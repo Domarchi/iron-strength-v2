@@ -3,12 +3,14 @@ import type { Database } from "@/types/database";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { supabasePublishableKey, supabaseUrl } from "./env";
+import { fetchWithTimeout } from "./fetch-with-timeout";
 
 // Cliente de servidor con la sesión del usuario (cookies httpOnly). La RLS aplica siempre.
 export async function createClient() {
   const cookieStore = await cookies();
 
   return createServerClient<Database>(supabaseUrl(), supabasePublishableKey(), {
+    global: { fetch: fetchWithTimeout() },
     cookies: {
       getAll() {
         return cookieStore.getAll();

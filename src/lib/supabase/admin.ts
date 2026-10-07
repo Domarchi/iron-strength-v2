@@ -2,6 +2,7 @@ import "server-only";
 import type { Database } from "@/types/database";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseUrl } from "./env";
+import { fetchWithTimeout } from "./fetch-with-timeout";
 
 // Cliente con service role: IGNORA la RLS. Solo para los tres usos previstos en el plan:
 // registro por invitación, enlace de restablecimiento (coach) y control de intentos de login.
@@ -12,5 +13,6 @@ export function createAdminClient() {
 
   return createClient<Database>(supabaseUrl(), key, {
     auth: { autoRefreshToken: false, persistSession: false },
+    global: { fetch: fetchWithTimeout() },
   });
 }

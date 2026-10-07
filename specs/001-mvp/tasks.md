@@ -164,7 +164,7 @@ Datos y cierre de fase:
 
 ## M9 — Endurecimiento y despliegue (Mar 13 – Mié 14)
 
-- [ ] **T95 · Carga, error y tiempo límite** — Dep: M5–M8 · `loading.tsx` y `error.tsx` por ruta, utilidad de tiempo límite de 10 s con botón de reintento. RF: 46; DC-20. **Hecho cuando:** simular una consulta lenta muestra el error con reintento tras 10 s.
+- [x] **T95 · Carga, error y tiempo límite** — Dep: M5–M8 · `loading.tsx` y `error.tsx` por ruta, utilidad de tiempo límite de 10 s con botón de reintento. RF: 46; DC-20. **Hecho cuando:** simular una consulta lenta muestra el error con reintento tras 10 s.
 - [ ] **T96 · Estados vacíos, copy y accesibilidad** — Dep: T95 · Revisar textos en español de Chile (tuteo), contraste AA, objetivos de 44 px y foco visible. **Hecho cuando:** revisión manual en móvil y una pasada con la skill `design:accessibility-review` sin hallazgos críticos.
 - [ ] **T97 · Playwright y fixtures** — Dep: T35 · Configuración contra Supabase local, `db reset` entre suites y helper para crear el coach. **Hecho cuando:** un test de humo de login pasa.
 - [ ] **T98 · E2E: flujo principal** — Dep: T97, M7 · Invitar → registrarse → asignar → ejecutar sesión → el coach ve el progreso y comenta. **Hecho cuando:** pasa de punta a punta (criterio de finalización de la spec).
