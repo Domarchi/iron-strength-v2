@@ -165,12 +165,12 @@ Datos y cierre de fase:
 ## M9 — Endurecimiento y despliegue (Mar 13 – Mié 14)
 
 - [x] **T95 · Carga, error y tiempo límite** — Dep: M5–M8 · `loading.tsx` y `error.tsx` por ruta, utilidad de tiempo límite de 10 s con botón de reintento. RF: 46; DC-20. **Hecho cuando:** simular una consulta lenta muestra el error con reintento tras 10 s.
-- [ ] **T96 · Estados vacíos, copy y accesibilidad** — Dep: T95 · Revisar textos en español de Chile (tuteo), contraste AA, objetivos de 44 px y foco visible. **Hecho cuando:** revisión manual en móvil y una pasada con la skill `design:accessibility-review` sin hallazgos críticos.
+- [x] **T96 · Estados vacíos, copy y accesibilidad** — Dep: T95 · Revisar textos en español de Chile (tuteo), contraste AA, objetivos de 44 px y foco visible. **Hecho cuando:** revisión manual en móvil y una pasada con la skill `design:accessibility-review` sin hallazgos críticos.
 - [x] **T97 · Playwright y fixtures** — Dep: T35 · Configuración contra Supabase local, `db reset` entre suites y helper para crear el coach. **Hecho cuando:** un test de humo de login pasa.
 - [x] **T98 · E2E: flujo principal** — Dep: T97, M7 · Invitar → registrarse → asignar → ejecutar sesión → el coach ve el progreso y comenta. **Hecho cuando:** pasa de punta a punta (criterio de finalización de la spec).
-- [ ] **T99 · E2E: fallo de guardado** — Dep: T98 · Cortar la red al finalizar, comprobar el aviso y el reintento sin duplicados. RF: 24. **Hecho cuando:** pasa.
-- [ ] **T100 · E2E: seguridad** — Dep: T98 · Alumno sin acceso a `/coach`, a datos del otro alumno ni a fotos ajenas; usuario desactivado expulsado. RF: 8, 44. **Hecho cuando:** pasa.
-- [ ] **T101 · E2E en CI** — Dep: T100 · Job que ejecuta los E2E en cada PR hacia `main`. **Hecho cuando:** el workflow completo (lint, tipos, unitarios, pgTAP, build, E2E) está verde.
+- [x] **T99 · E2E: fallo de guardado** — Dep: T98 · Cortar la red al finalizar, comprobar el aviso y el reintento sin duplicados. RF: 24. **Hecho cuando:** pasa.
+- [x] **T100 · E2E: seguridad** — Dep: T98 · Alumno sin acceso a `/coach`, a datos del otro alumno ni a fotos ajenas; usuario desactivado expulsado. RF: 8, 44. **Hecho cuando:** pasa.
+- [x] **T101 · E2E en CI** — Dep: T100 · Job que ejecuta los E2E en cada PR hacia `main`. **Hecho cuando:** el workflow completo (lint, tipos, unitarios, pgTAP, build, E2E) está verde.
 - [ ] **T102 · Revisión de seguridad** — Dep: T101 · Buscar usos de `admin.ts` (solo los 3 previstos), secretos en el repo, cabeceras básicas, y ejecutar la skill `security-review`. **Hecho cuando:** sin hallazgos altos abiertos.
 - [ ] **T103 · Despliegue** — (tú) Dep: T102, T36 · Crear el proyecto en Vercel, cargar variables de entorno, ejecutar `create-coach` contra producción con tus credenciales locales. **Hecho cuando:** la URL de producción abre `/login` y el coach inicia sesión.
 - [ ] **T104 · Prueba en producción y alta de alumnos** — (tú) Dep: T103 · Humo en móvil real e invitaciones a los 2 alumnos. **Hecho cuando:** ambos alumnos tienen cuenta y registraron un entrenamiento.

@@ -56,3 +56,37 @@ jobs:
         run: |
           npm run db:types
           git diff --exit-code src/types/database.ts
+
+  e2e:
+    name: E2E (Playwright contra Supabase local y build de producción)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Levantar Supabase local
+        run: npx supabase start -x studio,mailpit,imgproxy,edge-runtime,logflare,vector,realtime,postgres-meta,supavisor
+      - name: Variables de la pila local
+        run: |
+          eval "$(npx supabase status -o env | sed 's/^/export /')"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_SECRET_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3100" >> "$GITHUB_ENV"
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Pruebas E2E
+        run: npm run test:e2e
+      - name: Guardar el informe si algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

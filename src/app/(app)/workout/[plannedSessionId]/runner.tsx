@@ -119,7 +119,7 @@ function Suggestion({ exercise }: { exercise: ContextExercise }) {
   const s = exercise.suggestion;
   if (!s) return null;
   return (
-    <p className="rounded-md bg-primary/10 px-3 py-2 text-xs text-primary">
+    <p className="rounded-md border-l-4 border-primary bg-muted px-3 py-2 text-xs text-foreground">
       {s.kind === "increase"
         ? `Sugerencia: sube a ${formatKg(s.weightKg)} y apunta a ${s.reps} repeticiones.`
         : `Sugerencia: mantén ${formatKg(s.weightKg)} y apunta a ${s.reps} repeticiones.`}
@@ -253,7 +253,7 @@ export function WorkoutRunner({ userId, context }: { userId: string; context: Wo
   // Entrenando -----------------------------------------------------------------------------------------
   return (
     <div className="flex flex-col gap-4">
-      <header className="sticky top-0 z-30 -mx-4 flex items-center justify-between gap-3 border-b bg-background/95 px-4 py-2 backdrop-blur">
+      <header className="sticky top-0 z-30 -mx-4 flex items-center justify-between gap-3 border-b bg-background px-4 py-2">
         <div>
           <h1 className="text-base font-semibold">
             Sesión {context.session.label} · Semana {context.session.weekNumber}

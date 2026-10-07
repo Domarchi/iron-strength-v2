@@ -108,7 +108,7 @@ export default async function ExerciseProgressPage({
                   className={cn(
                     "inline-flex min-h-11 items-center rounded-full border px-4 text-sm",
                     metric === key
-                      ? "border-primary bg-primary/10 text-primary"
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "text-muted-foreground",
                   )}
                 >

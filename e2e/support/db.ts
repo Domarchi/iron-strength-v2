@@ -68,3 +68,92 @@ export async function seedCoach(db = admin()): Promise<string> {
     password: COACH.password,
   });
 }
+
+// Programa de 2 semanas que empieza este lunes, con una sesión A de dos ejercicios.
+export async function seedProgram(args: {
+  coachId: string;
+  studentId: string;
+  db?: SupabaseClient<Database>;
+}) {
+  const db = args.db ?? admin();
+  const { mondayOf, santiagoDate, addDays } = await import("../../src/domain/dates");
+  const start = mondayOf(santiagoDate(new Date()));
+  const { data: program } = await db
+    .from("programs")
+    .insert({
+      coach_id: args.coachId,
+      student_id: args.studentId,
+      name: "Programa semilla",
+      weeks_count: 2,
+      start_date: start,
+      ends_on: addDays(start, 13),
+    })
+    .select("id")
+    .single();
+  const { data: session } = await db
+    .from("program_sessions")
+    .insert({ program_id: program!.id, week_number: 1, label: "A" })
+    .select("id")
+    .single();
+  const { data: exercises } = await db
+    .from("exercises")
+    .select("id, name")
+    .in("name", ["Sentadilla", "Press de banca"])
+    .is("coach_id", null);
+  const byName = new Map(exercises!.map((e) => [e.name, e.id]));
+  await db.from("session_exercises").insert([
+    {
+      program_session_id: session!.id,
+      exercise_id: byName.get("Sentadilla")!,
+      position: 0,
+      sets: 3,
+      reps_min: 8,
+      reps_max: 12,
+    },
+    {
+      program_session_id: session!.id,
+      exercise_id: byName.get("Press de banca")!,
+      position: 1,
+      sets: 3,
+      reps_min: 8,
+      reps_max: 12,
+    },
+  ]);
+  return { programId: program!.id, sessionId: session!.id, exercises: byName };
+}
+
+// Un entrenamiento ya guardado de un alumno (sin programa), de hace `daysAgo` días.
+export async function seedWorkout(args: {
+  studentId: string;
+  exerciseId: string;
+  exerciseName: string;
+  daysAgo: number;
+  db?: SupabaseClient<Database>;
+}) {
+  const db = args.db ?? admin();
+  const { addDays, santiagoDate } = await import("../../src/domain/dates");
+  const startedAt = new Date(
+    `${addDays(santiagoDate(new Date()), -args.daysAgo)}T15:00:00Z`,
+  ).toISOString();
+  const id = crypto.randomUUID();
+  await db.from("workouts").insert({
+    id,
+    student_id: args.studentId,
+    started_at: startedAt,
+    finished_at: new Date(Date.parse(startedAt) + 3_000_000).toISOString(),
+    duration_seconds: 3000,
+    created_at: startedAt,
+  });
+  await db.from("workout_sets").insert({
+    workout_id: id,
+    student_id: args.studentId,
+    exercise_id: args.exerciseId,
+    exercise_name: args.exerciseName,
+    position: 0,
+    set_number: 1,
+    weight_kg: 60,
+    reps: 10,
+    is_warmup: false,
+  });
+  return id;
+}

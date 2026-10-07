@@ -71,7 +71,9 @@ async function Measurements({
                 aria-current={k === key ? "true" : undefined}
                 className={cn(
                   "inline-flex min-h-11 items-center rounded-full border px-4 text-sm",
-                  k === key ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground",
+                  k === key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "text-muted-foreground",
                 )}
               >
                 {METRICS[k].label}
