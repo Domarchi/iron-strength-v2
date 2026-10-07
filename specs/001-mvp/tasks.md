@@ -102,8 +102,8 @@ Datos y cierre de fase:
 
 ## M4 — Ejercicios y programas (Sáb 10 – Dom 11)
 
-- [ ] **T58 · Biblioteca de ejercicios (lectura)** — Dep: T41, T34 · `/coach/exercises` con globales y propios, filtro por grupo muscular. RF: 9. **Hecho cuando:** se ve el catálogo del seed y los archivados no aparecen por defecto.
-- [ ] **T59 · Crear, editar y archivar ejercicio propio** — Dep: T58, T51 · Formulario con incremento de progresión. RF: 10, 11; DC-12. **Hecho cuando:** un ejercicio propio aparece en la biblioteca, uno global no se puede editar, y uno usado en un historial se archiva en vez de borrarse.
+- [x] **T58 · Biblioteca de ejercicios (lectura)** — Dep: T41, T34 · `/coach/exercises` con globales y propios, filtro por grupo muscular. RF: 9. **Hecho cuando:** se ve el catálogo del seed y los archivados no aparecen por defecto.
+- [x] **T59 · Crear, editar y archivar ejercicio propio** — Dep: T58, T51 · Formulario con incremento de progresión. RF: 10, 11; DC-12. **Hecho cuando:** un ejercicio propio aparece en la biblioteca, uno global no se puede editar, y uno usado en un historial se archiva en vez de borrarse.
 - [ ] **T60 · Lista de programas y crear plantilla** — Dep: T41 · Nombre y semanas (1–16). RF: 12. **Hecho cuando:** crear una plantilla de 4 semanas la muestra en la lista; 17 semanas muestra error.
 - [ ] **T61 · Editor: semanas y sesiones** — Dep: T60 · Agregar y quitar sesiones (A, B, C…) por semana, hasta 7. RF: 13; DC-13. **Hecho cuando:** una semana de descarga sin sesiones es válida y la octava sesión se rechaza.
 - [ ] **T62 · Editor: agregar ejercicio con prescripción** — Dep: T61, T59 · Buscador de ejercicios y campos series, reps mín/máx, peso objetivo opcional y nota. RF: 14. **Hecho cuando:** los límites de T51 se muestran como errores de formulario y el ejercicio 16 se rechaza.
