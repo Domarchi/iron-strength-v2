@@ -4,36 +4,38 @@ Fase SDD: solo detectar. Ningún hallazgo está resuelto aquí; cada uno termina
 Severidad: **B** = bloquea el plan (cambia el modelo de datos o un requisito), **I** = importante (hay que decidirlo antes de implementar el requisito), **M** = menor (se puede decidir durante el plan).
 
 ## Estado
+
 Todos cerrados. C1 a C4, C24, C25 y el glosario se resolvieron con el usuario; C5 con su aprobación de la lista de MVP; el resto con defaults aprobados (DC-1 a DC-22 en la spec).
 
-| Hallazgo | Cierre |
-|---|---|
-| C5 | MVP del miércoles 14 y Fase 2 |
-| C6 | DC-1, DC-2 |
-| C7 | DC-3, RF-7 |
-| C8 | RF-6 |
-| C9 | RF-26, RF-26b |
-| C10 | DC-6 |
-| C11 | DC-7 |
-| C12 | DC-10 |
-| C13 | DC-11 |
-| C14 | DC-14 |
-| C15 | DC-15 |
-| C16 | DC-18 |
-| C17 | DC-4 |
-| C18 | DC-8 |
-| C19 | DC-9 |
-| C20 | DC-16 |
-| C21 | DC-17 |
-| C22 | DC-5 |
-| C23 | DC-19 |
-| C26 | DC-12 |
-| C27 | DC-13 |
-| C28 | DC-20 |
-| C29 | DC-21 |
-| C30 | DC-22 |
+| Hallazgo | Cierre                        |
+| -------- | ----------------------------- |
+| C5       | MVP del miércoles 14 y Fase 2 |
+| C6       | DC-1, DC-2                    |
+| C7       | DC-3, RF-7                    |
+| C8       | RF-6                          |
+| C9       | RF-26, RF-26b                 |
+| C10      | DC-6                          |
+| C11      | DC-7                          |
+| C12      | DC-10                         |
+| C13      | DC-11                         |
+| C14      | DC-14                         |
+| C15      | DC-15                         |
+| C16      | DC-18                         |
+| C17      | DC-4                          |
+| C18      | DC-8                          |
+| C19      | DC-9                          |
+| C20      | DC-16                         |
+| C21      | DC-17                         |
+| C22      | DC-5                          |
+| C23      | DC-19                         |
+| C26      | DC-12                         |
+| C27      | DC-13                         |
+| C28      | DC-20                         |
+| C29      | DC-21                         |
+| C30      | DC-22                         |
 
 ## Glosario faltante (I)
+
 G1. "Sesión" se usa con dos significados: la sesión **planificada** (A, B, C de una semana) y la sesión **realizada** (el entrenamiento registrado). Hay que fijar dos términos y usarlos en toda la spec. Afecta a RF-13, 19, 23, 29, 33, 36.
 
 ## Bloqueantes
@@ -41,6 +43,7 @@ G1. "Sesión" se usa con dos significados: la sesión **planificada** (A, B, C d
 C1 (B). **"Sesión cumplida" no está definida.** La racha (RF-29), el cumplimiento semanal (RF-33), el resumen (RF-32) y los logros (RF-31) dependen de ella. ¿Cuenta con 1 serie completada, con un porcentaje, o con todas las series prescritas? RF-23 guarda "solo series completadas", así que una sesión abandonada a la mitad puede existir.
 
 C2 (B). **La progresión automática (RF-15b) tiene huecos que cambian el modelo de datos.**
+
 - El peso objetivo es opcional (RF-14), pero la regla se evalúa "con el peso objetivo". Sin peso objetivo, la regla no se puede aplicar.
 - No se dice si la sugerencia es una **prescripción nueva** (se guarda en el programa del alumno) o solo una **referencia visual**. Si la semana siguiente ya tiene un peso escrito por el coach, ¿cuál manda?
 - No se dice qué pasa si el alumno levantó más peso que el objetivo, si falló repeticiones, o si el rango es fijo (mínimo = máximo).
@@ -109,4 +112,5 @@ C29 (M). **Rendimiento:** "menos de 2 s" no dice en qué pantalla exactamente, c
 C30 (M). **Coach como alumno de sí mismo (RF-49):** no está claro si aparece en su propia lista de alumnos (RF-33) o en una vista aparte, ni cómo se indica a sí mismo el cumplimiento.
 
 ## Resumen
+
 30 hallazgos: 5 bloqueantes, 17 importantes, 8 menores (más el glosario).

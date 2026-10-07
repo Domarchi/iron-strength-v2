@@ -3,6 +3,7 @@
 Entradas: `plan.md`, `spec.md`, `docs/constitution.md`.
 
 ## Reglas de trabajo
+
 - Una tarea cada vez, en orden de dependencia. Cada tarea es de menos de 30 minutos.
 - **Tests primero**: se escribe el test en rojo, se implementa, se pone en verde. En el esquema, cada tarea de test pgTAP va justo antes de la política o función que prueba.
 - Una tarea termina cuando se cumple su "Hecho cuando" y `npm run check` (lint + tipos + tests + build) está en verde. Después se marca y se hace un commit.
@@ -30,6 +31,7 @@ Leyenda: `Dep` = dependencia · `RF` = requisitos que cubre.
 ## M1 — Base de datos y RLS (Jue 8)
 
 Esquema (una migración por tarea):
+
 - [ ] **T9 · Migración: profiles** — Dep: T5 · Extensiones (`btree_gist`), enum de rol, tabla `profiles`, índice único de un solo coach, trigger que impide cambiar `role`, `coach_id` e `is_active` a quien no sea el coach. RF: 4, 8, 44. **Hecho cuando:** `npx supabase db reset` aplica sin errores.
 - [ ] **T10 · Migración: invitations y login_attempts** — Dep: T9 · RF: 1, 2, 6; DC-2. **Hecho cuando:** `db reset` pasa y el token se guarda solo como hash (columna `token_hash`, sin columna de token).
 - [ ] **T11 · Migración: exercises** — Dep: T9 · Incluye `progression_increment_kg`, `archived_at` y unicidad de nombre por coach sin distinguir mayúsculas. RF: 9–11; DC-12. **Hecho cuando:** `db reset` pasa.
@@ -41,6 +43,7 @@ Esquema (una migración por tarea):
 - [ ] **T17 · Funciones auxiliares** — Dep: T9 · `is_coach_of(uuid)` y `current_coach_id()` como `security definer stable` con `search_path` fijo. RF: 44. **Hecho cuando:** `db reset` pasa y las funciones existen en el esquema.
 
 RLS (test antes de política):
+
 - [ ] **T18 · Fixtures pgTAP** — Dep: T17 · Helper SQL para crear y asumir usuarios de prueba: coach, alumno A, alumno B, anónimo. **Hecho cuando:** `npx supabase test db` ejecuta un test de humo con los tres usuarios.
 - [ ] **T19 · Test: RLS de profiles y exercises** — Dep: T18 · Alumno ve solo lo suyo y los ejercicios globales y de su coach; coach ve a sus alumnos; nadie cambia su propio rol; alumno no escribe ejercicios. **Hecho cuando:** el test existe y falla (rojo).
 - [ ] **T20 · RLS: profiles y exercises** — Dep: T19 · **Hecho cuando:** T19 en verde.
@@ -58,6 +61,7 @@ RLS (test antes de política):
 - [ ] **T32 · Función assign_program** — Dep: T31 · RF: 16, 18; DC-10. **Hecho cuando:** T31 en verde.
 
 Datos y cierre de fase:
+
 - [ ] **T33 · Convertir catálogo de v1** — Dep: T11 · Script único que lee `~/Developer/iron-strength/src/data/exercises.js` y genera `supabase/seed.sql` (grupo muscular y equipamiento mapeados; incremento por defecto según equipamiento). RF: 9. **Hecho cuando:** el SQL generado se revisa a mano en una muestra de 10 ejercicios.
 - [ ] **T34 · Cargar seed y verificar** — Dep: T33 · **Hecho cuando:** `db reset` carga el catálogo y una consulta cuenta lo mismo que `exercises.js`; sin duplicados.
 - [ ] **T35 · Tipos TS y CI de base de datos** — Dep: T32, T34, T8 · Script `db:types` (`supabase gen types`) y job de CI con `supabase start` + `supabase test db`. **Hecho cuando:** `typecheck` usa los tipos generados y el job de CI está verde.
@@ -176,8 +180,10 @@ Datos y cierre de fase:
 ---
 
 ## Fase 2 (fuera de estas tareas)
+
 RF-27 temporizador de descanso, RF-31 logros, RF-32 resumen semanal, RF-37 comentarios no leídos, RF-45 PWA instalable, RF-47 exportar CSV, RF-48 borrar cuenta.
 
 ## Resumen
+
 106 tareas. M0: 8 · M1: 28 · M2: 12 · M3: 9 · M4: 9 · M5: 13 · M6: 4 · M7: 5 · M8: 6 · M9: 12.
 Acciones tuyas: T36, T103, T104.
