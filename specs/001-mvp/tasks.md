@@ -45,8 +45,8 @@ Esquema (una migración por tarea):
 RLS (test antes de política):
 
 - [x] **T18 · Fixtures pgTAP** — Dep: T17 · Helper SQL para crear y asumir usuarios de prueba: coach, alumno A, alumno B, anónimo. **Hecho cuando:** `npx supabase test db` ejecuta un test de humo con los tres usuarios.
-- [ ] **T19 · Test: RLS de profiles y exercises** — Dep: T18 · Alumno ve solo lo suyo y los ejercicios globales y de su coach; coach ve a sus alumnos; nadie cambia su propio rol; alumno no escribe ejercicios. **Hecho cuando:** el test existe y falla (rojo).
-- [ ] **T20 · RLS: profiles y exercises** — Dep: T19 · **Hecho cuando:** T19 en verde.
+- [x] **T19 · Test: RLS de profiles y exercises** — Dep: T18 · Alumno ve solo lo suyo y los ejercicios globales y de su coach; coach ve a sus alumnos; nadie cambia su propio rol; alumno no escribe ejercicios. **Hecho cuando:** el test existe y falla (rojo).
+- [x] **T20 · RLS: profiles y exercises** — Dep: T19 · **Hecho cuando:** T19 en verde.
 - [ ] **T21 · Test: RLS de programas** — Dep: T20 · Alumno solo lee los suyos y no escribe; coach CRUD de los suyos; alumno B no ve los de A. **Hecho cuando:** existe y falla.
 - [ ] **T22 · RLS: programs, program_sessions, session_exercises** — Dep: T21 · **Hecho cuando:** T21 en verde.
 - [ ] **T23 · Test: RLS de entrenamientos** — Dep: T22 · Insert y select propios; coach lee los de sus alumnos; alumno B no lee los de A; edición y borrado solo dentro de 7 días (probar el día 7 y el día 8). **Hecho cuando:** existe y falla.
