@@ -166,7 +166,7 @@ Datos y cierre de fase:
 
 - [x] **T95 · Carga, error y tiempo límite** — Dep: M5–M8 · `loading.tsx` y `error.tsx` por ruta, utilidad de tiempo límite de 10 s con botón de reintento. RF: 46; DC-20. **Hecho cuando:** simular una consulta lenta muestra el error con reintento tras 10 s.
 - [ ] **T96 · Estados vacíos, copy y accesibilidad** — Dep: T95 · Revisar textos en español de Chile (tuteo), contraste AA, objetivos de 44 px y foco visible. **Hecho cuando:** revisión manual en móvil y una pasada con la skill `design:accessibility-review` sin hallazgos críticos.
-- [ ] **T97 · Playwright y fixtures** — Dep: T35 · Configuración contra Supabase local, `db reset` entre suites y helper para crear el coach. **Hecho cuando:** un test de humo de login pasa.
+- [x] **T97 · Playwright y fixtures** — Dep: T35 · Configuración contra Supabase local, `db reset` entre suites y helper para crear el coach. **Hecho cuando:** un test de humo de login pasa.
 - [ ] **T98 · E2E: flujo principal** — Dep: T97, M7 · Invitar → registrarse → asignar → ejecutar sesión → el coach ve el progreso y comenta. **Hecho cuando:** pasa de punta a punta (criterio de finalización de la spec).
 - [ ] **T99 · E2E: fallo de guardado** — Dep: T98 · Cortar la red al finalizar, comprobar el aviso y el reintento sin duplicados. RF: 24. **Hecho cuando:** pasa.
 - [ ] **T100 · E2E: seguridad** — Dep: T98 · Alumno sin acceso a `/coach`, a datos del otro alumno ni a fotos ajenas; usuario desactivado expulsado. RF: 8, 44. **Hecho cuando:** pasa.
