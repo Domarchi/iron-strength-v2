@@ -17,13 +17,13 @@ Leyenda: `Dep` = dependencia · `RF` = requisitos que cubre.
 
 ## M0 — Scaffold (Mié 7)
 
-- [ ] **T1 · Crear app Next.js** — Dep: — · Next.js (App Router) + TypeScript estricto + Tailwind + ESLint en la raíz, con `src/`. **Hecho cuando:** `npm run dev` sirve la página inicial y `npm run build` pasa.
-- [ ] **T2 · shadcn/ui y tema** — Dep: T1 · Inicializar shadcn/ui, colores de marca (paleta ember de v1 como referencia), modo claro/oscuro, componente `Button`. **Hecho cuando:** una página de prueba muestra el botón en ambos modos y `build` pasa.
-- [ ] **T3 · Vitest** — Dep: T1 · Configurar Vitest (entorno node, alias `@/`) con un test trivial. **Hecho cuando:** `npm test` pasa.
-- [ ] **T4 · Scripts de calidad** — Dep: T3 · Scripts `lint`, `typecheck`, `test`, `build` y `check` (los encadena); Prettier. **Hecho cuando:** `npm run check` pasa en limpio.
-- [ ] **T5 · Supabase CLI local** — Dep: T1 · Instalar `supabase` como dependencia de desarrollo, `supabase init`, `config.toml` con registro público deshabilitado y zona horaria declarada. **Hecho cuando:** `npx supabase start` levanta el stack local y `npx supabase status` lista URL y claves.
-- [ ] **T6 · Clientes de Supabase** — Dep: T5 · `.env.example`; `src/lib/supabase/{server,client,admin}.ts` (`@supabase/ssr`), con `admin.ts` marcado `server-only`. **Hecho cuando:** `typecheck` pasa y importar `admin` desde un Client Component falla el build.
-- [ ] **T7 · AGENTS.md, CLAUDE.md, README** — Dep: T4 · AGENTS.md con comandos y reglas (plantilla del curso), CLAUDE.md que apunta a `@AGENTS.md`, README con cómo levantar el proyecto. **Hecho cuando:** un tercero podría clonar y seguir el README hasta `npm run dev`.
+- [x] **T1 · Crear app Next.js** — Dep: — · Next.js (App Router) + TypeScript estricto + Tailwind + ESLint en la raíz, con `src/`. **Hecho cuando:** `npm run dev` sirve la página inicial y `npm run build` pasa.
+- [x] **T2 · shadcn/ui y tema** — Dep: T1 · Inicializar shadcn/ui, colores de marca (paleta ember de v1 como referencia), modo claro/oscuro, componente `Button`. **Hecho cuando:** una página de prueba muestra el botón en ambos modos y `build` pasa.
+- [x] **T3 · Vitest** — Dep: T1 · Configurar Vitest (entorno node, alias `@/`) con un test trivial. **Hecho cuando:** `npm test` pasa.
+- [x] **T4 · Scripts de calidad** — Dep: T3 · Scripts `lint`, `typecheck`, `test`, `build` y `check` (los encadena); Prettier. **Hecho cuando:** `npm run check` pasa en limpio.
+- [x] **T5 · Supabase CLI local** — Dep: T1 · Instalar `supabase` como dependencia de desarrollo, `supabase init`, `config.toml` con registro público deshabilitado y zona horaria declarada. **Hecho cuando:** `npx supabase start` levanta el stack local y `npx supabase status` lista URL y claves.
+- [x] **T6 · Clientes de Supabase** — Dep: T5 · `.env.example`; `src/lib/supabase/{server,client,admin}.ts` (`@supabase/ssr`), con `admin.ts` marcado `server-only`. **Hecho cuando:** `typecheck` pasa y importar `admin` desde un Client Component falla el build.
+- [x] **T7 · AGENTS.md, CLAUDE.md, README** — Dep: T4 · AGENTS.md con comandos y reglas (plantilla del curso), CLAUDE.md que apunta a `@AGENTS.md`, README con cómo levantar el proyecto. **Hecho cuando:** un tercero podría clonar y seguir el README hasta `npm run dev`.
 - [ ] **T8 · CI básica** — Dep: T4 · GitHub Actions: instalar, lint, tipos, test, build. **Hecho cuando:** el workflow está verde en GitHub.
 
 ---
