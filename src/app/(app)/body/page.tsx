@@ -11,6 +11,8 @@ import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { deleteMeasurementAction } from "./actions";
 import { MeasurementForm } from "./measurement-form";
+import { PhotoGallery } from "./photo-gallery";
+import { PhotoUploader } from "./photo-uploader";
 
 export const metadata = { title: "Cuerpo · Iron Strength" };
 
@@ -159,6 +161,16 @@ export default async function BodyPage({ searchParams }: { searchParams: SearchP
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <Measurements searchParams={searchParams} readOnly={readOnly} />
       </Suspense>
+
+      <section aria-labelledby="photos-heading" className="flex flex-col gap-3">
+        <h2 id="photos-heading" className="text-lg font-medium">
+          Fotos de progreso
+        </h2>
+        {readOnly ? null : <PhotoUploader userId={user.id} today={santiagoDate(new Date())} />}
+        <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando fotos…</p>}>
+          <PhotoGallery studentId={readOnly ? String(alumno) : user.id} readOnly={readOnly} />
+        </Suspense>
+      </section>
     </div>
   );
 }
