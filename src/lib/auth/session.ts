@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type CurrentUser = {
@@ -31,3 +32,17 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     role: profile.role,
   };
 });
+
+// Guarda para páginas y layouts protegidos. Sin perfil activo → de vuelta al login.
+export async function requireUser(): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?motivo=sesion");
+  return user;
+}
+
+// Guarda para el área del coach. A un alumno le responde 404, sin revelar que la ruta existe.
+export async function requireCoach(): Promise<CurrentUser> {
+  const user = await requireUser();
+  if (user.role !== "coach") notFound();
+  return user;
+}

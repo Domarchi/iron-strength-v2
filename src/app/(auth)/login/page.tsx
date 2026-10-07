@@ -6,7 +6,16 @@ import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Entrar · Iron Strength" };
 
-export default async function LoginPage() {
+const REASONS: Record<string, string> = {
+  sesion: "Tu sesión terminó o tu cuenta está desactivada. Entra de nuevo.",
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ motivo?: string }>;
+}) {
+  const { motivo } = await searchParams;
   if (await getCurrentUser()) redirect("/");
 
   return (
@@ -14,7 +23,9 @@ export default async function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl tracking-tight">IRON STRENGTH</CardTitle>
-          <CardDescription>Entra con tu correo y contraseña.</CardDescription>
+          <CardDescription>
+            {(motivo && REASONS[motivo]) || "Entra con tu correo y contraseña."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm />
