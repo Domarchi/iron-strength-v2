@@ -93,3 +93,11 @@ export async function createProfileUser(
   }
   return { id, email: input.email, password };
 }
+
+// Cliente con la sesión abierta de un usuario (la RLS se aplica como en la app).
+export async function signedInClient(email: string, password: string): Promise<AdminClient> {
+  const client = anonClient();
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return client;
+}

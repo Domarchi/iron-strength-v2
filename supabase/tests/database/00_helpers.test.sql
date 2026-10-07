@@ -55,8 +55,8 @@ begin
 end;
 $$;
 
-grant usage on schema tests to anon, authenticated;
-grant execute on all functions in schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 -- Lunes de la semana actual en hora de Santiago (para tests independientes de la fecha de hoy).
 create or replace function tests.current_monday() returns date language sql stable as $$

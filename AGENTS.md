@@ -19,6 +19,7 @@ Este proyecto se desarrolla con **Spec-Driven Development**. La fuente de verdad
 - Base local: `npx supabase start` / `npx supabase stop` / `npx supabase db reset`
 - Tests de base de datos (RLS): `npm run db:test`; integración contra Supabase local: `npm run test:int`
 - Tipos de la base: `npm run db:types`
+- Datos de desarrollo (coach y 2 alumnos locales): `npm run dev:seed`. Los tests de integración **borran todos los usuarios locales**: después de correrlos, vuelve a ejecutar `dev:seed`.
 
 Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env.local`.
 

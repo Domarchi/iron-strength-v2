@@ -314,6 +314,9 @@ isOneToOne: false
             "assign_program":
 { Args: { "p_start_date": string,"p_student_id": string,"p_template_id": string }; Returns: string
                            },
+"auth_email_exists":
+{ Args: { "p_email": string }; Returns: boolean
+                           },
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
