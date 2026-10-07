@@ -38,7 +38,7 @@ select is((select count(*)::int from public.profiles where full_name = 'Hackeado
   'el alumno no puede modificar a otro alumno');
 
 select is((select count(*)::int from public.exercises), 2,
-  'el alumno ve el catálogo base y los ejercicios de su coach, sin archivados');
+  'el alumno ve el catálogo base y los ejercicios de su coach, sin archivados (DC-12)');
 select throws_ok(
   $$ insert into public.exercises (coach_id, name, muscle_group)
      values (null, 'Intruso', 'Pecho') $$,
@@ -70,7 +70,7 @@ select isnt((select archived_at from public.exercises where id = 'e0000000-0000-
   null, 'el coach archiva sus ejercicios');
 update public.exercises set name = 'Editado' where id = 'e0000000-0000-0000-0000-000000000001';
 select is((select name from public.exercises where id = 'e0000000-0000-0000-0000-000000000001'),
-  'Sentadilla', 'el coach no edita ejercicios del catálogo base');
+  'Sentadilla', 'el coach no edita ejercicios del catálogo base (DC-12)');
 
 reset role;
 

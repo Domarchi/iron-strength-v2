@@ -96,7 +96,7 @@ Datos y cierre de fase:
 - [x] **T54 · records** — Dep: T3 · Mayor peso, 1RM de Epley, primer registro sin celebrar, calentamiento excluido. RF: 28; DC-6, 7. **Hecho cuando:** los tests cubren empate de peso, primer registro, calentamiento y varios récords en una misma sesión.
 - [x] **T55 · progression** — Dep: T3 · Doble progresión con rango fijo, peso corporal, sin peso objetivo y rango incompleto. RF: 15b; DC-9. **Hecho cuando:** los tests cubren cada caso de RF-15b, incluidos los incrementos por equipamiento.
 - [x] **T56 · volume** — Dep: T3 · Volumen por entrenamiento y por semana, peso corporal cuenta solo repeticiones, tendencia contra la semana anterior. DC-16. **Hecho cuando:** los tests pasan, incluida la semana sin datos previos.
-- [ ] **T57 · Revisión de cobertura del dominio** — Dep: T49–T56 · Informe de cobertura de `src/domain/`. **Hecho cuando:** todas las reglas DC-6 a DC-17 tienen al menos un test que las nombra y la cobertura de ramas del dominio es de 90% o más.
+- [x] **T57 · Revisión de cobertura del dominio** — Dep: T49–T56 · Informe de cobertura de `src/domain/`. **Hecho cuando:** todas las reglas DC-6 a DC-17 tienen al menos un test que las nombra y la cobertura de ramas del dominio es de 90% o más.
 
 ---
 

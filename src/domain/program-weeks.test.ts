@@ -51,7 +51,7 @@ describe("programState", () => {
   });
 });
 
-describe("pickCurrentProgram (RF-18: un solo programa activo)", () => {
+describe("pickCurrentProgram (RF-18, DC-10: un solo programa activo)", () => {
   const next: ProgramRange = { startDate: "2026-10-26", endsOn: "2026-11-08", weeksCount: 2 };
 
   it("elige el programa activo de hoy", () => {

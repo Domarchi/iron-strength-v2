@@ -36,7 +36,7 @@ select throws_ok(
 select is((select count(*)::int from public.comments), 1, 'A ve solo los comentarios de su entrenamiento');
 update public.comments set body = 'editado' where id = 'c1000000-0000-0000-0000-0000000000a1';
 select is((select body from public.comments where id = 'c1000000-0000-0000-0000-0000000000a1'),
-  'mi comentario', 'los comentarios no se editan');
+  'mi comentario', 'los comentarios no se editan (DC-14)');
 
 -- body_measurements
 select lives_ok(

@@ -72,7 +72,7 @@ select throws_ok(
   $$ insert into public.workouts (id, student_id, started_at, finished_at, duration_seconds)
      values ('33333333-3333-3333-3333-333333333333', tests.student_a_id(),
              '2026-10-01 02:30:00+00', '2026-10-01 03:20:00+00', 3000) $$,
-  '23505', null, 'reinsertar el mismo id falla (idempotencia)');
+  '23505', null, 'reinsertar el mismo id falla (idempotencia, DC-8)');
 select is(
   (select performed_on from public.workouts where id = '33333333-3333-3333-3333-333333333333'),
   '2026-09-30'::date, 'performed_on usa hora de Santiago (02:30Z = 23:30 del día anterior)');
