@@ -57,8 +57,8 @@ RLS (test antes de política):
 - [x] **T28 · Bucket privado y políticas** — Dep: T27 · Tipos JPEG/WebP y 1 MB. **Hecho cuando:** T27 en verde.
 - [x] **T29 · Test: validate_invitation** — Dep: T26 · Devuelve solo `valida`, `vencida` o `usada`; anónimo no puede hacer `select` sobre `invitations`. **Hecho cuando:** existe y falla.
 - [x] **T30 · Función validate_invitation** — Dep: T29 · **Hecho cuando:** T29 en verde.
-- [ ] **T31 · Test: assign_program** — Dep: T26 · Solo el coach del alumno puede asignar; ajusta al lunes; copia profunda sin compartir filas con la plantilla; recorta el programa vigente; es atómica ante error. **Hecho cuando:** existe y falla.
-- [ ] **T32 · Función assign_program** — Dep: T31 · RF: 16, 18; DC-10. **Hecho cuando:** T31 en verde.
+- [x] **T31 · Test: assign_program** — Dep: T26 · Solo el coach del alumno puede asignar; ajusta al lunes; copia profunda sin compartir filas con la plantilla; recorta el programa vigente; es atómica ante error. **Hecho cuando:** existe y falla.
+- [x] **T32 · Función assign_program** — Dep: T31 · RF: 16, 18; DC-10. **Hecho cuando:** T31 en verde.
 
 Datos y cierre de fase:
 
