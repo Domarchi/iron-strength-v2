@@ -36,7 +36,8 @@ for (const ex of exercises) {
   const name = String(ex.name).trim();
   const key = name.toLowerCase();
   if (!GROUPS.has(ex.muscleGroup)) throw new Error(`Grupo muscular desconocido: ${ex.muscleGroup}`);
-  if (!(ex.equipment in INCREMENT_BY_EQUIPMENT)) throw new Error(`Equipamiento desconocido: ${ex.equipment}`);
+  if (!(ex.equipment in INCREMENT_BY_EQUIPMENT))
+    throw new Error(`Equipamiento desconocido: ${ex.equipment}`);
   if (seen.has(key)) {
     skipped.push(`${name} (${ex.id}) duplica a ${seen.get(key)}`);
     continue;

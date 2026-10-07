@@ -64,7 +64,7 @@ Datos y cierre de fase:
 
 - [x] **T33 · Convertir catálogo de v1** — Dep: T11 · Script único que lee `~/Developer/iron-strength/src/data/exercises.js` y genera `supabase/seed.sql` (grupo muscular y equipamiento mapeados; incremento por defecto según equipamiento). RF: 9. **Hecho cuando:** el SQL generado se revisa a mano en una muestra de 10 ejercicios.
 - [x] **T34 · Cargar seed y verificar** — Dep: T33 · **Hecho cuando:** `db reset` carga el catálogo y una consulta cuenta lo mismo que `exercises.js`; sin duplicados.
-- [ ] **T35 · Tipos TS y CI de base de datos** — Dep: T32, T34, T8 · Script `db:types` (`supabase gen types`) y job de CI con `supabase start` + `supabase test db`. **Hecho cuando:** `typecheck` usa los tipos generados y el job de CI está verde.
+- [x] **T35 · Tipos TS y CI de base de datos** — Dep: T32, T34, T8 · Script `db:types` (`supabase gen types`) y job de CI con `supabase start` + `supabase test db`. **Hecho cuando:** `typecheck` usa los tipos generados y el job de CI está verde.
 - [ ] **T36 · Aplicar migraciones al proyecto remoto** — (tú) Dep: T35 · Tú ejecutas `npx supabase login`, `npx supabase link --project-ref hmkgxhszamktvisrifxv` y `npx supabase db push`. **Hecho cuando:** `npx supabase migration list` muestra todas aplicadas en local y remoto, y confirmas la región del proyecto (D9).
 
 ---

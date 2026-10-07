@@ -1,4 +1,5 @@
 import "server-only";
+import type { Database } from "@/types/database";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseUrl } from "./env";
 
@@ -9,7 +10,7 @@ export function createAdminClient() {
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!key) throw new Error("Falta la variable de entorno SUPABASE_SECRET_KEY");
 
-  return createClient(supabaseUrl(), key, {
+  return createClient<Database>(supabaseUrl(), key, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
