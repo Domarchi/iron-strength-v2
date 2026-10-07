@@ -131,3 +131,13 @@ test("un alumno desactivado con la sesión abierta es expulsado y no puede volve
 
   await admin().from("profiles").update({ is_active: true }).eq("id", beaId);
 });
+
+test("las respuestas llevan las cabeceras de seguridad", async ({ page }) => {
+  const response = await page.goto("/login");
+  const headers = response!.headers();
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  expect(headers["x-frame-options"]).toBe("DENY");
+  expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(headers["permissions-policy"]).toContain("camera=(self)");
+});

@@ -171,7 +171,7 @@ Datos y cierre de fase:
 - [x] **T99 · E2E: fallo de guardado** — Dep: T98 · Cortar la red al finalizar, comprobar el aviso y el reintento sin duplicados. RF: 24. **Hecho cuando:** pasa.
 - [x] **T100 · E2E: seguridad** — Dep: T98 · Alumno sin acceso a `/coach`, a datos del otro alumno ni a fotos ajenas; usuario desactivado expulsado. RF: 8, 44. **Hecho cuando:** pasa.
 - [x] **T101 · E2E en CI** — Dep: T100 · Job que ejecuta los E2E en cada PR hacia `main`. **Hecho cuando:** el workflow completo (lint, tipos, unitarios, pgTAP, build, E2E) está verde.
-- [ ] **T102 · Revisión de seguridad** — Dep: T101 · Buscar usos de `admin.ts` (solo los 3 previstos), secretos en el repo, cabeceras básicas, y ejecutar la skill `security-review`. **Hecho cuando:** sin hallazgos altos abiertos.
+- [x] **T102 · Revisión de seguridad** — Dep: T101 · Buscar usos de `admin.ts` (solo los 3 previstos), secretos en el repo, cabeceras básicas, y ejecutar la skill `security-review`. **Hecho cuando:** sin hallazgos altos abiertos.
 - [ ] **T103 · Despliegue** — (tú) Dep: T102, T36 · Crear el proyecto en Vercel, cargar variables de entorno, ejecutar `create-coach` contra producción con tus credenciales locales. **Hecho cuando:** la URL de producción abre `/login` y el coach inicia sesión.
 - [ ] **T104 · Prueba en producción y alta de alumnos** — (tú) Dep: T103 · Humo en móvil real e invitaciones a los 2 alumnos. **Hecho cuando:** ambos alumnos tienen cuenta y registraron un entrenamiento.
 - [ ] **T105 · Validación RF por RF** — Dep: T104 · `specs/001-mvp/validation.md` con cada RF del MVP, el test que lo cubre y su resultado. **Hecho cuando:** ningún RF del MVP queda sin test, y el veredicto final está escrito.
