@@ -4,6 +4,8 @@ import { CheckCircle2, Circle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
+import { ConstancyStrip } from "@/components/streak/constancy-strip";
+import { getStreakSummary } from "@/lib/data/streak";
 import { getWeekView, type WeekSession } from "@/lib/data/week";
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -58,7 +60,13 @@ function SessionCard({ session }: { session: WeekSession }) {
 
 async function WeekContent() {
   const user = await requireUser();
-  const view = await getWeekView(await createClient(), user.id, santiagoDate(new Date()));
+  const db = await createClient();
+  const today = santiagoDate(new Date());
+  const [view, streak] = await Promise.all([
+    getWeekView(db, user.id, today),
+    getStreakSummary(db, user.id, today),
+  ]);
+  const showStreak = view.kind !== "no_program";
 
   switch (view.kind) {
     case "no_program":
@@ -102,6 +110,7 @@ async function WeekContent() {
     case "active":
       return (
         <div className="flex flex-col gap-4">
+          {showStreak ? <ConstancyStrip {...streak} /> : null}
           <div>
             <p className="text-sm text-muted-foreground">
               {view.program.name} · semana {view.weekNumber} de {view.program.weeksCount}

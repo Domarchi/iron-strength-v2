@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
 import { isWorkoutEditable } from "@/domain/edit-window";
 import { capitalizeFirst, formatDuration, formatKg } from "@/domain/format";
+import { getWorkoutRecords } from "@/lib/data/progress";
 import { getWorkoutDetail } from "@/lib/data/workouts";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/session";
@@ -27,8 +28,10 @@ export default async function WorkoutDetailPage({
   searchParams: Promise<{ nuevo?: string }>;
 }) {
   const [{ id }, { nuevo }, user] = await Promise.all([params, searchParams, requireUser()]);
-  const workout = await getWorkoutDetail(await createClient(), id);
+  const db = await createClient();
+  const workout = await getWorkoutDetail(db, id);
   if (!workout) notFound();
+  const records = await getWorkoutRecords(db, id);
 
   const own = workout.studentId === user.id;
   const { summary } = workout;
@@ -58,6 +61,28 @@ export default async function WorkoutDetailPage({
           {workout.sessionLabel ? `Sesión ${workout.sessionLabel}` : "Sesión"}
         </p>
       </header>
+
+      {records.length > 0 ? (
+        <Card className="border-primary/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Trophy className="size-5 text-primary" aria-hidden /> Nuevos récords
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-col gap-1 text-sm">
+              {records.map((r) => (
+                <li key={`${r.exerciseId}-${r.type}`}>
+                  <strong>{r.name}</strong>:{" "}
+                  {r.type === "weight"
+                    ? `nuevo peso máximo, ${formatKg(r.value)} (antes ${formatKg(r.previous)})`
+                    : `nuevo 1RM estimado, ${formatKg(Math.round(r.value * 10) / 10)} (antes ${formatKg(Math.round(r.previous * 10) / 10)})`}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[

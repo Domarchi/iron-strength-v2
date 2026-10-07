@@ -119,3 +119,77 @@ if (studentId && coachId) {
     console.log("programa  Fuerza base (3 semanas) asignado a Alumno Uno");
   }
 }
+
+// Historial de ejemplo (solo si el alumno no tiene entrenamientos): sentadilla y press en progresión.
+if (studentId) {
+  const { count: workoutCount } = await admin
+    .from("workouts")
+    .select("id", { count: "exact", head: true })
+    .eq("student_id", studentId);
+
+  if (!workoutCount) {
+    const { data: ex } = await admin
+      .from("exercises")
+      .select("id, name")
+      .in("name", ["Sentadilla", "Press de banca"])
+      .is("coach_id", null);
+    const squat = ex!.find((e) => e.name === "Sentadilla")!.id;
+    const bench = ex!.find((e) => e.name === "Press de banca")!.id;
+    const today = santiagoDate(new Date());
+
+    const plan = [
+      { ago: 35, squat: [55, 55, 55], bench: [40, 40, 40], reps: [10, 9, 8] },
+      { ago: 28, squat: [57.5, 57.5, 57.5], bench: [40, 40, 40], reps: [10, 10, 9] },
+      { ago: 21, squat: [60, 60, 60], bench: [42.5, 42.5, 42.5], reps: [10, 9, 9] },
+      { ago: 14, squat: [60, 60, 60], bench: [42.5, 42.5, 42.5], reps: [12, 11, 10] },
+      { ago: 10, squat: [62.5, 62.5, 62.5], bench: [45, 45, 45], reps: [10, 9, 8] },
+      { ago: 3, squat: [65, 65, 65], bench: [45, 45, 45], reps: [10, 9, 9] },
+    ];
+    for (const w of plan) {
+      const startedAt = new Date(`${addDays(today, -w.ago)}T15:00:00Z`).toISOString();
+      const id = crypto.randomUUID();
+      await admin.from("workouts").insert({
+        id,
+        student_id: studentId,
+        session_label: "A",
+        started_at: startedAt,
+        finished_at: new Date(Date.parse(startedAt) + 3_000_000).toISOString(),
+        duration_seconds: 3000,
+        created_at: startedAt,
+      });
+      const rows = [
+        ...w.squat.map((kg, i) => ({
+          exerciseId: squat,
+          name: "Sentadilla",
+          position: 0,
+          n: i + 1,
+          kg,
+          reps: w.reps[i],
+        })),
+        ...w.bench.map((kg, i) => ({
+          exerciseId: bench,
+          name: "Press de banca",
+          position: 1,
+          n: i + 1,
+          kg,
+          reps: w.reps[i],
+        })),
+      ];
+      const { error } = await admin.from("workout_sets").insert(
+        rows.map((r) => ({
+          workout_id: id,
+          student_id: studentId,
+          exercise_id: r.exerciseId,
+          exercise_name: r.name,
+          position: r.position,
+          set_number: r.n,
+          weight_kg: r.kg,
+          reps: r.reps,
+          is_warmup: false,
+        })),
+      );
+      if (error) throw error;
+    }
+    console.log("historial 6 entrenamientos de ejemplo para Alumno Uno");
+  }
+}

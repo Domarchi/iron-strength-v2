@@ -134,10 +134,10 @@ Datos y cierre de fase:
 
 ## M6 — Progreso (Lun 12)
 
-- [ ] **T80 · Lista de ejercicios con progreso** — Dep: T77, T54 · `/progress` con mejor marca y último valor por ejercicio. RF: 30. **Hecho cuando:** solo aparecen ejercicios con entrenamientos y el estado vacío se ve sin datos.
-- [ ] **T81 · Gráfico por ejercicio** — Dep: T80, T56 · 1RM estimado por entrenamiento con volumen como vista secundaria, carga diferida. RF: 30; DC-16. **Hecho cuando:** el gráfico se renderiza con 1 punto, con muchos puntos y sin puntos.
-- [ ] **T82 · Récords** — Dep: T76, T54 · Destacar récords al terminar la sesión y listarlos en progreso. RF: 28; DC-7. **Hecho cuando:** el primer registro de un ejercicio no muestra celebración; una marca nueva sí.
-- [ ] **T83 · Racha y calendario de constancia** — Dep: T53, T68 · En "Mi semana" y en progreso. RF: 29; DC-11. **Hecho cuando:** coincide con los casos de los tests de T53 usando datos de ejemplo.
+- [x] **T80 · Lista de ejercicios con progreso** — Dep: T77, T54 · `/progress` con mejor marca y último valor por ejercicio. RF: 30. **Hecho cuando:** solo aparecen ejercicios con entrenamientos y el estado vacío se ve sin datos.
+- [x] **T81 · Gráfico por ejercicio** — Dep: T80, T56 · 1RM estimado por entrenamiento con volumen como vista secundaria, carga diferida. RF: 30; DC-16. **Hecho cuando:** el gráfico se renderiza con 1 punto, con muchos puntos y sin puntos.
+- [x] **T82 · Récords** — Dep: T76, T54 · Destacar récords al terminar la sesión y listarlos en progreso. RF: 28; DC-7. **Hecho cuando:** el primer registro de un ejercicio no muestra celebración; una marca nueva sí.
+- [x] **T83 · Racha y calendario de constancia** — Dep: T53, T68 · En "Mi semana" y en progreso. RF: 29; DC-11. **Hecho cuando:** coincide con los casos de los tests de T53 usando datos de ejemplo.
 
 ---
 
