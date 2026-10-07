@@ -18,7 +18,8 @@
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "test:int": "vitest run -c vitest.integration.config.ts",
-    "coach:create": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file=.env.local scripts/create-coach.ts"
+    "coach:create": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file=.env.local scripts/create-coach.ts",
+    "dev:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file=.env.local scripts/seed-dev.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
