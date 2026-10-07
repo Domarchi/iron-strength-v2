@@ -143,11 +143,11 @@ Datos y cierre de fase:
 
 ## M7 — Panel del coach y comentarios (Mar 13)
 
-- [ ] **T84 · Lista de alumnos del coach** — Dep: T52, T77 · Última actividad, cumplimiento de la semana y fecha del último comentario; no incluye al propio coach. RF: 33; DC-22. **Hecho cuando:** un alumno sin entrenamientos muestra "sin actividad" y el coach no aparece en su lista.
-- [ ] **T85 · Detalle del alumno** — Dep: T84, T81, T83 · Historial, récords, racha y medidas, reutilizando los componentes del alumno. RF: 34, 35. **Hecho cuando:** un entrenamiento guardado por el alumno aparece al refrescar la pantalla del coach.
-- [ ] **T86 · Comentarios por entrenamiento** — Dep: T77, T26 · Lista, formulario con 500 caracteres y borrar el propio, para ambos roles. RF: 36; DC-14. **Hecho cuando:** un comentario de 501 caracteres se rechaza y un alumno no puede borrar el del coach (test).
-- [ ] **T87 · "Mi entrenamiento" del coach** — Dep: T68, T65 · Sección separada que reutiliza "Mi semana" y el historial. RF: 49; DC-22. **Hecho cuando:** el coach se asigna un programa y registra una sesión como cualquier alumno.
-- [ ] **T88 · Programas del alumno en su detalle** — Dep: T85, T66 · Ver el activo, los programados y los archivados, con acceso al editor. RF: 17, 18. **Hecho cuando:** asignar un programa nuevo deja el anterior como archivado.
+- [x] **T84 · Lista de alumnos del coach** — Dep: T52, T77 · Última actividad, cumplimiento de la semana y fecha del último comentario; no incluye al propio coach. RF: 33; DC-22. **Hecho cuando:** un alumno sin entrenamientos muestra "sin actividad" y el coach no aparece en su lista.
+- [x] **T85 · Detalle del alumno** — Dep: T84, T81, T83 · Historial, récords, racha y medidas, reutilizando los componentes del alumno. RF: 34, 35. **Hecho cuando:** un entrenamiento guardado por el alumno aparece al refrescar la pantalla del coach.
+- [x] **T86 · Comentarios por entrenamiento** — Dep: T77, T26 · Lista, formulario con 500 caracteres y borrar el propio, para ambos roles. RF: 36; DC-14. **Hecho cuando:** un comentario de 501 caracteres se rechaza y un alumno no puede borrar el del coach (test).
+- [x] **T87 · "Mi entrenamiento" del coach** — Dep: T68, T65 · Sección separada que reutiliza "Mi semana" y el historial. RF: 49; DC-22. **Hecho cuando:** el coach se asigna un programa y registra una sesión como cualquier alumno.
+- [x] **T88 · Programas del alumno en su detalle** — Dep: T85, T66 · Ver el activo, los programados y los archivados, con acceso al editor. RF: 17, 18. **Hecho cuando:** asignar un programa nuevo deja el anterior como archivado.
 
 ---
 

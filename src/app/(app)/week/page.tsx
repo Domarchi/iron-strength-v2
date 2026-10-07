@@ -157,10 +157,32 @@ async function WeekContent() {
   }
 }
 
+// El coach entrena como un alumno más (DC-22): desde aquí llega a su historial, progreso y medidas.
+async function CoachTrainingLinks() {
+  const user = await requireUser();
+  if (user.role !== "coach") return null;
+  return (
+    <nav aria-label="Mi entrenamiento" className="flex flex-wrap gap-2">
+      {[
+        ["/history", "Mi historial"],
+        ["/progress", "Mi progreso"],
+        ["/body", "Mi cuerpo"],
+      ].map(([href, label]) => (
+        <Button key={href} variant="outline" render={<Link href={href} />}>
+          {label}
+        </Button>
+      ))}
+    </nav>
+  );
+}
+
 export default function WeekPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">Mi semana</h1>
+      <Suspense fallback={null}>
+        <CoachTrainingLinks />
+      </Suspense>
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <WeekContent />
       </Suspense>

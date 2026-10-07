@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
 import { isWorkoutEditable } from "@/domain/edit-window";
 import { capitalizeFirst, formatDuration, formatKg } from "@/domain/format";
+import { CommentsSection } from "@/components/comments/comments-section";
+import { listComments } from "@/lib/data/comments";
 import { getWorkoutRecords } from "@/lib/data/progress";
 import { getWorkoutDetail } from "@/lib/data/workouts";
 import { createClient } from "@/lib/supabase/server";
@@ -31,7 +33,10 @@ export default async function WorkoutDetailPage({
   const db = await createClient();
   const workout = await getWorkoutDetail(db, id);
   if (!workout) notFound();
-  const records = await getWorkoutRecords(db, id);
+  const [records, comments] = await Promise.all([
+    getWorkoutRecords(db, id),
+    listComments({ db, workoutId: id, viewerId: user.id, studentId: workout.studentId }),
+  ]);
 
   const own = workout.studentId === user.id;
   const { summary } = workout;
@@ -119,6 +124,8 @@ export default async function WorkoutDetailPage({
           </CardContent>
         </Card>
       ))}
+
+      <CommentsSection workoutId={workout.id} comments={comments} viewerRole={user.role} />
 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" render={<Link href={own ? "/history" : "/coach/students"} />}>

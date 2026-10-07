@@ -24,17 +24,19 @@ export default async function ExerciseProgressPage({
   searchParams,
 }: {
   params: Promise<{ exerciseId: string }>;
-  searchParams: Promise<{ vista?: string }>;
+  searchParams: Promise<{ vista?: string; alumno?: string }>;
 }) {
-  const [{ exerciseId }, { vista }, user] = await Promise.all([
+  const [{ exerciseId }, { vista, alumno }, user] = await Promise.all([
     params,
     searchParams,
     requireUser(),
   ]);
+  // El coach puede ver el progreso de sus alumnos (la RLS decide si el alumno es suyo).
+  const studentId = user.role === "coach" && alumno ? alumno : user.id;
   const db = await createClient();
   const [list, series] = await Promise.all([
-    listExerciseProgress(db, user.id),
-    getExerciseSeries(db, user.id, exerciseId),
+    listExerciseProgress(db, studentId),
+    getExerciseSeries(db, studentId, exerciseId),
   ]);
 
   const summary = list.find((e) => e.exerciseId === exerciseId);
@@ -88,8 +90,16 @@ export default async function ExerciseProgressPage({
           {summary.isBodyweight ? null : (
             <nav aria-label="Qué mostrar" className="flex gap-2">
               {[
-                ["1rm", "1RM estimado", `/progress/${exerciseId}`],
-                ["volume", "Volumen", `/progress/${exerciseId}?vista=volumen`],
+                [
+                  "1rm",
+                  "1RM estimado",
+                  `/progress/${exerciseId}${alumno ? `?alumno=${alumno}` : ""}`,
+                ],
+                [
+                  "volume",
+                  "Volumen",
+                  `/progress/${exerciseId}?vista=volumen${alumno ? `&alumno=${alumno}` : ""}`,
+                ],
               ].map(([key, label, href]) => (
                 <Link
                   key={key}
@@ -149,7 +159,10 @@ export default async function ExerciseProgressPage({
       </details>
 
       <div>
-        <Button variant="outline" render={<Link href="/progress" />}>
+        <Button
+          variant="outline"
+          render={<Link href={alumno ? `/coach/students/${alumno}` : "/progress"} />}
+        >
           Volver
         </Button>
       </div>
