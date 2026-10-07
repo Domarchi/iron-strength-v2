@@ -335,6 +335,9 @@ isOneToOne: false
 "is_coach_of":
 { Args: { "student": string }; Returns: boolean
                            },
+"save_workout":
+{ Args: { "p_workout": Json }; Returns: Json
+                           },
 "validate_invitation":
 { Args: { "p_token_hash": string }; Returns: {
               "email": string,"status": string
