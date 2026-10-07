@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { santiagoDate } from "@/domain/dates";
+import { isWorkoutEditable } from "@/domain/edit-window";
 import { capitalizeFirst, formatDuration, formatKg } from "@/domain/format";
 import { getWorkoutDetail } from "@/lib/data/workouts";
 import { createClient } from "@/lib/supabase/server";
@@ -93,10 +95,15 @@ export default async function WorkoutDetailPage({
         </Card>
       ))}
 
-      <div>
+      <div className="flex flex-wrap gap-2">
         <Button variant="outline" render={<Link href={own ? "/history" : "/coach/students"} />}>
           Volver
         </Button>
+        {own && isWorkoutEditable(workout.performedOn, santiagoDate(new Date())) ? (
+          <Button variant="secondary" render={<Link href={`/history/${workout.id}/edit`} />}>
+            Editar
+          </Button>
+        ) : null}
       </div>
     </div>
   );

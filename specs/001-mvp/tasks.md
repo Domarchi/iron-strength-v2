@@ -127,7 +127,7 @@ Datos y cierre de fase:
 - [x] **T75 · Finalizar con fallo de red** — Dep: T74 · Estado de guardado; si falla, se conserva el borrador, se avisa y se reintenta con botón y al volver `online`. RF: 24. **Hecho cuando:** cortar la red al finalizar no pierde datos y al restablecerla se guarda sin duplicar.
 - [x] **T76 · Pantalla de resultado** — Dep: T75 · Duración, volumen y series; el espacio para récords queda listo (T82). RF: 23. **Hecho cuando:** tras finalizar se muestra el resumen y la sesión aparece como hecha en "Mi semana".
 - [x] **T77 · Historial de entrenamientos** — Dep: T76 · Lista paginada y detalle. RF: 34. **Hecho cuando:** el detalle muestra series reales, calentamiento marcado y duración.
-- [ ] **T78 · Editar y borrar un entrenamiento** — Dep: T77, T24 · Solo hasta 7 días después. RF: 26b. **Hecho cuando:** el botón no aparece al octavo día y el servidor rechaza el intento (test).
+- [x] **T78 · Editar y borrar un entrenamiento** — Dep: T77, T24 · Solo hasta 7 días después. RF: 26b. **Hecho cuando:** el botón no aparece al octavo día y el servidor rechaza el intento (test).
 - [x] **T79 · Test de integración de guardado** — Dep: T75 · Doble envío concurrente, id duplicado de otro alumno y sesión ajena. RF: 23, 44; DC-8. **Hecho cuando:** los tres casos pasan.
 
 ---
