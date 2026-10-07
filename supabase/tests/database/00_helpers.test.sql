@@ -28,6 +28,8 @@ $$;
 -- Coach + alumno A + alumno B, todos activos.
 create or replace function tests.setup_basic() returns void language plpgsql as $$
 begin
+  -- Los tests no dependen del catálogo base de seed.sql: dentro de cada transacción parten vacíos.
+  delete from public.exercises;
   perform tests.create_profile(tests.coach_id(), 'coach', 'Coach');
   perform tests.create_profile(tests.student_a_id(), 'student', 'Alumno A', tests.coach_id());
   perform tests.create_profile(tests.student_b_id(), 'student', 'Alumno B', tests.coach_id());
