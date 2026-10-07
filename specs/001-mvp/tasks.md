@@ -49,8 +49,8 @@ RLS (test antes de política):
 - [x] **T20 · RLS: profiles y exercises** — Dep: T19 · **Hecho cuando:** T19 en verde.
 - [x] **T21 · Test: RLS de programas** — Dep: T20 · Alumno solo lee los suyos y no escribe; coach CRUD de los suyos; alumno B no ve los de A. **Hecho cuando:** existe y falla.
 - [x] **T22 · RLS: programs, program_sessions, session_exercises** — Dep: T21 · **Hecho cuando:** T21 en verde.
-- [ ] **T23 · Test: RLS de entrenamientos** — Dep: T22 · Insert y select propios; coach lee los de sus alumnos; alumno B no lee los de A; edición y borrado solo dentro de 7 días (probar el día 7 y el día 8). **Hecho cuando:** existe y falla.
-- [ ] **T24 · RLS: workouts y workout_sets** — Dep: T23 · **Hecho cuando:** T23 en verde.
+- [x] **T23 · Test: RLS de entrenamientos** — Dep: T22 · Insert y select propios; coach lee los de sus alumnos; alumno B no lee los de A; edición y borrado solo dentro de 7 días (probar el día 7 y el día 8). **Hecho cuando:** existe y falla.
+- [x] **T24 · RLS: workouts y workout_sets** — Dep: T23 · **Hecho cuando:** T23 en verde.
 - [ ] **T25 · Test: RLS de comments, mediciones, fotos, invitaciones y login_attempts** — Dep: T24 · Comentarios solo si se ve el entrenamiento y solo borrar el propio; `login_attempts` e `invitations` inaccesibles para alumnos. **Hecho cuando:** existe y falla.
 - [ ] **T26 · RLS: esas tablas** — Dep: T25 · **Hecho cuando:** T25 en verde.
 - [ ] **T27 · Test: Storage de fotos** — Dep: T26 · Alumno lee y escribe solo en su carpeta; coach lee la de sus alumnos; alumno B no accede; anónimo no accede. **Hecho cuando:** existe y falla.
