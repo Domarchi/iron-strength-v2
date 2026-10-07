@@ -88,7 +88,7 @@ Datos y cierre de fase:
 
 ## M3 — Lógica de dominio pura (Vie 9 – Sáb 10; solo depende de M0)
 
-- [ ] **T49 · weeks: lunes y zona horaria** — Dep: T3 · `mondayOf`, `weekStart`, `todayInSantiago` con `Intl`; tests con las transiciones de horario de Chile y la medianoche. RF: 16, 19; DC-11. **Hecho cuando:** los tests de las fechas de cambio de hora pasan.
+- [x] **T49 · weeks: lunes y zona horaria** — Dep: T3 · `mondayOf`, `weekStart`, `todayInSantiago` con `Intl`; tests con las transiciones de horario de Chile y la medianoche. RF: 16, 19; DC-11. **Hecho cuando:** los tests de las fechas de cambio de hora pasan.
 - [ ] **T50 · weeks: semana del programa** — Dep: T49 · `programWeekNumber`, `programState` (programado, activo, terminado). **Hecho cuando:** los tests cubren primera semana, última semana, fecha anterior y posterior al programa.
 - [ ] **T51 · schemas (zod)** — Dep: T3 · Límites de DC-13, DC-15 y DC-18 (series, reps, pesos, medidas, foto). **Hecho cuando:** cada límite tiene un test de borde válido y uno inválido.
 - [ ] **T52 · completion** — Dep: T50 · Sesión cumplida, entrenamiento extra, estado de cada sesión planificada (hecha, pendiente, no realizada) y cumplimiento semanal. RF: 19, 25, 33; DC-11. **Hecho cuando:** los tests cubren: 0 series, doble entrenamiento de la misma sesión, semana pasada incompleta y semana de descarga.
