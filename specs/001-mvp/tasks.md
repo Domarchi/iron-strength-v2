@@ -104,13 +104,13 @@ Datos y cierre de fase:
 
 - [x] **T58 · Biblioteca de ejercicios (lectura)** — Dep: T41, T34 · `/coach/exercises` con globales y propios, filtro por grupo muscular. RF: 9. **Hecho cuando:** se ve el catálogo del seed y los archivados no aparecen por defecto.
 - [x] **T59 · Crear, editar y archivar ejercicio propio** — Dep: T58, T51 · Formulario con incremento de progresión. RF: 10, 11; DC-12. **Hecho cuando:** un ejercicio propio aparece en la biblioteca, uno global no se puede editar, y uno usado en un historial se archiva en vez de borrarse.
-- [ ] **T60 · Lista de programas y crear plantilla** — Dep: T41 · Nombre y semanas (1–16). RF: 12. **Hecho cuando:** crear una plantilla de 4 semanas la muestra en la lista; 17 semanas muestra error.
-- [ ] **T61 · Editor: semanas y sesiones** — Dep: T60 · Agregar y quitar sesiones (A, B, C…) por semana, hasta 7. RF: 13; DC-13. **Hecho cuando:** una semana de descarga sin sesiones es válida y la octava sesión se rechaza.
-- [ ] **T62 · Editor: agregar ejercicio con prescripción** — Dep: T61, T59 · Buscador de ejercicios y campos series, reps mín/máx, peso objetivo opcional y nota. RF: 14. **Hecho cuando:** los límites de T51 se muestran como errores de formulario y el ejercicio 16 se rechaza.
-- [ ] **T63 · Editor: ordenar y quitar ejercicios** — Dep: T62 · Reordenar con `dnd-kit` y alternativa por botones para accesibilidad. RF: 13. **Hecho cuando:** el orden se conserva al recargar.
-- [ ] **T64 · Copiar semana** — Dep: T62 · Acción que duplica sesiones y prescripciones de una semana a otra con confirmación si la destino tiene contenido. RF: 15. **Hecho cuando:** un test confirma copia profunda (editar la copia no cambia el origen).
-- [ ] **T65 · Asignar programa a un alumno** — Dep: T64, T32 · Selector de alumno (incluido el propio coach) y fecha, usa `assign_program`. RF: 16, 18, 49; DC-10. **Hecho cuando:** asignar con fecha miércoles queda en el lunes siguiente o actual según la regla, y asignar un solapado recorta el vigente (test de integración).
-- [ ] **T66 · Editar programa asignado** — Dep: T65 · Solo semanas posteriores a la semana en curso. RF: 17. **Hecho cuando:** una edición en la semana actual o pasada se rechaza en servidor y en pantalla.
+- [x] **T60 · Lista de programas y crear plantilla** — Dep: T41 · Nombre y semanas (1–16). RF: 12. **Hecho cuando:** crear una plantilla de 4 semanas la muestra en la lista; 17 semanas muestra error.
+- [x] **T61 · Editor: semanas y sesiones** — Dep: T60 · Agregar y quitar sesiones (A, B, C…) por semana, hasta 7. RF: 13; DC-13. **Hecho cuando:** una semana de descarga sin sesiones es válida y la octava sesión se rechaza.
+- [x] **T62 · Editor: agregar ejercicio con prescripción** — Dep: T61, T59 · Buscador de ejercicios y campos series, reps mín/máx, peso objetivo opcional y nota. RF: 14. **Hecho cuando:** los límites de T51 se muestran como errores de formulario y el ejercicio 16 se rechaza.
+- [x] **T63 · Editor: ordenar y quitar ejercicios** — Dep: T62 · Reordenar con `dnd-kit` y alternativa por botones para accesibilidad. RF: 13. **Hecho cuando:** el orden se conserva al recargar.
+- [x] **T64 · Copiar semana** — Dep: T62 · Acción que duplica sesiones y prescripciones de una semana a otra con confirmación si la destino tiene contenido. RF: 15. **Hecho cuando:** un test confirma copia profunda (editar la copia no cambia el origen).
+- [x] **T65 · Asignar programa a un alumno** — Dep: T64, T32 · Selector de alumno (incluido el propio coach) y fecha, usa `assign_program`. RF: 16, 18, 49; DC-10. **Hecho cuando:** asignar con fecha miércoles queda en el lunes siguiente o actual según la regla, y asignar un solapado recorta el vigente (test de integración).
+- [x] **T66 · Editar programa asignado** — Dep: T65 · Solo semanas posteriores a la semana en curso. RF: 17. **Hecho cuando:** una edición en la semana actual o pasada se rechaza en servidor y en pantalla.
 
 ---
 

@@ -317,6 +317,9 @@ isOneToOne: false
 "auth_email_exists":
 { Args: { "p_email": string }; Returns: boolean
                            },
+"copy_program_week":
+{ Args: { "p_from": number,"p_program_id": string,"p_replace"?: boolean,"p_to": number }; Returns: number
+                           },
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },

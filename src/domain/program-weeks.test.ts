@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isWeekEditable,
   pickCurrentProgram,
   programState,
   programWeekNumber,
@@ -80,5 +81,44 @@ describe("pickCurrentProgram (RF-18, DC-10: un solo programa activo)", () => {
 
   it("no depende del orden de la lista", () => {
     expect(pickCurrentProgram([next, program], "2026-10-20")?.program).toEqual(program);
+  });
+});
+
+describe("isWeekEditable (RF-17: solo semanas posteriores a la semana en curso)", () => {
+  it("una plantilla (sin fechas) se edita entera", () => {
+    expect(isWeekEditable(null, 1, "2026-10-20")).toBe(true);
+    expect(isWeekEditable(null, 16, "2026-10-20")).toBe(true);
+  });
+
+  it("un programa programado a futuro se edita entero", () => {
+    expect(isWeekEditable(program, 1, "2026-09-30")).toBe(true);
+    expect(isWeekEditable(program, 3, "2026-09-30")).toBe(true);
+  });
+
+  it("en un programa activo solo se editan las semanas posteriores a la actual", () => {
+    // hoy es miércoles de la semana 2
+    expect(isWeekEditable(program, 1, "2026-10-14")).toBe(false);
+    expect(isWeekEditable(program, 2, "2026-10-14")).toBe(false);
+    expect(isWeekEditable(program, 3, "2026-10-14")).toBe(true);
+  });
+
+  it("el primer día de una semana ya la bloquea; el último día de la anterior todavía no", () => {
+    expect(isWeekEditable(program, 2, "2026-10-11")).toBe(true); // domingo de la semana 1
+    expect(isWeekEditable(program, 2, "2026-10-12")).toBe(false); // lunes de la semana 2
+  });
+
+  it("un programa terminado no se edita", () => {
+    expect(isWeekEditable(program, 1, "2026-10-26")).toBe(false);
+    expect(isWeekEditable(program, 3, "2026-10-26")).toBe(false);
+  });
+
+  it("las semanas que el recorte dejó fuera del rango no se editan", () => {
+    const truncated: ProgramRange = { ...program, endsOn: "2026-10-11" }; // solo la semana 1 corre
+    expect(isWeekEditable(truncated, 2, "2026-10-05")).toBe(false);
+  });
+
+  it("una semana fuera del programa no existe", () => {
+    expect(isWeekEditable(program, 0, "2026-09-30")).toBe(false);
+    expect(isWeekEditable(program, 4, "2026-09-30")).toBe(false);
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   daysBetween,
+  defaultStartDate,
   isMonday,
   mondayOf,
   santiagoDate,
@@ -98,5 +99,17 @@ describe("weekStartOf (semana de un instante en Santiago)", () => {
     expect(weekStartOf(new Date("2026-04-05T03:30:00Z"))).toBe("2026-03-30"); // sáb 4 23:30 (2ª vez)
     expect(weekStartOf(new Date("2026-04-06T03:30:00Z"))).toBe("2026-03-30"); // dom 5 23:30 (UTC-4)
     expect(weekStartOf(new Date("2026-04-06T04:30:00Z"))).toBe("2026-04-06"); // lun 6 00:30 (UTC-4)
+  });
+});
+
+describe("defaultStartDate (inicio sugerido de un programa)", () => {
+  it("si hoy es lunes, empieza hoy", () => {
+    expect(defaultStartDate("2026-10-05")).toBe("2026-10-05");
+  });
+
+  it("cualquier otro día, el lunes siguiente", () => {
+    expect(defaultStartDate("2026-10-06")).toBe("2026-10-12");
+    expect(defaultStartDate("2026-10-07")).toBe("2026-10-12");
+    expect(defaultStartDate("2026-10-11")).toBe("2026-10-12"); // domingo
   });
 });

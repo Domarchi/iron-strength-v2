@@ -45,3 +45,29 @@ export function pickCurrentProgram<T extends ProgramRange>(
   const finished = sorted.at(-1);
   return finished ? { program: finished, state: "finished" } : null;
 }
+
+// ¿Puede el coach editar la semana n? Una plantilla (sin fechas) se edita entera. En un programa
+// ya asignado solo se editan las semanas posteriores a la semana en curso (RF-17); si todavía no
+// empezó se edita entero, y si terminó no se edita. Las semanas que un recorte dejó fuera tampoco.
+export function isWeekEditable(
+  program: ProgramRange | null,
+  week: number,
+  today: DateString,
+): boolean {
+  const weeksCount = program?.weeksCount ?? 16;
+  if (week < 1 || week > weeksCount) return false;
+  if (!program) return true;
+
+  if (programWeekStart(program, week) > program.endsOn) return false;
+
+  switch (programState(program, today)) {
+    case "scheduled":
+      return true;
+    case "finished":
+      return false;
+    case "active": {
+      const current = programWeekNumber(program, today);
+      return current !== null && week > current;
+    }
+  }
+}

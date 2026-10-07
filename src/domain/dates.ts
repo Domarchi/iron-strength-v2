@@ -65,3 +65,8 @@ export function weekDates(monday: DateString): DateString[] {
 export function weekStartOf(instant: Date): DateString {
   return mondayOf(santiagoDate(instant));
 }
+
+// Inicio sugerido de un programa: hoy si es lunes; si no, el lunes siguiente.
+export function defaultStartDate(today: DateString): DateString {
+  return isMonday(today) ? today : addDays(mondayOf(today), 7);
+}
