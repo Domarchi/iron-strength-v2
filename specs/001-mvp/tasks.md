@@ -24,7 +24,7 @@ Leyenda: `Dep` = dependencia · `RF` = requisitos que cubre.
 - [x] **T5 · Supabase CLI local** — Dep: T1 · Instalar `supabase` como dependencia de desarrollo, `supabase init`, `config.toml` con registro público deshabilitado y zona horaria declarada. **Hecho cuando:** `npx supabase start` levanta el stack local y `npx supabase status` lista URL y claves.
 - [x] **T6 · Clientes de Supabase** — Dep: T5 · `.env.example`; `src/lib/supabase/{server,client,admin}.ts` (`@supabase/ssr`), con `admin.ts` marcado `server-only`. **Hecho cuando:** `typecheck` pasa y importar `admin` desde un Client Component falla el build.
 - [x] **T7 · AGENTS.md, CLAUDE.md, README** — Dep: T4 · AGENTS.md con comandos y reglas (plantilla del curso), CLAUDE.md que apunta a `@AGENTS.md`, README con cómo levantar el proyecto. **Hecho cuando:** un tercero podría clonar y seguir el README hasta `npm run dev`.
-- [ ] **T8 · CI básica** — Dep: T4 · GitHub Actions: instalar, lint, tipos, test, build. **Hecho cuando:** el workflow está verde en GitHub.
+- [x] **T8 · CI básica** — Dep: T4 · GitHub Actions: instalar, lint, tipos, test, build. **Hecho cuando:** el workflow está verde en GitHub.
 
 ---
 
