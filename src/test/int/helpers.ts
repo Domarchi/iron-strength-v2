@@ -54,3 +54,42 @@ export async function resetUsers(admin: AdminClient = adminClient()): Promise<vo
 export function randomPassword(): string {
   return `Pw-${randomUUID()}`;
 }
+
+// Crea un usuario de auth (con correo confirmado) y su perfil. Devuelve sus datos de acceso.
+export async function createProfileUser(
+  admin: AdminClient,
+  input: {
+    role: "coach" | "student";
+    name: string;
+    email: string;
+    coachId?: string;
+    isActive?: boolean;
+    password?: string;
+  },
+): Promise<{ id: string; email: string; password: string }> {
+  const password = input.password ?? randomPassword();
+  const { data, error } = await admin.auth.admin.createUser({
+    email: input.email,
+    password,
+    email_confirm: true,
+  });
+  if (error || !data.user) throw error ?? new Error("No se pudo crear el usuario de prueba");
+
+  const id = data.user.id;
+  const { error: profileError } = await admin.from("profiles").insert({
+    id,
+    role: input.role,
+    full_name: input.name,
+    coach_id: input.role === "coach" ? id : (input.coachId ?? id),
+  });
+  if (profileError) throw profileError;
+
+  if (input.isActive === false) {
+    const { error: updateError } = await admin
+      .from("profiles")
+      .update({ is_active: false })
+      .eq("id", id);
+    if (updateError) throw updateError;
+  }
+  return { id, email: input.email, password };
+}
