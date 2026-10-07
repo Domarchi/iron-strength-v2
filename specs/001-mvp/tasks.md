@@ -153,8 +153,8 @@ Datos y cierre de fase:
 
 ## M8 — Medidas y fotos (Mar 13)
 
-- [ ] **T89 · Registrar medidas** — Dep: T41, T51 · Formulario con unidades, al menos un campo, un registro por fecha con confirmación para reemplazar. RF: 38; DC-15. **Hecho cuando:** un valor fuera de rango o un formulario vacío muestran error y reemplazar el mismo día pide confirmación.
-- [ ] **T90 · Lista y gráfico de medidas** — Dep: T89 · Editar, borrar y gráfico de evolución, visible para el coach. RF: 38, 39. **Hecho cuando:** el coach ve las medidas del alumno y el alumno B no.
+- [x] **T89 · Registrar medidas** — Dep: T41, T51 · Formulario con unidades, al menos un campo, un registro por fecha con confirmación para reemplazar. RF: 38; DC-15. **Hecho cuando:** un valor fuera de rango o un formulario vacío muestran error y reemplazar el mismo día pide confirmación.
+- [x] **T90 · Lista y gráfico de medidas** — Dep: T89 · Editar, borrar y gráfico de evolución, visible para el coach. RF: 38, 39. **Hecho cuando:** el coach ve las medidas del alumno y el alumno B no.
 - [ ] **T91 · Procesamiento de imagen en el cliente** — Dep: T51 · Reducir a lado mayor 1280 px, WebP, hasta 1 MB, conversión HEIC con carga diferida; funciones de dimensiones y calidad con tests unitarios. RF: 40, 43; DC-18. **Hecho cuando:** los tests pasan y una imagen de 6 MB queda bajo 1 MB.
 - [ ] **T92 · Subir foto** — Dep: T91, T28 · Selector con cámara o archivo, etiqueta opcional, subida a `{uid}/{uuid}.webp`, fila en la base y borrado del archivo si la fila falla. RF: 40, 43. **Hecho cuando:** un archivo que no es imagen se rechaza con mensaje claro y un fallo en la base no deja archivos huérfanos.
 - [ ] **T93 · Galería y borrar foto** — Dep: T92 · URLs firmadas de 300 s, para alumno y coach; borrar elimina archivo y fila. RF: 41, 42. **Hecho cuando:** la URL deja de funcionar a los 5 minutos y tras borrar el archivo no existe.

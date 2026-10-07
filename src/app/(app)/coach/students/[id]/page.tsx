@@ -135,6 +135,17 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         )}
       </section>
 
+      <section aria-labelledby="body-heading" className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 id="body-heading" className="text-lg font-medium">
+            Medidas y fotos
+          </h2>
+          <Button variant="outline" render={<Link href={`/body?alumno=${id}`} />}>
+            Ver
+          </Button>
+        </div>
+      </section>
+
       <section aria-labelledby="records-heading" className="flex flex-col gap-3">
         <h2 id="records-heading" className="text-lg font-medium">
           Mejores marcas
