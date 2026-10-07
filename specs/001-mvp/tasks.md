@@ -175,9 +175,13 @@ Datos y cierre de fase:
 - [ ] **T103 · Despliegue** — (tú) Dep: T102, T36 · Crear el proyecto en Vercel, cargar variables de entorno, ejecutar `create-coach` contra producción con tus credenciales locales. **Hecho cuando:** la URL de producción abre `/login` y el coach inicia sesión.
 - [ ] **T104 · Prueba en producción y alta de alumnos** — (tú) Dep: T103 · Humo en móvil real e invitaciones a los 2 alumnos. **Hecho cuando:** ambos alumnos tienen cuenta y registraron un entrenamiento.
 - [x] **T105 · Validación RF por RF** — Dep: T104 · `specs/001-mvp/validation.md` con cada RF del MVP, el test que lo cubre y su resultado. **Hecho cuando:** ningún RF del MVP queda sin test, y el veredicto final está escrito.
-- [ ] **T106 · Documentación al día** — Dep: T105 · AGENTS.md y README reflejan el estado real. **Hecho cuando:** un tercero puede levantar el proyecto y desplegarlo solo con ellos.
+- [x] **T106 · Documentación al día** — Dep: T105 · AGENTS.md y README reflejan el estado real. **Hecho cuando:** un tercero puede levantar el proyecto y desplegarlo solo con ellos.
 
 ---
+
+## Estado de avance
+
+103 de 106 tareas hechas. Pendientes, las tres que requieren tus credenciales: **T36**, **T103** y **T104** (guía paso a paso en `docs/despliegue.md`).
 
 ## Fase 2 (fuera de estas tareas)
 

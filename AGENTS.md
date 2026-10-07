@@ -2,56 +2,62 @@
 
 ## Proyecto
 
-App de entrenamiento para un coach y sus alumnos. El coach diseña programas por semanas, los asigna, ve el progreso y comenta; los alumnos ejecutan sesiones, registran series, medidas y fotos. El coach también entrena (es alumno de sí mismo).
+App de entrenamiento para un coach y sus alumnos. El coach diseña programas por semanas, los asigna, ve el progreso y comenta; los alumnos ejecutan sesiones, registran series, medidas y fotos. El coach también entrena (es alumno de sí mismo: `coach_id = id`).
 
-Next.js (App Router) + TypeScript estricto + Supabase (Postgres, Auth, Storage, RLS) + Tailwind + shadcn/ui. La seguridad vive en la base de datos (RLS). La lógica de dominio está en `src/domain/` (TypeScript puro, sin React ni red).
+Next.js 16 (App Router) + TypeScript estricto + Supabase (Postgres, Auth, Storage, RLS) + Tailwind + shadcn/ui (Base UI). La seguridad vive en la base de datos (RLS). La lógica de negocio está en `src/domain/` (TypeScript puro, sin React ni red).
 
-Este proyecto se desarrolla con **Spec-Driven Development**. La fuente de verdad es:
-`docs/constitution.md` → `specs/001-mvp/spec.md` → `plan.md` → `tasks.md`.
-
-> Next.js 16 tiene cambios incompatibles con versiones anteriores (p. ej. `middleware` pasó a `proxy`). Ante la duda, lee la guía en `node_modules/next/dist/docs/` antes de escribir código.
+Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitution.md` → `specs/001-mvp/spec.md` → `plan.md` → `tasks.md`. El estado de verificación está en `specs/001-mvp/validation.md`.
 
 ## Comandos
 
-- Desarrollo: `npm run dev`
-- Todo (formato, lint, tipos, tests, build): `npm run check`
-- Tests unitarios: `npm test` (cobertura del dominio: `npm run test:coverage`)
-- Base local: `npx supabase start` / `npx supabase stop` / `npx supabase db reset`
-- Tests de base de datos (RLS): `npm run db:test`; integración contra Supabase local: `npm run test:int`
-- Tipos de la base: `npm run db:types`
-- Datos de desarrollo (coach y 2 alumnos locales): `npm run dev:seed`. Los tests de integración **borran todos los usuarios locales**: después de correrlos, vuelve a ejecutar `dev:seed`.
+- Desarrollo: `npm run dev` (datos de prueba: `npm run dev:seed`)
+- Todo (formato, lint, tipos, tests unitarios, build): `npm run check`
+- Unitarias: `npm test` · cobertura del dominio: `npm run test:coverage`
+- Integración (Supabase local): `npm run test:int`
+- Base de datos (RLS, funciones, restricciones): `npm run db:test`
+- E2E (Playwright, build de producción): `npm run test:e2e`
+- Base local: `npx supabase start` / `stop` / `db reset` · tipos: `npm run db:types`
 
 Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env.local`.
+
+> Los tests de integración y E2E **borran todos los usuarios locales** (y se niegan a correr si la URL no es local). Después vuelve a ejecutar `npm run dev:seed`.
+
+## Estructura
+
+- `src/domain/`: reglas puras con tests (`dates`, `program-weeks`, `completion`, `streak`, `records`, `progression`, `volume`, `schemas`…).
+- `src/lib/data/`: funciones de datos que reciben el cliente con la sesión del usuario; la RLS decide. Cada una tiene su `*.int.test.ts`.
+- `src/lib/workout/`: borrador local de la sesión en curso y su lógica pura.
+- `src/app/(auth)` público; `src/app/(app)` exige sesión; `(app)/coach` solo coach (`requireCoach`).
+- `supabase/migrations/` esquema y RLS; `supabase/tests/database/` pgTAP (un test antes de cada política).
 
 ## Estilo y convenciones
 
 - Código e identificadores en inglés; textos de UI y documentación en español de Chile (tuteo).
-- TypeScript estricto, sin `any`. Validación con zod en `src/domain/schemas.ts`.
-- Fechas y semanas siempre en America/Santiago (lunes a domingo). Nunca uses la zona del navegador para decidir la semana.
-- Pesos en kilogramos. Componentes de UI con objetivos táctiles de al menos 44 px.
+- TypeScript estricto, sin `any`. Validación con zod (`src/domain/schemas.ts`).
+- Fechas y semanas siempre en America/Santiago, de lunes a domingo. Pesos en kg.
+- Objetivos táctiles de al menos 44 px (el `Button` ya lo cumple); contraste AA verificado con axe en E2E.
+
+## Particularidades de Next 16 y de las librerías (para no tropezar de nuevo)
+
+- `middleware` ahora es `src/proxy.ts`. El proxy solo refresca la sesión y exige login; el rol y el estado activo se validan en los layouts del servidor y en la RLS. No redirijas a quien tiene sesión fuera de `/login` (un usuario desactivado entraría en bucle).
+- `cacheComponents` está desactivado a propósito: todas las pantallas son por usuario.
+- `Button` con `render={<Link/>}` necesita `nativeButton={false}` (el `Button` del proyecto ya lo hace) y Playwright lo ve con `role=button`.
+- En `[auth.email]` de `supabase/config.toml`, `enable_signup = false` desactiva TODO el login por correo; el registro público se cierra con `[auth] enable_signup = false`.
+- PostgREST rellena con `null` las columnas ausentes en una inserción masiva con filas heterogéneas: pon todas las columnas.
+- El linter de React marca `Date.now()` en el render y `setState` dentro de efectos: usa funciones auxiliares y manejadores.
 
 ## Reglas
 
 - Lee `docs/constitution.md` y la spec activa antes de tocar código. Si falta una decisión, detente y pregunta.
 - La spec manda: un cambio de comportamiento empieza por la spec y se actualiza en el mismo commit.
 - Una tarea de `tasks.md` cada vez, **tests primero**. Commit por tarea: `Tn: <título>`.
-- `src/lib/supabase/admin.ts` (service role) solo se usa en el servidor y solo en tres puntos: registro por invitación, enlace de restablecimiento y control de intentos de login.
-- Todo cambio de esquema es una migración en `supabase/migrations/`. No se modifica la base a mano. Toda tabla nueva lleva RLS y su test pgTAP.
-- No agregues dependencias mayores ni servicios de pago sin aprobación.
-- Nunca pegues claves ni contraseñas en el chat ni las registres en logs.
+- `src/lib/supabase/admin.ts` (service role) solo en el servidor y solo en tres puntos: registro por invitación, enlace de restablecimiento y control de intentos de login.
+- Todo cambio de esquema es una migración. Toda tabla nueva lleva RLS y su test pgTAP.
+- No agregues dependencias mayores ni servicios de pago sin aprobación. Nunca pegues claves ni contraseñas en el chat.
 
 ## Al terminar cualquier tarea
 
-- Ejecuta `npm run check` desde un estado limpio y confirma que sale con código 0.
-- Si tocaste la base: `npx supabase db reset` y `npx supabase test db` en verde.
+- `npm run check` en verde desde un estado limpio.
+- Si tocaste la base: `npx supabase db reset`, `npm run db:test` y `npm run test:int`.
+- Si tocaste una pantalla: `npm run test:e2e` (incluye accesibilidad).
 - Marca la tarea en `tasks.md` y haz el commit.
-
-<!-- BEGIN:nextjs-agent-rules -->
-
-## This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
