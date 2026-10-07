@@ -39,8 +39,8 @@ async function WorkoutList({ cursor }: { cursor?: string }) {
               href={`/history/${w.id}`}
               className="flex min-h-16 flex-col justify-center gap-0.5 p-3 hover:bg-muted/50"
             >
-              <span className="font-medium capitalize">
-                {dayFormat.format(new Date(`${w.performedOn}T00:00:00Z`))}
+              <span className="font-medium">
+                {capitalizeFirst(dayFormat.format(new Date(`${w.performedOn}T00:00:00Z`)))}
               </span>
               <span className="text-sm text-muted-foreground">
                 {w.sessionLabel ? `Sesión ${w.sessionLabel} · ` : ""}
