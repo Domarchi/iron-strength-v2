@@ -8,6 +8,7 @@ export const metadata: Metadata = { title: "Entrar · Iron Strength" };
 
 const REASONS: Record<string, string> = {
   sesion: "Tu sesión terminó o tu cuenta está desactivada. Entra de nuevo.",
+  clave: "Contraseña actualizada. Entra con tu contraseña nueva.",
 };
 
 export default async function LoginPage({
