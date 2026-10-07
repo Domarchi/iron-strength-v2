@@ -116,7 +116,7 @@ Datos y cierre de fase:
 
 ## M5 — Mi semana y ejecución de sesión (Dom 11 – Lun 12)
 
-- [ ] **T67 · Carga de datos de la semana** — Dep: T52, T65 · Función de servidor que trae programa vigente, sesiones de la semana y entrenamientos de esa semana. RF: 19. **Hecho cuando:** un test de integración devuelve los estados correctos para un alumno con 2 sesiones, una hecha.
+- [x] **T67 · Carga de datos de la semana** — Dep: T52, T65 · Función de servidor que trae programa vigente, sesiones de la semana y entrenamientos de esa semana. RF: 19. **Hecho cuando:** un test de integración devuelve los estados correctos para un alumno con 2 sesiones, una hecha.
 - [ ] **T68 · Pantalla "Mi semana"** — Dep: T67 · Tarjetas de sesión con estado, y estados vacíos: sin programa, programa terminado, semana de descarga, todo cumplido. RF: 19, 46; DC-22. **Hecho cuando:** cada estado vacío se ve en una prueba manual con datos de ejemplo.
 - [ ] **T69 · Borrador de entrenamiento** — Dep: T3 · `lib/draft.ts` (localStorage por usuario y entrenamiento, versionado, con tests con `jsdom` primero). RF: 22. **Hecho cuando:** los tests cubren guardar, restaurar, borrar y datos corruptos (se ignoran).
 - [ ] **T70 · Ruta de sesión y precarga** — Dep: T68, T69 · `/workout/[plannedSessionId]`: ejercicios, series prescritas, peso precargado según DC-9 y referencia "última vez". RF: 20; DC-9. **Hecho cuando:** sin peso objetivo se precarga el último peso usado en cualquier programa.
