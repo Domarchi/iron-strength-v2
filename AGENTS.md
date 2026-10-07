@@ -17,7 +17,7 @@ Este proyecto se desarrolla con **Spec-Driven Development**. La fuente de verdad
 - Todo (formato, lint, tipos, tests, build): `npm run check`
 - Tests unitarios: `npm test` (cobertura del dominio: `npm run test:coverage`)
 - Base local: `npx supabase start` / `npx supabase stop` / `npx supabase db reset`
-- Tests de base de datos (RLS): `npx supabase test db`
+- Tests de base de datos (RLS): `npm run db:test`; integración contra Supabase local: `npm run test:int`
 - Tipos de la base: `npm run db:types`
 
 Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env.local`.

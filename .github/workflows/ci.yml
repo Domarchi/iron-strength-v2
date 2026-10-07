@@ -43,6 +43,15 @@ jobs:
         run: npx supabase start -x studio,mailpit,imgproxy,edge-runtime,logflare,vector,realtime,postgres-meta,supavisor
       - name: Tests de base de datos (RLS, restricciones, funciones)
         run: npm run db:test
+      - name: Variables de la pila local para los tests de integración
+        run: |
+          eval "$(npx supabase status -o env | sed 's/^/export /')"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_SECRET_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000" >> "$GITHUB_ENV"
+      - name: Tests de integración (server actions y flujos contra Supabase local)
+        run: npm run test:int
       - name: Los tipos generados están al día
         run: |
           npm run db:types

@@ -71,7 +71,7 @@ Datos y cierre de fase:
 
 ## M2 — Autenticación e invitaciones (Vie 9)
 
-- [ ] **T37 · Script de alta del coach** — Dep: T35 · `scripts/create-coach.ts` con service role; pide correo y contraseña por entorno (no por chat). DC-1. **Hecho cuando:** ejecutarlo en local crea el coach y repetirlo falla con mensaje claro (un solo coach).
+- [x] **T37 · Script de alta del coach** — Dep: T35 · `scripts/create-coach.ts` con service role; pide correo y contraseña por entorno (no por chat). DC-1. **Hecho cuando:** ejecutarlo en local crea el coach y repetirlo falla con mensaje claro (un solo coach).
 - [ ] **T38 · Límite de intentos de login** — Dep: T35 · `lib/auth/rate-limit.ts` con tests unitarios primero: 5 fallos en 15 minutos bloquean 15 minutos, éxito reinicia el contador. RF: 6. **Hecho cuando:** los tests pasan, incluida la ventana de tiempo con reloj simulado.
 - [ ] **T39 · Login** — Dep: T38, T6 · Server action y página `/login` con error genérico y aviso de bloqueo. RF: 5, 6. **Hecho cuando:** en local se puede iniciar sesión con el coach, un error muestra el mismo mensaje con correo inexistente o contraseña errónea.
 - [ ] **T40 · Middleware de sesión y roles** — Dep: T39 · Refresco de sesión, redirección por rol, ruta `/coach/**` solo coach, bloqueo de usuarios desactivados. RF: 5, 8, 44. **Hecho cuando:** un test de integración confirma que sin sesión redirige a `/login` y que un alumno no entra a `/coach`.
