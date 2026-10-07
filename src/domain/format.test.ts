@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatKg, formatPrescription, formatReps } from "./format";
+import {
+  capitalizeFirst,
+  formatDuration,
+  formatKg,
+  formatPrescription,
+  formatReps,
+} from "./format";
 
 describe("formatKg (es-CL)", () => {
   it("usa coma decimal y omite decimales innecesarios", () => {
@@ -35,5 +41,24 @@ describe("formatPrescription (RF-14)", () => {
     expect(formatPrescription({ sets: 3, repsMin: 10, repsMax: 15, targetWeightKg: 0 })).toBe(
       "3 × 10–15 · 0 kg",
     );
+  });
+});
+
+describe("formatDuration", () => {
+  it("minutos para menos de una hora y horas con minutos para más", () => {
+    expect(formatDuration(0)).toBe("0 min");
+    expect(formatDuration(45)).toBe("1 min"); // se redondea hacia arriba lo que no llega al minuto
+    expect(formatDuration(52 * 60)).toBe("52 min");
+    expect(formatDuration(3600)).toBe("1 h");
+    expect(formatDuration(3600 + 5 * 60)).toBe("1 h 05 min");
+    expect(formatDuration(2 * 3600 + 30 * 60)).toBe("2 h 30 min");
+  });
+});
+
+describe("capitalizeFirst", () => {
+  it("pone en mayúscula solo la primera letra", () => {
+    expect(capitalizeFirst("miércoles, 7 de octubre")).toBe("Miércoles, 7 de octubre");
+    expect(capitalizeFirst("")).toBe("");
+    expect(capitalizeFirst("ñandú")).toBe("Ñandú");
   });
 });
