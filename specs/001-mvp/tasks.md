@@ -32,19 +32,19 @@ Leyenda: `Dep` = dependencia · `RF` = requisitos que cubre.
 
 Esquema (una migración por tarea):
 
-- [ ] **T9 · Migración: profiles** — Dep: T5 · Extensiones (`btree_gist`), enum de rol, tabla `profiles`, índice único de un solo coach, trigger que impide cambiar `role`, `coach_id` e `is_active` a quien no sea el coach. RF: 4, 8, 44. **Hecho cuando:** `npx supabase db reset` aplica sin errores.
-- [ ] **T10 · Migración: invitations y login_attempts** — Dep: T9 · RF: 1, 2, 6; DC-2. **Hecho cuando:** `db reset` pasa y el token se guarda solo como hash (columna `token_hash`, sin columna de token).
-- [ ] **T11 · Migración: exercises** — Dep: T9 · Incluye `progression_increment_kg`, `archived_at` y unicidad de nombre por coach sin distinguir mayúsculas. RF: 9–11; DC-12. **Hecho cuando:** `db reset` pasa.
-- [ ] **T12 · Migración: programs** — Dep: T11 · `start_date` debe ser lunes, `weeks_count` 1–16, exclusión de solapamiento por alumno. RF: 12, 16, 18; DC-10. **Hecho cuando:** `db reset` pasa y un `insert` de dos programas solapados del mismo alumno falla en una prueba manual.
-- [ ] **T13 · Migración: program_sessions y session_exercises** — Dep: T12 · Límites de DC-13 como `check`. RF: 13, 14. **Hecho cuando:** `db reset` pasa y un `insert` con `reps_min > reps_max` falla.
-- [ ] **T14 · Migración: workouts y workout_sets** — Dep: T13 · `id` sin default (lo da el cliente), `student_id` desnormalizado en series, índices del plan. RF: 20–24; DC-6, 8. **Hecho cuando:** `db reset` pasa y reinsertar el mismo `id` falla por clave duplicada.
-- [ ] **T15 · Migración: comments y body_measurements** — Dep: T14 · RF: 36, 38; DC-14, 15. **Hecho cuando:** `db reset` pasa; una medida con todos los campos nulos falla.
-- [ ] **T16 · Migración: progress_photos** — Dep: T9 · Trigger de máximo 3 por fecha. RF: 40; DC-18. **Hecho cuando:** `db reset` pasa; la cuarta foto de una fecha falla.
-- [ ] **T17 · Funciones auxiliares** — Dep: T9 · `is_coach_of(uuid)` y `current_coach_id()` como `security definer stable` con `search_path` fijo. RF: 44. **Hecho cuando:** `db reset` pasa y las funciones existen en el esquema.
+- [x] **T9 · Migración: profiles** — Dep: T5 · Extensiones (`btree_gist`), enum de rol, tabla `profiles`, índice único de un solo coach, trigger que impide cambiar `role`, `coach_id` e `is_active` a quien no sea el coach. RF: 4, 8, 44. **Hecho cuando:** `npx supabase db reset` aplica sin errores.
+- [x] **T10 · Migración: invitations y login_attempts** — Dep: T9 · RF: 1, 2, 6; DC-2. **Hecho cuando:** `db reset` pasa y el token se guarda solo como hash (columna `token_hash`, sin columna de token).
+- [x] **T11 · Migración: exercises** — Dep: T9 · Incluye `progression_increment_kg`, `archived_at` y unicidad de nombre por coach sin distinguir mayúsculas. RF: 9–11; DC-12. **Hecho cuando:** `db reset` pasa.
+- [x] **T12 · Migración: programs** — Dep: T11 · `start_date` debe ser lunes, `weeks_count` 1–16, exclusión de solapamiento por alumno. RF: 12, 16, 18; DC-10. **Hecho cuando:** `db reset` pasa y un `insert` de dos programas solapados del mismo alumno falla en una prueba manual.
+- [x] **T13 · Migración: program_sessions y session_exercises** — Dep: T12 · Límites de DC-13 como `check`. RF: 13, 14. **Hecho cuando:** `db reset` pasa y un `insert` con `reps_min > reps_max` falla.
+- [x] **T14 · Migración: workouts y workout_sets** — Dep: T13 · `id` sin default (lo da el cliente), `student_id` desnormalizado en series, índices del plan. RF: 20–24; DC-6, 8. **Hecho cuando:** `db reset` pasa y reinsertar el mismo `id` falla por clave duplicada.
+- [x] **T15 · Migración: comments y body_measurements** — Dep: T14 · RF: 36, 38; DC-14, 15. **Hecho cuando:** `db reset` pasa; una medida con todos los campos nulos falla.
+- [x] **T16 · Migración: progress_photos** — Dep: T9 · Trigger de máximo 3 por fecha. RF: 40; DC-18. **Hecho cuando:** `db reset` pasa; la cuarta foto de una fecha falla.
+- [x] **T17 · Funciones auxiliares** — Dep: T9 · `is_coach_of(uuid)` y `current_coach_id()` como `security definer stable` con `search_path` fijo. RF: 44. **Hecho cuando:** `db reset` pasa y las funciones existen en el esquema.
 
 RLS (test antes de política):
 
-- [ ] **T18 · Fixtures pgTAP** — Dep: T17 · Helper SQL para crear y asumir usuarios de prueba: coach, alumno A, alumno B, anónimo. **Hecho cuando:** `npx supabase test db` ejecuta un test de humo con los tres usuarios.
+- [x] **T18 · Fixtures pgTAP** — Dep: T17 · Helper SQL para crear y asumir usuarios de prueba: coach, alumno A, alumno B, anónimo. **Hecho cuando:** `npx supabase test db` ejecuta un test de humo con los tres usuarios.
 - [ ] **T19 · Test: RLS de profiles y exercises** — Dep: T18 · Alumno ve solo lo suyo y los ejercicios globales y de su coach; coach ve a sus alumnos; nadie cambia su propio rol; alumno no escribe ejercicios. **Hecho cuando:** el test existe y falla (rojo).
 - [ ] **T20 · RLS: profiles y exercises** — Dep: T19 · **Hecho cuando:** T19 en verde.
 - [ ] **T21 · Test: RLS de programas** — Dep: T20 · Alumno solo lee los suyos y no escribe; coach CRUD de los suyos; alumno B no ve los de A. **Hecho cuando:** existe y falla.
