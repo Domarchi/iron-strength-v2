@@ -109,6 +109,74 @@ export function toggleDone(draft: WorkoutDraft, exIdx: number, setIdx: number): 
   return mapSet(draft, exIdx, setIdx, (s) => ({ ...s, done: !s.done }));
 }
 
+export type PreviousSet = { weightKg: number; reps: number };
+
+// "Anterior" de la fila (RF-53): la misma serie de la última vez. Una serie de trabajo se compara con
+// la serie de trabajo del mismo número (los calentamientos no desplazan la cuenta) y un calentamiento
+// con el calentamiento del mismo número.
+export function previousForSet(
+  last: { sets: { weightKg: number; reps: number; isWarmup: boolean }[] } | null,
+  exercise: DraftExercise,
+  setIdx: number,
+): PreviousSet | null {
+  const set = exercise.sets[setIdx];
+  if (!last || !set) return null;
+  const sameKind = (s: { isWarmup: boolean }) => s.isWarmup === set.isWarmup;
+  const position = exercise.sets.slice(0, setIdx).filter(sameKind).length;
+  const match = last.sets.filter(sameKind)[position];
+  return match ? { weightKg: match.weightKg, reps: match.reps } : null;
+}
+
+// Tocar "anterior" copia peso y repeticiones a la fila (RF-54).
+export function copyPrevious(
+  draft: WorkoutDraft,
+  exIdx: number,
+  setIdx: number,
+  previous: PreviousSet,
+): WorkoutDraft {
+  return mapSet(draft, exIdx, setIdx, (s) => ({
+    ...s,
+    weight: asText(previous.weightKg),
+    reps: String(previous.reps),
+  }));
+}
+
+// Marcar la serie sin bloquear al alumno (RF-55): completa lo que falte con la referencia
+// (peso de "anterior", repeticiones de "anterior" o el mínimo prescrito; DC-27). Si la serie ya estaba
+// hecha, la desmarca. `completed` solo es verdadero al marcarla (RF-60: desmarcar no inicia descanso).
+export function completeSet(
+  draft: WorkoutDraft,
+  exIdx: number,
+  setIdx: number,
+  previous: PreviousSet | null,
+): { draft: WorkoutDraft; completed: boolean; wasWarmup: boolean } {
+  const exercise = draft.exercises[exIdx];
+  const set = exercise?.sets[setIdx];
+  if (!exercise || !set) return { draft, completed: false, wasWarmup: false };
+
+  if (set.done) {
+    return { draft: toggleDone(draft, exIdx, setIdx), completed: false, wasWarmup: set.isWarmup };
+  }
+
+  const filled = mapSet(draft, exIdx, setIdx, (s) => ({
+    ...s,
+    weight: s.weight.trim() === "" && previous ? asText(previous.weightKg) : s.weight,
+    reps: s.reps.trim() === "" ? String(previous?.reps ?? exercise.prescribed.repsMin) : s.reps,
+  }));
+  const next = toggleDone(filled, exIdx, setIdx);
+  const completed = next.exercises[exIdx].sets[setIdx].done;
+  return { draft: completed ? next : draft, completed, wasWarmup: set.isWarmup };
+}
+
+export function exerciseProgress(exercise: DraftExercise): { done: number; total: number } {
+  return { done: exercise.sets.filter((s) => s.done).length, total: exercise.sets.length };
+}
+
+export function isExerciseComplete(exercise: DraftExercise): boolean {
+  const { done, total } = exerciseProgress(exercise);
+  return total > 0 && done === total;
+}
+
 export function toggleWarmup(draft: WorkoutDraft, exIdx: number, setIdx: number): WorkoutDraft {
   return mapSet(draft, exIdx, setIdx, (s) => ({ ...s, isWarmup: !s.isWarmup }));
 }
