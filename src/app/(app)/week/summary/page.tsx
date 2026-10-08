@@ -17,7 +17,7 @@ function Stat({ label, value, note }: { label: string; value: string; note?: str
     <div className="rounded-lg border p-3">
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="text-lg font-semibold tabular-nums">{value}</dd>
-      {note ? <p className="text-xs text-muted-foreground">{note}</p> : null}
+      {note ? <dd className="text-xs text-muted-foreground">{note}</dd> : null}
     </div>
   );
 }

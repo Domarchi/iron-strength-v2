@@ -16,5 +16,5 @@ Reglas: una tarea a la vez, tests primero, commit `Tn: título`, `npm run check`
 - [x] **T126 · Borrar cuenta: base** — migración `delete_my_account()` con pgTAP (solo alumno, solo el propio, cascada completa). RF: 48; DC-32.
 - [x] **T127 · Borrar cuenta: datos y acción** — borrar fotos de Storage con la sesión del alumno y luego la función; integración (datos y archivos desaparecen, el coach no puede, un fallo de fotos aborta). RF: 48.
 - [x] **T128 · Mi cuenta** — pantalla `/account` con enlace en el encabezado, exportar, cerrar sesión y borrado con confirmación BORRAR. RF: 64, 48.
-- [ ] **T129 · E2E de la Fase 2 y accesibilidad** — logro al terminar, resumen, no leído, CSV y borrar cuenta; axe AA en claro y oscuro en las pantallas nuevas. Criterios 1–5.
+- [x] **T129 · E2E de la Fase 2 y accesibilidad** — logro al terminar, resumen, no leído, CSV y borrar cuenta; axe AA en claro y oscuro en las pantallas nuevas. Criterios 1–5.
 - [ ] **T130 · Cierre** — validación de RF-31, 32, 37, 47, 48, 64–67; revisión de seguridad (nueva función `security definer`, tabla de logros); README y AGENTS; spec 001 y memoria al día.
