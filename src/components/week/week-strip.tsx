@@ -49,7 +49,7 @@ export function WeekStrip({ days }: { days: StripDay[] }) {
               day.isToday &&
                 day.trained &&
                 "ring-2 ring-primary ring-offset-2 ring-offset-background",
-              day.isFuture && !day.trained && "border-dashed opacity-70",
+              day.isFuture && !day.trained && "border-dashed",
             )}
           >
             {day.trained ? <Check className="size-5" /> : day.dayNumber}

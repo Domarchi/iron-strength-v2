@@ -60,6 +60,17 @@ for (const scheme of ["light", "dark"] as const) {
       await expect(page.getByText("Finalizar entrenamiento")).toBeVisible();
       await audit(page, "sesión en curso");
 
+      // Con el descanso activo y con la hoja de confirmación abierta.
+      await page
+        .getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla" })
+        .click();
+      await expect(page.getByRole("timer")).toBeVisible();
+      await audit(page, "sesión con descanso");
+      await page.getByRole("button", { name: "Terminar entrenamiento" }).click();
+      await expect(page.getByRole("alertdialog")).toBeVisible();
+      await audit(page, "confirmar fin de sesión");
+      await page.getByRole("button", { name: "Seguir entrenando" }).click();
+
       for (const [path, ready] of [
         ["/history", "Historial"],
         ["/progress", "Progreso"],

@@ -191,7 +191,7 @@ export function ExerciseCard({
                     type="button"
                     aria-label={`Copiar lo anterior en la serie ${n} de ${exercise.name}: ${formatKg(previous.weightKg)} por ${previous.reps}`}
                     onClick={() => onCopyPrevious(setIdx)}
-                    className="h-12 truncate rounded-lg text-sm text-muted-foreground tabular-nums outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="h-12 truncate rounded-lg text-sm text-foreground/75 tabular-nums outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
                     {`${String(previous.weightKg).replace(".", ",")}×${previous.reps}`}
                   </button>
