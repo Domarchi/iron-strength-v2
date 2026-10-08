@@ -228,7 +228,10 @@ export function WorkoutRunner({ userId, context }: { userId: string; context: Wo
         const result = await saveWorkoutAction(built.payload);
         if (result.ok) {
           clearDraft(storage(), d.userId, d.plannedSessionId);
-          router.push(`/history/${d.workoutId}?nuevo=1`);
+          const logros = result.achievements?.length
+            ? `&logros=${result.achievements.join(",")}`
+            : "";
+          router.push(`/history/${d.workoutId}?nuevo=1${logros}`);
           return;
         }
         setError(FAILURE_MESSAGES[result.reason]);

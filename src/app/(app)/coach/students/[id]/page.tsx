@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AchievementsList } from "@/components/achievements/achievements-list";
 import { ConstancyStrip } from "@/components/streak/constancy-strip";
 import { santiagoDate } from "@/domain/dates";
 import { formatDuration, formatKg } from "@/domain/format";
 import { programState } from "@/domain/program-weeks";
+import { getAchievementsOverview } from "@/lib/data/achievements";
 import { listAssignedPrograms } from "@/lib/data/programs";
 import { listExerciseProgress } from "@/lib/data/progress";
 import { getStreakSummary } from "@/lib/data/streak";
@@ -47,6 +49,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
     listAssignedPrograms(db, id),
   ]);
 
+  const achievements = await getAchievementsOverview(db, id, streak.longest);
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
@@ -70,6 +74,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <Download aria-hidden /> Exportar historial (CSV)
         </Button>
       </div>
+
+      <AchievementsList {...achievements} />
 
       <section aria-labelledby="programs-heading" className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">

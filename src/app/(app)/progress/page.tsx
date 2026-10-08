@@ -3,8 +3,10 @@ import { Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatKg } from "@/domain/format";
 import { requireUser } from "@/lib/auth/session";
+import { AchievementsList } from "@/components/achievements/achievements-list";
 import { ConstancyStrip } from "@/components/streak/constancy-strip";
 import { santiagoDate } from "@/domain/dates";
+import { getAchievementsOverview } from "@/lib/data/achievements";
 import { listExerciseProgress } from "@/lib/data/progress";
 import { getStreakSummary } from "@/lib/data/streak";
 import { createClient } from "@/lib/supabase/server";
@@ -25,17 +27,22 @@ async function ExerciseList() {
     getStreakSummary(db, user.id, santiagoDate(new Date())),
   ]);
 
+  const achievements = await getAchievementsOverview(db, user.id, streak.longest);
+
   if (list.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col gap-1 pt-6">
-          <p className="font-medium">Aquí verás tu progreso.</p>
-          <p className="text-sm text-muted-foreground">
-            Cuando termines tu primer entrenamiento aparecerán tus ejercicios, tus mejores marcas y
-            su evolución.
-          </p>
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardContent className="flex flex-col gap-1 pt-6">
+            <p className="font-medium">Aquí verás tu progreso.</p>
+            <p className="text-sm text-muted-foreground">
+              Cuando termines tu primer entrenamiento aparecerán tus ejercicios, tus mejores marcas
+              y su evolución.
+            </p>
+          </CardContent>
+        </Card>
+        <AchievementsList {...achievements} />
+      </>
     );
   }
 
@@ -63,6 +70,7 @@ async function ExerciseList() {
           </li>
         ))}
       </ul>
+      <AchievementsList {...achievements} />
     </>
   );
 }

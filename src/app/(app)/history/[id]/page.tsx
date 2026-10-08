@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
 import { isWorkoutEditable } from "@/domain/edit-window";
 import { capitalizeFirst, formatDuration, formatKg } from "@/domain/format";
+import { NewAchievements } from "@/components/achievements/new-achievements";
 import { CommentsSection } from "@/components/comments/comments-section";
+import { isAchievementKind } from "@/domain/achievements";
+import { listAchievements } from "@/lib/data/achievements";
 import { listComments } from "@/lib/data/comments";
 import { getWorkoutRecords } from "@/lib/data/progress";
 import { getWorkoutDetail } from "@/lib/data/workouts";
@@ -27,9 +30,13 @@ export default async function WorkoutDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ nuevo?: string }>;
+  searchParams: Promise<{ nuevo?: string; logros?: string }>;
 }) {
-  const [{ id }, { nuevo }, user] = await Promise.all([params, searchParams, requireUser()]);
+  const [{ id }, { nuevo, logros }, user] = await Promise.all([
+    params,
+    searchParams,
+    requireUser(),
+  ]);
   const db = await createClient();
   const workout = await getWorkoutDetail(db, id);
   if (!workout) notFound();
@@ -39,6 +46,18 @@ export default async function WorkoutDetailPage({
   ]);
 
   const own = workout.studentId === user.id;
+
+  // Solo se anuncian logros que el alumno realmente tiene (la dirección no es de fiar).
+  const announced =
+    nuevo && own && logros
+      ? await listAchievements(db, user.id).then((earned) => {
+          const have = new Set<string>(earned.map((a) => a.kind));
+          return logros
+            .split(",")
+            .filter(isAchievementKind)
+            .filter((kind) => have.has(kind));
+        })
+      : [];
   const { summary } = workout;
 
   return (
@@ -56,6 +75,8 @@ export default async function WorkoutDetailPage({
           </CardContent>
         </Card>
       ) : null}
+
+      {announced.length > 0 ? <NewAchievements kinds={announced} /> : null}
 
       <header>
         <h1 className="text-xl font-semibold">

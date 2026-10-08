@@ -23,7 +23,27 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "body_measurements": {
+            "achievements": {
+                  Row: {
+                    "earned_at": string,"id": string,"kind": string,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "earned_at"?: string,"id"?: string,"kind": string,"student_id": string
+                  }
+                  Update: {
+                    "earned_at"?: string,"id"?: string,"kind"?: string,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "achievements_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"body_measurements": {
                   Row: {
                     "arm_cm": number | null,"chest_cm": number | null,"created_at": string,"id": string,"measured_on": string,"student_id": string,"waist_cm": number | null,"weight_kg": number | null
                   }
