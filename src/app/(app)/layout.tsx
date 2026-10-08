@@ -1,4 +1,5 @@
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { CircleUser, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppChrome } from "@/components/layout/app-chrome";
 import { AppNav } from "@/components/layout/app-nav";
@@ -20,6 +21,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {user.fullName}
               </span>
+              <Button variant="ghost" aria-label="Mi cuenta" render={<Link href="/account" />}>
+                <CircleUser aria-hidden />
+              </Button>
               <form action={logoutAction}>
                 <Button type="submit" variant="ghost" aria-label="Cerrar sesión">
                   <LogOut aria-hidden />

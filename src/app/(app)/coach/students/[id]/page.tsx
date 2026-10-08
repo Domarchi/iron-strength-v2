@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -63,6 +64,12 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       </header>
 
       <ConstancyStrip {...streak} />
+
+      <div>
+        <Button variant="outline" render={<a href={`/export/history?alumno=${id}`} download />}>
+          <Download aria-hidden /> Exportar historial (CSV)
+        </Button>
+      </div>
 
       <section aria-labelledby="programs-heading" className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">

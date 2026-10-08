@@ -5,7 +5,7 @@ Reglas: una tarea a la vez, tests primero, commit `Tn: título`, `npm run check`
 ## M11 — Fase 2
 
 - [x] **T117 · CSV: dominio** — `src/domain/csv.ts` (escapar campos, neutralizar fórmulas, BOM, `;`, coma decimal, CRLF) y construcción de filas desde el historial. Tests primero. RF: 47, 67.
-- [ ] **T118 · CSV: datos, ruta y botones** — `src/lib/data/export.ts` + `GET /export/history` (alumno propio o alumno del coach; si no, 404), botones en "Mi cuenta" y en la ficha del alumno. Test de integración con acceso de coach, propio y ajeno. RF: 47, 64.
+- [x] **T118 · CSV: datos, ruta y botones** — `src/lib/data/export.ts` + `GET /export/history` (alumno propio o alumno del coach; si no, 404), botones en "Mi cuenta" y en la ficha del alumno. Test de integración con acceso de coach, propio y ajeno. RF: 47, 64.
 - [ ] **T119 · Logros: dominio** — `src/domain/achievements.ts`: catálogo, evaluación pura a partir de estadísticas, condición legible de cada logro. Tests primero. RF: 31.
 - [ ] **T120 · Logros: base y datos** — migración `achievements` con RLS y pgTAP; `src/lib/data/achievements.ts` (`syncAchievements`, `listAchievements`) con integración; se llama al guardar un entrenamiento. RF: 31, 66; DC-28.
 - [ ] **T121 · Logros: pantallas** — aviso al guardar (RF-65), lista en Progreso y en la ficha del alumno para el coach (RF-66). RF: 65, 66.

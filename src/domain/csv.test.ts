@@ -55,7 +55,10 @@ describe("buildHistoryCsv (RF-47)", () => {
   });
 
   it("una fila por serie, con coma decimal y fin de línea CRLF", () => {
-    const csv = buildHistoryCsv([row(), row({ setNumber: 2, isWarmup: true, weightKg: 40, reps: 12 })]);
+    const csv = buildHistoryCsv([
+      row(),
+      row({ setNumber: 2, isWarmup: true, weightKg: 40, reps: 12 }),
+    ]);
     expect(csv.slice(BOM.length).split("\r\n")).toEqual([
       "Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps",
       "2026-10-05;A;Sentadilla;1;Trabajo;62,5;10",
