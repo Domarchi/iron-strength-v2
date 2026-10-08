@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { CheckCircle2, Circle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
-import { ConstancyStrip } from "@/components/streak/constancy-strip";
+import { StreakChip } from "@/components/streak/streak-chip";
+import { WeekStrip } from "@/components/week/week-strip";
+import { buildWeekStrip, nextPendingSession } from "@/domain/week-strip";
 import { getStreakSummary } from "@/lib/data/streak";
 import { getWeekView, type WeekSession } from "@/lib/data/week";
 import { requireUser } from "@/lib/auth/session";
@@ -15,45 +17,80 @@ export const metadata = { title: "Mi semana · Iron Strength" };
 const day = new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", timeZone: "UTC" });
 const fmt = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
 
-function SessionCard({ session }: { session: WeekSession }) {
+// Tarjeta destacada con la próxima sesión (RF-62): qué toca y un botón grande para empezar.
+function NextSessionCard({
+  session,
+  trainedToday,
+}: {
+  session: WeekSession;
+  trainedToday: boolean;
+}) {
+  const shown = session.exerciseNames.slice(0, 5);
+  const more = session.exerciseNames.length - shown.length;
+  return (
+    <section
+      aria-label="Próxima sesión"
+      className="flex flex-col gap-3 rounded-2xl border border-primary/50 bg-card p-4"
+    >
+      <div>
+        <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+          {trainedToday ? "Siguiente sesión" : "Hoy toca"}
+        </p>
+        <h2 className="text-2xl font-bold">Sesión {session.label}</h2>
+        <p className="text-sm text-muted-foreground">
+          {session.exerciseCount} {session.exerciseCount === 1 ? "ejercicio" : "ejercicios"}
+        </p>
+      </div>
+      <ul className="flex flex-col gap-1 text-sm">
+        {shown.map((name, i) => (
+          <li key={`${name}-${i}`} className="flex gap-2">
+            <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
+            <span>{name}</span>
+          </li>
+        ))}
+        {more > 0 ? <li className="text-muted-foreground">y {more} más</li> : null}
+      </ul>
+      <Button size="lg" className="w-full" render={<Link href={`/workout/${session.sessionId}`} />}>
+        Empezar
+      </Button>
+    </section>
+  );
+}
+
+// Fila compacta para las demás sesiones de la semana.
+function SessionRow({ session }: { session: WeekSession }) {
   const done = session.status === "done";
   return (
-    <li>
-      <Card className={done ? "border-primary/40" : undefined}>
-        <CardHeader className="flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            {done ? (
-              <CheckCircle2 className="size-6 text-primary" aria-hidden />
-            ) : (
-              <Circle className="size-6 text-muted-foreground" aria-hidden />
-            )}
-            <div>
-              <CardTitle className="text-base">Sesión {session.label}</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {session.exerciseCount} {session.exerciseCount === 1 ? "ejercicio" : "ejercicios"} ·{" "}
-                {done ? "Hecha" : "Pendiente"}
-              </p>
-            </div>
-          </div>
-          {done ? (
-            <Button variant="outline" render={<Link href={`/history/${session.workoutId}`} />}>
-              Ver
-            </Button>
-          ) : (
-            <Button render={<Link href={`/workout/${session.sessionId}`} />}>Empezar</Button>
-          )}
-        </CardHeader>
-        {done ? (
-          <CardContent>
-            <Link
-              href={`/workout/${session.sessionId}`}
-              className="text-sm text-primary underline-offset-4 hover:underline"
-            >
-              Repetir esta sesión (cuenta como extra)
-            </Link>
-          </CardContent>
-        ) : null}
-      </Card>
+    <li className="flex min-h-14 items-center gap-3 rounded-xl border px-3 py-2">
+      {done ? (
+        <CheckCircle2 className="size-6 shrink-0 text-primary" aria-hidden />
+      ) : (
+        <Circle className="size-6 shrink-0 text-muted-foreground" aria-hidden />
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">Sesión {session.label}</p>
+        <p className="text-xs text-muted-foreground">
+          {session.exerciseCount} {session.exerciseCount === 1 ? "ejercicio" : "ejercicios"} ·{" "}
+          {done ? "Hecha" : "Pendiente"}
+        </p>
+      </div>
+      {done ? (
+        <div className="flex flex-col items-end">
+          <Button variant="outline" render={<Link href={`/history/${session.workoutId}`} />}>
+            Ver
+          </Button>
+          <Link
+            href={`/workout/${session.sessionId}`}
+            className="py-1 text-xs text-primary underline-offset-4 hover:underline"
+          >
+            Repetir (extra)
+          </Link>
+        </div>
+      ) : (
+        <Button variant="outline" render={<Link href={`/workout/${session.sessionId}`} />}>
+          Empezar
+        </Button>
+      )}
     </li>
   );
 }
@@ -107,18 +144,19 @@ async function WeekContent() {
         </Card>
       );
 
-    case "active":
+    case "active": {
+      const strip = buildWeekStrip(view.weekStart, today, view.trainedDates);
+      const next = nextPendingSession(view.sessions);
+      const others = view.sessions.filter((s) => s !== next);
+      const trainedToday = view.trainedDates.includes(today);
       return (
         <div className="flex flex-col gap-4">
-          {showStreak ? <ConstancyStrip {...streak} /> : null}
-          <div>
-            <p className="text-sm text-muted-foreground">
-              {view.program.name} · semana {view.weekNumber} de {view.program.weeksCount}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Del {fmt(view.weekStart)} al {fmt(view.weekEnd)}
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            {view.program.name} · semana {view.weekNumber} de {view.program.weeksCount} · del{" "}
+            {fmt(view.weekStart)} al {fmt(view.weekEnd)}
+          </p>
+
+          <WeekStrip days={strip} />
 
           {view.compliance.deload ? (
             <Card>
@@ -139,11 +177,14 @@ async function WeekContent() {
                   ? "¡Completaste todas las sesiones de la semana!"
                   : `Llevas ${view.compliance.done} de ${view.compliance.planned} sesiones`}
               </p>
-              <ul className="flex flex-col gap-3">
-                {view.sessions.map((session) => (
-                  <SessionCard key={session.sessionId} session={session} />
-                ))}
-              </ul>
+              {next ? <NextSessionCard session={next} trainedToday={trainedToday} /> : null}
+              {others.length > 0 ? (
+                <ul aria-label="Sesiones de la semana" className="flex flex-col gap-2">
+                  {others.map((session) => (
+                    <SessionRow key={session.sessionId} session={session} />
+                  ))}
+                </ul>
+              ) : null}
               {view.extraCount > 0 ? (
                 <p className="text-sm text-muted-foreground">
                   {view.extraCount} {view.extraCount === 1 ? "sesión extra" : "sesiones extra"} esta
@@ -152,8 +193,10 @@ async function WeekContent() {
               ) : null}
             </>
           )}
+          {showStreak ? <StreakChip current={streak.current} longest={streak.longest} /> : null}
         </div>
       );
+    }
   }
 }
 
