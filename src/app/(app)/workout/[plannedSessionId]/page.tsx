@@ -23,7 +23,7 @@ export default async function WorkoutPage({
 
   if (!result.ok) {
     return (
-      <Card>
+      <Card className="mt-6">
         <CardContent className="flex flex-col gap-3 pt-6">
           <p className="font-medium">Esta sesión no está disponible hoy.</p>
           <p className="text-sm text-muted-foreground">

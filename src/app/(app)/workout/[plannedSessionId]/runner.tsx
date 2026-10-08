@@ -2,12 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Flame, Plus, SkipForward, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { formatKg, formatPrescription } from "@/domain/format";
-import type { WorkoutContext, ContextExercise } from "@/lib/data/workout-context";
+import { startRest, type Rest } from "@/domain/rest-timer";
+import type { WorkoutContext } from "@/lib/data/workout-context";
 import {
   clearDraft,
   loadDraft,
@@ -19,18 +19,20 @@ import {
 import {
   addSet,
   buildPayload,
-  canComplete,
+  completeSet,
+  copyPrevious,
   createDraft,
   finishDraft,
+  previousForSet,
   removeSet,
   setSkipped,
   summarize,
-  toggleDone,
   toggleWarmup,
   updateSetField,
 } from "@/lib/workout/runner-state";
-import { cn } from "@/lib/utils";
 import { saveWorkoutAction } from "./actions";
+import { ExerciseCard } from "./exercise-card";
+import { RestBar } from "./rest-bar";
 
 function storage(): DraftStorage | undefined {
   try {
@@ -79,13 +81,6 @@ const FAILURE_MESSAGES = {
 const NETWORK_MESSAGE =
   "No hay conexión con el servidor. Tu entrenamiento está a salvo en este dispositivo; se guardará solo cuando vuelva la conexión.";
 
-const shortDay = new Intl.DateTimeFormat("es-CL", {
-  weekday: "short",
-  day: "numeric",
-  month: "short",
-  timeZone: "UTC",
-});
-
 function Elapsed({ startedAt }: { startedAt: string }) {
   const [seconds, setSeconds] = useState<number | null>(null);
   useEffect(() => {
@@ -103,27 +98,66 @@ function Elapsed({ startedAt }: { startedAt: string }) {
   return <span>{h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`}</span>;
 }
 
-function LastTime({ exercise }: { exercise: ContextExercise }) {
-  if (!exercise.last)
-    return <p className="text-xs text-muted-foreground">Primera vez con este ejercicio.</p>;
-  const working = exercise.last.sets.filter((s) => !s.isWarmup);
-  const date = shortDay.format(new Date(`${exercise.last.date}T00:00:00Z`));
-  return (
-    <p className="text-xs text-muted-foreground">
-      Última vez ({date}): {working.map((s) => `${formatKg(s.weightKg)} × ${s.reps}`).join(" · ")}
-    </p>
-  );
+const HINT_TEXT = "Revisa el peso y las repeticiones para marcar la serie.";
+
+// Pantalla siempre encendida mientras se entrena (RF-58). Si el dispositivo no lo soporta, no pasa nada.
+function useWakeLock(active: boolean) {
+  useEffect(() => {
+    if (!active || !("wakeLock" in navigator)) return;
+    let lock: WakeLockSentinel | null = null;
+    let cancelled = false;
+    const acquire = async () => {
+      try {
+        const next = await navigator.wakeLock.request("screen");
+        if (cancelled) void next.release();
+        else lock = next;
+      } catch {
+        // sin permiso o sin soporte: se entrena igual
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void acquire();
+    };
+    void acquire();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      void lock?.release();
+    };
+  }, [active]);
 }
 
-function Suggestion({ exercise }: { exercise: ContextExercise }) {
-  const s = exercise.suggestion;
-  if (!s) return null;
+// Hoja inferior para confirmar (RF-59): siempre a la vista aunque la lista sea larga.
+function ConfirmSheet({
+  label,
+  children,
+  onClose,
+}: {
+  label: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
-    <p className="rounded-md border-l-4 border-primary bg-muted px-3 py-2 text-xs text-foreground">
-      {s.kind === "increase"
-        ? `Sugerencia: sube a ${formatKg(s.weightKg)} y apunta a ${s.reps} repeticiones.`
-        : `Sugerencia: mantén ${formatKg(s.weightKg)} y apunta a ${s.reps} repeticiones.`}
-    </p>
+    <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}>
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-label={label}
+        onClick={(e) => e.stopPropagation()}
+        className="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-t-2xl border bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-card-foreground"
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -133,20 +167,51 @@ export function WorkoutRunner({ userId, context }: { userId: string; context: Wo
   const [confirming, setConfirming] = useState<"finish" | "discard" | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rest, setRest] = useState<Rest | null>(null);
+  const [hint, setHint] = useState<{ setId: string; text: string } | null>(null);
 
   const draftRef = useRef(draft);
   const savingRef = useRef(false);
 
+  useWakeLock(draft.status === "in_progress");
+
   // Cada cambio se guarda en el dispositivo (RF-22).
   useEffect(() => {
-    draftRef.current = draft;
     saveDraft(storage(), draft);
   }, [draft]);
 
-  const update = (fn: (d: WorkoutDraft) => WorkoutDraft) => {
-    const stamp = new Date().toISOString();
-    setDraft((d) => ({ ...fn(d), updatedAt: stamp }));
+  // El borrador vigente se actualiza al instante (sin esperar al render) para que dos toques
+  // seguidos nunca trabajen sobre un estado viejo.
+  const commit = (next: WorkoutDraft) => {
+    const stamped = { ...next, updatedAt: new Date().toISOString() };
+    draftRef.current = stamped;
+    setDraft(stamped);
   };
+  const update = (fn: (d: WorkoutDraft) => WorkoutDraft) => {
+    setHint(null);
+    commit(fn(draftRef.current));
+  };
+
+  const previousOf = (exIdx: number, setIdx: number) => {
+    const exercise = draftRef.current.exercises[exIdx];
+    const info = context.exercises.find((c) => c.sessionExerciseId === exercise?.sessionExerciseId);
+    return exercise ? previousForSet(info?.last ?? null, exercise, setIdx) : null;
+  };
+
+  // Marcar una serie la completa con lo que falte y arranca el descanso (RF-55, RF-27, RF-60).
+  function toggleSet(exIdx: number, setIdx: number) {
+    const current = draftRef.current;
+    const result = completeSet(current, exIdx, setIdx, previousOf(exIdx, setIdx));
+    const wasDone = current.exercises[exIdx]?.sets[setIdx]?.done ?? false;
+    if (!result.completed && !wasDone) {
+      const set = current.exercises[exIdx]?.sets[setIdx];
+      if (set) setHint({ setId: set.id, text: HINT_TEXT });
+      return;
+    }
+    setHint(null);
+    commit(result.draft);
+    if (result.completed) setRest(startRest(new Date().getTime(), result.wasWarmup));
+  }
 
   const submit = useCallback(
     async (d: WorkoutDraft) => {
@@ -200,8 +265,9 @@ export function WorkoutRunner({ userId, context }: { userId: string; context: Wo
 
   async function confirmFinish() {
     setConfirming(null);
-    const finished = finishDraft(draft, new Date());
-    setDraft(finished);
+    setRest(null);
+    const finished = finishDraft(draftRef.current, new Date());
+    commit(finished);
     await submit(finished);
   }
 
@@ -213,58 +279,82 @@ export function WorkoutRunner({ userId, context }: { userId: string; context: Wo
   // Sesión terminada que no llegó al servidor ------------------------------------------------------
   if (draft.status === "pending_save") {
     return (
-      <Card role="region" aria-label="Entrenamiento pendiente de guardar">
-        <CardHeader>
-          <CardTitle className="text-lg">Tu entrenamiento terminó, pero no se guardó</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">
-            Está a salvo en este dispositivo. Reintenta cuando tengas conexión: no se duplicará.
-          </p>
-          {error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
+      <div className="py-6">
+        <Card role="region" aria-label="Entrenamiento pendiente de guardar">
+          <CardHeader>
+            <CardTitle className="text-lg">Tu entrenamiento terminó, pero no se guardó</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <p className="text-sm text-muted-foreground">
+              Está a salvo en este dispositivo. Reintenta cuando tengas conexión: no se duplicará.
             </p>
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => submit(draft)} disabled={saving}>
-              {saving ? "Guardando…" : "Reintentar"}
-            </Button>
-            {confirming === "discard" ? (
-              <>
-                <Button variant="destructive" onClick={confirmDiscard}>
-                  Sí, descartar
-                </Button>
-                <Button variant="ghost" onClick={() => setConfirming(null)}>
-                  Cancelar
-                </Button>
-              </>
-            ) : (
-              <Button variant="outline" onClick={() => setConfirming("discard")}>
-                Descartar
+            {error ? (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => submit(draft)} disabled={saving}>
+                {saving ? "Guardando…" : "Reintentar"}
               </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              {confirming === "discard" ? (
+                <>
+                  <Button variant="destructive" onClick={confirmDiscard}>
+                    Sí, descartar
+                  </Button>
+                  <Button variant="ghost" onClick={() => setConfirming(null)}>
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={() => setConfirming("discard")}>
+                  Descartar
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
-  // Entrenando -----------------------------------------------------------------------------------------
+  // Entrenando (modo enfoque, RF-52) ---------------------------------------------------------------
+  const percent = summary.totalSets === 0 ? 0 : (summary.doneSets / summary.totalSets) * 100;
+
   return (
-    <div className="flex flex-col gap-4">
-      <header className="sticky top-0 z-30 -mx-4 flex items-center justify-between gap-3 border-b bg-background px-4 py-2">
-        <div>
-          <h1 className="text-base font-semibold">
-            Sesión {context.session.label} · Semana {context.session.weekNumber}
-          </h1>
-          <p className="text-xs text-muted-foreground">{context.session.programName}</p>
+    <div className={rest ? "flex flex-col gap-3 pb-28" : "flex flex-col gap-3 pb-6"}>
+      <header className="sticky top-0 z-30 -mx-4 border-b bg-background pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center gap-1 px-2 py-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Volver a Mi semana (tu avance queda guardado)"
+            render={<Link href="/week" />}
+          >
+            <ChevronLeft aria-hidden />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-base leading-tight font-semibold">
+              Sesión {context.session.label} · Semana {context.session.weekNumber}
+            </h1>
+            <p className="truncate text-xs text-muted-foreground">
+              <Elapsed startedAt={draft.startedAt} /> · {summary.doneSets}/{summary.totalSets}{" "}
+              series
+            </p>
+          </div>
+          <Button onClick={requestFinish} disabled={saving} aria-label="Terminar entrenamiento">
+            Terminar
+          </Button>
         </div>
-        <div className="text-right text-sm tabular-nums">
-          <Elapsed startedAt={draft.startedAt} />
-          <p className="text-xs text-muted-foreground">
-            {summary.doneSets}/{summary.totalSets} series
-          </p>
+        <div
+          role="progressbar"
+          aria-label="Avance de la sesión"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(percent)}
+          className="h-1 bg-muted"
+        >
+          <div className="h-full bg-primary transition-[width]" style={{ width: `${percent}%` }} />
         </div>
       </header>
 
@@ -275,128 +365,41 @@ export function WorkoutRunner({ userId, context }: { userId: string; context: Wo
 
         if (exercise.skipped) {
           return (
-            <Card key={exercise.sessionExerciseId}>
-              <CardContent className="flex items-center justify-between gap-3 pt-6">
-                <div>
-                  <p className="font-medium line-through">{exercise.name}</p>
-                  <p className="text-xs text-muted-foreground">Saltado: no se guardará.</p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => update((d) => setSkipped(d, exIdx, false))}
-                >
-                  Retomar
-                </Button>
-              </CardContent>
-            </Card>
+            <section
+              key={exercise.sessionExerciseId}
+              aria-label={exercise.name}
+              className="flex items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium line-through">{exercise.name}</p>
+                <p className="text-xs text-muted-foreground">Saltado: no se guardará.</p>
+              </div>
+              <Button variant="outline" onClick={() => update((d) => setSkipped(d, exIdx, false))}>
+                Retomar
+              </Button>
+            </section>
           );
         }
 
         return (
-          <Card key={exercise.sessionExerciseId}>
-            <CardHeader className="gap-1">
-              <CardTitle className="text-base">{exercise.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {formatPrescription(exercise.prescribed)}
-              </p>
-              {info?.note ? <p className="text-sm">{info.note}</p> : null}
-              {info ? <LastTime exercise={info} /> : null}
-              {info ? <Suggestion exercise={info} /> : null}
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <div className="grid grid-cols-[1.75rem_1fr_1fr_2.75rem_2.75rem_2.75rem] items-center gap-2 text-xs text-muted-foreground">
-                <span aria-hidden>#</span>
-                <span>Kg</span>
-                <span>Reps</span>
-                <span className="sr-only">Hecha</span>
-                <span className="sr-only">Calentamiento</span>
-                <span className="sr-only">Quitar</span>
-              </div>
-              {exercise.sets.map((set, setIdx) => (
-                <div
-                  key={set.id}
-                  className={cn(
-                    "grid grid-cols-[1.75rem_1fr_1fr_2.75rem_2.75rem_2.75rem] items-center gap-2",
-                    set.done && "opacity-90",
-                  )}
-                >
-                  <span className="text-center text-sm tabular-nums text-muted-foreground">
-                    {set.isWarmup ? "C" : setIdx + 1}
-                  </span>
-                  <Input
-                    aria-label={`Peso de la serie ${setIdx + 1} de ${exercise.name} (kg)`}
-                    inputMode="decimal"
-                    value={set.weight}
-                    placeholder={exercise.isBodyweight ? "0" : ""}
-                    onChange={(e) =>
-                      update((d) => updateSetField(d, exIdx, setIdx, "weight", e.target.value))
-                    }
-                    className="h-11 px-2 text-center"
-                  />
-                  <Input
-                    aria-label={`Repeticiones de la serie ${setIdx + 1} de ${exercise.name}`}
-                    inputMode="numeric"
-                    value={set.reps}
-                    placeholder={
-                      exercise.prescribed.repsMin === exercise.prescribed.repsMax
-                        ? String(exercise.prescribed.repsMin)
-                        : `${exercise.prescribed.repsMin}–${exercise.prescribed.repsMax}`
-                    }
-                    onChange={(e) =>
-                      update((d) => updateSetField(d, exIdx, setIdx, "reps", e.target.value))
-                    }
-                    className="h-11 px-2 text-center"
-                  />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant={set.done ? "default" : "outline"}
-                    aria-label={`${set.done ? "Desmarcar" : "Marcar como hecha"} la serie ${setIdx + 1} de ${exercise.name}`}
-                    aria-pressed={set.done}
-                    disabled={!set.done && !canComplete(exercise, set)}
-                    onClick={() => update((d) => toggleDone(d, exIdx, setIdx))}
-                  >
-                    <Check aria-hidden />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant={set.isWarmup ? "secondary" : "ghost"}
-                    aria-label={`Serie ${setIdx + 1} de ${exercise.name} como calentamiento`}
-                    aria-pressed={set.isWarmup}
-                    onClick={() => update((d) => toggleWarmup(d, exIdx, setIdx))}
-                  >
-                    <Flame aria-hidden />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    aria-label={`Quitar la serie ${setIdx + 1} de ${exercise.name}`}
-                    onClick={() => update((d) => removeSet(d, exIdx, setIdx))}
-                  >
-                    <Trash2 aria-hidden />
-                  </Button>
-                </div>
-              ))}
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => update((d) => addSet(d, exIdx))}
-                >
-                  <Plus aria-hidden /> Serie
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => update((d) => setSkipped(d, exIdx, true))}
-                >
-                  <SkipForward aria-hidden /> Saltar ejercicio
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ExerciseCard
+            key={exercise.sessionExerciseId}
+            exercise={exercise}
+            info={info}
+            hint={hint}
+            onField={(setIdx, field, value) =>
+              update((d) => updateSetField(d, exIdx, setIdx, field, value))
+            }
+            onToggleDone={(setIdx) => toggleSet(exIdx, setIdx)}
+            onCopyPrevious={(setIdx) => {
+              const previous = previousOf(exIdx, setIdx);
+              if (previous) update((d) => copyPrevious(d, exIdx, setIdx, previous));
+            }}
+            onToggleWarmup={(setIdx) => update((d) => toggleWarmup(d, exIdx, setIdx))}
+            onRemoveSet={(setIdx) => update((d) => removeSet(d, exIdx, setIdx))}
+            onAddSet={() => update((d) => addSet(d, exIdx))}
+            onSkip={() => update((d) => setSkipped(d, exIdx, true))}
+          />
         );
       })}
 
@@ -406,49 +409,49 @@ export function WorkoutRunner({ userId, context }: { userId: string; context: Wo
         </p>
       ) : null}
 
+      <div className="flex flex-col gap-2 pt-2">
+        <Button size="lg" onClick={requestFinish} disabled={saving}>
+          Finalizar entrenamiento
+        </Button>
+        <Button variant="ghost" onClick={() => setConfirming("discard")}>
+          Descartar sesión
+        </Button>
+      </div>
+
+      {rest ? <RestBar rest={rest} onChange={setRest} onDismiss={() => setRest(null)} /> : null}
+
       {confirming === "finish" ? (
-        <Card role="alertdialog" aria-label="Confirmar el fin del entrenamiento">
-          <CardContent className="flex flex-col gap-3 pt-6">
-            <p className="font-medium">
-              Completaste {summary.doneSets} de {summary.totalSets} series. ¿Finalizar el
-              entrenamiento?
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={confirmFinish} disabled={saving}>
-                {saving ? "Guardando…" : "Sí, finalizar"}
-              </Button>
-              <Button variant="outline" onClick={() => setConfirming(null)}>
-                Seguir entrenando
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <ConfirmSheet
+          label="Confirmar el fin del entrenamiento"
+          onClose={() => setConfirming(null)}
+        >
+          <p className="font-medium">
+            Completaste {summary.doneSets} de {summary.totalSets} series. ¿Finalizar el
+            entrenamiento?
+          </p>
+          <Button size="lg" onClick={confirmFinish} disabled={saving} autoFocus>
+            {saving ? "Guardando…" : "Sí, finalizar"}
+          </Button>
+          <Button variant="outline" onClick={() => setConfirming(null)}>
+            Seguir entrenando
+          </Button>
+        </ConfirmSheet>
       ) : confirming === "discard" ? (
-        <Card role="alertdialog" aria-label="Confirmar que se descarta el entrenamiento">
-          <CardContent className="flex flex-col gap-3 pt-6">
-            <p className="font-medium">
-              ¿Descartar este entrenamiento? Se perderá lo que registraste.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="destructive" onClick={confirmDiscard}>
-                Sí, descartar
-              </Button>
-              <Button variant="outline" onClick={() => setConfirming(null)}>
-                Cancelar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex flex-col gap-2 pb-4">
-          <Button size="lg" onClick={requestFinish} disabled={saving}>
-            Finalizar entrenamiento
+        <ConfirmSheet
+          label="Confirmar que se descarta el entrenamiento"
+          onClose={() => setConfirming(null)}
+        >
+          <p className="font-medium">
+            ¿Descartar este entrenamiento? Se perderá lo que registraste.
+          </p>
+          <Button variant="destructive" size="lg" onClick={confirmDiscard}>
+            Sí, descartar
           </Button>
-          <Button variant="ghost" onClick={() => setConfirming("discard")}>
-            Descartar sesión
+          <Button variant="outline" onClick={() => setConfirming(null)}>
+            Cancelar
           </Button>
-        </div>
-      )}
+        </ConfirmSheet>
+      ) : null}
     </div>
   );
 }

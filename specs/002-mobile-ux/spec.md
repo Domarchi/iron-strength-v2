@@ -33,7 +33,7 @@ Se copian patrones probados de **Hevy** y **Strong** (las apps de registro de pe
 - **RF-54**: CUANDO el alumno toca el valor "anterior" de una fila, EL SISTEMA copia ese peso y esas repeticiones a los campos de la fila.
 - **RF-55**: CUANDO el alumno marca una serie como hecha y le falta un valor, EL SISTEMA lo completa con el valor de referencia (el peso precargado, las repeticiones de "anterior" o el mínimo prescrito) en lugar de bloquear el botón; SI aun así no hay un número válido, ENTONCES no la marca y lo indica.
 - **RF-56**: EL SISTEMA marca visualmente la fila hecha (fondo y check rellenos), muestra el avance de cada ejercicio (series hechas de total) y, cuando un ejercicio queda completo, lo pliega mostrando un resumen que se puede volver a abrir.
-- **RF-57**: EL SISTEMA agrupa las acciones secundarias de una serie (calentamiento, quitar) detrás de un toque en su número, y las de un ejercicio (agregar serie, saltar) en un menú de ejercicio, de modo que cada fila solo muestra lo que se usa en cada serie.
+- **RF-57**: EL SISTEMA agrupa las acciones poco frecuentes de una serie (calentamiento, quitar) detrás de un toque en su número, y saltar el ejercicio en un menú de ejercicio; "Agregar serie" queda siempre visible al pie de cada ejercicio, porque se usa a menudo. Cada fila solo muestra lo que se usa en cada serie.
 - **RF-58**: MIENTRAS hay una sesión en curso, EL SISTEMA intenta mantener la pantalla encendida (Wake Lock) y, si el dispositivo no lo soporta, no muestra error.
 - **RF-59**: EL SISTEMA muestra el botón principal "Terminar" siempre accesible y mantiene la confirmación de RF-23 con el resumen de series; descartar sigue pidiendo confirmación (RF-26).
 

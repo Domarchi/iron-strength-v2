@@ -7,7 +7,7 @@ import type { WorkoutContext } from "@/lib/data/workout-context";
 // HTML del servidor y el del cliente no difieran.
 const Runner = dynamic(() => import("./runner").then((m) => m.WorkoutRunner), {
   ssr: false,
-  loading: () => <p className="text-sm text-muted-foreground">Preparando tu sesión…</p>,
+  loading: () => <p className="py-6 text-sm text-muted-foreground">Preparando tu sesión…</p>,
 });
 
 export function RunnerLoader(props: { userId: string; context: WorkoutContext }) {
