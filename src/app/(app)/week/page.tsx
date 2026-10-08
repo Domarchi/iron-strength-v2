@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { CheckCircle2, Circle, Clock } from "lucide-react";
+import { CheckCircle2, ChevronRight, Circle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
@@ -222,7 +222,15 @@ async function CoachTrainingLinks() {
 export default function WeekPage() {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">Mi semana</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold">Mi semana</h1>
+        <Link
+          href="/week/summary"
+          className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary"
+        >
+          Resumen semanal <ChevronRight className="size-4" aria-hidden />
+        </Link>
+      </div>
       <Suspense fallback={null}>
         <CoachTrainingLinks />
       </Suspense>

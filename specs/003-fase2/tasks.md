@@ -10,7 +10,7 @@ Reglas: una tarea a la vez, tests primero, commit `Tn: título`, `npm run check`
 - [x] **T120 · Logros: base y datos** — migración `achievements` con RLS y pgTAP; `src/lib/data/achievements.ts` (`syncAchievements`, `listAchievements`) con integración; se llama al guardar un entrenamiento. RF: 31, 66; DC-28.
 - [x] **T121 · Logros: pantallas** — aviso al guardar (RF-65), lista en Progreso y en la ficha del alumno para el coach (RF-66). RF: 65, 66.
 - [x] **T122 · Resumen semanal: dominio y datos** — `src/domain/weekly-summary.ts` + `src/lib/data/weekly-summary.ts` (semana anterior y en curso, sesiones, récords, volumen y variación). Tests y integración. RF: 32; DC-29.
-- [ ] **T123 · Resumen semanal: pantalla** — `/week/summary` enlazada desde "Mi semana", con estados vacíos. RF: 32.
+- [x] **T123 · Resumen semanal: pantalla** — `/week/summary` enlazada desde "Mi semana", con estados vacíos. RF: 32.
 - [ ] **T124 · No leídos: base y datos** — migración `comment_reads` + función `unread_comments` con RLS y pgTAP; `src/lib/data/unread.ts` (conteos, marcar leído) con integración. RF: 37; DC-30.
 - [ ] **T125 · No leídos: pantallas** — marcar leído al abrir un entrenamiento; marcas en historial y ficha del alumno; contadores en la lista de alumnos y en la navegación. RF: 37.
 - [ ] **T126 · Borrar cuenta: base** — migración `delete_my_account()` con pgTAP (solo alumno, solo el propio, cascada completa). RF: 48; DC-32.
