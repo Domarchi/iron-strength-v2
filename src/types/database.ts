@@ -369,6 +369,9 @@ isOneToOne: false
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"delete_my_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "edit_window_start":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
