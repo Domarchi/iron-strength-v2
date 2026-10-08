@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { santiagoDate } from "@/domain/dates";
+import { UnreadBadge } from "@/components/unread/unread-badge";
 import { listStudentOverviews, type StudentOverview } from "@/lib/data/students";
+import { getUnreadSummary } from "@/lib/data/unread";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +35,11 @@ function weekText(week: StudentOverview["week"]): string {
 }
 
 export async function StudentsList() {
-  const overviews = await listStudentOverviews(await createClient(), santiagoDate(new Date()));
+  const db = await createClient();
+  const [overviews, unread] = await Promise.all([
+    listStudentOverviews(db, santiagoDate(new Date())),
+    getUnreadSummary(db).catch(() => null),
+  ]);
 
   if (overviews.length === 0) {
     return (
@@ -59,6 +65,7 @@ export async function StudentsList() {
               <div className="flex min-w-0 flex-col gap-1">
                 <span className="flex items-center gap-2 font-medium">
                   <span className="truncate">{student.fullName}</span>
+                  <UnreadBadge count={unread?.byStudent.get(student.id)?.comments ?? 0} />
                   {!student.isActive ? (
                     <span className="rounded-full border px-2 py-0.5 text-xs font-normal text-muted-foreground">
                       Desactivado

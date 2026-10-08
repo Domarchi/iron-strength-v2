@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { capitalizeFirst, formatDuration, formatKg } from "@/domain/format";
+import { UnreadBadge } from "@/components/unread/unread-badge";
 import { requireUser } from "@/lib/auth/session";
+import { getUnreadSummary } from "@/lib/data/unread";
 import { listWorkouts } from "@/lib/data/workouts";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,10 +19,11 @@ const dayFormat = new Intl.DateTimeFormat("es-CL", {
 
 async function WorkoutList({ cursor }: { cursor?: string }) {
   const user = await requireUser();
-  const { items, nextCursor } = await listWorkouts(await createClient(), user.id, {
-    limit: 20,
-    cursor,
-  });
+  const db = await createClient();
+  const [{ items, nextCursor }, unread] = await Promise.all([
+    listWorkouts(db, user.id, { limit: 20, cursor }),
+    getUnreadSummary(db).catch(() => null),
+  ]);
 
   if (items.length === 0 && !cursor) {
     return (
@@ -39,8 +42,9 @@ async function WorkoutList({ cursor }: { cursor?: string }) {
               href={`/history/${w.id}`}
               className="flex min-h-16 flex-col justify-center gap-0.5 p-3 hover:bg-muted/50"
             >
-              <span className="font-medium">
+              <span className="flex items-center gap-2 font-medium">
                 {capitalizeFirst(dayFormat.format(new Date(`${w.performedOn}T00:00:00Z`)))}
+                <UnreadBadge count={unread?.byWorkout.get(w.id) ?? 0} />
               </span>
               <span className="text-sm text-muted-foreground">
                 {w.sessionLabel ? `Sesión ${w.sessionLabel} · ` : ""}

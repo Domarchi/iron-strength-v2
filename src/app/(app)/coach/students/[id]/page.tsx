@@ -4,12 +4,14 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UnreadBadge } from "@/components/unread/unread-badge";
 import { AchievementsList } from "@/components/achievements/achievements-list";
 import { ConstancyStrip } from "@/components/streak/constancy-strip";
 import { santiagoDate } from "@/domain/dates";
 import { formatDuration, formatKg } from "@/domain/format";
 import { programState } from "@/domain/program-weeks";
 import { getAchievementsOverview } from "@/lib/data/achievements";
+import { getUnreadSummary } from "@/lib/data/unread";
 import { listAssignedPrograms } from "@/lib/data/programs";
 import { listExerciseProgress } from "@/lib/data/progress";
 import { getStreakSummary } from "@/lib/data/streak";
@@ -49,7 +51,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
     listAssignedPrograms(db, id),
   ]);
 
-  const achievements = await getAchievementsOverview(db, id, streak.longest);
+  const [achievements, unread] = await Promise.all([
+    getAchievementsOverview(db, id, streak.longest),
+    getUnreadSummary(db).catch(() => null),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -135,7 +140,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
                   href={`/history/${w.id}`}
                   className="flex min-h-14 flex-col justify-center gap-0.5 p-3 hover:bg-muted/50"
                 >
-                  <span className="font-medium">{fmt(w.performedOn)}</span>
+                  <span className="flex items-center gap-2 font-medium">
+                    {fmt(w.performedOn)}
+                    <UnreadBadge count={unread?.byWorkout.get(w.id) ?? 0} />
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     {w.sessionLabel ? `Sesión ${w.sessionLabel} · ` : ""}
                     {w.workingSets} series · {formatDuration(w.durationSeconds)}

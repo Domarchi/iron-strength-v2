@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
 import { isWorkoutEditable } from "@/domain/edit-window";
 import { capitalizeFirst, formatDuration, formatKg } from "@/domain/format";
+import { MarkRead } from "@/components/unread/mark-read";
 import { NewAchievements } from "@/components/achievements/new-achievements";
 import { CommentsSection } from "@/components/comments/comments-section";
 import { isAchievementKind } from "@/domain/achievements";
 import { listAchievements } from "@/lib/data/achievements";
 import { listComments } from "@/lib/data/comments";
+import { getUnreadSummary } from "@/lib/data/unread";
 import { getWorkoutRecords } from "@/lib/data/progress";
 import { getWorkoutDetail } from "@/lib/data/workouts";
 import { createClient } from "@/lib/supabase/server";
@@ -40,9 +42,10 @@ export default async function WorkoutDetailPage({
   const db = await createClient();
   const workout = await getWorkoutDetail(db, id);
   if (!workout) notFound();
-  const [records, comments] = await Promise.all([
+  const [records, comments, unread] = await Promise.all([
     getWorkoutRecords(db, id),
     listComments({ db, workoutId: id, viewerId: user.id, studentId: workout.studentId }),
+    getUnreadSummary(db).catch(() => null),
   ]);
 
   const own = workout.studentId === user.id;
@@ -75,6 +78,8 @@ export default async function WorkoutDetailPage({
           </CardContent>
         </Card>
       ) : null}
+
+      <MarkRead workoutId={id} unread={unread?.byWorkout.get(id) ?? 0} />
 
       {announced.length > 0 ? <NewAchievements kinds={announced} /> : null}
 

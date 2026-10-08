@@ -12,7 +12,7 @@ Reglas: una tarea a la vez, tests primero, commit `Tn: título`, `npm run check`
 - [x] **T122 · Resumen semanal: dominio y datos** — `src/domain/weekly-summary.ts` + `src/lib/data/weekly-summary.ts` (semana anterior y en curso, sesiones, récords, volumen y variación). Tests y integración. RF: 32; DC-29.
 - [x] **T123 · Resumen semanal: pantalla** — `/week/summary` enlazada desde "Mi semana", con estados vacíos. RF: 32.
 - [x] **T124 · No leídos: base y datos** — migración `comment_reads` + función `unread_comments` con RLS y pgTAP; `src/lib/data/unread.ts` (conteos, marcar leído) con integración. RF: 37; DC-30.
-- [ ] **T125 · No leídos: pantallas** — marcar leído al abrir un entrenamiento; marcas en historial y ficha del alumno; contadores en la lista de alumnos y en la navegación. RF: 37.
+- [x] **T125 · No leídos: pantallas** — marcar leído al abrir un entrenamiento; marcas en historial y ficha del alumno; contadores en la lista de alumnos y en la navegación. RF: 37.
 - [ ] **T126 · Borrar cuenta: base** — migración `delete_my_account()` con pgTAP (solo alumno, solo el propio, cascada completa). RF: 48; DC-32.
 - [ ] **T127 · Borrar cuenta: datos y acción** — borrar fotos de Storage con la sesión del alumno y luego la función; integración (datos y archivos desaparecen, el coach no puede, un fallo de fotos aborta). RF: 48.
 - [ ] **T128 · Mi cuenta** — pantalla `/account` con enlace en el encabezado, exportar, cerrar sesión y borrado con confirmación BORRAR. RF: 64, 48.

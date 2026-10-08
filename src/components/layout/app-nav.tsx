@@ -49,8 +49,24 @@ export function AppNav({ items }: { items: NavItem[] }) {
                   active && "text-primary md:bg-muted",
                 )}
               >
-                <Icon className="size-5" aria-hidden />
+                <span className="relative">
+                  <Icon className="size-5" aria-hidden />
+                  {item.badge ? (
+                    <span
+                      aria-hidden
+                      className="absolute -top-1.5 -right-2.5 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-4 font-bold text-primary-foreground"
+                    >
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  ) : null}
+                </span>
                 {item.label}
+                {item.badge ? (
+                  <span className="sr-only">
+                    , {item.badge}{" "}
+                    {item.badge === 1 ? "comentario sin leer" : "comentarios sin leer"}
+                  </span>
+                ) : null}
               </Link>
             </li>
           );

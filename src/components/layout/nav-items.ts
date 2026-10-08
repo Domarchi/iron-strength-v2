@@ -2,6 +2,7 @@ export type NavItem = {
   href: string;
   label: string;
   icon: "week" | "history" | "progress" | "body" | "students" | "programs" | "exercises";
+  badge?: number; // comentarios sin leer (RF-37)
 };
 
 // Navegación por rol. El coach entrena como un alumno más desde "Mi entrenamiento" (DC-22).
@@ -30,4 +31,16 @@ export function isActive(pathname: string, href: string): boolean {
 // Mientras se entrena (RF-52) solo queda la barra propia de la sesión: sin cabecera ni navegación global.
 export function isFocusRoute(pathname: string): boolean {
   return pathname.startsWith("/workout/");
+}
+
+// Pone el contador de comentarios sin leer donde cada rol los encuentra: el alumno en Historial y el
+// coach en Alumnos (RF-37).
+export function withUnreadBadge(
+  items: NavItem[],
+  role: "coach" | "student",
+  unreadComments: number,
+): NavItem[] {
+  if (unreadComments <= 0) return items;
+  const target = role === "coach" ? "/coach/students" : "/history";
+  return items.map((item) => (item.href === target ? { ...item, badge: unreadComments } : item));
 }

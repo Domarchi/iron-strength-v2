@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isActive, isFocusRoute, navItemsFor } from "./nav-items";
+import { isActive, isFocusRoute, navItemsFor, withUnreadBadge } from "./nav-items";
 
 describe("navegación por rol", () => {
   it("el alumno ve su semana, historial, progreso y cuerpo", () => {
@@ -40,5 +40,23 @@ describe("modo enfoque (RF-52)", () => {
     ]) {
       expect(isFocusRoute(path)).toBe(false);
     }
+  });
+});
+
+describe("contador de no leídos en la navegación (RF-37)", () => {
+  it("el alumno lo ve en Historial", () => {
+    const items = withUnreadBadge(navItemsFor("student"), "student", 3);
+    expect(items.find((i) => i.href === "/history")?.badge).toBe(3);
+    expect(items.filter((i) => i.badge).length).toBe(1);
+  });
+
+  it("el coach lo ve en Alumnos", () => {
+    const items = withUnreadBadge(navItemsFor("coach"), "coach", 2);
+    expect(items.find((i) => i.href === "/coach/students")?.badge).toBe(2);
+    expect(items.filter((i) => i.badge).length).toBe(1);
+  });
+
+  it("sin comentarios sin leer no hay contador", () => {
+    expect(withUnreadBadge(navItemsFor("student"), "student", 0).every((i) => !i.badge)).toBe(true);
   });
 });
