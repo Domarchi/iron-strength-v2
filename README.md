@@ -2,7 +2,7 @@
 
 App de entrenamiento para un coach y sus alumnos: el coach arma programas por semanas, los asigna, ve el progreso y comenta; el alumno registra sus sesiones (con borrador local que resiste cortes de conexión), medidas y fotos privadas, y ve su racha y récords.
 
-Se desarrolló con **Spec-Driven Development**: todo lo que hace la app está en `specs/001-mvp/spec.md` y cada decisión de diseño en `plan.md`. La experiencia móvil (sesión estilo Hevy/Strong, descanso, tira semanal, app instalable) está en `specs/002-mobile-ux/`.
+Se desarrolló con **Spec-Driven Development**: todo lo que hace la app está en `specs/001-mvp/spec.md` y cada decisión de diseño en `plan.md`. La experiencia móvil (sesión estilo Hevy/Strong, descanso, tira semanal, app instalable) está en `specs/002-mobile-ux/` y la Fase 2 (logros, resumen semanal, comentarios no leídos, exportar CSV y borrar cuenta) en `specs/003-fase2/`.
 
 ## Stack
 
@@ -53,4 +53,5 @@ Usuarios de prueba locales (ver `.env.example`): `coach-e2e@test.local`, `alumno
 - `docs/constitution.md`: principios innegociables
 - `specs/001-mvp/`: spec, clarificación, plan, tareas, revisión de seguridad y validación
 - `specs/002-mobile-ux/`: spec y tareas de la experiencia móvil
+- `specs/003-fase2/`: spec y tareas de la Fase 2
 - `docs/despliegue.md`: cómo ponerla en producción

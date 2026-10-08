@@ -31,3 +31,21 @@ Sin hallazgos altos abiertos. Dos mejoras aplicadas durante la revisión.
 1. En el panel de Supabase: desactivar "Allow new users to sign up" y mantener el proveedor Email activo (ver nota en `supabase/config.toml`).
 2. Fijar `otp_expiry` en 86400 (24 h) en Authentication → Providers → Email.
 3. Cargar las variables en Vercel como secretas; `SUPABASE_SECRET_KEY` jamás con prefijo `NEXT_PUBLIC_`.
+
+## Adenda — Fase 2 (spec 003, T130)
+
+Fecha: 2026-10-08 · Alcance: tablas `achievements` y `comment_reads`, funciones `unread_comments`, `mark_comments_read` y `delete_my_account`, la ruta `/export/history` y la pantalla "Mi cuenta".
+
+| Área                       | Qué se verificó                                                                                                                                                                                                                                                                                  | Resultado |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| Clave de servicio          | Sigue usándose solo en los mismos puntos (login, registro por invitación y acciones del coach). Borrar la cuenta **no** la usa: lo hace la función `delete_my_account` y los archivos de fotos los borra el propio alumno con su sesión.                                                         | OK        |
+| `delete_my_account`        | `security definer` con `search_path` vacío; exige sesión y que quien llama sea un alumno activo; solo borra al propio usuario (`auth.uid()`); sin permisos para `anon`. pgTAP 15: sin sesión, coach y alumno desactivado reciben 42501; la cascada borra todo lo del alumno y nada de los demás. | OK        |
+| Fotos al borrar            | Si el borrado de archivos falla, no se borra la cuenta (se puede reintentar). También se borran archivos sin fila registrada de su carpeta. Probado en integración.                                                                                                                              | OK        |
+| `unread_comments` y marcas | Funciones `security invoker`: la RLS de `comments` y `workouts` sigue siendo la única barrera. `comment_reads` solo se ve y escribe con el propio `user_id`, y solo sobre entrenamientos visibles. pgTAP 14.                                                                                     | OK        |
+| Exportar CSV               | Ruta con sesión obligatoria; el id se valida como UUID; la RLS decide y un alumno ajeno recibe 404 sin saber que existe (E2E). Cabeceras `no-store` y `nosniff`. Nombres de ejercicio neutralizados contra inyección de fórmulas (RF-67).                                                        | OK        |
+| Borrado con confirmación   | La acción del servidor exige rol alumno y la palabra BORRAR; no depende de lo que valide el cliente.                                                                                                                                                                                             | OK        |
+| Dependencias               | `npm audit --omit=dev`: 0 vulnerabilidades. No se agregó ninguna dependencia.                                                                                                                                                                                                                    | OK        |
+
+**Riesgo aceptado (DC-28):** `achievements` deja insertar al propio alumno, así que quien llame a la API a mano podría otorgarse un logro del catálogo. Es un dato cosmético sin efecto sobre nada más; sí está impedido que otorgue a otros, que los modifique o los borre (pgTAP 13).
+
+**Contraste:** la variante destructiva del botón se oscureció en modo claro para cumplir AA (hallazgo de axe en las pruebas de accesibilidad).

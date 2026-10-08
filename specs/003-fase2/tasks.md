@@ -17,4 +17,10 @@ Reglas: una tarea a la vez, tests primero, commit `Tn: título`, `npm run check`
 - [x] **T127 · Borrar cuenta: datos y acción** — borrar fotos de Storage con la sesión del alumno y luego la función; integración (datos y archivos desaparecen, el coach no puede, un fallo de fotos aborta). RF: 48.
 - [x] **T128 · Mi cuenta** — pantalla `/account` con enlace en el encabezado, exportar, cerrar sesión y borrado con confirmación BORRAR. RF: 64, 48.
 - [x] **T129 · E2E de la Fase 2 y accesibilidad** — logro al terminar, resumen, no leído, CSV y borrar cuenta; axe AA en claro y oscuro en las pantallas nuevas. Criterios 1–5.
-- [ ] **T130 · Cierre** — validación de RF-31, 32, 37, 47, 48, 64–67; revisión de seguridad (nueva función `security definer`, tabla de logros); README y AGENTS; spec 001 y memoria al día.
+- [x] **T130 · Cierre** — validación de RF-31, 32, 37, 47, 48, 64–67; revisión de seguridad (nueva función `security definer`, tabla de logros); README y AGENTS; spec 001 y memoria al día.
+
+---
+
+## Estado de avance
+
+14 de 14 tareas hechas (T117–T130). Verificado con `npm run check`, pgTAP, integración y E2E (incluida accesibilidad AA en claro y oscuro). El resultado por RF está en `specs/001-mvp/validation.md`, sección "Spec 003", y la revisión de seguridad en la adenda de `specs/001-mvp/security-review.md`.

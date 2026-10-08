@@ -6,7 +6,7 @@ App de entrenamiento para un coach y sus alumnos. El coach diseña programas por
 
 Next.js 16 (App Router) + TypeScript estricto + Supabase (Postgres, Auth, Storage, RLS) + Tailwind + shadcn/ui (Base UI). La seguridad vive en la base de datos (RLS). La lógica de negocio está en `src/domain/` (TypeScript puro, sin React ni red).
 
-Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitution.md` → `specs/001-mvp/spec.md` → `plan.md` → `tasks.md`, más `specs/002-mobile-ux/` (experiencia móvil). El estado de verificación está en `specs/001-mvp/validation.md`.
+Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitution.md` → `specs/001-mvp/spec.md` → `plan.md` → `tasks.md`, más `specs/002-mobile-ux/` (experiencia móvil) y `specs/003-fase2/` (logros, resumen, no leídos, CSV, borrar cuenta). El estado de verificación está en `specs/001-mvp/validation.md`.
 
 ## Comandos
 
@@ -45,6 +45,8 @@ Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env
 - En `[auth.email]` de `supabase/config.toml`, `enable_signup = false` desactiva TODO el login por correo; el registro público se cierra con `[auth] enable_signup = false`.
 - PostgREST rellena con `null` las columnas ausentes en una inserción masiva con filas heterogéneas: pon todas las columnas.
 - Móvil: durante `/workout/…` el marco (`AppChrome`) oculta cabecera y navegación (modo enfoque). El manifiesto, `/icons/*` y `/apple-icon` son públicos en `route-access.ts`; si agregas otro recurso de la PWA, agrégalo allí.
+- Borrar la cuenta (RF-48) no usa el service role: `delete_my_account()` en la base y los archivos de fotos se borran antes con la sesión del alumno. Si agregas datos nuevos por alumno, asegúrate de que caen en cascada y súmalos a `supabase/tests/database/15_delete_my_account.test.sql`.
+- Las funciones de no leídos (`unread_comments`, `mark_comments_read`) son `security invoker`: no las cambies a `security definer`, la RLS de comentarios es su única barrera.
 - El linter de React marca `Date.now()` en el render y `setState` dentro de efectos: usa funciones auxiliares y manejadores.
 
 ## Reglas
