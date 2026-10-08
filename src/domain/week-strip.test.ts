@@ -38,10 +38,12 @@ describe("buildWeekStrip (RF-61)", () => {
 });
 
 describe("nextPendingSession (RF-62)", () => {
-  const s = (id: string, status: string) => ({ sessionId: id, status }) as never;
+  const s = (id: string, status: string) => ({ sessionId: id, status });
 
   it("la primera sesión pendiente, en el orden del programa", () => {
-    expect(nextPendingSession([s("a", "done"), s("b", "pending"), s("c", "pending")])?.sessionId).toBe("b");
+    expect(
+      nextPendingSession([s("a", "done"), s("b", "pending"), s("c", "pending")])?.sessionId,
+    ).toBe("b");
   });
 
   it("ignora las sesiones hechas, no realizadas o aún no disponibles", () => {

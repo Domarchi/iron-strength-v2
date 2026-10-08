@@ -70,7 +70,11 @@ describe("completeSet (RF-55, DC-27)", () => {
   it("rellena las repeticiones con las de 'anterior' y marca la serie", () => {
     const result = completeSet(draft(), 0, 0, { weightKg: 65, reps: 10 });
     expect(result.completed).toBe(true);
-    expect(result.draft.exercises[0].sets[0]).toMatchObject({ weight: "60", reps: "10", done: true });
+    expect(result.draft.exercises[0].sets[0]).toMatchObject({
+      weight: "60",
+      reps: "10",
+      done: true,
+    });
   });
 
   it("sin 'anterior', usa las repeticiones mínimas prescritas", () => {

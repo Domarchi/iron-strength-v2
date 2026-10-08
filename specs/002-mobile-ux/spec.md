@@ -10,14 +10,14 @@ La app funciona en el móvil, pero se siente como un formulario web: la sesión 
 
 Se copian patrones probados de **Hevy** y **Strong** (las apps de registro de pesas más usadas), no su marca ni sus pantallas:
 
-| Patrón | Origen | Qué se toma |
-| --- | --- | --- |
-| Fila de serie con columna "Anterior" | Hevy, Strong | `SERIE · ANTERIOR · KG · REPS · ✓`; tocar "anterior" copia los valores |
-| Check grande que se rellena | Hevy | Una sola acción grande por serie; la fila queda resaltada al completarla |
-| Modo enfoque durante la sesión | Hevy, Strong | Sin navegación global; barra superior con cronómetro y botón "Terminar" |
-| Temporizador de descanso automático | Hevy, Strong | Arranca al marcar una serie, barra fija inferior, −15 s / +15 s / Saltar |
-| Tira de la semana | TrainHeroic, Fitbod | Lunes a domingo con el estado de cada día |
-| Tarjeta "Hoy toca" | Fitbod | La próxima sesión con un botón grande |
+| Patrón                               | Origen              | Qué se toma                                                              |
+| ------------------------------------ | ------------------- | ------------------------------------------------------------------------ |
+| Fila de serie con columna "Anterior" | Hevy, Strong        | `SERIE · ANTERIOR · KG · REPS · ✓`; tocar "anterior" copia los valores   |
+| Check grande que se rellena          | Hevy                | Una sola acción grande por serie; la fila queda resaltada al completarla |
+| Modo enfoque durante la sesión       | Hevy, Strong        | Sin navegación global; barra superior con cronómetro y botón "Terminar"  |
+| Temporizador de descanso automático  | Hevy, Strong        | Arranca al marcar una serie, barra fija inferior, −15 s / +15 s / Saltar |
+| Tira de la semana                    | TrainHeroic, Fitbod | Lunes a domingo con el estado de cada día                                |
+| Tarjeta "Hoy toca"                   | Fitbod              | La próxima sesión con un botón grande                                    |
 
 ## 3. Requisitos (EARS)
 

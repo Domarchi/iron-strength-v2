@@ -32,7 +32,7 @@ export function AppNav({ items }: { items: NavItem[] }) {
   return (
     <nav
       aria-label="Principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background md:static md:border-t-0 md:bg-transparent md:backdrop-blur-none"
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background pb-[env(safe-area-inset-bottom)] md:static md:border-t-0 md:bg-transparent md:pb-0 md:backdrop-blur-none"
     >
       <ul className="mx-auto flex max-w-5xl justify-around md:justify-start md:gap-1">
         {items.map((item) => {

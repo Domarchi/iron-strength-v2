@@ -26,3 +26,8 @@ export function navItemsFor(role: "coach" | "student"): NavItem[] {
 export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
+
+// Mientras se entrena (RF-52) solo queda la barra propia de la sesión: sin cabecera ni navegación global.
+export function isFocusRoute(pathname: string): boolean {
+  return pathname.startsWith("/workout/");
+}

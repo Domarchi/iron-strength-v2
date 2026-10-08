@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Iron Strength",
   description: "Entrena tus programas, registra tus series y sigue tu progreso.",
+};
+
+// Móvil (RF-50, RF-51): ocupa toda la pantalla (incluida la zona de la muesca) y el navegador pinta
+// su barra con el color de la app. Sin maximumScale: no se bloquea el zoom del usuario.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#141414" },
+  ],
 };
 
 // Aplica el modo oscuro según la preferencia del sistema antes del primer pintado.

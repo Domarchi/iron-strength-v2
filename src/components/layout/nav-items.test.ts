@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isActive, navItemsFor } from "./nav-items";
+import { isActive, isFocusRoute, navItemsFor } from "./nav-items";
 
 describe("navegación por rol", () => {
   it("el alumno ve su semana, historial, progreso y cuerpo", () => {
@@ -21,5 +21,24 @@ describe("navegación por rol", () => {
     expect(isActive("/coach/programs/abc/edit", "/coach/programs")).toBe(true);
     expect(isActive("/coach/programs-viejos", "/coach/programs")).toBe(false);
     expect(isActive("/week", "/history")).toBe(false);
+  });
+});
+
+describe("modo enfoque (RF-52)", () => {
+  it("la sesión de entrenamiento oculta la navegación global", () => {
+    expect(isFocusRoute("/workout/abc-123")).toBe(true);
+  });
+
+  it("el resto de las pantallas la muestran", () => {
+    for (const path of [
+      "/week",
+      "/history/abc",
+      "/progress",
+      "/body",
+      "/coach/students",
+      "/workouts",
+    ]) {
+      expect(isFocusRoute(path)).toBe(false);
+    }
   });
 });
