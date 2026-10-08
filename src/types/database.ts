@@ -63,6 +63,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"comment_reads": {
+                  Row: {
+                    "read_at": string,"user_id": string,"workout_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "read_at"?: string,"user_id": string,"workout_id": string
+                  }
+                  Update: {
+                    "read_at"?: string,"user_id"?: string,"workout_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "comment_reads_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "comment_reads_workout_id_fkey"
+      columns: ["workout_id"]
+isOneToOne: false
+      referencedRelation: "workouts"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"comments": {
                   Row: {
                     "author_id": string,"body": string,"created_at": string,"id": string,"workout_id": string
@@ -355,8 +381,16 @@ isOneToOne: false
 "is_coach_of":
 { Args: { "student": string }; Returns: boolean
                            },
+"mark_comments_read":
+{ Args: { "p_workout_id": string }; Returns: undefined
+                           },
 "save_workout":
 { Args: { "p_workout": Json }; Returns: Json
+                           },
+"unread_comments":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "last_comment_at": string,"student_id": string,"unread_count": number,"workout_id": string
+            }[]
                            },
 "validate_invitation":
 { Args: { "p_token_hash": string }; Returns: {
