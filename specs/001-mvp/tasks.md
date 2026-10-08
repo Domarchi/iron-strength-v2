@@ -185,7 +185,7 @@ Datos y cierre de fase:
 
 ## Fase 2 (fuera de estas tareas)
 
-RF-27 temporizador de descanso, RF-31 logros, RF-32 resumen semanal, RF-37 comentarios no leídos, RF-45 PWA instalable, RF-47 exportar CSV, RF-48 borrar cuenta.
+RF-31 logros, RF-32 resumen semanal, RF-37 comentarios no leídos, RF-47 exportar CSV, RF-48 borrar cuenta. (RF-27 temporizador de descanso y RF-45 app instalable se hicieron en la spec 002, `specs/002-mobile-ux/`.)
 
 ## Resumen
 

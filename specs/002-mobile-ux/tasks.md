@@ -13,4 +13,10 @@ Reglas: una tarea a la vez, tests primero, commit `Tn: título`, `npm run check`
 - [x] **T113 · Mi semana rediseñada** — tira semanal, tarjeta "Hoy toca", lista compacta, racha en una línea. RF: 61–63.
 - [x] **T114 · PWA instalable** — `app/manifest.ts`, iconos con `ImageResponse`, icono Apple. RF: 45.
 - [x] **T115 · E2E móvil y accesibilidad** — proyecto Playwright en 375×812 con el flujo de sesión (anterior, copiar, descanso, terminar), sin scroll horizontal, axe AA en claro y oscuro. Actualizar E2E existentes si cambian los flujos. Criterios 1–6.
-- [ ] **T116 · Cierre** — validar RF-27, 45 y 50–63 en `specs/001-mvp/validation.md`, actualizar README/AGENTS y tasks de la 001.
+- [x] **T116 · Cierre** — validar RF-27, 45 y 50–63 en `specs/001-mvp/validation.md`, actualizar README/AGENTS y tasks de la 001.
+
+---
+
+## Estado de avance
+
+10 de 10 tareas hechas (T107–T116). Verificado con `npm run check`, pgTAP, integración y E2E (incluida accesibilidad AA en móvil, claro y oscuro). El resultado por RF está en `specs/001-mvp/validation.md`, sección "Spec 002".

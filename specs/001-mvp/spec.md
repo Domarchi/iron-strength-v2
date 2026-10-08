@@ -162,7 +162,7 @@ Iron Strength v1 fue una PWA personal que creció sin especificación y terminó
 
 Son requisitos con el mismo peso que los RF. Cada uno indica el hallazgo que cierra.
 
-**MVP del miércoles 14 (C5).** Entra: todo P0, más medidas, fotos, comentarios por sesión, récords, racha, gráficos por ejercicio, progresión sugerida (RF-15b), edición de entrenamientos (RF-26b) y restablecimiento de contraseña por el coach (RF-7). **Fase 2** (pasan a la semana siguiente si falta tiempo): RF-27 temporizador, RF-31 logros, RF-32 resumen semanal, RF-37 comentarios no leídos, RF-45 PWA instalable, RF-47 exportar CSV y RF-48 borrar cuenta.
+**MVP del miércoles 14 (C5).** Entra: todo P0, más medidas, fotos, comentarios por sesión, récords, racha, gráficos por ejercicio, progresión sugerida (RF-15b), edición de entrenamientos (RF-26b) y restablecimiento de contraseña por el coach (RF-7). **Fase 2** (pasan a la semana siguiente si falta tiempo): RF-27 temporizador, RF-31 logros, RF-32 resumen semanal, RF-37 comentarios no leídos, RF-45 PWA instalable, RF-47 exportar CSV y RF-48 borrar cuenta. **Actualización 2026-10-07:** RF-27 y RF-45 se adelantaron al MVP y se redefinieron en `specs/002-mobile-ux/spec.md`.
 
 **Cuentas (C6, C7, C8, C17, C22)**
 

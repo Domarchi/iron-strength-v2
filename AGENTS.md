@@ -6,7 +6,7 @@ App de entrenamiento para un coach y sus alumnos. El coach diseña programas por
 
 Next.js 16 (App Router) + TypeScript estricto + Supabase (Postgres, Auth, Storage, RLS) + Tailwind + shadcn/ui (Base UI). La seguridad vive en la base de datos (RLS). La lógica de negocio está en `src/domain/` (TypeScript puro, sin React ni red).
 
-Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitution.md` → `specs/001-mvp/spec.md` → `plan.md` → `tasks.md`. El estado de verificación está en `specs/001-mvp/validation.md`.
+Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitution.md` → `specs/001-mvp/spec.md` → `plan.md` → `tasks.md`, más `specs/002-mobile-ux/` (experiencia móvil). El estado de verificación está en `specs/001-mvp/validation.md`.
 
 ## Comandos
 
@@ -20,7 +20,7 @@ Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitut
 
 Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env.local`.
 
-> Los tests de integración y E2E **borran todos los usuarios locales** (y se niegan a correr si la URL no es local). Después vuelve a ejecutar `npm run dev:seed`.
+> Los tests de integración y E2E **borran todos los usuarios locales** (y se niegan a correr si la URL no es local). Después vuelve a ejecutar `npm run dev:seed`. Los de pgTAP (`db:test`) exigen una base **sin perfiles**: haz `npx supabase db reset` antes y `npm run dev:seed` después.
 
 ## Estructura
 
@@ -44,6 +44,7 @@ Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env
 - `Button` con `render={<Link/>}` necesita `nativeButton={false}` (el `Button` del proyecto ya lo hace) y Playwright lo ve con `role=button`.
 - En `[auth.email]` de `supabase/config.toml`, `enable_signup = false` desactiva TODO el login por correo; el registro público se cierra con `[auth] enable_signup = false`.
 - PostgREST rellena con `null` las columnas ausentes en una inserción masiva con filas heterogéneas: pon todas las columnas.
+- Móvil: durante `/workout/…` el marco (`AppChrome`) oculta cabecera y navegación (modo enfoque). El manifiesto, `/icons/*` y `/apple-icon` son públicos en `route-access.ts`; si agregas otro recurso de la PWA, agrégalo allí.
 - El linter de React marca `Date.now()` en el render y `setState` dentro de efectos: usa funciones auxiliares y manejadores.
 
 ## Reglas

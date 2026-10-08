@@ -70,7 +70,7 @@ Después **borra** `.env.production.local` o al menos la línea `COACH_PASSWORD`
 
 ## 4. Prueba en tu móvil e invitaciones (T104)
 
-1. Desde el móvil, abre la URL, entra como coach e **instálala en la pantalla de inicio** si quieres (la instalación como app es Fase 2; funciona igual desde el navegador).
+1. Desde el móvil, abre la URL, entra como coach e **instálala en la pantalla de inicio** (Chrome: menú ⋮ → "Instalar app"; iPhone: Compartir → "Agregar a pantalla de inicio").
 2. Crea una plantilla de prueba y asígnatela como coach (aparece en "Mi entreno"). Haz una sesión corta, comprueba que se guarda y que el historial la muestra.
 3. En **Alumnos**, invita al primer alumno con su correo. Copia el enlace (se muestra una sola vez) y envíaselo.
 4. Repite con el segundo alumno.
