@@ -9,7 +9,7 @@ import {
   type WeekCompliance,
   type WorkoutSummary,
 } from "../../domain/completion.ts";
-import { addDays, type DateString } from "../../domain/dates.ts";
+import { addDays, santiagoDate, type DateString } from "../../domain/dates.ts";
 import {
   pickCurrentProgram,
   programWeekNumber,
@@ -22,7 +22,7 @@ type Client = SupabaseClient<Database>;
 
 export type CurrentProgram = ProgramRange & { id: string; name: string };
 
-export type WeekSession = SessionStatusEntry & { exerciseCount: number };
+export type WeekSession = SessionStatusEntry & { exerciseCount: number; exerciseNames: string[] };
 
 export type WeekView =
   | { kind: "no_program" }
@@ -38,6 +38,7 @@ export type WeekView =
       compliance: WeekCompliance;
       allDone: boolean;
       extraCount: number;
+      trainedDates: DateString[]; // días (Santiago) con al menos un entrenamiento esta semana
     };
 
 export async function getWeekView(
@@ -77,7 +78,7 @@ export async function getWeekView(
   const [sessionsResult, workoutsResult] = await Promise.all([
     db
       .from("program_sessions")
-      .select("id, week_number, label, session_exercises(count)")
+      .select("id, week_number, label, session_exercises(position, exercises(name))")
       .eq("program_id", program.id),
     db
       .from("workouts")
@@ -95,8 +96,13 @@ export async function getWeekView(
     weekNumber: s.week_number,
     label: s.label,
   }));
-  const exerciseCounts = new Map(
-    sessionsResult.data.map((s) => [s.id, s.session_exercises[0]?.count ?? 0]),
+  const exerciseNames = new Map(
+    sessionsResult.data.map((s) => [
+      s.id,
+      [...s.session_exercises]
+        .sort((a, b) => a.position - b.position)
+        .map((e) => (e.exercises as unknown as { name: string } | null)?.name ?? "Ejercicio"),
+    ]),
   );
   const workouts: WorkoutSummary[] = workoutsResult.data.map((w) => ({
     id: w.id,
@@ -119,6 +125,15 @@ export async function getWeekView(
       weekSessionIds.has(w.programSessionId),
   ).length;
   const compliance = weekCompliance(statuses);
+  const lastDay = addDays(weekStart, 6);
+  const trainedDates = [
+    ...new Set(
+      workouts
+        .filter((w) => w.setCount >= 1)
+        .map((w) => santiagoDate(new Date(w.startedAt)))
+        .filter((d) => d >= weekStart && d <= lastDay),
+    ),
+  ].sort();
 
   return {
     kind: "active",
@@ -126,9 +141,13 @@ export async function getWeekView(
     weekNumber,
     weekStart,
     weekEnd: addDays(weekStart, 6),
-    sessions: statuses.map((s) => ({ ...s, exerciseCount: exerciseCounts.get(s.sessionId) ?? 0 })),
+    sessions: statuses.map((s) => {
+      const names = exerciseNames.get(s.sessionId) ?? [];
+      return { ...s, exerciseCount: names.length, exerciseNames: names };
+    }),
     compliance,
     allDone: compliance.complete,
     extraCount,
+    trainedDates,
   };
 }

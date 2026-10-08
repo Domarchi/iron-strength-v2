@@ -189,6 +189,19 @@ describe("getWeekView (RF-19, RF-25, DC-11)", () => {
     expect(view.compliance.complete).toBe(true);
   });
 
+  it("informa los días entrenados de la semana y los ejercicios de cada sesión (RF-61, RF-62)", async () => {
+    await workout("1A", "2025-03-04T15:00:00Z");
+    await workout("1A", "2025-03-04T20:00:00Z"); // mismo día: cuenta una vez
+    await workout("1A", "2025-02-25T15:00:00Z"); // semana anterior: no cuenta
+    const view = await getWeekView(studentDb, studentId, "2025-03-07");
+    if (view.kind !== "active") throw new Error("debía estar activo");
+    expect(view.trainedDates).toEqual(["2025-03-04"]);
+    expect(view.sessions.every((s) => s.exerciseNames.length === s.exerciseCount)).toBe(true);
+    expect(view.sessions.find((s) => s.exerciseCount > 0)?.exerciseNames[0]).toEqual(
+      expect.any(String),
+    );
+  });
+
   it("repetir una sesión cuenta como extra y no cambia el cumplimiento", async () => {
     await workout("1A", "2025-03-04T15:00:00Z");
     await workout("1A", "2025-03-06T15:00:00Z");

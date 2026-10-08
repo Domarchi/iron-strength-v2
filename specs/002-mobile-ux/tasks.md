@@ -6,7 +6,7 @@ Reglas: una tarea a la vez, tests primero, commit `Tn: título`, `npm run check`
 
 - [x] **T107 · Dominio del descanso** — `src/domain/rest-timer.ts`: duración por defecto (90 s, 60 s tras calentamiento), ajuste ±15 s con límites 15 s–10 min, tiempo restante desde la hora de término, formato `m:ss`. Tests primero. RF: 27.
 - [x] **T108 · Dominio de series anteriores y valores de referencia** — `src/lib/workout/runner-state.ts`: `previousFor(exercise, setIdx)`, `copyPrevious`, `fillMissing` (RF-55, DC-27), progreso por ejercicio y `isExerciseComplete`. Tests primero. RF: 53–55, 56.
-- [ ] **T109 · Dominio de la tira semanal** — `src/domain/week-strip.ts`: 7 días lun–dom con `isToday`, `trained`, `isFuture`; elección de la próxima sesión pendiente. Tests primero. RF: 61, 62.
+- [x] **T109 · Dominio de la tira semanal** — `src/domain/week-strip.ts`: 7 días lun–dom con `isToday`, `trained`, `isFuture`; elección de la próxima sesión pendiente. Tests primero. RF: 61, 62.
 - [ ] **T110 · Base móvil** — viewport-fit cover, color de tema, áreas seguras, modo enfoque que oculta cabecera y barra en `/workout/…`. RF: 50–52.
 - [ ] **T111 · Sesión rediseñada** — filas con columna "Anterior", check grande, ejercicios que se pliegan, menús de serie y de ejercicio, barra superior con Terminar, Wake Lock. Conserva las etiquetas accesibles. RF: 53–59.
 - [ ] **T112 · Temporizador de descanso (UI)** — barra fija inferior, ±15 s, saltar, vibración, exacto tras bloqueo de pantalla. RF: 27, 60.
