@@ -2,12 +2,14 @@ import { Download, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
 import { logoutAction } from "../../(auth)/actions";
+import { DeleteAccount } from "./delete-account";
 
 export const metadata = { title: "Mi cuenta · Iron Strength" };
 
 const ROLE_LABEL = { coach: "Coach", student: "Alumno" } as const;
 
-// Mi cuenta (RF-64): datos básicos, exportar el propio historial y cerrar sesión.
+// Mi cuenta (RF-64): datos básicos, exportar el propio historial, cerrar sesión y, solo para alumnos,
+// borrar la cuenta (RF-48).
 export default async function AccountPage() {
   const user = await requireUser();
 
@@ -45,6 +47,8 @@ export default async function AccountPage() {
           <LogOut aria-hidden /> Cerrar sesión
         </Button>
       </form>
+
+      {user.role === "student" ? <DeleteAccount /> : null}
     </div>
   );
 }
