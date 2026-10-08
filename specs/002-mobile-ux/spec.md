@@ -50,7 +50,7 @@ Se copian patrones probados de **Hevy** y **Strong** (las apps de registro de pe
 
 ### Instalación
 
-- **RF-45 (revisado)**: EL SISTEMA se puede instalar en la pantalla de inicio como aplicación independiente: manifiesto con nombre, colores, `display: standalone`, `lang: es-CL`, orientación vertical e iconos de 192 y 512 px (también enmascarable) y un icono para iOS. Abre en `/week`.
+- **RF-45 (revisado)**: EL SISTEMA se puede instalar en la pantalla de inicio como aplicación independiente: manifiesto con nombre, colores, `display: standalone`, `lang: es-CL`, orientación vertical e iconos de 192 y 512 px (también enmascarable) y un icono para iOS. Abre en `/`, que lleva a la pantalla principal de cada rol.
 
 ## 4. Fuera de alcance
 

@@ -2,16 +2,30 @@ import { describe, expect, it } from "vitest";
 import { accessDecision, isPublicPath } from "./route-access";
 
 describe("rutas públicas", () => {
-  it.each(["/login", "/invite/abc123", "/reset/abc123"])("%s es pública", (path) => {
+  it.each([
+    "/login",
+    "/invite/abc123",
+    "/reset/abc123",
+    "/manifest.webmanifest", // el navegador lo pide sin sesión para ofrecer instalar la app (RF-45)
+    "/icons/192",
+    "/icons/maskable",
+    "/apple-icon",
+  ])("%s es pública", (path) => {
     expect(isPublicPath(path)).toBe(true);
   });
 
-  it.each(["/", "/week", "/coach/students", "/loginx", "/invitex/abc", "/workout/123"])(
-    "%s es protegida",
-    (path) => {
-      expect(isPublicPath(path)).toBe(false);
-    },
-  );
+  it.each([
+    "/",
+    "/week",
+    "/coach/students",
+    "/loginx",
+    "/invitex/abc",
+    "/workout/123",
+    "/iconsx/1",
+    "/manifest.webmanifestx",
+  ])("%s es protegida", (path) => {
+    expect(isPublicPath(path)).toBe(false);
+  });
 });
 
 describe("decisión de acceso del proxy", () => {
