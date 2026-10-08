@@ -5,6 +5,7 @@ import {
   formatKg,
   formatPrescription,
   formatReps,
+  formatTrend,
 } from "./format";
 
 describe("formatKg (es-CL)", () => {
@@ -60,5 +61,22 @@ describe("capitalizeFirst", () => {
     expect(capitalizeFirst("miércoles, 7 de octubre")).toBe("Miércoles, 7 de octubre");
     expect(capitalizeFirst("")).toBe("");
     expect(capitalizeFirst("ñandú")).toBe("Ñandú");
+  });
+});
+
+describe("formatTrend (RF-32)", () => {
+  it("sin semana previa con qué comparar", () => {
+    expect(formatTrend(null)).toBe("Sin semana anterior para comparar");
+  });
+
+  it("sube, baja o queda igual, con porcentaje entero", () => {
+    expect(formatTrend(0.123)).toBe("12 % más que la semana anterior");
+    expect(formatTrend(-0.4166)).toBe("42 % menos que la semana anterior");
+    expect(formatTrend(0.001)).toBe("Igual que la semana anterior");
+    expect(formatTrend(-0.001)).toBe("Igual que la semana anterior");
+  });
+
+  it("un cambio chico pero visible se redondea a 1 %, nunca a 0 %", () => {
+    expect(formatTrend(0.006)).toBe("1 % más que la semana anterior");
   });
 });

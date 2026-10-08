@@ -32,3 +32,11 @@ export function formatDuration(totalSeconds: number): string {
 export function capitalizeFirst(text: string): string {
   return text.charAt(0).toLocaleUpperCase("es-CL") + text.slice(1);
 }
+
+// Variación del volumen frente a la semana anterior (RF-32). `trend` es una fracción (0,12 = 12 %).
+export function formatTrend(trend: number | null): string {
+  if (trend === null) return "Sin semana anterior para comparar";
+  if (Math.abs(trend) < 0.005) return "Igual que la semana anterior";
+  const percent = Math.max(1, Math.round(Math.abs(trend) * 100));
+  return `${percent} % ${trend > 0 ? "más" : "menos"} que la semana anterior`;
+}
