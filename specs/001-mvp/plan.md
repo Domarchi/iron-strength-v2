@@ -18,7 +18,7 @@ Supabase: Auth · Postgres (RLS) · Storage privado (fotos)
 - **Escrituras** en Server Actions, con validación zod compartida y RLS como segunda barrera.
 - **Service role** solo en tres puntos del servidor: registro por invitación, enlace de restablecimiento de contraseña (coach), y control de intentos de login. Nunca llega al cliente (constitución 4 y 8).
 - **Lógica de dominio** en `src/domain/` (TypeScript puro, sin React ni red). Es lo que se reutilizará en una app nativa futura.
-- **Entornos**: local (Supabase CLI en Docker) para desarrollar y testear; producción (proyecto `hmkgxhszamktvisrifxv`). Sin entorno intermedio, para mantener el costo en $0.
+- **Entornos**: local (Supabase CLI en Docker) para desarrollar y testear; producción (proyecto `udwhjcnlfqlggblnpchu`). Sin entorno intermedio, para mantener el costo en $0.
 
 ## 2. Decisiones técnicas (con la alternativa descartada)
 
@@ -210,6 +210,6 @@ M3 se hace en paralelo porque es lógica pura sin dependencias de UI ni de base 
 ## 11. Pendientes antes de las tareas
 
 - Crear el repositorio `Domarchi/iron-strength-v2` en GitHub (decisión tuya: privado o público) y el primer commit del scaffold. No lo hago sin tu confirmación.
-- `supabase login` y `supabase link --project-ref hmkgxhszamktvisrifxv` los ejecutas tú en tu terminal; yo no manejo tus credenciales.
+- `supabase login` y `supabase link --project-ref udwhjcnlfqlggblnpchu` los ejecutas tú en tu terminal; yo no manejo tus credenciales.
 - Confirmar la región del proyecto de Supabase (D9).
 - Confirmar si el uso de la app es comercial (riesgo de Vercel Hobby).

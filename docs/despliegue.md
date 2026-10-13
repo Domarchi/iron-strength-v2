@@ -2,7 +2,9 @@
 
 Estos pasos usan tus credenciales, por eso no los hago yo. Corresponden a las tareas **T36**, **T103** y **T104** de `specs/001-mvp/tasks.md`. Cada paso termina con una comprobación.
 
-Proyecto de Supabase: `hmkgxhszamktvisrifxv` (cuenta nueva, solo para Iron Strength). **No toques RELEVO ni relevo1.**
+Proyecto de Supabase: `udwhjcnlfqlggblnpchu` (`iron-strength`, región East US (Ohio), solo para Iron Strength). **No toques RELEVO ni relevo1.**
+
+> El proyecto `hmkgxhszamktvisrifxv` de la misma cuenta contiene tablas de otra aplicación (citas, fichas clínicas): **no se usa y no se debe tocar**.
 
 ## 1. Base de datos (T36)
 
@@ -10,7 +12,7 @@ En una terminal, dentro de la carpeta del proyecto:
 
 ```bash
 npx supabase login
-npx supabase link --project-ref hmkgxhszamktvisrifxv
+npx supabase link --project-ref udwhjcnlfqlggblnpchu
 npx supabase db push --dry-run
 ```
 
@@ -22,7 +24,7 @@ npx supabase db push --include-seed
 
 `--include-seed` carga además el catálogo de 467 ejercicios.
 
-**Comprobación:** `npx supabase migration list` muestra las mismas migraciones en local y en remoto. Anota la **región** del proyecto (Settings → General); si no es São Paulo, la latencia desde Chile será algo mayor.
+**Comprobación:** `npx supabase migration list` muestra las mismas migraciones en local y en remoto. El proyecto está en East US (Ohio): funciona igual que en São Paulo, con algo más de latencia desde Chile.
 
 ### Ajustes en el panel de Supabase
 
@@ -40,7 +42,7 @@ En **Authentication**:
 
    | Variable                               | Valor                                                                  |
    | -------------------------------------- | ---------------------------------------------------------------------- |
-   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://hmkgxhszamktvisrifxv.supabase.co`                             |
+   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://udwhjcnlfqlggblnpchu.supabase.co`                             |
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | clave **publicable**                                                   |
    | `SUPABASE_SECRET_KEY`                  | clave **secreta** (nunca con prefijo `NEXT_PUBLIC_`)                   |
    | `NEXT_PUBLIC_SITE_URL`                 | la URL pública de la app, p. ej. `https://iron-strength-v2.vercel.app` |
@@ -53,7 +55,7 @@ Crea un archivo `.env.production.local` (está en `.gitignore`) con **las claves
 
 ```bash
 # .env.production.local
-NEXT_PUBLIC_SUPABASE_URL=https://hmkgxhszamktvisrifxv.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://udwhjcnlfqlggblnpchu.supabase.co
 SUPABASE_SECRET_KEY=<tu clave secreta>
 COACH_EMAIL=tu-correo@ejemplo.cl
 COACH_NAME="Tu nombre"
