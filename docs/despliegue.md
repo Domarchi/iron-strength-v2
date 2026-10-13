@@ -14,7 +14,7 @@ npx supabase link --project-ref hmkgxhszamktvisrifxv
 npx supabase db push --dry-run
 ```
 
-`--dry-run` solo muestra qué migraciones se aplicarían. Revisa que sean las de `supabase/migrations/` (de `…0009_profiles` a `…0074_save_workout`, más las intermedias). Luego:
+`--dry-run` solo muestra qué migraciones se aplicarían. Revisa que sean las de `supabase/migrations/` (de `…0009_profiles` a `20261008120084_delete_my_account`: son 23 en total). Luego:
 
 ```bash
 npx supabase db push --include-seed
