@@ -1,4 +1,4 @@
-// Arte del icono de la app: una mancuerna naranja sobre fondo oscuro, dibujada con cajas para no
+// Arte del icono de la app: una mancuerna verde sobre fondo claro, dibujada con cajas para no
 // depender de ninguna fuente. En la versión enmascarable el dibujo ocupa solo el centro (zona segura
 // del 80 %), porque el sistema recorta los bordes con la forma que prefiera.
 export function IconArt({ size, maskable }: { size: number; maskable: boolean }) {
@@ -10,12 +10,12 @@ export function IconArt({ size, maskable }: { size: number; maskable: boolean })
   const innerW = w * 0.1;
   const barH = w * 0.1;
   const gap = w * 0.02;
-  const orange = "#f07a55";
+  const green = "#236b50";
   const box = (width: number, height: number, radius: number) => ({
     width,
     height,
     borderRadius: radius,
-    background: orange,
+    background: green,
   });
 
   return (
@@ -26,7 +26,7 @@ export function IconArt({ size, maskable }: { size: number; maskable: boolean })
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#141414",
+        background: "#f6f7f4",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap }}>

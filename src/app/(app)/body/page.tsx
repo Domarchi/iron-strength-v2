@@ -1,3 +1,4 @@
+import { PageHeading } from "@/components/layout/page-heading";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Trash2 } from "lucide-react";
@@ -148,7 +149,11 @@ export default async function BodyPage({ searchParams }: { searchParams: SearchP
             ← Volver al alumno
           </Link>
         ) : null}
-        <h1 className="text-xl font-semibold">{readOnly ? "Medidas del alumno" : "Cuerpo"}</h1>
+        <PageHeading
+          title={readOnly ? "Medidas del alumno" : "Cuerpo"}
+          eyebrow="Más allá de las marcas"
+          description="Registra tus medidas y observa los cambios a tu ritmo."
+        />
       </header>
 
       {readOnly ? null : (

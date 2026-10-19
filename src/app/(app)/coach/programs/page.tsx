@@ -1,3 +1,4 @@
+import { PageHeading } from "@/components/layout/page-heading";
 import Link from "next/link";
 import { Suspense } from "react";
 import { listTemplates } from "@/lib/data/programs";
@@ -17,7 +18,7 @@ async function TemplateList() {
     );
   }
   return (
-    <ul className="divide-y rounded-lg border">
+    <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border bg-card">
       {templates.map((template) => (
         <li key={template.id}>
           <Link
@@ -39,7 +40,11 @@ async function TemplateList() {
 export default function ProgramsPage() {
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-xl font-semibold">Programas</h1>
+      <PageHeading
+        title="Programas"
+        eyebrow="Planifica con intención"
+        description="Diseña cada semana y construye una base para progresar."
+      />
 
       <section aria-labelledby="new-heading" className="flex flex-col gap-3">
         <h2 id="new-heading" className="text-lg font-medium">

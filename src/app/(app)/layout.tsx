@@ -3,6 +3,7 @@ import { CircleUser, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppChrome } from "@/components/layout/app-chrome";
 import { AppNav } from "@/components/layout/app-nav";
+import { Brand } from "@/components/layout/brand";
 import { navItemsFor, withUnreadBadge } from "@/components/layout/nav-items";
 import { requireUser } from "@/lib/auth/session";
 import { getUnreadSummary } from "@/lib/data/unread";
@@ -20,12 +21,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AppChrome
       header={
-        <header className="border-b pt-[env(safe-area-inset-top)]">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2">
-            <span className="font-bold tracking-tight">IRON STRENGTH</span>
+        <header className="border-b bg-card pt-[env(safe-area-inset-top)]">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-8">
+            <Link
+              href={user.role === "coach" ? "/coach/students" : "/week"}
+              aria-label="Iron Strength, inicio"
+            >
+              <Brand />
+            </Link>
             <div className="flex items-center gap-2">
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                {user.fullName}
+              <span className="mr-2 hidden text-right sm:block">
+                <span className="block text-sm font-medium">{user.fullName}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {user.role === "coach" ? "Coach" : "Alumno"}
+                </span>
               </span>
               <Button variant="ghost" aria-label="Mi cuenta" render={<Link href="/account" />}>
                 <CircleUser aria-hidden />
@@ -37,9 +46,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </Button>
               </form>
             </div>
-          </div>
-          <div className="mx-auto hidden max-w-5xl px-4 md:block">
-            <AppNav items={items} />
           </div>
         </header>
       }

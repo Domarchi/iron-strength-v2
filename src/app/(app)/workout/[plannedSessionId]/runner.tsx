@@ -365,9 +365,9 @@ function ActiveWorkoutRunner({
   const percent = summary.totalSets === 0 ? 0 : (summary.doneSets / summary.totalSets) * 100;
 
   return (
-    <div className={rest ? "flex flex-col gap-3 pb-28" : "flex flex-col gap-3 pb-6"}>
-      <header className="sticky top-0 z-30 -mx-4 border-b bg-background pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center gap-1 px-2 py-1">
+    <div className={rest ? "flex flex-col gap-4 pb-28" : "flex flex-col gap-4 pb-6"}>
+      <header className="sticky top-0 z-30 -mx-4 border-b bg-card pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center gap-2 px-2 py-3">
           <Button
             variant="ghost"
             size="icon"

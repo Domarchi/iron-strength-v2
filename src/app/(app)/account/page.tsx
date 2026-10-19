@@ -1,3 +1,4 @@
+import { PageHeading } from "@/components/layout/page-heading";
 import { Download, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
@@ -15,9 +16,13 @@ export default async function AccountPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Mi cuenta</h1>
+      <PageHeading
+        title="Mi cuenta"
+        eyebrow="Tu espacio"
+        description="Tus datos y las opciones de tu cuenta, en un solo lugar."
+      />
 
-      <section aria-label="Datos de la cuenta" className="rounded-xl border p-4">
+      <section aria-label="Datos de la cuenta" className="rounded-2xl border bg-card p-5 sm:p-6">
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           <dt className="text-muted-foreground">Nombre</dt>
           <dd className="font-medium">{user.fullName}</dd>

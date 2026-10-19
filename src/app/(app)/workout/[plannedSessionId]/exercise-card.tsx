@@ -69,7 +69,7 @@ export function ExerciseCard({
     return (
       <section
         aria-label={exercise.name}
-        className="rounded-xl border border-primary/40 bg-card text-card-foreground"
+        className="rounded-2xl border border-primary/40 bg-card text-card-foreground"
       >
         <button
           type="button"
@@ -92,8 +92,8 @@ export function ExerciseCard({
   }
 
   return (
-    <section aria-label={exercise.name} className="rounded-xl border bg-card text-card-foreground">
-      <header className="flex items-start gap-2 px-4 pt-3">
+    <section aria-label={exercise.name} className="rounded-2xl border bg-card text-card-foreground">
+      <header className="flex items-start gap-2 rounded-t-2xl bg-muted/30 px-4 py-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-lg leading-tight font-semibold">{exercise.name}</h2>
           <p className="text-sm text-muted-foreground">
@@ -137,7 +137,7 @@ export function ExerciseCard({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-2 px-4 pt-2">
+      <div className="flex flex-col gap-2 px-4 pt-4">
         {info?.note ? <p className="text-sm">{info.note}</p> : null}
         {info ? <Suggestion info={info} /> : null}
         {info && !info.last ? (
@@ -162,6 +162,9 @@ export function ExerciseCard({
 
         {exercise.sets.map((set, setIdx) => {
           const previous = previousForSet(last, exercise, setIdx);
+          const previousText = previous
+            ? `${String(previous.weightKg).replace(".", ",")}×${previous.reps}`
+            : "";
           const n = setIdx + 1;
           const showHint = hint?.setId === set.id;
           return (
@@ -189,11 +192,11 @@ export function ExerciseCard({
                 {previous ? (
                   <button
                     type="button"
-                    aria-label={`Copiar lo anterior en la serie ${n} de ${exercise.name}: ${formatKg(previous.weightKg)} por ${previous.reps}`}
+                    aria-label={`Copiar lo anterior en la serie ${n} de ${exercise.name}: ${previousText} (kg × repeticiones)`}
                     onClick={() => onCopyPrevious(setIdx)}
                     className="h-12 truncate rounded-lg text-sm text-foreground/75 tabular-nums outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
-                    {`${String(previous.weightKg).replace(".", ",")}×${previous.reps}`}
+                    {previousText}
                   </button>
                 ) : (
                   <span className="text-center text-sm text-muted-foreground" aria-hidden>
@@ -224,7 +227,7 @@ export function ExerciseCard({
                   aria-pressed={set.done}
                   onClick={() => onToggleDone(setIdx)}
                   className={cn(
-                    "grid size-12 place-items-center rounded-xl border-2 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+                    "grid size-12 place-items-center rounded-2xl border-2 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
                     set.done
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-input bg-muted text-muted-foreground hover:border-primary",

@@ -20,8 +20,8 @@ describe("manifiesto de la app instalable (RF-45)", () => {
     for (const icon of m.icons ?? []) expect(icon.type).toBe("image/png");
   });
 
-  it("los colores coinciden con el modo oscuro de la app", () => {
-    expect(m.background_color).toBe("#141414");
-    expect(m.theme_color).toBe("#141414");
+  it("los colores coinciden con la nueva superficie clara de la app", () => {
+    expect(m.background_color).toBe("#f6f7f4");
+    expect(m.theme_color).toBe("#f6f7f4");
   });
 });

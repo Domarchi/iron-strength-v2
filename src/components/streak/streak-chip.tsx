@@ -8,7 +8,7 @@ export function StreakChip({ current, longest }: { current: number; longest: num
   return (
     <Link
       href="/progress"
-      className="flex min-h-12 items-center gap-2 rounded-xl border px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="flex min-h-12 items-center gap-2 rounded-xl border bg-card px-4 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <Flame
         className={cn("size-5 shrink-0", current > 0 ? "text-primary" : "text-muted-foreground")}

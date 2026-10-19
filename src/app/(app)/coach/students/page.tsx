@@ -1,3 +1,4 @@
+import { PageHeading } from "@/components/layout/page-heading";
 import { Suspense } from "react";
 import { InviteForm } from "./invite-form";
 import { PendingInvitations } from "./pending-invitations";
@@ -8,9 +9,13 @@ export const metadata = { title: "Alumnos · Iron Strength" };
 export default function StudentsPage() {
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-xl font-semibold">Alumnos</h1>
+      <PageHeading
+        title="Alumnos"
+        eyebrow="Espacio del coach"
+        description="Acompaña su constancia. Revisa cómo va cada uno."
+      />
 
-      <section aria-labelledby="students-heading" className="flex flex-col gap-3">
+      <section aria-labelledby="students-heading" className="flex flex-col gap-4">
         <h2 id="students-heading" className="text-lg font-medium">
           Mis alumnos
         </h2>
@@ -19,7 +24,10 @@ export default function StudentsPage() {
         </Suspense>
       </section>
 
-      <section aria-labelledby="invite-heading" className="flex flex-col gap-3">
+      <section
+        aria-labelledby="invite-heading"
+        className="flex flex-col gap-4 rounded-2xl border bg-card p-5 sm:p-6"
+      >
         <h2 id="invite-heading" className="text-lg font-medium">
           Invitar a un alumno
         </h2>

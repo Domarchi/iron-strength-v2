@@ -1,3 +1,4 @@
+import { PageHeading } from "@/components/layout/page-heading";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ async function ExerciseList({ searchParams }: { searchParams: SearchParams }) {
           ? "Mostrando los primeros 150. Usa el buscador o un grupo."
           : `${exercises.length} ejercicios`}
       </p>
-      <ul className="divide-y rounded-lg border">
+      <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border bg-card">
         {exercises.map((exercise) => (
           <li key={exercise.id} className="flex items-center justify-between gap-3 p-3">
             <div className="min-w-0">
@@ -95,7 +96,11 @@ export default async function ExercisesPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-xl font-semibold">Ejercicios</h1>
+      <PageHeading
+        title="Ejercicios"
+        eyebrow="Tu biblioteca"
+        description="Encuentra el movimiento adecuado para cada programa."
+      />
 
       <section aria-labelledby="new-heading" className="flex flex-col gap-3">
         <h2 id="new-heading" className="text-lg font-medium">

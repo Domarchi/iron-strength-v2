@@ -1,3 +1,4 @@
+import { PageHeading } from "@/components/layout/page-heading";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ async function WorkoutList({ cursor }: { cursor?: string }) {
 
   return (
     <>
-      <ul className="divide-y rounded-lg border">
+      <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border bg-card">
         {items.map((w) => (
           <li key={w.id}>
             <Link
@@ -77,7 +78,11 @@ export default async function HistoryPage({
   const { antes } = await searchParams;
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">Historial</h1>
+      <PageHeading
+        title="Historial"
+        eyebrow="Tu recorrido"
+        description="Cada sesión es parte de tu progreso. Vuelve a ver lo que hiciste."
+      />
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <WorkoutList cursor={antes} />
       </Suspense>

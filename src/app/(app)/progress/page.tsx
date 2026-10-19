@@ -1,3 +1,4 @@
+import { PageHeading } from "@/components/layout/page-heading";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,7 +50,7 @@ async function ExerciseList() {
   return (
     <>
       <ConstancyStrip {...streak} />
-      <ul className="divide-y rounded-lg border">
+      <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border bg-card">
         {list.map((e) => (
           <li key={e.exerciseId}>
             <Link
@@ -78,7 +79,11 @@ async function ExerciseList() {
 export default function ProgressPage() {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">Progreso</h1>
+      <PageHeading
+        title="Progreso"
+        eyebrow="Paso a paso"
+        description="Tus marcas, tu constancia y todo lo que has avanzado."
+      />
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <ExerciseList />
       </Suspense>
