@@ -1,10 +1,22 @@
 // T96 · Accesibilidad (WCAG 2.1 AA) con axe-core en las pantallas principales, en modo claro y oscuro.
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { admin, createUser, resetAll, seedCoach, seedProgram, seedWorkout } from "./support/db";
+import {
+  COACH,
+  admin,
+  createUser,
+  resetAll,
+  seedCoach,
+  seedProgram,
+  seedWorkout,
+} from "./support/db";
 import { login } from "./support/ui";
 
-const ANA = { email: "ana-a11y@e2e.test", name: "Ana", password: "Contraseña-E2E-2026!" };
+const ANA = {
+  email: "ana-a11y@iron-strength.e2e.test",
+  name: "Ana",
+  password: "Contraseña-E2E-2026!",
+};
 let coachId: string;
 let studentId: string;
 let programId: string;
@@ -83,7 +95,7 @@ for (const scheme of ["light", "dark"] as const) {
     });
 
     test("pantallas del coach", async ({ page }) => {
-      await login(page, "coach-e2e@test.local", "Local-E2E-only-2026!");
+      await login(page, COACH.email, COACH.password);
       for (const [path, ready] of [
         ["/coach/students", "Mis alumnos"],
         [`/coach/students/${studentId}`, "Últimos entrenamientos"],

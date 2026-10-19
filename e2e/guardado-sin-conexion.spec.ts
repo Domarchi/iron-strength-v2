@@ -6,7 +6,11 @@ import { addDays, mondayOf, santiagoDate } from "../src/domain/dates";
 import { createDraft, finishDraft } from "../src/lib/workout/runner-state";
 import { draftKey } from "../src/lib/workout/draft";
 
-const STUDENT = { email: "luz@e2e.test", name: "Luz Soto", password: "Contraseña-E2E-2026!" };
+const STUDENT = {
+  email: "luz@iron-strength.e2e.test",
+  name: "Luz Soto",
+  password: "Contraseña-E2E-2026!",
+};
 
 test("recupera desde Mi semana un entrenamiento pendiente de la semana anterior sin habilitar sesiones nuevas", async ({
   page,

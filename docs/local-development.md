@@ -41,6 +41,32 @@ El supervisor y los archivos de acceso son archivos locales de este equipo, fuer
 - `npm run check`: 350 pruebas en 35 archivos, formato, lint, tipos y build de producción: pasan.
 - Navegador real: login del alumno, carga del programa e historial, descanso de dos minutos, volumen en vivo, desmarcado al editar repeticiones inválidas y guardado final. Una lectura independiente confirmó la fila y su serie en Postgres mediante REST.
 - Login del coach: muestra sus dos alumnos y el cumplimiento actualizado del entrenamiento guardado.
-- La suite automatizada de Playwright no se ejecutó en esta configuración; lo anterior es una comprobación manual mediante el navegador integrado.
+- Esa validación inicial fue manual mediante el navegador integrado. En T139 se ejecutó además la suite automatizada completa contra otra pila local: **35 E2E pasan**, incluido el editor del coach, accesibilidad en ambos temas y las comprobaciones de guardado/permisos. El check final pasa con 373 pruebas.
 
-Antes de correr comandos de la CLI contra esta pila nativa, usar el mismo `SUPABASE_HOME` y activar `SUPABASE_EXPERIMENTAL_STACK=1` y `SUPABASE_STORAGE_VECTOR_ENABLED=false`. Las pruebas de integración/E2E borran los usuarios locales y pgTAP exige una base sin perfiles: después de las pruebas, restaurar los datos de prueba con `npm run dev:seed`, como indica `AGENTS.md`.
+Antes de correr comandos de la CLI contra esta pila nativa, usar el mismo `SUPABASE_HOME` y activar `SUPABASE_EXPERIMENTAL_STACK=1` y `SUPABASE_STORAGE_VECTOR_ENABLED=false`. Las pruebas de integración borran los usuarios locales y pgTAP exige una base sin perfiles: después de esas pruebas, restaurar los datos de prueba con `npm run dev:seed`, como indica `AGENTS.md`.
+
+## Ejecutar E2E sin borrar el desarrollo interactivo
+
+El esquema admite un único coach. Playwright usa otra instancia Supabase con las mismas migraciones y el mismo catálogo: no debe apuntar a la base de la app que se prueba manualmente. Crear una pila/proyecto local distinto (por ejemplo `iron-strength-e2e`, con puertos 55321–55324) y aplicar allí migraciones y seed. Nunca hacer reset del proyecto `iron-strength-v2` para este propósito.
+
+Guardar las claves de esa instancia en `.env.e2e.local`, excluido de Git:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<clave pública de la pila E2E>
+SUPABASE_SECRET_KEY=<clave privada de la pila E2E>
+```
+
+La configuración de Playwright carga ese archivo primero y completa valores ausentes con `.env.local`; las variables de CI ya definidas tienen prioridad. `E2E_ENV_FILE` permite elegir otra ruta privada. La app de pruebas se compila y arranca en el puerto 3100 con estas variables; no reutiliza un servidor de otra ejecución.
+
+La suite usa `coach@iron-strength.e2e.test` y alumnos del mismo dominio reservado. Se puede configurar `E2E_TEST_COACH_EMAIL` dentro de ese dominio y `E2E_TEST_COACH_PASSWORD`; por defecto la contraseña toma `E2E_COACH_PASSWORD` o el valor de prueba documentado. Su limpieza nunca selecciona las cuentas de `dev:seed`, y la semilla se detiene si encuentra otro coach en la base objetivo. Las pruebas de borrado de cuenta solo usan fixtures de la instancia E2E.
+
+```sh
+npm run test:e2e
+```
+
+En este equipo, el supervisor nativo aislado se puede iniciar desde el repo con `node ../work/t139-e2e-stack.mjs`. Este supervisor reinicia **solo la base E2E** al arrancar; no usarlo para guardar trabajo manual. Los navegadores de Playwright están en `../work/playwright-browsers`; para usarlos sin escribir en la carpeta personal:
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=../work/playwright-browsers npm run test:e2e
+```

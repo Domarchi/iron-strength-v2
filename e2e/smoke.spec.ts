@@ -11,7 +11,7 @@ test("el coach inicia sesión y llega a su panel; un correo inexistente da el mi
   page,
 }) => {
   await page.goto("/login");
-  await page.getByLabel("Correo").fill("nadie@test.local");
+  await page.getByLabel("Correo").fill("nadie@iron-strength.e2e.test");
   await page.getByLabel("Contraseña").fill("incorrecta-123");
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(

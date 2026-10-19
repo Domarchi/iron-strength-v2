@@ -48,6 +48,13 @@ Solicitado el 2026-10-19. Amplía RF-22, RF-24, RF-27, RF-50 y RF-53 a RF-60; re
 - Mantener copia de semanas, asignación y eliminación confirmada; mover herramientas secundarias a desplegables. Mantener las semanas pasadas bloqueadas en UI, acciones de servidor y RLS; las actuales/futuras siguen editables. Sin nuevas dependencias ni cambios de esquema.
 - Diseño azul/neutro, campos numéricos legibles, objetivos táctiles de 44 px y sin desbordamiento horizontal a 360 px.
 
+## Cierre E2E (T139)
+
+- Ejecutar la suite Playwright completa sobre el build de producción y Supabase local; corregir regresiones funcionales y de accesibilidad sin relajar los criterios del producto.
+- Usar una instancia Supabase exclusiva en `.env.e2e.local`, porque el esquema admite un único coach. No reutilizar servidores de producción de otra ejecución con variables públicas compiladas para una base distinta.
+- La limpieza E2E solo puede borrar cuentas del dominio reservado `iron-strength.e2e.test` y sus datos asociados, nunca las cuentas ni programas del desarrollo interactivo. Usar un coach exclusivo de la suite y limpiar los intentos de login únicamente de sus correos. Mantener la barrera de URL local.
+- Actualizar selectores obsoletos a los roles/nombres accesibles vigentes; conservar comprobaciones de resultado, guardado real, protección de datos y accesibilidad. Registrar el resultado real, los fallos corregidos y los datos locales conservados.
+
 ## Validación
 
 Regresiones de cálculo, edición, selección de descanso, compatibilidad del borrador y conexión de la UI; check completo y E2E cuando el entorno lo permita. No se incorpora código, recursos ni servicios de Hevy al producto.

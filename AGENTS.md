@@ -20,7 +20,9 @@ Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitut
 
 Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env.local`.
 
-> Los tests de integración y E2E **borran todos los usuarios locales** (y se niegan a correr si la URL no es local). Después vuelve a ejecutar `npm run dev:seed`. Los de pgTAP (`db:test`) exigen una base **sin perfiles**: haz `npx supabase db reset` antes y `npm run dev:seed` después.
+> Los tests de integración **borran todos los usuarios locales** (y se niegan a correr si la URL no es local). Después vuelve a ejecutar `npm run dev:seed`. Los de pgTAP (`db:test`) exigen una base **sin perfiles**: haz `npx supabase db reset` antes y `npm run dev:seed` después.
+>
+> E2E usa una instancia Supabase **exclusiva de pruebas**, configurada en `.env.e2e.local` (tiene prioridad sobre `.env.local`; CI puede inyectar las variables). La limpieza solo borra cuentas `@iron-strength.e2e.test` y sus archivos/intentos de login. El esquema permite un solo coach, por lo que no se puede compartir la base del desarrollo interactivo; la semilla E2E se detiene si ya contiene un coach. Nunca resetear la base de la app abierta para ejecutar E2E. Ver `docs/local-development.md`.
 
 ## Estructura
 

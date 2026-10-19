@@ -4,8 +4,16 @@ import { expect, test } from "@playwright/test";
 import { admin, createUser, resetAll, seedCoach, seedWorkout } from "./support/db";
 import { login } from "./support/ui";
 
-const ANA = { email: "ana-sec@e2e.test", name: "Ana", password: "Contraseña-E2E-2026!" };
-const BEA = { email: "bea-sec@e2e.test", name: "Bea", password: "Contraseña-E2E-2026!" };
+const ANA = {
+  email: "ana-sec@iron-strength.e2e.test",
+  name: "Ana",
+  password: "Contraseña-E2E-2026!",
+};
+const BEA = {
+  email: "bea-sec@iron-strength.e2e.test",
+  name: "Bea",
+  password: "Contraseña-E2E-2026!",
+};
 
 let coachId: string;
 let anaId: string;

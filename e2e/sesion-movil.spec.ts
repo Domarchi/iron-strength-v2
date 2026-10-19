@@ -4,7 +4,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { admin, createUser, resetAll, seedCoach, seedProgram, seedWorkout } from "./support/db";
 import { login } from "./support/ui";
 
-const LUIS = { email: "luis-movil@e2e.test", name: "Luis", password: "Contraseña-E2E-2026!" };
+const LUIS = {
+  email: "luis-movil@iron-strength.e2e.test",
+  name: "Luis",
+  password: "Contraseña-E2E-2026!",
+};
 let sessionId: string;
 
 test.beforeAll(async () => {

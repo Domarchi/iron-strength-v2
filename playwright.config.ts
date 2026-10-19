@@ -1,10 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Carga .env.local (Node 24) si existe; en CI las variables ya vienen del entorno.
-try {
-  process.loadEnvFile(".env.local");
-} catch {
-  // sin .env.local: se usan las variables del entorno
+// La base de pruebas tiene prioridad; .env.local solo completa valores ausentes.
+// Las variables ya definidas por CI conservan su precedencia (Node 24).
+for (const file of [process.env.E2E_ENV_FILE ?? ".env.e2e.local", ".env.local"]) {
+  try {
+    process.loadEnvFile(file);
+  } catch {
+    // El archivo es opcional; la validación de fixtures exige una URL local y claves.
+  }
 }
 
 const PORT = 3100;
@@ -31,7 +34,7 @@ export default defineConfig({
     // Build de producción: es lo que se despliega.
     command: `npm run build && npm run start -- -p ${PORT}`,
     url: `http://127.0.0.1:${PORT}/login`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 300_000,
   },
 });

@@ -5,7 +5,11 @@ import { mondayOf, santiagoDate } from "../src/domain/dates";
 import { COACH, resetAll, seedCoach } from "./support/db";
 import { login } from "./support/ui";
 
-const STUDENT = { email: "ana@e2e.test", name: "Ana Pérez", password: "Contraseña-E2E-2026!" };
+const STUDENT = {
+  email: "ana@iron-strength.e2e.test",
+  name: "Ana Pérez",
+  password: "Contraseña-E2E-2026!",
+};
 
 test.beforeAll(async () => {
   await resetAll();
@@ -96,7 +100,7 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await coach.getByText("Asignar a un alumno", { exact: true }).click();
   await coach.getByLabel("Alumno").selectOption({ label: STUDENT.name });
   const today = santiagoDate(new Date());
-  await coach.getByLabel("Inicio").fill(mondayOf(today));
+  await coach.getByLabel("Inicio", { exact: true }).fill(mondayOf(today));
   await coach.getByRole("button", { name: "Asignar" }).click();
   await expect(coach.getByText(`Programa de ${STUDENT.name}`)).toBeVisible();
 

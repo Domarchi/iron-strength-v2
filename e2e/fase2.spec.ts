@@ -7,8 +7,16 @@ import { login } from "./support/ui";
 
 test.describe.configure({ mode: "serial" });
 
-const EVA = { email: "eva-f2@e2e.test", name: "Eva", password: "Contraseña-E2E-2026!" };
-const OLGA = { email: "olga-f2@e2e.test", name: "Olga", password: "Contraseña-E2E-2026!" };
+const EVA = {
+  email: "eva-f2@iron-strength.e2e.test",
+  name: "Eva",
+  password: "Contraseña-E2E-2026!",
+};
+const OLGA = {
+  email: "olga-f2@iron-strength.e2e.test",
+  name: "Olga",
+  password: "Contraseña-E2E-2026!",
+};
 let coachId: string;
 let evaId: string;
 let sessionId: string;

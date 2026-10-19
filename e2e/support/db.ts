@@ -1,4 +1,6 @@
 // Utilidades de E2E contra Supabase LOCAL: crear y limpiar datos con service role.
+import { createHash } from "node:crypto";
+import { E2E_EMAIL_DOMAIN, isE2EAccount } from "../../src/lib/testing/e2e-isolation";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../src/types/database";
 
@@ -10,9 +12,10 @@ function env(name: string): string {
 }
 
 export const COACH = {
-  email: process.env.E2E_COACH_EMAIL ?? "coach-e2e@test.local",
-  password: process.env.E2E_COACH_PASSWORD ?? "Local-E2E-only-2026!",
-  name: process.env.E2E_COACH_NAME ?? "Coach E2E",
+  email: process.env.E2E_TEST_COACH_EMAIL ?? `coach@${E2E_EMAIL_DOMAIN}`,
+  password:
+    process.env.E2E_TEST_COACH_PASSWORD ?? process.env.E2E_COACH_PASSWORD ?? "Local-E2E-only-2026!",
+  name: "Coach E2E",
 };
 
 export function admin(): SupabaseClient<Database> {
@@ -27,10 +30,39 @@ export function admin(): SupabaseClient<Database> {
 }
 
 export async function resetAll(db = admin()): Promise<void> {
-  const { data } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  for (const user of data?.users ?? []) await db.auth.admin.deleteUser(user.id);
-  await db.from("login_attempts").delete().neq("email_hash", "");
-  // Los ejercicios propios del coach se borran con él (cascada); el catálogo base queda.
+  if (!isE2EAccount(COACH.email)) throw new Error(`El coach E2E debe usar @${E2E_EMAIL_DOMAIN}.`);
+  const fixtureUsers: { id: string; email?: string }[] = [];
+  for (let page = 1; ; page++) {
+    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+    fixtureUsers.push(...data.users.filter((user) => isE2EAccount(user.email)));
+    if (data.users.length < 1000) break;
+  }
+  for (const user of fixtureUsers) {
+    const { data: files, error: listError } = await db.storage
+      .from("progress-photos")
+      .list(user.id, { limit: 1000 });
+    if (listError) throw listError;
+    if (files?.length) {
+      const { error } = await db.storage
+        .from("progress-photos")
+        .remove(files.map((file) => `${user.id}/${file.name}`));
+      if (error) throw error;
+    }
+    const { error } = await db.auth.admin.deleteUser(user.id);
+    if (error) throw error;
+  }
+  const emails = [
+    ...fixtureUsers.map((user) => user.email!),
+    COACH.email,
+    `nadie@${E2E_EMAIL_DOMAIN}`,
+  ];
+  const hashes = emails.map((email) =>
+    createHash("sha256").update(email.trim().toLowerCase()).digest("hex"),
+  );
+  const { error } = await db.from("login_attempts").delete().in("email_hash", hashes);
+  if (error) throw error;
+  // Solo fixtures: el coach y los alumnos de dev:seed conservan sus IDs y programas.
 }
 
 export async function createUser(
@@ -61,6 +93,16 @@ export async function createUser(
 }
 
 export async function seedCoach(db = admin()): Promise<string> {
+  const { data: existing, error } = await db
+    .from("profiles")
+    .select("id")
+    .eq("role", "coach")
+    .maybeSingle();
+  if (error) throw error;
+  if (existing)
+    throw new Error(
+      "La base contiene otro coach. Configura una instancia Supabase exclusiva en .env.e2e.local; no se borraron los datos de desarrollo.",
+    );
   return createUser(db, {
     role: "coach",
     name: COACH.name,
