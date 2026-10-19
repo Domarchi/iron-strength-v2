@@ -10,6 +10,10 @@ const Runner = dynamic(() => import("./runner").then((m) => m.WorkoutRunner), {
   loading: () => <p className="py-6 text-sm text-muted-foreground">Preparando tu sesión…</p>,
 });
 
-export function RunnerLoader(props: { userId: string; context: WorkoutContext }) {
+export function RunnerLoader(props: {
+  userId: string;
+  context: WorkoutContext;
+  recoveryOnly?: boolean;
+}) {
   return <Runner {...props} />;
 }

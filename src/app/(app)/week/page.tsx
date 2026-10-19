@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
 import { StreakChip } from "@/components/streak/streak-chip";
 import { WeekStrip } from "@/components/week/week-strip";
+import { PendingWorkouts } from "@/components/week/pending-workouts";
 import { buildWeekStrip, nextPendingSession } from "@/domain/week-strip";
 import { getStreakSummary } from "@/lib/data/streak";
 import { getWeekView, type WeekSession } from "@/lib/data/week";
@@ -219,6 +220,11 @@ async function CoachTrainingLinks() {
   );
 }
 
+async function RecoveryLinks() {
+  const user = await requireUser();
+  return <PendingWorkouts userId={user.id} />;
+}
+
 export default function WeekPage() {
   return (
     <div className="flex flex-col gap-4">
@@ -231,6 +237,9 @@ export default function WeekPage() {
           Resumen semanal <ChevronRight className="size-4" aria-hidden />
         </Link>
       </div>
+      <Suspense fallback={null}>
+        <RecoveryLinks />
+      </Suspense>
       <Suspense fallback={null}>
         <CoachTrainingLinks />
       </Suspense>

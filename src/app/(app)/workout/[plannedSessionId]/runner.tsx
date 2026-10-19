@@ -42,11 +42,16 @@ function storage(): DraftStorage | undefined {
   }
 }
 
-function initialDraft(userId: string, context: WorkoutContext): WorkoutDraft {
+function initialDraft(
+  userId: string,
+  context: WorkoutContext,
+  recoveryOnly: boolean,
+): WorkoutDraft | null {
   const store = storage();
   pruneStale(store, userId, Date.now());
   const stored = loadDraft(store, userId, context.session.id);
   if (stored) return stored;
+  if (recoveryOnly) return null;
 
   return createDraft({
     workoutId: crypto.randomUUID(),
@@ -161,9 +166,44 @@ function ConfirmSheet({
   );
 }
 
-export function WorkoutRunner({ userId, context }: { userId: string; context: WorkoutContext }) {
+export function WorkoutRunner({
+  userId,
+  context,
+  recoveryOnly = false,
+}: {
+  userId: string;
+  context: WorkoutContext;
+  recoveryOnly?: boolean;
+}) {
+  const [initial] = useState(() => initialDraft(userId, context, recoveryOnly));
+  if (!initial) {
+    return (
+      <Card className="mt-6">
+        <CardContent className="flex flex-col gap-3">
+          <p className="font-medium">Esta sesión no está disponible hoy.</p>
+          <p className="text-sm text-muted-foreground">
+            No hay un entrenamiento pendiente en este dispositivo. Solo puedes iniciar sesiones de
+            la semana en curso.
+          </p>
+          <Button render={<Link href="/week" />}>Volver a mi semana</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+  return <ActiveWorkoutRunner userId={userId} context={context} initial={initial} />;
+}
+
+function ActiveWorkoutRunner({
+  userId,
+  context,
+  initial,
+}: {
+  userId: string;
+  context: WorkoutContext;
+  initial: WorkoutDraft;
+}) {
   const router = useRouter();
-  const [draft, setDraft] = useState<WorkoutDraft>(() => initialDraft(userId, context));
+  const [draft, setDraft] = useState<WorkoutDraft>(initial);
   const [confirming, setConfirming] = useState<"finish" | "discard" | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

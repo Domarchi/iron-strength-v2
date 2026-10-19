@@ -2,8 +2,70 @@
 import { expect, test } from "@playwright/test";
 import { admin, createUser, resetAll, seedCoach, seedProgram } from "./support/db";
 import { login } from "./support/ui";
+import { addDays, mondayOf, santiagoDate } from "../src/domain/dates";
+import { createDraft, finishDraft } from "../src/lib/workout/runner-state";
+import { draftKey } from "../src/lib/workout/draft";
 
 const STUDENT = { email: "luz@e2e.test", name: "Luz Soto", password: "Contraseña-E2E-2026!" };
+
+test("recupera desde Mi semana un entrenamiento pendiente de la semana anterior sin habilitar sesiones nuevas", async ({
+  page,
+}) => {
+  await resetAll();
+  const coachId = await seedCoach();
+  const studentId = await createUser(admin(), { role: "student", ...STUDENT, coachId });
+  const seeded = await seedProgram({ coachId, studentId });
+  const thisMonday = mondayOf(santiagoDate(new Date()));
+  const { error } = await admin()
+    .from("programs")
+    .update({
+      start_date: addDays(thisMonday, -7),
+      ends_on: addDays(thisMonday, 6),
+    })
+    .eq("id", seeded.programId);
+  expect(error).toBeNull();
+  const started = new Date(`${addDays(thisMonday, -1)}T15:00:00.000Z`);
+  const initial = createDraft({
+    workoutId: crypto.randomUUID(),
+    userId: studentId,
+    plannedSession: { id: seeded.sessionId, programId: seeded.programId, label: "A" },
+    now: started,
+    exercises: [
+      {
+        sessionExerciseId: crypto.randomUUID(),
+        exerciseId: seeded.exercises.get("Sentadilla")!,
+        name: "Sentadilla",
+        isBodyweight: false,
+        lastWeightKg: null,
+        prescribed: { sets: 1, repsMin: 8, repsMax: 12, targetWeightKg: 60 },
+      },
+    ],
+  });
+  initial.exercises[0].sets[0] = { ...initial.exercises[0].sets[0], done: true, reps: "10" };
+  const pending = finishDraft(initial, new Date(started.getTime() + 3600_000));
+  await login(page, STUDENT.email, STUDENT.password);
+  await page.evaluate(({ key, draft }) => localStorage.setItem(key, JSON.stringify(draft)), {
+    key: draftKey(studentId, seeded.sessionId),
+    draft: pending,
+  });
+  await page.goto("/week");
+  await page.getByRole("button", { name: "Recuperar", exact: true }).click();
+  await expect(page.getByText("Tu entrenamiento terminó, pero no se guardó")).toBeVisible();
+  await page.getByRole("button", { name: "Reintentar", exact: true }).click();
+  await expect(page.getByText("¡Entrenamiento guardado!")).toBeVisible();
+  const { data: saved, error: readError } = await admin()
+    .from("workouts")
+    .select("id, started_at, duration_seconds")
+    .eq("student_id", studentId);
+  expect(readError).toBeNull();
+  expect(saved).toHaveLength(1);
+  expect(saved![0]).toMatchObject({ id: pending.workoutId, duration_seconds: 3600 });
+  expect(Date.parse(saved![0].started_at)).toBe(started.getTime());
+
+  await page.goto(`/workout/${seeded.sessionId}`);
+  await expect(page.getByText("Esta sesión no está disponible hoy.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Terminar entrenamiento" })).toHaveCount(0);
+});
 
 test("sin conexión al finalizar: el entrenamiento queda a salvo y se guarda una sola vez al volver la red", async ({
   page,

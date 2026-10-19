@@ -17,7 +17,13 @@ export default async function WorkoutPage({
 }) {
   const { plannedSessionId } = await params;
   const user = await requireUser();
-  const result = await getWorkoutContext(await createClient(), user.id, plannedSessionId);
+  const result = await getWorkoutContext(
+    await createClient(),
+    user.id,
+    plannedSessionId,
+    undefined,
+    true,
+  );
 
   if (!result.ok && result.reason === "not_found") notFound();
 
@@ -37,5 +43,5 @@ export default async function WorkoutPage({
     );
   }
 
-  return <RunnerLoader userId={user.id} context={result.context} />;
+  return <RunnerLoader userId={user.id} context={result.context} recoveryOnly={!result.canStart} />;
 }

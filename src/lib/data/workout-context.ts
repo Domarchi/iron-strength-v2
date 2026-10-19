@@ -1,7 +1,7 @@
 // Contexto de una sesión a entrenar (RF-19, RF-20, RF-15b, DC-9): ejercicios en orden con su
 // prescripción, "última vez", peso previo para precargar y la sugerencia de progresión.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { santiagoDate, type DateString } from "../../domain/dates.ts";
+import { addDays, mondayOf, santiagoDate, type DateString } from "../../domain/dates.ts";
 import { lastByExercise, type HistoryWorkout, type LastPerformance } from "../../domain/history.ts";
 import { programWeekNumber } from "../../domain/program-weeks.ts";
 import { suggestProgression, type Suggestion } from "../../domain/progression.ts";
@@ -29,7 +29,8 @@ export type WorkoutContext = {
 };
 
 export type WorkoutContextResult =
-  { ok: true; context: WorkoutContext } | { ok: false; reason: "not_found" | "not_current_week" };
+  | { ok: true; context: WorkoutContext; canStart: boolean }
+  | { ok: false; reason: "not_found" | "not_current_week" };
 
 // Cuántos entrenamientos recientes se revisan para encontrar la "última vez" de cada ejercicio.
 const HISTORY_WINDOW = 60;
@@ -39,6 +40,7 @@ export async function getWorkoutContext(
   studentId: string,
   plannedSessionId: string,
   today: DateString = santiagoDate(new Date()),
+  allowRecovery = false,
 ): Promise<WorkoutContextResult> {
   const { data: session, error } = await db
     .from("program_sessions")
@@ -69,7 +71,12 @@ export async function getWorkoutContext(
     { startDate: program.start_date, endsOn: program.ends_on, weeksCount: program.weeks_count },
     today,
   );
-  if (currentWeek !== session.week_number) return { ok: false, reason: "not_current_week" };
+  const canStart = currentWeek === session.week_number;
+  const sessionWeekStart = addDays(program.start_date, (session.week_number - 1) * 7);
+  // Solo se abre una semana pasada para recuperar un borrador. Una semana futura sigue cerrada.
+  if (!canStart && !(allowRecovery && sessionWeekStart < mondayOf(today))) {
+    return { ok: false, reason: "not_current_week" };
+  }
 
   const { data: recent, error: historyError } = await db
     .from("workouts")
@@ -128,6 +135,7 @@ export async function getWorkoutContext(
 
   return {
     ok: true,
+    canStart,
     context: {
       session: {
         id: session.id,
