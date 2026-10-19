@@ -2,6 +2,8 @@
 
 Fecha: 2026-10-19. Rama: `main-54qpxa`.
 
+Actualización T136: Supabase local ya está operativo mediante el runtime nativo. Las limitaciones históricas de claves, migraciones, pgTAP e integración descritas abajo quedaron resueltas; consultar la última sección y `docs/local-development.md`. La suite automatizada de Playwright sigue pendiente.
+
 ## Verificado
 
 - `npm run check`: formato, ESLint, TypeScript, **338 pruebas unitarias/de componentes en 33 archivos** y build de producción con Turbopack.
@@ -37,3 +39,13 @@ La propuesta clara/verde de T133 fue rechazada por el usuario. Se reemplazó por
 - `npm run check` completo en verde: **350 tests en 35 archivos**, formato, ESLint, TypeScript y build de producción. Revisión adicional de React y del diff sin hallazgos accionables: cálculos derivados sin efectos, selección controlada y etiquetas accesibles, sin dependencias nuevas en la app ni cambios a la base.
 - E2E nuevo en `e2e/sesion-movil.spec.ts`, con descanso elegido, volumen, edición inválida y recarga. El intento se hizo con límite de 35 s; el servidor compila, pero `/login` falla por `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` ausente. No llegó a ejecutar el escenario autenticado. Un primer intento coincidió con el build del check y fue rechazado por el bloqueo de Next; se repitió una vez terminado ese build.
 - La galería ilustrativa `outputs/hevy-preview.html` de la carpeta padre se regeneró con los componentes actuales. Se mantiene la limitación de inspección visual del navegador documentada en T134; no se considera una auditoría visual o axe del estado T135.
+
+## T136 — Supabase local y flujo autenticado
+
+- CLI 2.120.0, runtime nativo oficial para Linux. Se conserva `supabase/config.toml` y se usan variables de entorno para el modo stack y para desactivar Storage vector. Servicios de la app: base, Auth, REST, Storage y Realtime; además Studio y correo de prueba. El supervisor local mantiene los procesos activos y los archivos viven fuera del repo, en `work/supabase-home` de la carpeta padre.
+- Se aplicaron todas las migraciones, se hizo reset local y se ejecutaron **272 comprobaciones SQL/pgTAP en 17 archivos**: todas pasan. La migración `20261019120086_atomic_login_failures.sql` y sus 11 comprobaciones ya se ejecutaron correctamente.
+- **204 pruebas de integración en 25 archivos** pasan contra la API local. Después se restauró la semilla de desarrollo: coach, dos alumnos, programa e historial del primer alumno.
+- `npm run check` vuelve a pasar completo: **350 pruebas en 35 archivos**, formato, lint, tipos y build.
+- Verificación manual en el navegador integrado contra la app real de Next: login como alumno; programa de la semana; marcar una serie con descanso de 120 s y volumen de 600 kg; editar repeticiones a 0 desmarca la serie y devuelve el volumen a 0; restaurar 10 repeticiones, marcar y finalizar guarda el entrenamiento y muestra su detalle. Una consulta REST independiente confirmó una serie de 60 kg × 10 en la base.
+- Login como coach: dos alumnos visibles, y Alumno Uno con 1 de 2 sesiones cumplidas. Se vuelve a dejar la sesión del alumno abierta para pruebas manuales.
+- La inspección visual ahora se realizó sobre esas pantallas autenticadas. No equivale a una auditoría completa de todas las vistas, todos los tamaños o axe. La suite automatizada de Playwright no se ejecutó en esta configuración.
