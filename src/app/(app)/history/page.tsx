@@ -36,7 +36,7 @@ async function WorkoutList({ cursor }: { cursor?: string }) {
 
   return (
     <>
-      <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border bg-card">
+      <ul className="divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
         {items.map((w) => (
           <li key={w.id}>
             <Link
@@ -81,7 +81,7 @@ export default async function HistoryPage({
       <PageHeading
         title="Historial"
         eyebrow="Tu recorrido"
-        description="Cada sesión es parte de tu progreso. Vuelve a ver lo que hiciste."
+        description="Tus entrenamientos guardados."
       />
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <WorkoutList cursor={antes} />

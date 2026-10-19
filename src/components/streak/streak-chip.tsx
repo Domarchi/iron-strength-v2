@@ -8,7 +8,7 @@ export function StreakChip({ current, longest }: { current: number; longest: num
   return (
     <Link
       href="/progress"
-      className="flex min-h-12 items-center gap-2 rounded-xl border bg-card px-4 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="flex min-h-12 items-center gap-2 border-t py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <Flame
         className={cn("size-5 shrink-0", current > 0 ? "text-primary" : "text-muted-foreground")}
@@ -20,7 +20,7 @@ export function StreakChip({ current, longest }: { current: number; longest: num
           <span className="font-normal text-muted-foreground"> · mejor: {weeks(longest)}</span>
         ) : null}
       </span>
-      <span className="text-xs text-muted-foreground">Ver constancia</span>
+      <span className="text-xs text-muted-foreground">Ver progreso</span>
       <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
     </Link>
   );

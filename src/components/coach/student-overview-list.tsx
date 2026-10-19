@@ -56,11 +56,11 @@ export function StudentOverviewList({
         return (
           <li
             key={student.id}
-            className="overflow-hidden rounded-2xl border bg-card transition-colors hover:border-primary/40"
+            className="overflow-hidden rounded-lg border bg-card transition-colors hover:border-primary/40"
           >
             <Link
               href={`/coach/students/${student.id}`}
-              className="flex min-h-40 items-start justify-between gap-3 p-5"
+              className="flex min-h-32 items-start justify-between gap-3 p-4"
             >
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <span className="flex flex-wrap items-center gap-2 font-semibold">

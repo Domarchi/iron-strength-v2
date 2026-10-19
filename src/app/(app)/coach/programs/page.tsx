@@ -18,7 +18,7 @@ async function TemplateList() {
     );
   }
   return (
-    <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border bg-card">
+    <ul className="divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
       {templates.map((template) => (
         <li key={template.id}>
           <Link
@@ -43,7 +43,7 @@ export default function ProgramsPage() {
       <PageHeading
         title="Programas"
         eyebrow="Planifica con intención"
-        description="Diseña cada semana y construye una base para progresar."
+        description="Plantillas de entrenamiento."
       />
 
       <section aria-labelledby="new-heading" className="flex flex-col gap-3">

@@ -22,9 +22,9 @@ export async function StudentsList() {
     <div className="flex flex-col gap-5">
       <dl className="grid grid-cols-3 gap-2 sm:gap-4">
         {counts.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border bg-card p-3 sm:p-5">
+          <div key={stat.label} className="rounded-lg border bg-card p-3 sm:p-4">
             <dt className="text-xs text-muted-foreground">{stat.label}</dt>
-            <dd className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
+            <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
               {stat.value}
             </dd>
           </div>

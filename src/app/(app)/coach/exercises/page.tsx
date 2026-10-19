@@ -41,7 +41,7 @@ async function ExerciseList({ searchParams }: { searchParams: SearchParams }) {
           ? "Mostrando los primeros 150. Usa el buscador o un grupo."
           : `${exercises.length} ejercicios`}
       </p>
-      <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border bg-card">
+      <ul className="divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
         {exercises.map((exercise) => (
           <li key={exercise.id} className="flex items-center justify-between gap-3 p-3">
             <div className="min-w-0">
@@ -99,7 +99,7 @@ export default async function ExercisesPage({ searchParams }: { searchParams: Se
       <PageHeading
         title="Ejercicios"
         eyebrow="Tu biblioteca"
-        description="Encuentra el movimiento adecuado para cada programa."
+        description="Catálogo de ejercicios."
       />
 
       <section aria-labelledby="new-heading" className="flex flex-col gap-3">

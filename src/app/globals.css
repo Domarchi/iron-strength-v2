@@ -35,6 +35,9 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -50,73 +53,79 @@
 
 :root {
   color-scheme: light;
-  --background: #f6f7f4;
-  --foreground: #202b25;
+  --background: #ffffff;
+  --foreground: #17191e;
   --card: #ffffff;
-  --card-foreground: #202b25;
+  --card-foreground: #17191e;
   --popover: #ffffff;
-  --popover-foreground: #202b25;
-  --primary: #236b50;
+  --popover-foreground: #17191e;
+  --primary: #176ac6;
   --primary-foreground: #ffffff;
-  --secondary: #e8efe8;
-  --secondary-foreground: #294536;
-  --muted: #edf1ec;
-  --muted-foreground: #627066;
-  --accent: #e8efe8;
-  --accent-foreground: #294536;
-  --destructive: #bb342d;
-  --border: #dce3db;
-  --input: #cdd7cd;
-  --ring: #236b50;
-  --chart-1: #236b50;
-  --chart-2: #597959;
-  --chart-3: #6c7770;
-  --chart-4: #9ba89c;
-  --chart-5: #c0cbc0;
-  --radius: 1rem;
-  --sidebar: #f6f7f4;
-  --sidebar-foreground: #202b25;
-  --sidebar-primary: #236b50;
+  --secondary: #eaf2fd;
+  --secondary-foreground: #185ca9;
+  --muted: #f1f3f6;
+  --muted-foreground: #606772;
+  --accent: #edf3fc;
+  --accent-foreground: #185ca9;
+  --destructive: #bf3434;
+  --border: #e0e3e8;
+  --input: #d5d9e0;
+  --ring: #176ac6;
+  --success: #177b42;
+  --success-foreground: #ffffff;
+  --success-muted: #e3f6e9;
+  --chart-1: #176ac6;
+  --chart-2: #177b42;
+  --chart-3: #707987;
+  --chart-4: #94a3b8;
+  --chart-5: #bdc5d0;
+  --radius: 0.5rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #17191e;
+  --sidebar-primary: #176ac6;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8efe8;
-  --sidebar-accent-foreground: #294536;
-  --sidebar-border: #dce3db;
-  --sidebar-ring: #236b50;
+  --sidebar-accent: #edf3fc;
+  --sidebar-accent-foreground: #185ca9;
+  --sidebar-border: #e0e3e8;
+  --sidebar-ring: #176ac6;
 }
 
 .dark {
   color-scheme: dark;
-  --background: #101713;
-  --foreground: #edf2ed;
-  --card: #19231c;
-  --card-foreground: #edf2ed;
-  --popover: #19231c;
-  --popover-foreground: #edf2ed;
-  --primary: #97d0b1;
-  --primary-foreground: #142e20;
-  --secondary: #27382b;
-  --secondary-foreground: #e0ece0;
-  --muted: #253028;
-  --muted-foreground: #abb9ac;
-  --accent: #27382b;
-  --accent-foreground: #e0ece0;
-  --destructive: #ff9e92;
-  --border: #354338;
-  --input: #4b5c4d;
-  --ring: #97d0b1;
-  --chart-1: #97d0b1;
-  --chart-2: #85ae8c;
-  --chart-3: #abb9ac;
-  --chart-4: #7c927f;
-  --chart-5: #536b57;
-  --sidebar: #101713;
-  --sidebar-foreground: #edf2ed;
-  --sidebar-primary: #97d0b1;
-  --sidebar-primary-foreground: #142e20;
-  --sidebar-accent: #27382b;
-  --sidebar-accent-foreground: #e0ece0;
-  --sidebar-border: #354338;
-  --sidebar-ring: #97d0b1;
+  --background: #111214;
+  --foreground: #f4f5f7;
+  --card: #191b1f;
+  --card-foreground: #f4f5f7;
+  --popover: #202227;
+  --popover-foreground: #f4f5f7;
+  --primary: #68b0ff;
+  --primary-foreground: #071a30;
+  --secondary: #203249;
+  --secondary-foreground: #91c4ff;
+  --muted: #24262c;
+  --muted-foreground: #a4a9b4;
+  --accent: #203249;
+  --accent-foreground: #91c4ff;
+  --destructive: #ff9b9b;
+  --border: #32353d;
+  --input: #454a55;
+  --ring: #68b0ff;
+  --success: #6bdb91;
+  --success-foreground: #072613;
+  --success-muted: #123622;
+  --chart-1: #68b0ff;
+  --chart-2: #6bdb91;
+  --chart-3: #b3bac7;
+  --chart-4: #8a97aa;
+  --chart-5: #626b7d;
+  --sidebar: #111214;
+  --sidebar-foreground: #f4f5f7;
+  --sidebar-primary: #68b0ff;
+  --sidebar-primary-foreground: #071a30;
+  --sidebar-accent: #203249;
+  --sidebar-accent-foreground: #91c4ff;
+  --sidebar-border: #32353d;
+  --sidebar-ring: #68b0ff;
 }
 
 @layer base {
@@ -125,7 +134,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    line-height: 1.6;
+    line-height: 1.5;
   }
   html {
     @apply font-sans;

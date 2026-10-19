@@ -1,6 +1,6 @@
 # Spec 004 — Correcciones de revisión y rediseño
 
-Solicitado el 2026-10-19. Amplía las specs 001–003. Dirección visual elegida por el usuario: clara y minimalista, con foco en legibilidad.
+Solicitado el 2026-10-19. Amplía las specs 001–003. Dirección inicial: clara y minimalista. El usuario rechazó esa propuesta visual y pidió una interfaz más parecida a Hevy.
 
 ## Correcciones
 
@@ -10,9 +10,12 @@ Solicitado el 2026-10-19. Amplía las specs 001–003. Dirección visual elegida
 ## Rediseño
 
 - Mantener los flujos, datos, etiquetas accesibles y permisos existentes.
-- Paleta clara de fondo gris cálido, superficies blancas, texto oscuro y acento verde profundo; variante oscura legible según el sistema.
-- Navegación reconocible, títulos con más jerarquía y espaciado consistente. En móvil se conserva la barra inferior y el modo enfoque durante el entrenamiento.
-- Login con identidad de marca y formulario sencillo; Mi semana con resumen, próxima sesión destacada y progreso visible; panel del coach con información fácil de recorrer.
+- Referencia: las pantallas oficiales de rutinas y registro de Hevy (`https://www.hevyapp.com/features/track-workouts/`). Se adoptan sus patrones funcionales y densidad; se conserva la identidad Iron Strength.
+- Superficies neutras, azul para acciones y verde para series completadas. Temas claro y oscuro según el sistema; bordes discretos y radios pequeños.
+- Navegación compacta y títulos de tamaño de aplicación. En móvil se conserva la barra inferior y el modo enfoque durante el entrenamiento; se elimina el aspecto de dashboard con una barra lateral ancha y textos promocionales.
+- Mi semana prioriza las rutinas: resumen y calendario compactos seguidos de tarjetas con ejercicios y acción de inicio. La próxima sesión sigue identificada con Hoy toca y no desaparecen las sesiones completadas ni la opción de repetirlas.
+- El registro presenta los ejercicios como secciones continuas y filas compactas SERIE / ANTERIOR / KG / REPS / check. Las filas completadas se marcan en verde; la cabecera muestra duración y avance, con Terminar accesible.
+- Login directo con formulario, sin eslóganes ni gráficos decorativos. El coach conserva el seguimiento de alumnos con la misma densidad visual.
 - Objetivos táctiles de 44 px, contraste AA, sin scroll horizontal desde 360 px y respeto de movimiento reducido.
 - Sin dependencias nuevas, servicios de pago ni cambios a las reglas de entrenamiento.
 

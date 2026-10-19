@@ -50,7 +50,7 @@ async function ExerciseList() {
   return (
     <>
       <ConstancyStrip {...streak} />
-      <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border bg-card">
+      <ul className="divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
         {list.map((e) => (
           <li key={e.exerciseId}>
             <Link
@@ -82,7 +82,7 @@ export default function ProgressPage() {
       <PageHeading
         title="Progreso"
         eyebrow="Paso a paso"
-        description="Tus marcas, tu constancia y todo lo que has avanzado."
+        description="Marcas personales y constancia."
       />
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <ExerciseList />

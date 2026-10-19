@@ -12,7 +12,7 @@ export default function StudentsPage() {
       <PageHeading
         title="Alumnos"
         eyebrow="Espacio del coach"
-        description="Acompaña su constancia. Revisa cómo va cada uno."
+        description="Actividad y cumplimiento de tus alumnos."
       />
 
       <section aria-labelledby="students-heading" className="flex flex-col gap-4">
@@ -26,7 +26,7 @@ export default function StudentsPage() {
 
       <section
         aria-labelledby="invite-heading"
-        className="flex flex-col gap-4 rounded-2xl border bg-card p-5 sm:p-6"
+        className="flex flex-col gap-4 rounded-lg border bg-card p-5 sm:p-6"
       >
         <h2 id="invite-heading" className="text-lg font-medium">
           Invitar a un alumno

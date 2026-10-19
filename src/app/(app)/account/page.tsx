@@ -19,10 +19,10 @@ export default async function AccountPage() {
       <PageHeading
         title="Mi cuenta"
         eyebrow="Tu espacio"
-        description="Tus datos y las opciones de tu cuenta, en un solo lugar."
+        description="Gestiona tu cuenta y tus datos."
       />
 
-      <section aria-label="Datos de la cuenta" className="rounded-2xl border bg-card p-5 sm:p-6">
+      <section aria-label="Datos de la cuenta" className="rounded-lg border bg-card p-5 sm:p-6">
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           <dt className="text-muted-foreground">Nombre</dt>
           <dd className="font-medium">{user.fullName}</dd>

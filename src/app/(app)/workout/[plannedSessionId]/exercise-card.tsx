@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, MoreVertical, Plus, SkipForward, Trash2, Flame } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  MoreVertical,
+  Plus,
+  SkipForward,
+  Trash2,
+  Flame,
+  Dumbbell,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatKg, formatPrescription } from "@/domain/format";
@@ -30,7 +39,7 @@ function Suggestion({ info }: { info: ContextExercise }) {
   const s = info.suggestion;
   if (!s) return null;
   return (
-    <p className="rounded-md border-l-4 border-primary bg-muted px-3 py-2 text-xs text-foreground">
+    <p className="text-xs text-primary">
       {s.kind === "increase"
         ? `Sugerencia: sube a ${formatKg(s.weightKg)} y apunta a ${s.reps} repeticiones.`
         : `Sugerencia: mantén ${formatKg(s.weightKg)} y apunta a ${s.reps} repeticiones.`}
@@ -69,16 +78,16 @@ export function ExerciseCard({
     return (
       <section
         aria-label={exercise.name}
-        className="rounded-2xl border border-primary/40 bg-card text-card-foreground"
+        className="border-b border-success/40 py-2 text-foreground"
       >
         <button
           type="button"
           aria-expanded={false}
           aria-label={`${exercise.name}, completado. Ver las series`}
           onClick={() => setReopened(true)}
-          className="flex min-h-14 w-full items-center gap-3 rounded-xl px-4 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="flex min-h-14 w-full items-center gap-3 px-1 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+          <span className="grid size-7 shrink-0 place-items-center rounded bg-success text-success-foreground">
             <Check className="size-4" aria-hidden />
           </span>
           <span className="min-w-0 flex-1">
@@ -92,11 +101,14 @@ export function ExerciseCard({
   }
 
   return (
-    <section aria-label={exercise.name} className="rounded-2xl border bg-card text-card-foreground">
-      <header className="flex items-start gap-2 rounded-t-2xl bg-muted/30 px-4 py-4">
+    <section aria-label={exercise.name} className="border-b pb-4 text-foreground">
+      <header className="flex items-center gap-3 pt-3 pb-2">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted">
+          <Dumbbell className="size-6 text-primary" aria-hidden />
+        </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg leading-tight font-semibold">{exercise.name}</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-base leading-tight font-semibold text-primary">{exercise.name}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
             {formatPrescription(exercise.prescribed)} ·{" "}
             <span className="tabular-nums">
               {done}/{total} hechas
@@ -122,7 +134,7 @@ export function ExerciseCard({
       </header>
 
       {menuOpen ? (
-        <div className="px-4 pt-1">
+        <div className="pt-1">
           <Button
             type="button"
             variant="outline"
@@ -137,7 +149,7 @@ export function ExerciseCard({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-2 px-4 pt-4">
+      <div className="flex flex-col gap-1.5 py-2">
         {info?.note ? <p className="text-sm">{info.note}</p> : null}
         {info ? <Suggestion info={info} /> : null}
         {info && !info.last ? (
@@ -145,7 +157,7 @@ export function ExerciseCard({
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-2 px-4 py-3">
+      <div className="flex flex-col gap-1 py-2">
         <div
           className={cn(
             COLUMNS,
@@ -172,8 +184,8 @@ export function ExerciseCard({
               <div
                 className={cn(
                   COLUMNS,
-                  "-mx-2 rounded-lg px-2 py-1 transition-colors",
-                  set.done && "bg-primary/10",
+                  "-mx-2 rounded px-2 py-1 transition-colors",
+                  set.done && "bg-success-muted",
                 )}
               >
                 <button
@@ -182,7 +194,7 @@ export function ExerciseCard({
                   aria-expanded={openSet === setIdx}
                   onClick={() => setOpenSet(openSet === setIdx ? null : setIdx)}
                   className={cn(
-                    "grid h-12 place-items-center rounded-lg text-base font-semibold tabular-nums outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                    "grid h-11 place-items-center rounded text-base font-semibold tabular-nums outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                     set.isWarmup ? "text-primary" : "text-muted-foreground",
                   )}
                 >
@@ -194,7 +206,7 @@ export function ExerciseCard({
                     type="button"
                     aria-label={`Copiar lo anterior en la serie ${n} de ${exercise.name}: ${previousText} (kg × repeticiones)`}
                     onClick={() => onCopyPrevious(setIdx)}
-                    className="h-12 truncate rounded-lg text-sm text-foreground/75 tabular-nums outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="h-11 truncate rounded text-sm text-muted-foreground tabular-nums outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
                     {previousText}
                   </button>
@@ -210,7 +222,10 @@ export function ExerciseCard({
                   value={set.weight}
                   placeholder={exercise.isBodyweight ? "0" : ""}
                   onChange={(e) => onField(setIdx, "weight", e.target.value)}
-                  className="h-12 px-1 text-center text-lg font-semibold tabular-nums md:text-lg"
+                  className={cn(
+                    "h-11 rounded border-transparent bg-muted px-1 text-center text-base font-semibold tabular-nums md:text-base dark:bg-muted",
+                    set.done && "bg-transparent dark:bg-transparent",
+                  )}
                 />
                 <Input
                   aria-label={`Repeticiones de la serie ${n} de ${exercise.name}`}
@@ -218,7 +233,10 @@ export function ExerciseCard({
                   value={set.reps}
                   placeholder={String(previous?.reps ?? exercise.prescribed.repsMin)}
                   onChange={(e) => onField(setIdx, "reps", e.target.value)}
-                  className="h-12 px-1 text-center text-lg font-semibold tabular-nums md:text-lg"
+                  className={cn(
+                    "h-11 rounded border-transparent bg-muted px-1 text-center text-base font-semibold tabular-nums md:text-base dark:bg-muted",
+                    set.done && "bg-transparent dark:bg-transparent",
+                  )}
                 />
 
                 <button
@@ -227,10 +245,10 @@ export function ExerciseCard({
                   aria-pressed={set.done}
                   onClick={() => onToggleDone(setIdx)}
                   className={cn(
-                    "grid size-12 place-items-center rounded-2xl border-2 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+                    "grid size-11 place-items-center rounded outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
                     set.done
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-muted text-muted-foreground hover:border-primary",
+                      ? "bg-success text-success-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-primary/15 hover:text-primary",
                   )}
                 >
                   <Check className="size-6" aria-hidden />
@@ -273,7 +291,12 @@ export function ExerciseCard({
           );
         })}
 
-        <Button type="button" variant="ghost" size="lg" className="w-full" onClick={onAddSet}>
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-2 w-full bg-muted text-foreground"
+          onClick={onAddSet}
+        >
           <Plus aria-hidden /> Agregar serie
         </Button>
       </div>

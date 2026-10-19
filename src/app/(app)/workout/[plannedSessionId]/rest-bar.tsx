@@ -66,7 +66,7 @@ export function RestBar({
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-2">
+      <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 py-2">
         <Timer className="size-5 shrink-0 text-muted-foreground" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">

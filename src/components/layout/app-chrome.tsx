@@ -33,16 +33,9 @@ export function AppChrome({
         Saltar al contenido
       </a>
       {focus ? null : header}
-      <div
-        className={cn(
-          "mx-auto w-full flex-1 px-4",
-          focus
-            ? "max-w-2xl"
-            : "max-w-7xl md:grid md:grid-cols-[12rem_minmax(0,1fr)] md:gap-10 md:px-8",
-        )}
-      >
-        {focus ? null : <div className="md:border-r md:pr-6 md:pt-8">{nav}</div>}
-        <main id="main-content" className={cn("min-w-0", focus ? "py-0" : "py-7 md:py-10")}>
+      <div className={cn("mx-auto w-full flex-1 px-4", focus ? "max-w-2xl" : "max-w-5xl md:px-6")}>
+        {focus ? null : nav}
+        <main id="main-content" className={cn("min-w-0", focus ? "py-0" : "py-5 md:py-6")}>
           {children}
         </main>
       </div>

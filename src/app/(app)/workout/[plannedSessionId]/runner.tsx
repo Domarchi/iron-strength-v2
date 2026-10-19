@@ -365,9 +365,9 @@ function ActiveWorkoutRunner({
   const percent = summary.totalSets === 0 ? 0 : (summary.doneSets / summary.totalSets) * 100;
 
   return (
-    <div className={rest ? "flex flex-col gap-4 pb-28" : "flex flex-col gap-4 pb-6"}>
-      <header className="sticky top-0 z-30 -mx-4 border-b bg-card pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center gap-2 px-2 py-3">
+    <div className={rest ? "flex flex-col gap-3 pb-28" : "flex flex-col gap-3 pb-6"}>
+      <header className="sticky top-0 z-30 -mx-4 border-b bg-background pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center gap-2 px-2 py-2">
           <Button
             variant="ghost"
             size="icon"
@@ -380,22 +380,39 @@ function ActiveWorkoutRunner({
             <h1 className="truncate text-base leading-tight font-semibold">
               Sesión {context.session.label} · Semana {context.session.weekNumber}
             </h1>
-            <p className="truncate text-xs text-muted-foreground">
-              <Elapsed startedAt={draft.startedAt} /> · {summary.doneSets}/{summary.totalSets}{" "}
-              series
-            </p>
           </div>
           <Button onClick={requestFinish} disabled={saving} aria-label="Terminar entrenamiento">
             Terminar
           </Button>
         </div>
+        <dl className="grid grid-cols-3 gap-3 border-t px-4 py-3">
+          <div>
+            <dt className="text-[11px] text-muted-foreground">Duración</dt>
+            <dd className="mt-1 text-sm font-semibold text-primary tabular-nums">
+              <Elapsed startedAt={draft.startedAt} />
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] text-muted-foreground">Series</dt>
+            <dd className="mt-1 text-sm font-semibold tabular-nums">
+              {summary.doneSets}
+              <span className="font-normal text-muted-foreground"> / {summary.totalSets}</span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] text-muted-foreground">Ejercicios</dt>
+            <dd className="mt-1 text-sm font-semibold tabular-nums">
+              {draft.exercises.length - summary.skippedExercises}
+            </dd>
+          </div>
+        </dl>
         <div
           role="progressbar"
           aria-label="Avance de la sesión"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(percent)}
-          className="h-1 bg-muted"
+          className="h-0.5 bg-muted"
         >
           <div className="h-full bg-primary transition-[width]" style={{ width: `${percent}%` }} />
         </div>
@@ -456,7 +473,11 @@ function ActiveWorkoutRunner({
         <Button size="lg" onClick={requestFinish} disabled={saving}>
           Finalizar entrenamiento
         </Button>
-        <Button variant="ghost" onClick={() => setConfirming("discard")}>
+        <Button
+          variant="ghost"
+          className="text-destructive"
+          onClick={() => setConfirming("discard")}
+        >
           Descartar sesión
         </Button>
       </div>

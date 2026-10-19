@@ -152,7 +152,7 @@ export default async function BodyPage({ searchParams }: { searchParams: SearchP
         <PageHeading
           title={readOnly ? "Medidas del alumno" : "Cuerpo"}
           eyebrow="Más allá de las marcas"
-          description="Registra tus medidas y observa los cambios a tu ritmo."
+          description="Medidas y fotos de progreso."
         />
       </header>
 

@@ -21,7 +21,7 @@ function describe(day: StripDay): string {
 // Lunes a domingo (RF-61): el día de hoy con anillo y los días entrenados rellenos.
 export function WeekStrip({ days }: { days: StripDay[] }) {
   return (
-    <ol aria-label="Días de la semana" className="grid grid-cols-7 gap-1 sm:gap-3">
+    <ol aria-label="Días de la semana" className="grid grid-cols-7 gap-1">
       {days.map((day) => (
         <li
           key={day.date}
@@ -41,11 +41,11 @@ export function WeekStrip({ days }: { days: StripDay[] }) {
           <span
             aria-hidden
             className={cn(
-              "grid size-10 place-items-center rounded-xl border text-sm font-semibold tabular-nums",
+              "grid size-8 place-items-center rounded-full border text-xs font-semibold tabular-nums",
               day.trained
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-transparent bg-muted/60 text-muted-foreground",
-              day.isToday && !day.trained && "border-2 border-primary bg-primary/5 text-foreground",
+                : "border-transparent text-muted-foreground",
+              day.isToday && !day.trained && "border-primary bg-primary/10 text-primary",
               day.isToday &&
                 day.trained &&
                 "ring-2 ring-primary ring-offset-2 ring-offset-background",

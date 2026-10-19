@@ -54,6 +54,6 @@ Usuarios de prueba locales (ver `.env.example`): `coach-e2e@test.local`, `alumno
 - `specs/001-mvp/`: spec, clarificación, plan, tareas, revisión de seguridad y validación
 - `specs/002-mobile-ux/`: spec y tareas de la experiencia móvil
 - `specs/003-fase2/`: spec y tareas de la Fase 2
-- `specs/004-review-redesign/`: login atómico, recuperación de sesiones entre semanas y rediseño claro y minimalista.
+- `specs/004-review-redesign/`: login atómico, recuperación de sesiones entre semanas y rediseño de entrenamiento inspirado en Hevy.
 - `docs/despliegue.md`: cómo ponerla en producción
 - `docs/codex.md`: cómo trabajar con Codex

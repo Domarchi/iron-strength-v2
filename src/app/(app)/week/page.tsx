@@ -96,14 +96,14 @@ async function RecoveryLinks() {
 
 export default function WeekPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <PageHeading
         title="Mi semana"
         eyebrow="Tu entrenamiento"
-        description="Haz espacio para ti. Tu próxima sesión te espera."
+        description=""
         action={
           <Link
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border bg-card px-4 text-sm font-medium text-primary hover:bg-muted"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md px-1 text-sm font-medium text-primary hover:bg-muted"
             href="/week/summary"
             aria-label="Resumen semanal"
           >

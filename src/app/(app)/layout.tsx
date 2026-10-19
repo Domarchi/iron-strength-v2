@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppChrome
       header={
         <header className="border-b bg-card pt-[env(safe-area-inset-top)]">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-8">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2 md:px-6">
             <Link
               href={user.role === "coach" ? "/coach/students" : "/week"}
               aria-label="Iron Strength, inicio"
