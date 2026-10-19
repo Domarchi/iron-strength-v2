@@ -55,3 +55,4 @@ Usuarios de prueba locales (ver `.env.example`): `coach-e2e@test.local`, `alumno
 - `specs/002-mobile-ux/`: spec y tareas de la experiencia móvil
 - `specs/003-fase2/`: spec y tareas de la Fase 2
 - `docs/despliegue.md`: cómo ponerla en producción
+- `docs/codex.md`: cómo trabajar con Codex
