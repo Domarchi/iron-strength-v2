@@ -143,6 +143,38 @@ test("un ejercicio completo se pliega y se puede volver a abrir (RF-56)", async 
   await expect(page.getByLabel("Peso de la serie 1 de Sentadilla (kg)")).toBeVisible();
 });
 
+test("teclado, deshacer y descanso recuperado al recargar (T137)", async ({ page }) => {
+  await openSession(page);
+  await page.getByLabel("Descanso automático de Sentadilla").selectOption("120");
+  const weight = page.getByLabel("Peso de la serie 1 de Sentadilla (kg)");
+  const reps = page.getByLabel("Repeticiones de la serie 1 de Sentadilla");
+  await weight.fill("62,5");
+  await weight.press("Enter");
+  await expect(reps).toBeFocused();
+  await reps.fill("10");
+  await reps.press("Enter");
+  await expect(page.getByLabel("Peso de la serie 2 de Sentadilla (kg)")).toBeFocused();
+  await expect(page.getByLabel("Volumen de trabajo")).toHaveText("625 kg");
+  const undo = page.getByRole("button", { name: "Deshacer última acción" });
+  await undo.click();
+  await expect(page.getByLabel("Volumen de trabajo")).toHaveText("0 kg");
+  await expect(page.getByRole("timer")).toHaveCount(0);
+  await reps.press("Enter");
+  await page.getByRole("button", { name: "Serie 1 de Sentadilla, opciones", exact: true }).click();
+  await page.getByRole("button", { name: "Quitar la serie 1 de Sentadilla", exact: true }).click();
+  await undo.click();
+  await expect(weight).toHaveValue("62,5");
+  await expect(reps).toHaveValue("10");
+  const before = await clockSeconds(page);
+  await page.reload();
+  await expect(page.getByRole("timer")).toBeVisible();
+  expect(await clockSeconds(page)).toBeLessThanOrEqual(before);
+  expect(await clockSeconds(page)).toBeGreaterThan(0);
+  await expect(page.getByLabel("Volumen de trabajo")).toHaveText("625 kg");
+  await expect(page.getByText("Guardado en este dispositivo", { exact: true })).toBeVisible();
+  await expect(undo).toHaveCount(0);
+});
+
 test("Terminar guarda la sesión desde la barra superior (RF-59)", async ({ page }) => {
   await openSession(page);
   await page.getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla" }).click();

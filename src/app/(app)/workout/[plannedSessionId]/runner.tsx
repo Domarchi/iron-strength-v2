@@ -1,22 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleCheck, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { restAfterSet, type Rest } from "@/domain/rest-timer";
 import { formatKg } from "@/domain/format";
 import type { WorkoutContext } from "@/lib/data/workout-context";
-import {
-  clearDraft,
-  loadDraft,
-  pruneStale,
-  saveDraft,
-  type DraftStorage,
-  type WorkoutDraft,
-} from "@/lib/workout/draft";
+import { clearDraft, loadDraft, type DraftStorage, type WorkoutDraft } from "@/lib/workout/draft";
+import { createDraftPersistence, type DraftSaveStatus } from "@/lib/workout/draft-persistence";
 import {
   addSet,
   buildPayload,
@@ -25,6 +19,8 @@ import {
   createDraft,
   finishDraft,
   previousForSet,
+  nextPendingExercise,
+  isExerciseComplete,
   removeSet,
   setSkipped,
   setExerciseRestSeconds,
@@ -51,7 +47,6 @@ function initialDraft(
   recoveryOnly: boolean,
 ): WorkoutDraft | null {
   const store = storage();
-  pruneStale(store, userId, Date.now());
   const stored = loadDraft(store, userId, context.session.id);
   if (stored) return stored;
   if (recoveryOnly) return null;
@@ -88,16 +83,43 @@ const FAILURE_MESSAGES = {
 
 const NETWORK_MESSAGE =
   "No hay conexión con el servidor. Tu entrenamiento está a salvo en este dispositivo; se guardará solo cuando vuelva la conexión.";
+const UNSAVED_NETWORK_MESSAGE =
+  "No hay conexión con el servidor y no se pudo guardar una copia en el dispositivo. Mantén esta página abierta y reintenta el guardado.";
+
+function DraftStatus({ status, onRetry }: { status: DraftSaveStatus; onRetry: () => void }) {
+  if (status === "error")
+    return (
+      <div
+        role="alert"
+        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm"
+      >
+        <p className="flex-1 text-destructive">
+          No se pudo guardar en este dispositivo. Tu avance sigue en esta página; mantenla abierta.
+        </p>
+        <Button variant="outline" aria-label="Reintentar guardado local" onClick={onRetry}>
+          Reintentar
+        </Button>
+      </div>
+    );
+  return (
+    <p role="status" className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <CircleCheck className="size-3.5" aria-hidden />
+      {status === "saved" ? "Guardado en este dispositivo" : "Guardando en este dispositivo…"}
+    </p>
+  );
+}
+
+function elapsedSeconds(startedAt: string) {
+  return Math.max(0, Math.floor((Date.now() - Date.parse(startedAt)) / 1000));
+}
 
 function Elapsed({ startedAt }: { startedAt: string }) {
-  const [seconds, setSeconds] = useState<number | null>(null);
+  const [seconds, setSeconds] = useState(() => elapsedSeconds(startedAt));
   useEffect(() => {
-    const tick = () =>
-      setSeconds(Math.max(0, Math.floor((Date.now() - Date.parse(startedAt)) / 1000)));
+    const tick = () => setSeconds(elapsedSeconds(startedAt));
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [startedAt]);
-  if (seconds === null) return <span aria-hidden>--:--</span>;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
@@ -210,24 +232,51 @@ function ActiveWorkoutRunner({
   const [confirming, setConfirming] = useState<"finish" | "discard" | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rest, setRest] = useState<Rest | null>(null);
   const [hint, setHint] = useState<{ setId: string; text: string } | null>(null);
+  const [activeId, setActiveId] = useState(
+    () => nextPendingExercise(initial)?.sessionExerciseId ?? null,
+  );
+  const [undo, setUndo] = useState<{
+    draft: WorkoutDraft;
+    message: string;
+    exerciseId: string | null;
+  } | null>(null);
+  const [persistence] = useState(() => createDraftPersistence(storage));
+  const saveStatus = useSyncExternalStore(
+    persistence.subscribe,
+    persistence.getSnapshot,
+    persistence.getSnapshot,
+  );
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rest = draft.rest ?? null;
 
   const draftRef = useRef(draft);
   const savingRef = useRef(false);
 
   useWakeLock(draft.status === "in_progress");
 
-  // Cada cambio se guarda en el dispositivo (RF-22).
+  // La primera copia y cada cambio informan su resultado real; los cambios se escriben en commit.
   useEffect(() => {
-    saveDraft(storage(), draft);
-  }, [draft]);
+    persistence.persist(draftRef.current);
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (persistence.getSnapshot() === "error") {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => window.removeEventListener("beforeunload", beforeUnload);
+  }, [persistence]);
 
   // El borrador vigente se actualiza al instante (sin esperar al render) para que dos toques
   // seguidos nunca trabajen sobre un estado viejo.
-  const commit = (next: WorkoutDraft) => {
+  const commit = (next: WorkoutDraft, undoMessage?: string) => {
+    setUndo(
+      undoMessage ? { draft: draftRef.current, message: undoMessage, exerciseId: activeId } : null,
+    );
     const stamped = { ...next, updatedAt: new Date().toISOString() };
     draftRef.current = stamped;
+    persistence.persist(stamped);
     setDraft(stamped);
   };
   const update = (fn: (d: WorkoutDraft) => WorkoutDraft) => {
@@ -249,14 +298,65 @@ function ActiveWorkoutRunner({
     if (!result.completed && !wasDone) {
       const set = current.exercises[exIdx]?.sets[setIdx];
       if (set) setHint({ setId: set.id, text: HINT_TEXT });
-      return;
+      return false;
     }
     setHint(null);
-    commit(result.draft);
+    const next = result.completed
+      ? {
+          ...result.draft,
+          rest: restAfterSet(
+            new Date().getTime(),
+            result.wasWarmup,
+            current.exercises[exIdx].restSeconds,
+          ),
+        }
+      : result.draft;
+    commit(
+      next,
+      result.completed
+        ? `Serie ${setIdx + 1} de ${current.exercises[exIdx].name} completada`
+        : undefined,
+    );
     if (result.completed) {
-      setRest(
-        restAfterSet(new Date().getTime(), result.wasWarmup, current.exercises[exIdx].restSeconds),
-      );
+      const exercise = next.exercises[exIdx];
+      if (isExerciseComplete(exercise))
+        setActiveId(
+          nextPendingExercise(next, exercise.sessionExerciseId)?.sessionExerciseId ?? null,
+        );
+    }
+    return true;
+  }
+
+  function focusField(exerciseId: string, setId?: string) {
+    setActiveId(exerciseId);
+    requestAnimationFrame(() => {
+      const section = [
+        ...(containerRef.current?.querySelectorAll<HTMLElement>("[data-exercise-id]") ?? []),
+      ].find((node) => node.dataset.exerciseId === exerciseId);
+      const input = [
+        ...(section?.querySelectorAll<HTMLInputElement>("input[data-set-id]") ?? []),
+      ].find((node) => !setId || node.dataset.setId === setId);
+      input?.focus({ preventScroll: true });
+      section?.scrollIntoView?.({
+        block: "start",
+        behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+      });
+    });
+  }
+
+  function completeAndAdvance(exIdx: number, setIdx: number) {
+    const exercise = draftRef.current.exercises[exIdx];
+    if (!exercise.sets[setIdx].done && !toggleSet(exIdx, setIdx)) return;
+    const updated = draftRef.current.exercises[exIdx];
+    const nextSet =
+      updated.sets.slice(setIdx + 1).find((set) => !set.done) ??
+      updated.sets.find((set) => !set.done);
+    if (nextSet) focusField(updated.sessionExerciseId, nextSet.id);
+    else {
+      const next = nextPendingExercise(draftRef.current, updated.sessionExerciseId);
+      if (next) focusField(next.sessionExerciseId);
     }
   }
 
@@ -284,13 +384,13 @@ function ActiveWorkoutRunner({
         setError(FAILURE_MESSAGES[result.reason]);
       } catch {
         // Sin red (RF-24): el borrador queda como "pendiente de guardar" y se reintenta solo.
-        setError(NETWORK_MESSAGE);
+        setError(persistence.getSnapshot() === "saved" ? NETWORK_MESSAGE : UNSAVED_NETWORK_MESSAGE);
       } finally {
         savingRef.current = false;
         setSaving(false);
       }
     },
-    [router],
+    [router, persistence],
   );
 
   // Al volver la conexión, reintenta una sesión terminada que no se pudo guardar.
@@ -304,6 +404,7 @@ function ActiveWorkoutRunner({
 
   const summary = summarize(draft);
   const volume = workoutVolume(draft);
+  const nextExercise = activeId ? nextPendingExercise(draft, activeId) : null;
 
   function requestFinish() {
     if (summary.doneSets === 0) {
@@ -316,7 +417,6 @@ function ActiveWorkoutRunner({
 
   async function confirmFinish() {
     setConfirming(null);
-    setRest(null);
     const finished = finishDraft(draftRef.current, new Date());
     commit(finished);
     await submit(finished);
@@ -333,12 +433,20 @@ function ActiveWorkoutRunner({
       <div className="py-6">
         <Card role="region" aria-label="Entrenamiento pendiente de guardar">
           <CardHeader>
-            <CardTitle className="text-lg">Tu entrenamiento terminó, pero no se guardó</CardTitle>
+            <CardTitle className="text-lg">
+              {saving ? "Guardando entrenamiento…" : "Tu entrenamiento terminó, pero no se guardó"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <p className="text-sm text-muted-foreground">
-              Está a salvo en este dispositivo. Reintenta cuando tengas conexión: no se duplicará.
+              {saveStatus === "saved"
+                ? "Está a salvo en este dispositivo. Reintenta cuando tengas conexión: no se duplicará."
+                : "Tu avance sigue en esta página. Mantenla abierta hasta que se guarde correctamente."}
             </p>
+            <DraftStatus
+              status={saveStatus}
+              onRetry={() => persistence.persist(draftRef.current)}
+            />
             {error ? (
               <p role="alert" className="text-sm text-destructive">
                 {error}
@@ -373,13 +481,20 @@ function ActiveWorkoutRunner({
   const percent = summary.totalSets === 0 ? 0 : (summary.doneSets / summary.totalSets) * 100;
 
   return (
-    <div className={rest ? "flex flex-col gap-3 pb-28" : "flex flex-col gap-3 pb-6"}>
+    <div
+      ref={containerRef}
+      className={rest || undo ? "flex flex-col gap-4 pb-48" : "flex flex-col gap-4 pb-6"}
+    >
       <header className="sticky top-0 z-30 -mx-4 border-b bg-background pt-[env(safe-area-inset-top)]">
         <div className="flex items-center gap-2 px-2 py-2">
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Volver a Mi semana (tu avance queda guardado)"
+            aria-label={
+              saveStatus === "error"
+                ? "Volver a Mi semana (copia local no disponible)"
+                : "Volver a Mi semana (tu avance queda guardado)"
+            }
             render={<Link href="/week" />}
           >
             <ChevronLeft aria-hidden />
@@ -414,6 +529,21 @@ function ActiveWorkoutRunner({
             </dd>
           </div>
         </dl>
+        <div className="flex flex-wrap items-center justify-between gap-x-2 px-4 pb-2">
+          <DraftStatus status={saveStatus} onRetry={() => persistence.persist(draftRef.current)} />
+          {nextExercise && nextExercise.sessionExerciseId !== activeId ? (
+            <Button
+              variant="ghost"
+              aria-label="Siguiente ejercicio"
+              onClick={() => {
+                const next = nextPendingExercise(draftRef.current, activeId ?? undefined);
+                if (next) focusField(next.sessionExerciseId);
+              }}
+            >
+              Siguiente <ChevronRight aria-hidden />
+            </Button>
+          ) : null}
+        </div>
         {volume.bodyweightReps > 0 ? (
           <p className="px-4 pb-2 text-xs text-muted-foreground">
             Además, {volume.bodyweightReps} repeticiones sin carga
@@ -458,6 +588,9 @@ function ActiveWorkoutRunner({
           <ExerciseCard
             key={exercise.sessionExerciseId}
             exercise={exercise}
+            active={activeId === exercise.sessionExerciseId}
+            onActivate={() => setActiveId(exercise.sessionExerciseId)}
+            onCompleteAndAdvance={(setIdx) => completeAndAdvance(exIdx, setIdx)}
             info={info}
             hint={hint}
             onField={(setIdx, field, value) =>
@@ -469,7 +602,13 @@ function ActiveWorkoutRunner({
               if (previous) update((d) => copyPrevious(d, exIdx, setIdx, previous));
             }}
             onToggleWarmup={(setIdx) => update((d) => toggleWarmup(d, exIdx, setIdx))}
-            onRemoveSet={(setIdx) => update((d) => removeSet(d, exIdx, setIdx))}
+            onRemoveSet={(setIdx) => {
+              setHint(null);
+              commit(
+                removeSet(draftRef.current, exIdx, setIdx),
+                `Serie ${setIdx + 1} de ${exercise.name} eliminada`,
+              );
+            }}
             onAddSet={() => update((d) => addSet(d, exIdx))}
             onSkip={() => update((d) => setSkipped(d, exIdx, true))}
             onRestChange={(seconds) => update((d) => setExerciseRestSeconds(d, exIdx, seconds))}
@@ -496,7 +635,32 @@ function ActiveWorkoutRunner({
         </Button>
       </div>
 
-      {rest ? <RestBar rest={rest} onChange={setRest} onDismiss={() => setRest(null)} /> : null}
+      {undo ? (
+        <div
+          role="status"
+          className={`fixed inset-x-4 z-40 mx-auto flex max-w-lg items-center gap-3 rounded-xl border border-primary/30 bg-card p-3 shadow-lg ${rest ? "bottom-[calc(6.5rem+env(safe-area-inset-bottom))]" : "bottom-[calc(1rem+env(safe-area-inset-bottom))]"}`}
+        >
+          <p className="flex-1 text-sm">{undo.message}</p>
+          <Button
+            variant="secondary"
+            aria-label="Deshacer última acción"
+            onClick={() => {
+              const previous = undo;
+              commit(previous.draft);
+              setActiveId(previous.exerciseId);
+            }}
+          >
+            <Undo2 aria-hidden /> Deshacer
+          </Button>
+        </div>
+      ) : null}
+      {rest ? (
+        <RestBar
+          rest={rest}
+          onChange={(next: Rest) => commit({ ...draftRef.current, rest: next })}
+          onDismiss={() => commit({ ...draftRef.current, rest: null })}
+        />
+      ) : null}
 
       {confirming === "finish" ? (
         <ConfirmSheet

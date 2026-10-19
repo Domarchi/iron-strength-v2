@@ -8,8 +8,6 @@ import { z } from "zod";
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
 
 const PREFIX = "is:draft:v1:";
-// Una sesión "en curso" sin tocar durante 24 h se considera abandonada.
-export const STALE_AFTER_MS = 24 * 3600_000;
 
 const setSchema = z.object({
   id: z.string(),
@@ -48,6 +46,14 @@ const draftSchema = z.object({
   status: z.enum(["in_progress", "pending_save"]),
   finishedAt: z.string().optional(),
   durationSeconds: z.number().optional(),
+  rest: z
+    .object({
+      endsAt: z.number().finite().nonnegative(),
+      totalSeconds: z.number().int().min(15).max(600),
+    })
+    .nullable()
+    .catch(null)
+    .optional(),
   exercises: z.array(exerciseSchema),
 });
 
@@ -125,15 +131,5 @@ export function listDrafts(storage: DraftStorage | undefined, userId: string): W
     return drafts;
   } catch {
     return [];
-  }
-}
-
-// Borra las sesiones en curso abandonadas. Las terminadas pendientes de guardar NO se tocan:
-// son datos del alumno que todavía no llegaron al servidor.
-export function pruneStale(storage: DraftStorage | undefined, userId: string, now: number): void {
-  for (const draft of listDrafts(storage, userId)) {
-    if (draft.status === "in_progress" && now - Date.parse(draft.updatedAt) > STALE_AFTER_MS) {
-      clearDraft(storage, userId, draft.plannedSessionId);
-    }
   }
 }

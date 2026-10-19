@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Check,
   ChevronDown,
@@ -9,7 +9,6 @@ import {
   SkipForward,
   Trash2,
   Flame,
-  Dumbbell,
   Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import type { DraftExercise } from "@/lib/workout/draft";
 import { exerciseProgress, isExerciseComplete, previousForSet } from "@/lib/workout/runner-state";
 import { cn } from "@/lib/utils";
 import { DEFAULT_REST_SECONDS, formatClock } from "@/domain/rest-timer";
+import { ExerciseThumbnail } from "@/components/workout/exercise-thumbnail";
 
 const COLUMNS =
   "grid grid-cols-[2.75rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_3rem] items-center gap-2";
@@ -37,6 +37,9 @@ type Props = {
   onAddSet: () => void;
   onSkip: () => void;
   onRestChange: (seconds: number) => void;
+  active: boolean;
+  onActivate: () => void;
+  onCompleteAndAdvance: (setIdx: number) => void;
 };
 
 function Suggestion({ info }: { info: ContextExercise }) {
@@ -65,10 +68,14 @@ export function ExerciseCard({
   onAddSet,
   onSkip,
   onRestChange,
+  active,
+  onActivate,
+  onCompleteAndAdvance,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openSet, setOpenSet] = useState<number | null>(null);
   const [reopened, setReopened] = useState(false);
+  const repInputs = useRef(new Map<string, HTMLInputElement>());
 
   const { done, total } = exerciseProgress(exercise);
   const complete = isExerciseComplete(exercise);
@@ -83,6 +90,10 @@ export function ExerciseCard({
     return (
       <section
         aria-label={exercise.name}
+        data-exercise-id={exercise.sessionExerciseId}
+        data-active={active}
+        onFocusCapture={onActivate}
+        onPointerDownCapture={onActivate}
         className="border-b border-success/40 py-2 text-foreground"
       >
         <button
@@ -106,15 +117,30 @@ export function ExerciseCard({
   }
 
   return (
-    <section aria-label={exercise.name} className="border-b pb-4 text-foreground">
-      <header className="flex items-center gap-3 pt-3 pb-2">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted">
-          <Dumbbell className="size-6 text-primary" aria-hidden />
-        </span>
+    <section
+      aria-label={exercise.name}
+      data-exercise-id={exercise.sessionExerciseId}
+      data-active={active}
+      onFocusCapture={onActivate}
+      onPointerDownCapture={onActivate}
+      className={cn("scroll-mt-52 border-b pb-5 text-foreground", active && "border-primary/40")}
+    >
+      <header
+        className={cn(
+          "flex items-center gap-3 py-3",
+          active && "-mx-2 rounded-xl bg-primary/5 px-2",
+        )}
+      >
+        <ExerciseThumbnail name={exercise.name} />
         <div className="min-w-0 flex-1">
-          <h2 className="text-base leading-tight font-semibold text-primary">{exercise.name}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {formatPrescription(exercise.prescribed)} ·{" "}
+          <p className="mb-1 text-xs text-muted-foreground">
+            {[info?.muscleGroup, info?.equipment].filter(Boolean).join(" · ") ||
+              "Entrenamiento de fuerza"}
+          </p>
+          <h2 className="text-lg leading-tight font-semibold text-primary">{exercise.name}</h2>
+          <p className="mt-1 text-sm font-medium">{formatPrescription(exercise.prescribed)}</p>
+          <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+            {active ? <span className="font-semibold text-primary">En curso</span> : null}
             <span className="tabular-nums">
               {done}/{total} hechas
             </span>
@@ -154,13 +180,17 @@ export function ExerciseCard({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-1.5 py-2">
-        {info?.note ? <p className="text-sm">{info.note}</p> : null}
-        {info ? <Suggestion info={info} /> : null}
-        {info && !info.last ? (
-          <p className="text-xs text-muted-foreground">Primera vez con este ejercicio.</p>
-        ) : null}
-      </div>
+      {info?.note || info?.suggestion ? (
+        <details className="my-1 rounded-lg bg-muted/40 px-3">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm text-muted-foreground">
+            Indicaciones y sugerencias
+          </summary>
+          <div className="flex flex-col gap-2 pb-3">
+            {info.note ? <p className="text-sm">{info.note}</p> : null}
+            <Suggestion info={info} />
+          </div>
+        </details>
+      ) : null}
 
       <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
         <Timer className="size-4" aria-hidden />
@@ -242,24 +272,42 @@ export function ExerciseCard({
                 )}
 
                 <Input
+                  data-set-id={set.id}
                   aria-label={`Peso de la serie ${n} de ${exercise.name} (kg)`}
                   inputMode="decimal"
+                  enterKeyHint="next"
                   value={set.weight}
                   placeholder={exercise.isBodyweight ? "0" : ""}
                   onChange={(e) => onField(setIdx, "weight", e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+                    event.preventDefault();
+                    repInputs.current.get(set.id)?.focus();
+                  }}
                   className={cn(
-                    "h-11 rounded border-transparent bg-muted px-1 text-center text-base font-semibold tabular-nums md:text-base dark:bg-muted",
+                    "h-12 rounded-md border-transparent bg-muted px-1 text-center text-lg font-semibold tabular-nums md:text-lg dark:bg-muted",
                     set.done && "bg-transparent dark:bg-transparent",
                   )}
                 />
                 <Input
+                  data-set-id={set.id}
+                  ref={(node) => {
+                    if (node) repInputs.current.set(set.id, node);
+                    else repInputs.current.delete(set.id);
+                  }}
                   aria-label={`Repeticiones de la serie ${n} de ${exercise.name}`}
                   inputMode="numeric"
+                  enterKeyHint="next"
                   value={set.reps}
                   placeholder={String(previous?.reps ?? exercise.prescribed.repsMin)}
                   onChange={(e) => onField(setIdx, "reps", e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+                    event.preventDefault();
+                    onCompleteAndAdvance(setIdx);
+                  }}
                   className={cn(
-                    "h-11 rounded border-transparent bg-muted px-1 text-center text-base font-semibold tabular-nums md:text-base dark:bg-muted",
+                    "h-12 rounded-md border-transparent bg-muted px-1 text-center text-lg font-semibold tabular-nums md:text-lg dark:bg-muted",
                     set.done && "bg-transparent dark:bg-transparent",
                   )}
                 />

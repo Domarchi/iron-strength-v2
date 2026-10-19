@@ -212,6 +212,12 @@ export function isExerciseComplete(exercise: DraftExercise): boolean {
   return total > 0 && done === total;
 }
 
+export function nextPendingExercise(draft: WorkoutDraft, afterId?: string): DraftExercise | null {
+  const start = draft.exercises.findIndex((e) => e.sessionExerciseId === afterId) + 1;
+  const ordered = [...draft.exercises.slice(start), ...draft.exercises.slice(0, start)];
+  return ordered.find((e) => !e.skipped && e.sets.some((s) => !s.done)) ?? null;
+}
+
 export function toggleWarmup(draft: WorkoutDraft, exIdx: number, setIdx: number): WorkoutDraft {
   return mapSet(draft, exIdx, setIdx, (s) => ({ ...s, isWarmup: !s.isWarmup }));
 }
@@ -328,6 +334,7 @@ export function finishDraft(draft: WorkoutDraft, now: Date): WorkoutDraft {
   return {
     ...draft,
     status: "pending_save",
+    rest: null,
     finishedAt: now.toISOString(),
     durationSeconds: secondsBetween(draft.startedAt, now),
     updatedAt: now.toISOString(),

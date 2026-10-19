@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Database } from "@/types/database";
 import { getWorkoutContext } from "./workout-context";
 
-function client(studentId = "student-1") {
+function client(studentId = "student-1", withExercise = false) {
   return createClient<Database>("http://127.0.0.1:54321", "test-key", {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
@@ -22,7 +22,27 @@ function client(studentId = "student-1") {
                   weeks_count: 2,
                   student_id: studentId,
                 },
-                session_exercises: [],
+                session_exercises: withExercise
+                  ? [
+                      {
+                        id: "se1",
+                        exercise_id: "ex1",
+                        position: 0,
+                        sets: 3,
+                        reps_min: 8,
+                        reps_max: 12,
+                        target_weight_kg: 60,
+                        note: null,
+                        exercises: {
+                          name: "Sentadilla",
+                          muscle_group: "Piernas",
+                          equipment: "Barra",
+                          is_bodyweight: false,
+                          progression_increment_kg: 2.5,
+                        },
+                      },
+                    ]
+                  : [],
               }
             : [],
         ),
@@ -31,6 +51,18 @@ function client(studentId = "student-1") {
 }
 
 describe("recuperación de una sesión al cambiar de semana (RF-22, RF-24)", () => {
+  it("incluye el grupo muscular y equipo reales del catálogo para el registro", async () => {
+    const result = await getWorkoutContext(
+      client("student-1", true),
+      "student-1",
+      "session-1",
+      "2026-10-18",
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      context: { exercises: [{ name: "Sentadilla", muscleGroup: "Piernas", equipment: "Barra" }] },
+    });
+  });
   it("una sesión actual permite iniciar y recuperar", async () => {
     expect(await getWorkoutContext(client(), "student-1", "session-1", "2026-10-18")).toMatchObject(
       { ok: true, canStart: true },

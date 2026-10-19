@@ -11,6 +11,8 @@ import type { PrefillExercise } from "../workout/runner-state.ts";
 type Client = SupabaseClient<Database>;
 
 export type ContextExercise = PrefillExercise & {
+  muscleGroup?: string;
+  equipment?: string | null;
   note: string | null;
   last: Pick<LastPerformance, "date" | "sets"> | null;
   suggestion: Suggestion | null;
@@ -49,7 +51,7 @@ export async function getWorkoutContext(
        programs ( name, start_date, ends_on, weeks_count, student_id ),
        session_exercises (
          id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note,
-         exercises ( name, is_bodyweight, progression_increment_kg )
+         exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg )
        )`,
     )
     .eq("id", plannedSessionId)
@@ -103,6 +105,8 @@ export async function getWorkoutContext(
     .map((row) => {
       const exercise = row.exercises as unknown as {
         name: string;
+        muscle_group: string;
+        equipment: string | null;
         is_bodyweight: boolean;
         progression_increment_kg: number;
       };
@@ -117,6 +121,8 @@ export async function getWorkoutContext(
         sessionExerciseId: row.id,
         exerciseId: row.exercise_id,
         name: exercise.name,
+        muscleGroup: exercise.muscle_group,
+        equipment: exercise.equipment,
         isBodyweight: exercise.is_bodyweight,
         prescribed,
         note: row.note,

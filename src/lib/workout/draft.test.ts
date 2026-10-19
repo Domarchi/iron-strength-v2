@@ -4,9 +4,7 @@ import {
   draftKey,
   listDrafts,
   loadDraft,
-  pruneStale,
   saveDraft,
-  STALE_AFTER_MS,
   type DraftStorage,
   type WorkoutDraft,
 } from "./draft";
@@ -59,6 +57,19 @@ describe("borrador de la sesión en curso (RF-22, RF-24, DC-8)", () => {
     const storage = fakeStorage();
     expect(saveDraft(storage, draft())).toBe(true);
     expect(loadDraft(storage, "user-a", "session-1")).toEqual(draft());
+  });
+
+  it("conserva el descanso y no pierde las series si solo el descanso está corrupto", () => {
+    const storage = fakeStorage();
+    const rest = { endsAt: 1792422090000, totalSeconds: 90 };
+    storage.setItem(draftKey("user-a", "session-1"), JSON.stringify({ ...draft(), rest }));
+    expect(loadDraft(storage, "user-a", "session-1")?.rest).toEqual(rest);
+    storage.setItem(
+      draftKey("user-a", "session-1"),
+      JSON.stringify({ ...draft(), rest: { endsAt: "roto" } }),
+    );
+    expect(loadDraft(storage, "user-a", "session-1")?.exercises).toEqual(draft().exercises);
+    expect(loadDraft(storage, "user-a", "session-1")?.rest).toBeNull();
   });
 
   it("la clave incluye usuario y sesión: no se mezclan", () => {
@@ -123,36 +134,6 @@ describe("borrador de la sesión en curso (RF-22, RF-24, DC-8)", () => {
     ).toEqual(["session-1", "session-2"]);
   });
 
-  describe("pruneStale", () => {
-    const now = Date.parse("2026-10-09T15:00:00.000Z");
-
-    it("borra las sesiones en curso abandonadas hace más de 24 h", () => {
-      const storage = fakeStorage();
-      saveDraft(storage, draft({ updatedAt: new Date(now - STALE_AFTER_MS - 1000).toISOString() }));
-      saveDraft(
-        storage,
-        draft({ plannedSessionId: "session-2", updatedAt: new Date(now - 3600_000).toISOString() }),
-      );
-      pruneStale(storage, "user-a", now);
-      expect(listDrafts(storage, "user-a").map((d) => d.plannedSessionId)).toEqual(["session-2"]);
-    });
-
-    it("nunca borra una sesión terminada pendiente de guardar: son datos del alumno", () => {
-      const storage = fakeStorage();
-      saveDraft(
-        storage,
-        draft({
-          status: "pending_save",
-          updatedAt: new Date(now - 10 * STALE_AFTER_MS).toISOString(),
-          finishedAt: "2026-10-07T16:00:00.000Z",
-          durationSeconds: 60,
-        }),
-      );
-      pruneStale(storage, "user-a", now);
-      expect(listDrafts(storage, "user-a")).toHaveLength(1);
-    });
-  });
-
   describe("robustez del almacenamiento", () => {
     it("si guardar falla (cuota llena o modo privado), no lanza y avisa con false", () => {
       const broken: DraftStorage = {
@@ -186,7 +167,6 @@ describe("borrador de la sesión en curso (RF-22, RF-24, DC-8)", () => {
       expect(loadDraft(undefined, "user-a", "session-1")).toBeNull();
       expect(listDrafts(undefined, "user-a")).toEqual([]);
       expect(() => clearDraft(undefined, "user-a", "session-1")).not.toThrow();
-      expect(() => pruneStale(undefined, "user-a", 0)).not.toThrow();
     });
   });
 });

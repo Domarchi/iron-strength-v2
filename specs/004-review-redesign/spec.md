@@ -27,6 +27,18 @@ La evidencia y sus límites se registran en `docs/research/hevy-rea.md`. Se impl
 - Cada ejercicio permite elegir su descanso automático de trabajo: desactivado, 30 s, 1 min, 1:30, 2, 3 o 5 min. El valor predeterminado sigue siendo 90 s y el calentamiento sigue en 60 s; desactivarlo también desactiva el descanso tras calentamientos. El cambio afecta al próximo descanso, no al que ya corre. La elección vive en el borrador del dispositivo y sobrevive a recargas; no modifica el programa del coach. Los borradores anteriores siguen siendo válidos.
 - Si se edita una serie hecha y el dato deja de ser válido, se desmarca conservando el texto escrito. Una edición válida conserva la marca. Así la confirmación y las series que se guardan coinciden.
 
+## Registro fluido y protección del borrador (T137)
+
+Solicitado el 2026-10-19. Amplía RF-22, RF-24, RF-27, RF-50 y RF-53 a RF-60; reemplaza la caducidad automática de borradores y DC-24 (el descanso ahora se conserva).
+
+- Resaltar el ejercicio activo y permitir ir al siguiente ejercicio pendiente. Se mantiene el acceso a todos los ejercicios y el plegado reversible de los completados. Enter en peso lleva a repeticiones; Enter en repeticiones completa una serie válida y avanza al siguiente campo pendiente. Si hay datos inválidos, conserva el foco y explica el error.
+- Ofrecer Deshacer para la última serie marcada o eliminada, recuperando sus datos y el descanso anterior. Una edición posterior invalida esa opción para no sobrescribir trabajo nuevo. No se mantiene un historial de deshacer tras recargar.
+- Miniaturas SVG propias por patrón reconocible de ejercicio, con alternativa genérica; no se presentan como demostraciones de técnica. Mostrar grupo muscular/equipo desde el catálogo, con jerarquía clara para nombre, prescripción y valores numéricos. Mantener azul/neutros, contraste AA y objetivos de 44 px. Reducir texto secundario con indicaciones desplegables.
+- Los borradores válidos del usuario no caducan: solo se eliminan por descarte confirmado o guardado correcto en el servidor. Mi semana permite retomar también los antiguos. Mantener los límites de permisos y recuperación de sesiones pasadas del servidor.
+- Guardar y restaurar el descanso mediante su hora de término, incluidos ajustes y cierre; recargar no reinicia la cuenta. Aceptar borradores anteriores sin descanso y conservar las series aunque el dato del descanso esté corrupto.
+- Guardar cada cambio del entrenamiento en el dispositivo y mostrar su resultado. Si el almacenamiento falla, avisar que el avance solo sigue en esta página y ofrecer Reintentar. No afirmar que está protegido al fallar también el guardado en el servidor. Mantener el mismo id y fechas para reintentos idempotentes.
+- Sin cambios de esquema, dependencias nuevas ni cambios al editor del coach en esta tarea.
+
 ## Validación
 
 Regresiones de cálculo, edición, selección de descanso, compatibilidad del borrador y conexión de la UI; check completo y E2E cuando el entorno lo permita. No se incorpora código, recursos ni servicios de Hevy al producto.

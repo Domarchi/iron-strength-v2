@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { CloudUpload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { listDrafts, STALE_AFTER_MS, type WorkoutDraft } from "@/lib/workout/draft";
+import { listDrafts, type WorkoutDraft } from "@/lib/workout/draft";
 
 function subscribe(notify: () => void) {
   window.addEventListener("storage", notify);
@@ -17,13 +17,7 @@ function subscribe(notify: () => void) {
 
 function snapshot(userId: string): string {
   try {
-    return JSON.stringify(
-      listDrafts(window.localStorage, userId).filter(
-        (draft) =>
-          draft.status === "pending_save" ||
-          Date.now() - Date.parse(draft.updatedAt) <= STALE_AFTER_MS,
-      ),
-    );
+    return JSON.stringify(listDrafts(window.localStorage, userId));
   } catch {
     return "[]";
   }

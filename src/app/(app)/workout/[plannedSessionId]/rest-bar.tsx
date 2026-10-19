@@ -11,6 +11,8 @@ import {
   type Rest,
 } from "@/domain/rest-timer";
 
+const clockNow = () => Date.now();
+
 // Barra fija inferior con el descanso entre series (RF-27). El tiempo restante sale de la hora de
 // término, no de contar ticks: sigue exacto tras bloquear la pantalla (RF-27, DC-24).
 export function RestBar({
@@ -22,9 +24,8 @@ export function RestBar({
   onChange: (next: Rest) => void;
   onDismiss: () => void;
 }) {
-  // Arranca en el instante en que empezó el descanso (dato derivado de `rest`, sin leer el reloj
-  // durante el render) y el intervalo lo corrige enseguida.
-  const [now, setNow] = useState(rest.endsAt - rest.totalSeconds * 1000);
+  // Usa la hora actual al montar: restaurar el borrador no reinicia la cuenta.
+  const [now, setNow] = useState(clockNow);
   const vibrated = useRef<number | null>(null);
 
   useEffect(() => {
