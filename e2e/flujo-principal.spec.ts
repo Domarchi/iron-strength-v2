@@ -44,18 +44,33 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await coach.getByRole("button", { name: "Agregar sesión" }).first().click();
   await expect(coach.getByText("Sesión A")).toBeVisible();
 
-  for (const [search, label] of [
-    ["Sentadilla", "Sentadilla · Piernas · Barra"],
-    ["Press de banca", "Press de banca · Pecho · Barra"],
-  ] as const) {
-    // El panel queda abierto tras agregar un ejercicio: solo se abre si hace falta.
-    const searchBox = coach.getByLabel("Ejercicio", { exact: true });
-    if (!(await searchBox.isVisible())) await coach.getByText("Agregar ejercicio").first().click();
-    await searchBox.fill(search);
-    await coach.getByLabel("Resultados de la búsqueda").selectOption({ label });
-    await coach.getByRole("button", { name: "Agregar a la sesión" }).click();
-    await expect(coach.getByText(search, { exact: true }).first()).toBeVisible();
-  }
+  // Catálogo de selección múltiple: la selección se conserva entre búsquedas.
+  await coach.getByRole("button", { name: "Agregar ejercicios", exact: true }).click();
+  await coach.getByLabel("Buscar ejercicios").fill("Sentadilla");
+  await coach.getByRole("checkbox", { name: "Sentadilla Piernas · Barra", exact: true }).check();
+  await coach.getByLabel("Buscar ejercicios").fill("Press de banca");
+  await coach.getByRole("checkbox", { name: "Press de banca Pecho · Barra", exact: true }).check();
+  await coach.getByRole("button", { name: "Agregar seleccionados (2)", exact: true }).click();
+  await expect(coach.getByLabel("Series de Sentadilla", { exact: true })).toBeVisible();
+
+  // Edición visible, validación del lote, protección y conservación al cambiar de semana.
+  await coach.getByLabel("Series de Sentadilla", { exact: true }).fill("4");
+  await coach.getByLabel("Reps mín. de Press de banca", { exact: true }).fill("15");
+  await coach.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(coach.getByRole("alert").filter({ hasText: "mínimo" })).toBeVisible();
+  await expect(
+    coach.getByRole("button", { name: "Agregar ejercicios", exact: true }),
+  ).toBeDisabled();
+  await coach.getByRole("button", { name: /Semana 2/ }).click();
+  await expect(coach.getByRole("heading", { name: "Semana 2", exact: true })).toBeVisible();
+  await coach.getByRole("button", { name: /Semana 1/ }).click();
+  await expect(coach.getByLabel("Series de Sentadilla", { exact: true })).toHaveValue("4");
+  await coach.getByLabel("Reps mín. de Press de banca", { exact: true }).fill("9");
+  await coach.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(coach.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await coach.reload();
+  await expect(coach.getByLabel("Series de Sentadilla", { exact: true })).toHaveValue("4");
+  await expect(coach.getByLabel("Reps mín. de Press de banca", { exact: true })).toHaveValue("9");
 
   // --- El coach invita a la alumna ------------------------------------------------------------------------
   await coach.goto("/coach/students");
@@ -78,6 +93,7 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   // --- El coach asigna el programa a la alumna, empezando esta semana -----------------------------------
   await coach.goto("/coach/programs");
   await coach.getByRole("link", { name: /Plan E2E/ }).click();
+  await coach.getByText("Asignar a un alumno", { exact: true }).click();
   await coach.getByLabel("Alumno").selectOption({ label: STUDENT.name });
   const today = santiagoDate(new Date());
   await coach.getByLabel("Inicio").fill(mondayOf(today));

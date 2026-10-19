@@ -39,6 +39,15 @@ Solicitado el 2026-10-19. Amplía RF-22, RF-24, RF-27, RF-50 y RF-53 a RF-60; re
 - Guardar cada cambio del entrenamiento en el dispositivo y mostrar su resultado. Si el almacenamiento falla, avisar que el avance solo sigue en esta página y ofrecer Reintentar. No afirmar que está protegido al fallar también el guardado en el servidor. Mantener el mismo id y fechas para reintentos idempotentes.
 - Sin cambios de esquema, dependencias nuevas ni cambios al editor del coach en esta tarea.
 
+## Editor de rutinas del coach (T138)
+
+- Navegar por semanas con un selector compacto; mostrar una semana a la vez, conservando sus ediciones al cambiar. Abrir la semana actual en programas activos y la primera en plantillas. Resumir sesiones, ejercicios y series por semana/sesión.
+- Editar series, rango de repeticiones, peso opcional y nota directamente en cada ejercicio. Guardar las prescripciones modificadas con un botón por sesión; validar todo antes del primer envío. Mostrar errores junto al ejercicio, confirmar guardado real y conservar los datos pendientes si falla la red o una operación. El guardado de varias filas usa operaciones individuales: si falla una, informar el avance parcial y reintentar solo las pendientes.
+- Mientras haya cambios, impedir operaciones estructurales de esa sesión (agregar, reordenar o quitar) hasta guardar o descartar con confirmación. Avisar al seguir enlaces de la app, cerrar sesión o recargar con ediciones pendientes. Cambiar de semana no descarta nada. El editor no afirma persistencia del borrador tras cerrar la página.
+- Agregar varios ejercicios a la sesión desde un catálogo con búsqueda por nombre, músculo y equipo, filtro muscular y selección explícita que se conserva al buscar. Respetar 15 ejercicios por sesión, mostrar los seleccionados y permitir quitarlos antes de confirmar. Los nuevos usan 3 series de 8–12 repeticiones y peso libre; pueden ajustarse inmediatamente. Una incorporación parcial retira de la selección solo los ejercicios agregados y explica el fallo.
+- Mantener copia de semanas, asignación y eliminación confirmada; mover herramientas secundarias a desplegables. Mantener las semanas pasadas bloqueadas en UI, acciones de servidor y RLS; las actuales/futuras siguen editables. Sin nuevas dependencias ni cambios de esquema.
+- Diseño azul/neutro, campos numéricos legibles, objetivos táctiles de 44 px y sin desbordamiento horizontal a 360 px.
+
 ## Validación
 
 Regresiones de cálculo, edición, selección de descanso, compatibilidad del borrador y conexión de la UI; check completo y E2E cuando el entorno lo permita. No se incorpora código, recursos ni servicios de Hevy al producto.

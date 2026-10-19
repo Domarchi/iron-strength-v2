@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { requireCoach } from "@/lib/auth/session";
 import {
   addSession,
-  addSessionExercise,
   assignProgram,
   copyWeek,
   createTemplate,
@@ -14,7 +13,6 @@ import {
   removeSession,
   removeSessionExercise,
   reorderSessionExercises,
-  updateSessionExercise,
   type AssignFailure,
   type Failure,
 } from "@/lib/data/programs";
@@ -26,8 +24,7 @@ const FAILURES: Record<Failure | "destination_not_empty" | AssignFailure, string
   not_found: "No se encontró lo que intentas modificar. Recarga la página.",
   invalid: "Revisa los datos ingresados.",
   limit: "Alcanzaste el límite: 7 sesiones por semana y 15 ejercicios por sesión.",
-  week_locked:
-    "Esa semana ya está en curso o terminó: no se puede modificar. Solo las semanas posteriores.",
+  week_locked: "Esa semana ya terminó: no se puede modificar. Solo la actual y las futuras.",
   forbidden: "No tienes permiso para hacer esto.",
   destination_not_empty:
     "La semana destino ya tiene sesiones. Marca “Reemplazar” para sobrescribirla.",
@@ -83,41 +80,6 @@ export async function removeSessionAction(_prev: ActionState, fd: FormData): Pro
   const result = await removeSession({
     db: await createClient(),
     sessionId: text(fd, "sessionId"),
-  });
-  if (!result.ok) return failed(result.reason);
-  refresh(text(fd, "programId"));
-  return { error: null, done: true };
-}
-
-function prescriptionInput(fd: FormData) {
-  return {
-    exerciseId: text(fd, "exerciseId"),
-    sets: text(fd, "sets"),
-    repsMin: text(fd, "repsMin"),
-    repsMax: text(fd, "repsMax"),
-    targetWeightKg: text(fd, "targetWeightKg"),
-    note: text(fd, "note"),
-  };
-}
-
-export async function addExerciseAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  await requireCoach();
-  const result = await addSessionExercise({
-    db: await createClient(),
-    sessionId: text(fd, "sessionId"),
-    input: prescriptionInput(fd),
-  });
-  if (!result.ok) return failed(result.reason);
-  refresh(text(fd, "programId"));
-  return { error: null, done: true };
-}
-
-export async function updateExerciseAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  await requireCoach();
-  const result = await updateSessionExercise({
-    db: await createClient(),
-    id: text(fd, "id"),
-    input: prescriptionInput(fd),
   });
   if (!result.ok) return failed(result.reason);
   refresh(text(fd, "programId"));
