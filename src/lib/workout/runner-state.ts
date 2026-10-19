@@ -3,6 +3,8 @@
 // texto mientras el alumno escribe y se convierten (con los límites de la spec) al finalizar.
 import { workoutSetSchema } from "../../domain/schemas.ts";
 import { prefillWeight } from "../../domain/progression.ts";
+import { setVolume } from "../../domain/volume.ts";
+import { MAX_REST_SECONDS, MIN_REST_SECONDS } from "../../domain/rest-timer.ts";
 import type { DraftExercise, DraftSet, WorkoutDraft } from "./draft.ts";
 
 export type PrefillExercise = {
@@ -84,7 +86,40 @@ export function updateSetField(
   field: "weight" | "reps",
   value: string,
 ): WorkoutDraft {
-  return mapSet(draft, exIdx, setIdx, (s) => ({ ...s, [field]: value }));
+  const exercise = draft.exercises[exIdx];
+  if (!exercise) return draft;
+  return mapSet(draft, exIdx, setIdx, (s) => {
+    const next = { ...s, [field]: value };
+    return { ...next, done: s.done && canComplete(exercise, next) };
+  });
+}
+
+export function setExerciseRestSeconds(
+  draft: WorkoutDraft,
+  exIdx: number,
+  restSeconds: number,
+): WorkoutDraft {
+  if (
+    !Number.isInteger(restSeconds) ||
+    (restSeconds !== 0 && (restSeconds < MIN_REST_SECONDS || restSeconds > MAX_REST_SECONDS))
+  ) {
+    return draft;
+  }
+  return mapExercise(draft, exIdx, (e) => ({ ...e, restSeconds }));
+}
+
+// Comparte la regla de volumen del historial; nunca cuenta valores de referencia sin marcar.
+export function workoutVolume(draft: WorkoutDraft): ReturnType<typeof setVolume> {
+  return setVolume(
+    draft.exercises.flatMap((exercise) => {
+      if (exercise.skipped) return [];
+      return exercise.sets.flatMap((set) => {
+        if (!set.done || !canComplete(exercise, set)) return [];
+        const result = toNumbers(exercise, set);
+        return result.success ? [result.data] : [];
+      });
+    }),
+  );
 }
 
 function toNumbers(exercise: DraftExercise, set: DraftSet) {

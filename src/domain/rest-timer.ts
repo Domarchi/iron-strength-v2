@@ -18,6 +18,17 @@ export function startRest(nowMs: number, afterWarmup: boolean): Rest {
   return { endsAt: nowMs + totalSeconds * 1000, totalSeconds };
 }
 
+// La elección del ejercicio solo se aplica al próximo descanso; 0 lo desactiva.
+export function restAfterSet(
+  nowMs: number,
+  afterWarmup: boolean,
+  workSeconds = DEFAULT_REST_SECONDS,
+): Rest | null {
+  if (workSeconds === 0) return null;
+  const totalSeconds = afterWarmup ? WARMUP_REST_SECONDS : workSeconds;
+  return { endsAt: nowMs + totalSeconds * 1000, totalSeconds };
+}
+
 export function remainingSeconds(rest: Rest, nowMs: number): number {
   return Math.max(0, Math.ceil((rest.endsAt - nowMs) / 1000));
 }

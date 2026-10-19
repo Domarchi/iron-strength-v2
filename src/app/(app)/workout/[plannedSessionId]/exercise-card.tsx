@@ -10,6 +10,7 @@ import {
   Trash2,
   Flame,
   Dumbbell,
+  Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +19,11 @@ import type { ContextExercise } from "@/lib/data/workout-context";
 import type { DraftExercise } from "@/lib/workout/draft";
 import { exerciseProgress, isExerciseComplete, previousForSet } from "@/lib/workout/runner-state";
 import { cn } from "@/lib/utils";
+import { DEFAULT_REST_SECONDS, formatClock } from "@/domain/rest-timer";
 
 const COLUMNS =
   "grid grid-cols-[2.75rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_3rem] items-center gap-2";
+const REST_OPTIONS = [0, 30, 60, 90, 120, 180, 300];
 
 type Props = {
   exercise: DraftExercise;
@@ -33,6 +36,7 @@ type Props = {
   onRemoveSet: (setIdx: number) => void;
   onAddSet: () => void;
   onSkip: () => void;
+  onRestChange: (seconds: number) => void;
 };
 
 function Suggestion({ info }: { info: ContextExercise }) {
@@ -60,6 +64,7 @@ export function ExerciseCard({
   onRemoveSet,
   onAddSet,
   onSkip,
+  onRestChange,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openSet, setOpenSet] = useState<number | null>(null);
@@ -156,6 +161,26 @@ export function ExerciseCard({
           <p className="text-xs text-muted-foreground">Primera vez con este ejercicio.</p>
         ) : null}
       </div>
+
+      <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
+        <Timer className="size-4" aria-hidden />
+        <span>Descanso</span>
+        <select
+          aria-label={`Descanso automático de ${exercise.name}`}
+          value={exercise.restSeconds ?? DEFAULT_REST_SECONDS}
+          onChange={(event) => onRestChange(Number(event.target.value))}
+          className="min-h-11 min-w-24 rounded border border-input bg-background px-2 font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {REST_OPTIONS.map((seconds) => (
+            <option key={seconds} value={seconds}>
+              {seconds === 0 ? "Desactivado" : formatClock(seconds)}
+            </option>
+          ))}
+          {exercise.restSeconds !== undefined && !REST_OPTIONS.includes(exercise.restSeconds) ? (
+            <option value={exercise.restSeconds}>{formatClock(exercise.restSeconds)}</option>
+          ) : null}
+        </select>
+      </label>
 
       <div className="flex flex-col gap-1 py-2">
         <div

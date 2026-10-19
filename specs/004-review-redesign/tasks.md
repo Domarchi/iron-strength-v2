@@ -7,3 +7,5 @@
 Validación final y limitaciones: `validation.md`. Las casillas marcan implementación; las suites contra Supabase no se consideran verificadas.
 
 - [x] **T134 · Interfaz de entrenamiento inspirada en Hevy** — Sustituir la propuesta verde por superficies neutras, azul, tarjetas de rutinas compactas y registro continuo con filas completadas en verde. Previsualización renovada y check completo en verde (338 tests). Contraste de tokens verificado; revisión visual y E2E pendientes por las limitaciones indicadas en validation.md.
+
+- [x] **T135 · Registro basado en evidencia estructural de Hevy** — Dos análisis estáticos con REA de siete archivos públicos, con evidencia y límites documentados. Volumen en vivo y descanso por ejercicio implementados; edición coherente de series hechas y borradores compatibles. Check completo en verde: 350 tests. E2E autenticado y revisión visual pendientes del entorno.

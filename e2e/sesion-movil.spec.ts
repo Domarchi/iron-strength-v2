@@ -108,6 +108,26 @@ test("marcar con campos vacíos usa el valor de referencia (RF-55)", async ({ pa
   ).toHaveAttribute("aria-pressed", "true");
 });
 
+test("descanso por ejercicio, volumen en vivo y edición inválida (T135)", async ({ page }) => {
+  await openSession(page);
+  const rest = page.getByLabel("Descanso automático de Sentadilla");
+  await rest.selectOption("120");
+  await page.getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla" }).click();
+  await expect(page.getByLabel("Volumen de trabajo")).toHaveText("600 kg");
+  expect(await clockSeconds(page)).toBeGreaterThan(110);
+  await page.getByLabel("Repeticiones de la serie 1 de Sentadilla").fill("0");
+  await expect(
+    page.getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla" }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByLabel("Volumen de trabajo")).toHaveText("0 kg");
+  await rest.selectOption("0");
+  await page.reload();
+  await expect(rest).toHaveValue("0");
+  await page.getByRole("button", { name: "Marcar como hecha la serie 2 de Sentadilla" }).click();
+  await expect(page.getByRole("timer")).toHaveCount(0);
+  await expect(page.getByLabel("Volumen de trabajo")).toHaveText("480 kg");
+});
+
 test("un ejercicio completo se pliega y se puede volver a abrir (RF-56)", async ({ page }) => {
   await openSession(page);
   for (const n of [1, 2, 3]) {

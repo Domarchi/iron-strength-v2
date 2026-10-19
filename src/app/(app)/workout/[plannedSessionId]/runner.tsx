@@ -6,7 +6,8 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { startRest, type Rest } from "@/domain/rest-timer";
+import { restAfterSet, type Rest } from "@/domain/rest-timer";
+import { formatKg } from "@/domain/format";
 import type { WorkoutContext } from "@/lib/data/workout-context";
 import {
   clearDraft,
@@ -26,9 +27,11 @@ import {
   previousForSet,
   removeSet,
   setSkipped,
+  setExerciseRestSeconds,
   summarize,
   toggleWarmup,
   updateSetField,
+  workoutVolume,
 } from "@/lib/workout/runner-state";
 import { saveWorkoutAction } from "./actions";
 import { ExerciseCard } from "./exercise-card";
@@ -250,7 +253,11 @@ function ActiveWorkoutRunner({
     }
     setHint(null);
     commit(result.draft);
-    if (result.completed) setRest(startRest(new Date().getTime(), result.wasWarmup));
+    if (result.completed) {
+      setRest(
+        restAfterSet(new Date().getTime(), result.wasWarmup, current.exercises[exIdx].restSeconds),
+      );
+    }
   }
 
   const submit = useCallback(
@@ -296,6 +303,7 @@ function ActiveWorkoutRunner({
   }, [submit]);
 
   const summary = summarize(draft);
+  const volume = workoutVolume(draft);
 
   function requestFinish() {
     if (summary.doneSets === 0) {
@@ -400,12 +408,17 @@ function ActiveWorkoutRunner({
             </dd>
           </div>
           <div>
-            <dt className="text-[11px] text-muted-foreground">Ejercicios</dt>
-            <dd className="mt-1 text-sm font-semibold tabular-nums">
-              {draft.exercises.length - summary.skippedExercises}
+            <dt className="text-[11px] text-muted-foreground">Volumen</dt>
+            <dd aria-label="Volumen de trabajo" className="mt-1 text-sm font-semibold tabular-nums">
+              {formatKg(volume.loadKg)}
             </dd>
           </div>
         </dl>
+        {volume.bodyweightReps > 0 ? (
+          <p className="px-4 pb-2 text-xs text-muted-foreground">
+            Además, {volume.bodyweightReps} repeticiones sin carga
+          </p>
+        ) : null}
         <div
           role="progressbar"
           aria-label="Avance de la sesión"
@@ -459,6 +472,7 @@ function ActiveWorkoutRunner({
             onRemoveSet={(setIdx) => update((d) => removeSet(d, exIdx, setIdx))}
             onAddSet={() => update((d) => addSet(d, exIdx))}
             onSkip={() => update((d) => setSkipped(d, exIdx, true))}
+            onRestChange={(seconds) => update((d) => setExerciseRestSeconds(d, exIdx, seconds))}
           />
         );
       })}

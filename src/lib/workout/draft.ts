@@ -31,6 +31,8 @@ const exerciseSchema = z.object({
     targetWeightKg: z.number().nullable(),
   }),
   skipped: z.boolean(),
+  // Opcional para recuperar también borradores anteriores a T135 (90 s por defecto).
+  restSeconds: z.union([z.literal(0), z.number().int().min(15).max(600)]).optional(),
   sets: z.array(setSchema),
 });
 
