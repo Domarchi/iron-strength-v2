@@ -148,4 +148,13 @@ describe("attemptLogin (RF-5, RF-6, RF-8)", () => {
     expect(data).toHaveLength(1);
     expect(data![0].email_hash).toMatch(/^[0-9a-f]{64}$/);
   });
+
+  it("cuenta fallos simultáneos desde clientes independientes sin perder incrementos", async () => {
+    const guards = Array.from({ length: 5 }, () => createLoginGuard(supabaseStore(adminClient())));
+    await Promise.all(guards.map((guard) => guard.recordFailure(student.email)));
+    expect(await guards[0].check(student.email)).toMatchObject({ locked: true });
+    const { data, error } = await admin.from("login_attempts").select("failed_count").single();
+    expect(error).toBeNull();
+    expect(data?.failed_count).toBe(5);
+  });
 });

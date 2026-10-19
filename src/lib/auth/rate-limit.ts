@@ -17,7 +17,7 @@ export type AttemptState = {
 
 export interface LoginAttemptStore {
   get(emailHash: string): Promise<AttemptState | null>;
-  set(emailHash: string, state: AttemptState): Promise<void>;
+  recordFailure(emailHash: string, now: number): Promise<void>;
   clear(emailHash: string): Promise<void>;
 }
 
@@ -40,20 +40,7 @@ export function createLoginGuard(store: LoginAttemptStore, clock: () => number =
     },
 
     async recordFailure(email: string): Promise<void> {
-      const key = hashEmail(email);
-      const now = clock();
-      const previous = await store.get(key);
-
-      const lockExpired = previous?.lockedUntil != null && previous.lockedUntil <= now;
-      const windowExpired = previous != null && now - previous.windowStartedAt >= WINDOW_MS;
-      const fresh = !previous || lockExpired || windowExpired;
-
-      const failedCount = fresh ? 1 : previous.failedCount + 1;
-      await store.set(key, {
-        failedCount,
-        windowStartedAt: fresh ? now : previous.windowStartedAt,
-        lockedUntil: failedCount >= MAX_FAILED_ATTEMPTS ? now + LOCK_MS : null,
-      });
+      await store.recordFailure(hashEmail(email), clock());
     },
 
     async recordSuccess(email: string): Promise<void> {
@@ -68,8 +55,18 @@ export function memoryStore(): LoginAttemptStore {
     async get(key) {
       return data.get(key) ?? null;
     },
-    async set(key, state) {
-      data.set(key, state);
+    async recordFailure(key, now) {
+      // Sin await entre leer y escribir: atómico dentro de este almacenamiento de pruebas.
+      const previous = data.get(key);
+      if (previous?.lockedUntil != null && previous.lockedUntil > now) return;
+      const fresh =
+        !previous || previous.lockedUntil != null || now - previous.windowStartedAt >= WINDOW_MS;
+      const failedCount = fresh ? 1 : previous.failedCount + 1;
+      data.set(key, {
+        failedCount,
+        windowStartedAt: fresh ? now : previous.windowStartedAt,
+        lockedUntil: failedCount >= MAX_FAILED_ATTEMPTS ? now + LOCK_MS : null,
+      });
     },
     async clear(key) {
       data.delete(key);
@@ -94,13 +91,9 @@ export function supabaseStore(admin: SupabaseClient<Database>): LoginAttemptStor
         lockedUntil: data.locked_until ? Date.parse(data.locked_until) : null,
       };
     },
-    async set(emailHash, state) {
-      const { error } = await admin.from("login_attempts").upsert({
-        email_hash: emailHash,
-        failed_count: state.failedCount,
-        window_started_at: new Date(state.windowStartedAt).toISOString(),
-        locked_until: state.lockedUntil ? new Date(state.lockedUntil).toISOString() : null,
-      });
+    async recordFailure(emailHash) {
+      // El reloj y la exclusión entre instancias viven en Postgres, no en este proceso.
+      const { error } = await admin.rpc("record_login_failure", { p_email_hash: emailHash });
       if (error) throw new Error(`No se pudo guardar login_attempts: ${error.message}`);
     },
     async clear(emailHash) {

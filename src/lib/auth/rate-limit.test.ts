@@ -38,6 +38,26 @@ describe("límite de intentos de login (RF-6)", () => {
     expect((await guard.check("a@test.local")).locked).toBe(false);
   });
 
+  it("cuenta cinco fallos simultáneos entre guardas que comparten almacenamiento", async () => {
+    const store = memoryStore();
+    const guards = Array.from({ length: 5 }, () => createLoginGuard(store, () => 1_000_000));
+    await Promise.all(guards.map((guard) => guard.recordFailure("a@test.local")));
+    expect(await guards[0].check("a@test.local")).toEqual({
+      locked: true,
+      retryAfterSeconds: 900,
+    });
+  });
+
+  it("los fallos en vuelo no prolongan un bloqueo activo ni lo reinician al vencer la ventana", async () => {
+    const { guard, advance } = setup();
+    await fail(guard, "a@test.local", 4);
+    advance(14 * MIN);
+    await guard.recordFailure("a@test.local");
+    advance(2 * MIN);
+    await guard.recordFailure("a@test.local");
+    expect(await guard.check("a@test.local")).toEqual({ locked: true, retryAfterSeconds: 13 * 60 });
+  });
+
   it("el 5º fallo bloquea y informa los segundos restantes", async () => {
     const { guard } = setup();
     await fail(guard, "a@test.local", 5);

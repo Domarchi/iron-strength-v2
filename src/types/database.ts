@@ -387,6 +387,9 @@ isOneToOne: false
 "mark_comments_read":
 { Args: { "p_workout_id": string }; Returns: undefined
                            },
+"record_login_failure":
+{ Args: { "p_email_hash": string }; Returns: undefined
+                           },
 "save_workout":
 { Args: { "p_workout": Json }; Returns: Json
                            },
