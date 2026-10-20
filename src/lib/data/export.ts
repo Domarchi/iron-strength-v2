@@ -24,7 +24,7 @@ export async function getHistoryExport(db: Client, studentId: string): Promise<H
   const { data, error } = await db
     .from("workouts")
     .select(
-      `started_at, performed_on, session_label,
+      `started_at, performed_on, session_label, perceived_effort, note,
        workout_sets ( prescribed_exercise_name, exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
     )
     .eq("student_id", studentId)
@@ -37,6 +37,8 @@ export async function getHistoryExport(db: Client, studentId: string): Promise<H
       .sort((a, b) => a.position - b.position || a.set_number - b.set_number)
       .map((set) => ({
         date: workout.performed_on as string,
+        perceivedEffort: workout.perceived_effort,
+        workoutNote: workout.note,
         sessionLabel: workout.session_label,
         exerciseName: set.exercise_name,
         prescribedExerciseName: set.prescribed_exercise_name,

@@ -1,6 +1,6 @@
 -- T74 · save_workout (RF-23, RF-24, DC-8): atómico, idempotente y sujeto a la RLS de quien llama.
 begin;
-select plan(25);
+select plan(31);
 
 select tests.setup_basic();
 insert into public.exercises (id, coach_id, name, muscle_group) values
@@ -50,6 +50,16 @@ select is((select is_warmup from public.workout_sets
   'conserva el calentamiento');
 select is((select performed_on from public.workouts where id = 'd0000000-0000-0000-0000-0000000000a1'),
   '2025-03-04'::date, 'y deriva el día en hora de Santiago');
+
+-- T156: campos opcionales validados dentro de la misma transacción.
+select is(public.save_workout(pg_temp.payload('d0000000-0000-0000-0000-000000000156','a2000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-00000000000a',pg_temp.sets_ok()) || '{"perceivedEffort":8,"note":"Buen ritmo"}'::jsonb)->>'status','created','valoración guardada');
+select is((select perceived_effort::int from public.workouts where id='d0000000-0000-0000-0000-000000000156'),8,'esfuerzo conservado');
+select is((select note from public.workouts where id='d0000000-0000-0000-0000-000000000156'),'Buen ritmo','nota conservada');
+select throws_ok($$select public.save_workout(pg_temp.payload('d0000000-0000-0000-0000-000000000157','a2000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-00000000000a',pg_temp.sets_ok()) || '{"perceivedEffort":11}'::jsonb)$$,'23514',null,'esfuerzo inválido rechaza todo');
+select is((select count(*)::int from public.workouts where id='d0000000-0000-0000-0000-000000000157'),0,'sin entrenamiento parcial');
+reset role;
+select throws_ok($$update public.workouts set note=repeat('x',501) where id='d0000000-0000-0000-0000-000000000156'$$,'23514',null,'nota larga rechazada también en UPDATE directo');
+select tests.authenticate_as(tests.student_a_id());
 
 -- Idempotencia (DC-8)
 select is(

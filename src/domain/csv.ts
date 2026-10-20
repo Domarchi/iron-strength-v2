@@ -15,6 +15,8 @@ const HEADER = [
   "Kg",
   "Reps",
   "Ejercicio prescrito",
+  "Esfuerzo (1–10)",
+  "Nota del entrenamiento",
 ];
 
 export type ExportSet = {
@@ -22,6 +24,8 @@ export type ExportSet = {
   sessionLabel: string | null;
   exerciseName: string;
   prescribedExerciseName?: string | null;
+  perceivedEffort?: number | null;
+  workoutNote?: string | null;
   setNumber: number;
   isWarmup: boolean;
   weightKg: number;
@@ -51,6 +55,8 @@ export function buildHistoryCsv(rows: ExportSet[]): string {
       decimal(r.weightKg),
       String(r.reps),
       r.prescribedExerciseName ?? r.exerciseName,
+      r.perceivedEffort == null ? "" : String(r.perceivedEffort),
+      r.workoutNote ?? "",
     ]
       .map(escapeField)
       .join(SEPARATOR),

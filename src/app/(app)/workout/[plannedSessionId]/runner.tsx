@@ -185,26 +185,34 @@ function ConfirmSheet({
   children: React.ReactNode;
   onClose: () => void;
 }) {
+  const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const element = dialog.current;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    element?.showModal();
+    return () => {
+      element?.close();
+      previous?.focus();
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
+  }, []);
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}>
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-label={label}
-        onClick={(e) => e.stopPropagation()}
-        className="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-t-2xl border bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-card-foreground"
-      >
+    <dialog
+      ref={dialog}
+      role="alertdialog"
+      aria-label={label}
+      className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 text-card-foreground backdrop:bg-black/50"
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[90dvh] w-full max-w-xl flex-col gap-3 overflow-y-auto rounded-t-2xl border bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         {children}
       </div>
-    </div>
+    </dialog>
   );
 }
 
@@ -762,7 +770,63 @@ function ActiveWorkoutRunner({
             Completaste {summary.doneSets} de {summary.totalSets} series. ¿Finalizar el
             entrenamiento?
           </p>
-          <Button size="lg" onClick={confirmFinish} disabled={saving} autoFocus>
+          <p className="text-sm text-muted-foreground">
+            Volumen de trabajo: {formatKg(volume.loadKg)}
+          </p>
+          {draft.exercises
+            .filter(
+              (e) =>
+                !e.skipped &&
+                e.original &&
+                e.original.exerciseId !== e.exerciseId &&
+                e.sets.some((s) => s.done),
+            )
+            .map((e) => (
+              <p key={e.sessionExerciseId} className="text-sm">
+                {e.name} en lugar de {e.original!.name}
+              </p>
+            ))}
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Esfuerzo percibido (opcional)
+            <select
+              aria-label="Esfuerzo percibido (opcional)"
+              aria-describedby="effort-hint"
+              className="min-h-11 rounded-md border bg-background px-3 text-base"
+              value={draft.perceivedEffort ?? ""}
+              onChange={(e) =>
+                commit({
+                  ...draftRef.current,
+                  perceivedEffort: e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+            >
+              <option value="">Sin registrar</option>
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                <option value={n} key={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p id="effort-hint" className="text-xs text-muted-foreground">
+            1 = muy fácil · 10 = esfuerzo máximo
+          </p>
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Nota del entrenamiento (opcional)
+            <textarea
+              aria-label="Nota del entrenamiento (opcional)"
+              className="min-h-24 w-full resize-y rounded-md border bg-background p-3 text-base font-normal"
+              maxLength={500}
+              rows={3}
+              value={draft.note ?? ""}
+              onChange={(e) => commit({ ...draftRef.current, note: e.target.value })}
+              placeholder="Cómo te fue, molestias o algo que quieras comentar"
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">
+            {(draft.note ?? "").length}/500 caracteres · se conserva en tu borrador
+          </p>
+          <Button size="lg" onClick={confirmFinish} disabled={saving}>
             {saving ? "Guardando…" : "Sí, finalizar"}
           </Button>
           <Button variant="outline" onClick={() => setConfirming(null)}>

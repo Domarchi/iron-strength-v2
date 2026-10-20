@@ -129,6 +129,20 @@ export default async function WorkoutDetailPage({
         ))}
       </dl>
 
+      {workout.perceivedEffort != null || workout.note ? (
+        <section aria-label="Valoración del entrenamiento" className="rounded-lg border p-4">
+          <h2 className="font-semibold">Cómo se sintió</h2>
+          {workout.perceivedEffort != null ? (
+            <p className="mt-2 text-sm">
+              Esfuerzo percibido: <strong>{workout.perceivedEffort}/10</strong>
+            </p>
+          ) : null}
+          {workout.note ? (
+            <p className="mt-2 whitespace-pre-wrap break-words text-sm">{workout.note}</p>
+          ) : null}
+        </section>
+      ) : null}
+
       {workout.exercises.map((exercise) => (
         <Card key={exercise.position}>
           <CardHeader>

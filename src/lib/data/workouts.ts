@@ -39,6 +39,8 @@ export type WorkoutDetail = {
   sessionLabel: string | null;
   startedAt: string;
   durationSeconds: number;
+  perceivedEffort: number | null;
+  note: string | null;
   performedOn: DateString;
   exercises: WorkoutExerciseRow[];
   summary: WorkoutSummary;
@@ -73,7 +75,7 @@ export async function getWorkoutDetail(db: Client, id: string): Promise<WorkoutD
   const { data, error } = await db
     .from("workouts")
     .select(
-      `id, student_id, program_id, session_label, started_at, duration_seconds, performed_on,
+      `id, student_id, program_id, session_label, started_at, duration_seconds, performed_on, perceived_effort, note,
        programs ( name ),
        workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
     )
@@ -112,6 +114,8 @@ export async function getWorkoutDetail(db: Client, id: string): Promise<WorkoutD
     sessionLabel: data.session_label,
     startedAt: data.started_at,
     durationSeconds: data.duration_seconds,
+    perceivedEffort: data.perceived_effort,
+    note: data.note,
     performedOn: data.performed_on as string,
     exercises: [...grouped.values()],
     summary: summarize(data.workout_sets),

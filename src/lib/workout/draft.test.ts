@@ -185,3 +185,12 @@ it("recupera grupo, descanso compartido y serie pendiente sin alterar borradores
   saveDraft(store, value);
   expect(loadDraft(store, value.userId, value.plannedSessionId)).toEqual(value);
 });
+
+it("recupera esfuerzo y nota sin exigirlos a borradores antiguos (T156)", () => {
+  const store = fakeStorage();
+  const value = draft({ perceivedEffort: 7, note: "Última serie exigente" });
+  saveDraft(store, value);
+  expect(loadDraft(store, "user-a", "session-1")).toEqual(value);
+  saveDraft(store, draft());
+  expect(loadDraft(store, "user-a", "session-1")).toEqual(draft());
+});

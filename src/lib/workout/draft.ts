@@ -62,6 +62,8 @@ const draftSchema = z.object({
   updatedAt: z.string(),
   status: z.enum(["in_progress", "pending_save"]),
   finishedAt: z.string().optional(),
+  perceivedEffort: z.number().int().min(1).max(10).nullable().optional(),
+  note: z.string().max(500).nullable().optional(),
   durationSeconds: z.number().optional(),
   rest: z
     .object({

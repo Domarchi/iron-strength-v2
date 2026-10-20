@@ -437,14 +437,14 @@ isOneToOne: false
                   ]
                 },"workouts": {
                   Row: {
-                    "created_at": string,"duration_seconds": number,"finished_at": string,"id": string,"performed_on": string | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"started_at": string,"student_id": string,"week_start": string | null
+                    "created_at": string,"duration_seconds": number,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"started_at": string,"student_id": string,"week_start": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"duration_seconds": number,"finished_at": string,"id": string,"performed_on"?: never,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"started_at": string,"student_id": string,"week_start"?: never
+                    "created_at"?: string,"duration_seconds": number,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"started_at": string,"student_id": string,"week_start"?: never
                   }
                   Update: {
-                    "created_at"?: string,"duration_seconds"?: number,"finished_at"?: string,"id"?: string,"performed_on"?: never,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"started_at"?: string,"student_id"?: string,"week_start"?: never
+                    "created_at"?: string,"duration_seconds"?: number,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"started_at"?: string,"student_id"?: string,"week_start"?: never
                   }
                   Relationships: [
                     {

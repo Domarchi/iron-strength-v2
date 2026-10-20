@@ -51,7 +51,9 @@ describe("buildHistoryCsv (RF-47)", () => {
   it("empieza con la marca de orden de bytes y el encabezado en español", () => {
     const csv = buildHistoryCsv([]);
     expect(csv.startsWith(BOM)).toBe(true);
-    expect(csv).toBe(`${BOM}Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito\r\n`);
+    expect(csv).toBe(
+      `${BOM}Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento\r\n`,
+    );
   });
 
   it("una fila por serie, con coma decimal y fin de línea CRLF", () => {
@@ -60,9 +62,9 @@ describe("buildHistoryCsv (RF-47)", () => {
       row({ setNumber: 2, isWarmup: true, weightKg: 40, reps: 12 }),
     ]);
     expect(csv.slice(BOM.length).split("\r\n")).toEqual([
-      "Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito",
-      "2026-10-05;A;Sentadilla;1;Trabajo;62,5;10;Sentadilla",
-      "2026-10-05;A;Sentadilla;2;Calentamiento;40;12;Sentadilla",
+      "Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento",
+      "2026-10-05;A;Sentadilla;1;Trabajo;62,5;10;Sentadilla;;",
+      "2026-10-05;A;Sentadilla;2;Calentamiento;40;12;Sentadilla;;",
       "",
     ]);
   });
@@ -95,4 +97,10 @@ describe("csvFileName", () => {
   it("un nombre sin letras cae en 'alumno'", () => {
     expect(csvFileName("???", "2026-10-08")).toBe("entrenamientos-alumno-2026-10-08.csv");
   });
+});
+
+it("exporta esfuerzo y nota del entrenamiento con neutralización (T156)", () => {
+  expect(buildHistoryCsv([row({ perceivedEffort: 8, workoutNote: "=1+1" })])).toContain(
+    ";8;'=1+1\r\n",
+  );
 });

@@ -336,6 +336,8 @@ export type WorkoutPayload = {
   startedAt: string;
   finishedAt: string;
   durationSeconds: number;
+  perceivedEffort?: number | null;
+  note?: string | null;
   sets: {
     sessionExerciseId?: string;
     prescribedExerciseId?: string;
@@ -393,6 +395,8 @@ export function buildPayload(
       startedAt: draft.startedAt,
       finishedAt: draft.finishedAt ?? now.toISOString(),
       durationSeconds: draft.durationSeconds ?? secondsBetween(draft.startedAt, now),
+      ...(draft.perceivedEffort !== undefined ? { perceivedEffort: draft.perceivedEffort } : {}),
+      ...(draft.note !== undefined ? { note: draft.note?.trim() || null } : {}),
       sets,
     },
   };

@@ -7,6 +7,8 @@ import {
   type AdminClient,
 } from "@/test/int/helpers";
 import { saveWorkout } from "./save-workout";
+import { getWorkoutDetail } from "./workouts";
+import { getHistoryExport } from "./export";
 import { getWeekView } from "./week";
 
 const admin = adminClient();
@@ -141,6 +143,46 @@ describe("saveWorkout (RF-23, RF-24, DC-8)", () => {
       },
     ],
     ...over,
+  });
+
+  it("valoración opcional atómica, privada y estable al reintentar (T156)", async () => {
+    const p = payload({ perceivedEffort: 8, note: "  Buen ritmo  " });
+    expect(await saveWorkout({ db: studentDb, payload: p })).toEqual({
+      ok: true,
+      status: "created",
+    });
+    expect(await saveWorkout({ db: studentDb, payload: p })).toEqual({
+      ok: true,
+      status: "duplicate",
+    });
+    expect(await getWorkoutDetail(studentDb, p.id)).toMatchObject({
+      perceivedEffort: 8,
+      note: "Buen ritmo",
+    });
+    expect(await getWorkoutDetail(otherDb, p.id)).toBeNull();
+    const exported = await getHistoryExport(studentDb, studentId);
+    expect(exported.ok).toBe(true);
+    if (exported.ok)
+      expect(exported.rows[0]).toMatchObject({ perceivedEffort: 8, workoutNote: "Buen ritmo" });
+    for (const patch of [
+      { perceivedEffort: 0 },
+      { perceivedEffort: 11 },
+      { perceivedEffort: 2.5 },
+      { note: "x".repeat(501) },
+    ]) {
+      const invalid = payload(patch);
+      expect(await saveWorkout({ db: studentDb, payload: invalid })).toMatchObject({
+        ok: false,
+        reason: "invalid",
+      });
+      expect((await admin.from("workouts").select("id").eq("id", invalid.id)).data).toEqual([]);
+    }
+    const legacy = payload();
+    expect((await saveWorkout({ db: studentDb, payload: legacy })).ok).toBe(true);
+    expect(await getWorkoutDetail(studentDb, legacy.id)).toMatchObject({
+      perceivedEffort: null,
+      note: null,
+    });
   });
 
   it("guarda el entrenamiento con sus series y deriva el día en hora de Santiago", async () => {

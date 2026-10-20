@@ -97,3 +97,10 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - Mi semana muestra fecha, sesiones previstas, pendientes y hechas. El inicio sigue disponible cualquier día de la semana y no cambia el cumplimiento. Tests primero con módulos ausentes. Check: 425 pruebas, formato/lint/tipos/build en verde; integración final: 243; SQL final: 398 comprobaciones.
 - Migración aplicada al desarrollo sin reset, con comparación completa idéntica de tres perfiles, dos programas y ocho entrenamientos.
 - Primera suite E2E: 53/57. Se precisaron selectores antiguos y se separó la descripción del nombre accesible del nuevo control. Check final en verde; el recorrido nuevo pasó aislado y la segunda suite completa pasó 57/57 sin reintentos, incluidos temas claro/oscuro, entrenamiento del coach, recuperación del día, cambio personal y restauración de la sugerencia.
+
+## T156
+
+- Cierre con esfuerzo opcional 1–10 y nota de 500 caracteres, persistidos inmediatamente en el borrador. Se conservan al seguir entrenando, recargar y finalizar; el reintento mantiene identidad, fecha, duración y valoración. La confirmación usa diálogo nativo, foco contenido/restaurado y desplazamiento a 360 px.
+- Guardado atómico con restricciones SQL, lectura privada por RLS existente, compatibilidad con registros antiguos sin valoración. El detalle reúne ejecución, sustituciones, récords y valoración; el CSV añade esfuerzo/nota neutralizando fórmulas.
+- Pruebas primero: payload, borrador, exportación e integración fallaron al no conservar campos nuevos. Check: 428 pruebas, formato/lint/tipos/build en verde. Pasan 244 integración y 404 comprobaciones SQL. Migración aplicada al desarrollo sin reset; perfiles, programas, entrenamientos y días elegidos conservados.
+- 58/58 E2E en verde en la primera pasada, sin reintentos. Incluye valoración recuperada tras cerrar/recargar, accesibilidad a 360 × 640, respuesta perdida después de guardar y confirmación posterior sin duplicar series, además del circuito completo existente.

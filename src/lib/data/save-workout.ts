@@ -30,6 +30,8 @@ export const workoutPayloadSchema = z.object({
   finishedAt: z.iso.datetime(),
   durationSeconds: z.number().int().min(0).max(86_400),
   sets: z.array(setSchema).max(300),
+  perceivedEffort: z.number().int().min(1).max(10).nullable().optional(),
+  note: z.string().trim().max(500).nullable().optional(),
 });
 
 export type SaveWorkoutResult =

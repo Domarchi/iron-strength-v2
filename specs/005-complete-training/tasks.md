@@ -16,7 +16,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T153 · Biblioteca de rutinas**
 - [x] **T154 · Edición múltiple**
 - [x] **T155 · Organización semanal**
-- [ ] **T156 · Cierre del entrenamiento**
+- [x] **T156 · Cierre del entrenamiento**
 - [ ] **T157 · Panel del coach**
 - [ ] **T158 · Progreso conectado**
 - [ ] **T159 · Descarga explícita**

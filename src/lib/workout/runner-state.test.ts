@@ -296,3 +296,21 @@ describe("prescripciones de descanso y grupos (T147)", () => {
     expect(updated.exercises[2]).toEqual(draft.exercises[2]);
   });
 });
+
+it("conserva esfuerzo y nota al finalizar y en el payload estable del reintento (T156)", () => {
+  let draft = create([squat]);
+  draft = updateSetField(draft, 0, 0, "reps", "8");
+  draft = toggleDone(draft, 0, 0);
+  draft = { ...draft, perceivedEffort: 8, note: "Buen ritmo" };
+  const finished = finishDraft(draft, new Date("2026-10-07T16:00:00Z"));
+  const payload = buildPayload(finished, new Date("2026-10-08T16:00:00Z"));
+  expect(payload).toMatchObject({
+    ok: true,
+    payload: {
+      perceivedEffort: 8,
+      note: "Buen ritmo",
+      finishedAt: "2026-10-07T16:00:00.000Z",
+      durationSeconds: 3600,
+    },
+  });
+});

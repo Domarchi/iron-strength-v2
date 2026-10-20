@@ -444,3 +444,62 @@ test("comparación explica la progresión y copiar no modifica series hechas (T1
     page.getByRole("button", { name: "Desmarcar la serie 1 de Sentadilla" }),
   ).toHaveAttribute("aria-pressed", "true");
 });
+
+test("esfuerzo y nota se recuperan y se guardan una sola vez tras perder la respuesta (T156)", async ({
+  page,
+}) => {
+  await openSession(page);
+  await page.getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla" }).click();
+  await page.getByRole("button", { name: "Terminar entrenamiento" }).click();
+  await page.getByLabel("Esfuerzo percibido (opcional)", { exact: true }).selectOption("8");
+  await page
+    .getByLabel("Nota del entrenamiento (opcional)", { exact: true })
+    .fill("Buen ritmo, última serie exigente.");
+  await page.getByRole("button", { name: "Seguir entrenando", exact: true }).click();
+  await page.reload();
+  await page.getByRole("button", { name: "Terminar entrenamiento" }).click();
+  await expect(page.getByLabel("Esfuerzo percibido (opcional)", { exact: true })).toHaveValue("8");
+  await expect(page.getByLabel("Nota del entrenamiento (opcional)", { exact: true })).toHaveValue(
+    "Buen ritmo, última serie exigente.",
+  );
+  await page.setViewportSize({ width: 360, height: 640 });
+  const result = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(
+    result.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
+  ).toEqual([]);
+  let intercepted = false;
+  await page.route(page.url(), async (route) => {
+    if (
+      !intercepted &&
+      route.request().method() === "POST" &&
+      route.request().headers()["next-action"]
+    ) {
+      intercepted = true;
+      await route.fetch();
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await page.getByRole("button", { name: "Sí, finalizar", exact: true }).click();
+  await expect(
+    page.getByRole("region", { name: "Entrenamiento pendiente de guardar" }),
+  ).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Reintentar", exact: true }).click();
+  await expect(page.getByText("¡Entrenamiento guardado!", { exact: true })).toBeVisible();
+  await expect(page.getByText("8/10", { exact: true })).toBeVisible();
+  await expect(page.getByText("Buen ritmo, última serie exigente.", { exact: true })).toBeVisible();
+  const id = new URL(page.url()).pathname.split("/").at(-1)!;
+  const { data, error } = await admin()
+    .from("workouts")
+    .select("perceived_effort,note,workout_sets(count)")
+    .eq("id", id)
+    .single();
+  expect(error).toBeNull();
+  expect(data).toMatchObject({
+    perceived_effort: 8,
+    note: "Buen ritmo, última serie exigente.",
+    workout_sets: [{ count: 1 }],
+  });
+});

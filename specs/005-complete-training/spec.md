@@ -41,7 +41,8 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 
 ## Seguimiento
 
-- Esfuerzo percibido opcional entero 1–10 y nota opcional hasta 500 caracteres al terminar. Resumen con ejecución, sustituciones y récords.
+- Esfuerzo percibido opcional entero 1–10 y nota opcional hasta 500 caracteres al terminar. Ambos se guardan inmediatamente en el borrador, sobreviven al cierre de la confirmación/recarga y se congelan al finalizar para reintentar el mismo registro. Vacío equivale a no registrar.
+- El cierre muestra series y volumen; el detalle guardado reúne ejecución, sustituciones, récords y valoración para alumno/coach. Exportación CSV incluye esfuerzo y nota protegida contra fórmulas. Registros antiguos sin valoración siguen legibles. La base valida rangos también en escritura directa y guarda valoración y series atómicamente.
 - Panel del coach: filtros por alumno; no leídos, sin programa, programa termina esta semana y siete días sin entrenar durante programa activo con sesiones. Excluir descargas de la señal de inactividad. Sin automatizar cargas.
 - Progreso: periodos 4/8/12 semanas comparados con periodo anterior equivalente, enlaces a entrenamientos, esfuerzo/notas en ficha.
 
