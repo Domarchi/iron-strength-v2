@@ -369,6 +369,9 @@ isOneToOne: false
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"duplicate_routine_item":
+{ Args: { "p_session_id": string,"p_copy_id": string,"p_exercise_id"?: string }; Returns: string
+                           },
 "delete_my_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },

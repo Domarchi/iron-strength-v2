@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   add: vi.fn(),
   refresh: vi.fn(),
   reorder: vi.fn(),
+  duplicate: vi.fn(),
 }));
 vi.mock("@/lib/auth/session", () => ({ requireCoach: mocks.requireCoach }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(() => ({})) }));
@@ -15,11 +16,13 @@ vi.mock("@/lib/data/programs", () => ({
   updateSessionExercise: mocks.update,
   addSessionExercise: mocks.add,
   reorderSessionExercises: mocks.reorder,
+  duplicateRoutineItem: mocks.duplicate,
 }));
 import {
   savePrescriptionsAction,
   addExercisesAction,
   reorderExercisesAction,
+  duplicateRoutineAction,
 } from "./editor-actions";
 const exerciseId = "00000000-0000-4000-8000-000000000001";
 const row = (id: string) => ({
@@ -124,5 +127,31 @@ it("mantiene el bloqueo de semanas y permite reintentar un error de red al orden
   mocks.reorder.mockRejectedValueOnce(new Error("private"));
   const result = await reorderExercisesAction(data);
   expect(result.error).toContain("intentar");
+  expect(result.error).not.toContain("private");
+});
+
+it("valida el origen y la identidad estable antes de duplicar", async () => {
+  const data = fd([]);
+  data.set("copyId", exerciseId);
+  data.set("exerciseId", "foreign");
+  expect((await duplicateRoutineAction(data)).error).toBeTruthy();
+  expect(mocks.duplicate).not.toHaveBeenCalled();
+  data.set("exerciseId", "a");
+  mocks.duplicate.mockResolvedValue({ ok: true, id: exerciseId });
+  expect((await duplicateRoutineAction(data)).savedIds).toEqual([exerciseId]);
+  expect(mocks.requireCoach).toHaveBeenCalled();
+  expect(mocks.duplicate).toHaveBeenCalledWith(
+    expect.objectContaining({ sessionId: "s", exerciseId: "a", copyId: exerciseId }),
+  );
+});
+
+it("explica los límites de sesión y conserva el identificador para reintento", async () => {
+  const data = fd([]);
+  data.set("copyId", exerciseId);
+  mocks.duplicate.mockResolvedValue({ ok: false, reason: "limit" });
+  expect((await duplicateRoutineAction(data)).error).toContain("7 sesiones");
+  mocks.duplicate.mockRejectedValue(new Error("private"));
+  const result = await duplicateRoutineAction(data);
+  expect(result.error).toContain("reintentar");
   expect(result.error).not.toContain("private");
 });

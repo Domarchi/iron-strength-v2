@@ -63,6 +63,14 @@ Solicitado el 2026-10-19. Amplía RF-22, RF-24, RF-27, RF-50 y RF-53 a RF-60; re
 - Bloquear el arrastre mientras hay prescripciones/selecciones pendientes, durante guardado y en semanas pasadas. No mover ejercicios entre sesiones ni alterar sus prescripciones. Sin dependencias ni cambios de esquema.
 - Regresiones de permiso/permutación, mouse y touch reales en E2E, cancelación, error/reintento, persistencia tras recarga y accesibilidad.
 
+## Flujo completo y duplicación de rutinas (T141)
+
+- Validar en Supabase E2E aislado: crear una plantilla, guardar prescripciones, reordenar, asignar y comprobar el orden/prescripción desde la cuenta del alumno; registrar el entrenamiento, recargar y verificar el seguimiento del coach.
+- Duplicar un ejercicio al final de su misma sesión, con nueva identidad y las mismas series, rango, carga y nota. Duplicar una sesión en su misma semana con la primera letra A–G libre, copiando todos sus ejercicios en orden y con nuevas identidades. Las copias se editan independientemente; no se copian entrenamientos ni borradores.
+- Copiar solo datos guardados: bloquear estas acciones mientras haya ediciones, selección de catálogo, orden pendiente o una copia en curso. Mostrar progreso y confirmar el resultado real. Si se pierde la respuesta, conservar el identificador de la operación y ofrecer Reintentar copia sin crear duplicados; proteger la salida mientras el resultado esté pendiente.
+- Respetar 15 ejercicios por sesión, 7 sesiones por semana, sesión autenticada de coach y RLS. Se conserva RF-17 de la spec 001 y del dominio: las plantillas se editan completas; en programas activos solo semanas posteriores a la actual; programas terminados y semanas recortadas quedan bloqueados. Esta precisión corrige las menciones a «actuales/futuras» de T138 sin cambiar el comportamiento existente. Un ejercicio archivado no se puede duplicar; una sesión con ejercicios archivados informa que deben quitarse antes. Las copias son transacciones completas: un fallo no deja una sesión parcial.
+- Sin dependencias nuevas. Migración con función security invoker, permisos, bloqueo concurrente y regresiones SQL, integración, UI y E2E. Aplicar la migración al desarrollo sin resetear sus datos; reset e integración solo en la base exclusiva de pruebas.
+
 ## Validación
 
 Regresiones de cálculo, edición, selección de descanso, compatibilidad del borrador y conexión de la UI; check completo y E2E cuando el entorno lo permita. No se incorpora código, recursos ni servicios de Hevy al producto.

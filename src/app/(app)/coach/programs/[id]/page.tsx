@@ -215,6 +215,7 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
                     programId={tree.id}
                     session={session}
                     exercises={pickerExercises}
+                    canDuplicateSession={sessions.length < 7}
                   />
                 ) : (
                   <Card key={session.id}>

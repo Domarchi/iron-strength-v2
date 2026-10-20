@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowDown, ArrowUp, Check, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Copy, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,11 @@ import {
 import type { SessionRow } from "@/lib/data/programs";
 import { moveExerciseAction, removeExerciseAction, removeSessionAction } from "../actions";
 import { ActionForm } from "../action-form";
-import { reorderExercisesAction, savePrescriptionsAction } from "../editor-actions";
+import {
+  duplicateRoutineAction,
+  reorderExercisesAction,
+  savePrescriptionsAction,
+} from "../editor-actions";
 import { ExercisePicker } from "./exercise-picker";
 import { useRoutineGuard } from "./week-workspace";
 import { SortableExerciseList } from "./sortable-exercise-list";
@@ -23,10 +27,12 @@ export function SessionEditor({
   programId,
   session,
   exercises,
+  canDuplicateSession = true,
 }: {
   programId: string;
   session: SessionRow;
   exercises: CatalogExercise[];
+  canDuplicateSession?: boolean;
 }) {
   const [edits, setEdits] = useState<Record<string, PrescriptionDraft>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -37,6 +43,9 @@ export function SessionEditor({
   const [order, setOrder] = useState<string[] | null>(null);
   const [dragging, setDragging] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [copyRequest, setCopyRequest] = useState<{ id: string; exerciseId?: string } | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const copyKey = `${session.id}-copy`;
   const orderKey = `${session.id}-order`;
   const dragKey = `${session.id}-drag`;
   const orderedExercises = order
@@ -55,6 +64,33 @@ export function SessionEditor({
     0,
   );
   const structuralDisabled = pending || guard.dirty || dragging;
+  function duplicate(request: { id: string; exerciseId?: string }) {
+    setCopyRequest(request);
+    setCopyError(null);
+    setStatus(null);
+    guard.setDirty(copyKey, true);
+    const fd = new FormData();
+    fd.set("programId", programId);
+    fd.set("sessionId", session.id);
+    fd.set("copyId", request.id);
+    if (request.exerciseId) fd.set("exerciseId", request.exerciseId);
+    startTransition(async () => {
+      try {
+        const result = await duplicateRoutineAction(fd);
+        setCopyError(result.error);
+        if (!result.uncertain) {
+          setCopyRequest(null);
+          guard.setDirty(copyKey, false);
+        }
+        if (!result.error)
+          setStatus(request.exerciseId ? "Ejercicio duplicado." : "Sesión duplicada.");
+      } catch {
+        setCopyError(
+          "No se pudo confirmar la copia. Reintenta para comprobarla sin crear duplicados.",
+        );
+      }
+    });
+  }
   function reorder(ids: string[]) {
     setOrder(ids);
     setOrderError(null);
@@ -130,7 +166,7 @@ export function SessionEditor({
   return (
     <Card>
       <CardHeader className="border-b pb-4">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <CardTitle className="text-base" role="heading" aria-level={3}>
               Sesión {session.label}
@@ -139,16 +175,26 @@ export function SessionEditor({
               {session.exercises.length} ejercicios · {totalSets} series
             </p>
           </div>
-          <ActionForm
-            action={removeSessionAction}
-            fields={{ sessionId: session.id, programId }}
-            label={<Trash2 aria-hidden />}
-            ariaLabel={`Quitar la sesión ${session.label} de la semana ${session.weekNumber}`}
-            confirm={`¿Quitar la sesión ${session.label} y sus ejercicios?`}
-            size="icon"
-            variant="ghost"
-            disabled={structuralDisabled}
-          />
+          <div className="flex flex-wrap justify-end gap-1">
+            <Button
+              variant="outline"
+              disabled={structuralDisabled || !canDuplicateSession}
+              onClick={() => duplicate({ id: crypto.randomUUID() })}
+              aria-label={`Duplicar sesión ${session.label}`}
+            >
+              <Copy aria-hidden /> Duplicar sesión
+            </Button>
+            <ActionForm
+              action={removeSessionAction}
+              fields={{ sessionId: session.id, programId }}
+              label={<Trash2 aria-hidden />}
+              ariaLabel={`Quitar la sesión ${session.label} de la semana ${session.weekNumber}`}
+              confirm={`¿Quitar la sesión ${session.label} y sus ejercicios?`}
+              size="icon"
+              variant="ghost"
+              disabled={structuralDisabled}
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -199,6 +245,19 @@ export function SessionEditor({
                     </div>
                   </div>
                   <div className="flex w-full shrink-0 justify-end gap-0.5 sm:w-auto">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Duplicar ${exercise.name}`}
+                      disabled={
+                        structuralDisabled || session.exercises.length >= 15 || exercise.archived
+                      }
+                      onClick={() =>
+                        duplicate({ id: crypto.randomUUID(), exerciseId: exercise.id })
+                      }
+                    >
+                      <Copy aria-hidden />
+                    </Button>
                     <ActionForm
                       action={moveExerciseAction}
                       fields={{
@@ -240,7 +299,7 @@ export function SessionEditor({
                   </div>
                 </div>
                 <fieldset
-                  disabled={pending || orderPending || dragging}
+                  disabled={pending || orderPending || dragging || !!copyRequest}
                   className="mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
                 >
                   {(
@@ -280,7 +339,7 @@ export function SessionEditor({
                     aria-label={`Nota de ${exercise.name}`}
                     value={draft.note}
                     maxLength={500}
-                    disabled={pending || orderPending || dragging}
+                    disabled={pending || orderPending || dragging || !!copyRequest}
                     onChange={(e) => change(draft, "note", e.target.value)}
                     placeholder="Técnica, tempo o indicaciones"
                     className="h-11 bg-background"
@@ -295,6 +354,21 @@ export function SessionEditor({
             );
           }}
         </SortableExerciseList>
+        {copyError ? (
+          <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
+            <p>{copyError}</p>
+            {copyRequest ? (
+              <Button className="mt-2" disabled={pending} onClick={() => duplicate(copyRequest)}>
+                Reintentar copia
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {pending && copyRequest ? (
+          <p role="status" className="text-sm text-muted-foreground">
+            Creando copia…
+          </p>
+        ) : null}
         {orderError ? (
           <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
             <p>{orderError}</p>
@@ -343,7 +417,10 @@ export function SessionEditor({
                   Descartar cambios
                 </Button>
               ) : null}
-              <Button disabled={!dirty || pending || orderPending || dragging} onClick={save}>
+              <Button
+                disabled={!dirty || pending || orderPending || dragging || !!copyRequest}
+                onClick={save}
+              >
                 <Save aria-hidden />
                 {pending ? "Guardando…" : "Guardar sesión"}
               </Button>
@@ -366,7 +443,7 @@ export function SessionEditor({
           sessionId={session.id}
           exercises={exercises}
           count={session.exercises.length}
-          disabled={dirty || pending || orderPending || dragging}
+          disabled={dirty || pending || orderPending || dragging || !!copyRequest}
         />
       </CardContent>
     </Card>

@@ -463,6 +463,26 @@ export async function reorderSessionExercises(args: {
 }
 
 // Copiar semana --------------------------------------------------------------------------------------
+export async function duplicateRoutineItem(args: {
+  db: Client;
+  sessionId: string;
+  copyId: string;
+  exerciseId?: string;
+}): Promise<Result<{ id: string }>> {
+  const { data, error } = await args.db.rpc("duplicate_routine_item", {
+    p_session_id: args.sessionId,
+    p_copy_id: args.copyId,
+    ...(args.exerciseId ? { p_exercise_id: args.exerciseId } : {}),
+  });
+  if (error) {
+    if (error.code === "P0002") return { ok: false, reason: "not_found" };
+    if (error.code === "55000") return { ok: false, reason: "week_locked" };
+    if (error.code === "22023") return { ok: false, reason: "invalid" };
+    return { ok: false, reason: failureFromError(error) };
+  }
+  return { ok: true, id: data };
+}
+
 export async function copyWeek(args: {
   db: Client;
   programId: string;

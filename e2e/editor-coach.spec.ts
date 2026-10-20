@@ -68,6 +68,16 @@ test("copiar y reordenar una semana conserva prescripciones, es accesible y cabe
   ).toBeLessThanOrEqual(0);
   for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
+    // Espera los colores definitivos del control visible antes de medir contraste.
+    const activeWeek = page.getByRole("button", { name: /Semana 2/ });
+    await expect(activeWeek).toHaveCSS(
+      "color",
+      scheme === "dark" ? "rgb(7, 26, 48)" : "rgb(255, 255, 255)",
+    );
+    await expect(activeWeek).toHaveCSS(
+      "background-color",
+      scheme === "dark" ? "rgb(104, 176, 255)" : "rgb(23, 106, 198)",
+    );
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
       .analyze();
@@ -228,4 +238,108 @@ test("soltar fuera y Escape cancelan; las prescripciones pendientes bloquean el 
   await expect(page.getByText("Orden guardado.", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: /1.*Press de banca/ })).toBeVisible();
   await expect(handle).toBeFocused();
+});
+
+test("duplicar un ejercicio recupera una respuesta perdida sin repetir la copia", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await visibleField(page, "Series de Sentadilla").fill("4");
+  await visibleField(page, "Peso (kg) de Sentadilla").fill("62,5");
+  await expect(
+    page.getByRole("button", { name: "Duplicar Sentadilla", exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Duplicar sesión A", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  let lost = false;
+  await page.route(page.url(), async (route) => {
+    if (!lost && route.request().method() === "POST" && route.request().headers()["next-action"]) {
+      lost = true;
+      // La base ya confirmó la copia; solo se pierde la respuesta hacia el navegador.
+      await route.fetch();
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await page.getByRole("button", { name: "Duplicar Sentadilla", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Reintentar copia", exact: true })).toBeVisible();
+  const readRows = async () => {
+    const { data, error } = await admin()
+      .from("program_sessions")
+      .select("session_exercises(*)")
+      .eq("program_id", programId)
+      .single();
+    expect(error).toBeNull();
+    return data!.session_exercises.sort((a, b) => a.position - b.position);
+  };
+  const beforeRetry = await readRows();
+  expect(beforeRetry).toHaveLength(3);
+  expect(beforeRetry[2]).toMatchObject({ sets: 4, target_weight_kg: 62.5 });
+  await page.getByRole("button", { name: "Reintentar copia", exact: true }).click();
+  await expect(page.getByText("Ejercicio duplicado.", { exact: true })).toBeVisible();
+  expect((await readRows()).map((row) => row.id)).toEqual(beforeRetry.map((row) => row.id));
+  await page.reload();
+  const copy = page.locator(`[data-sortable-id="${beforeRetry[2].id}"]`);
+  await copy.getByLabel("Series de Sentadilla", { exact: true }).fill("2");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  const rows = await readRows();
+  expect(rows[0].sets).toBe(4);
+  expect(rows[2].sets).toBe(2);
+});
+
+test("duplicar sesión conserva orden y prescripciones y permite editar solo la copia", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await visibleField(page, "Series de Sentadilla").fill("4");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Duplicar sesión A", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Sesión B", exact: true })).toBeVisible();
+  await page.reload();
+  const { data, error } = await admin()
+    .from("program_sessions")
+    .select("id,label,session_exercises(*)")
+    .eq("program_id", programId)
+    .eq("week_number", 1)
+    .order("label");
+  expect(error).toBeNull();
+  expect(data).toHaveLength(2);
+  const rows = data!.map((session) =>
+    session.session_exercises.sort((a, b) => a.position - b.position),
+  );
+  expect(rows[1].map((row) => ({ ...row, id: "", program_session_id: "" }))).toEqual(
+    rows[0].map((row) => ({ ...row, id: "", program_session_id: "" })),
+  );
+  expect(rows[1].every((copy) => !rows[0].some((source) => source.id === copy.id))).toBe(true);
+  await page
+    .locator(`[data-sortable-id="${rows[1][0].id}"]`)
+    .getByLabel("Series de Sentadilla", { exact: true })
+    .fill("2");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).last().click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(
+    page
+      .locator(`[data-sortable-id="${rows[0][0].id}"]`)
+      .getByLabel("Series de Sentadilla", { exact: true }),
+  ).toHaveValue("4");
+  await expect(
+    page
+      .locator(`[data-sortable-id="${rows[1][0].id}"]`)
+      .getByLabel("Series de Sentadilla", { exact: true }),
+  ).toHaveValue("2");
+  await page.setViewportSize({ width: 360, height: 800 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(
+    results.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
+  ).toEqual([]);
 });

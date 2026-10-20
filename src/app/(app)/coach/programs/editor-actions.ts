@@ -9,11 +9,12 @@ import {
   updateSessionExercise,
   addSessionExercise,
   reorderSessionExercises,
+  duplicateRoutineItem,
   type Failure,
 } from "@/lib/data/programs";
 import { createClient } from "@/lib/supabase/server";
 
-export type EditorResult = { error: string | null; savedIds: string[] };
+export type EditorResult = { error: string | null; savedIds: string[]; uncertain?: boolean };
 const messages: Record<Failure, string> = {
   invalid: "Revisa los datos ingresados.",
   forbidden: "No tienes permiso para modificar esta sesión.",
@@ -136,5 +137,43 @@ export async function reorderExercisesAction(fd: FormData): Promise<EditorResult
   } catch {
     refresh(programId);
     return { error: temporaryError, savedIds: [] };
+  }
+}
+
+export async function duplicateRoutineAction(fd: FormData): Promise<EditorResult> {
+  await requireCoach();
+  const copyId = z.uuid().safeParse(fd.get("copyId"));
+  if (!copyId.success) return { error: messages.invalid, savedIds: [] };
+  const programId = String(fd.get("programId") ?? "");
+  const exerciseId = String(fd.get("exerciseId") ?? "") || undefined;
+  try {
+    const db = await createClient();
+    const tree = await getProgramTree(db, programId);
+    const session = tree?.sessions.find((s) => s.id === fd.get("sessionId"));
+    if (!session || (exerciseId && !session.exercises.some((e) => e.id === exerciseId)))
+      return { error: messages.not_found, savedIds: [] };
+    const result = await duplicateRoutineItem({
+      db,
+      sessionId: session.id,
+      copyId: copyId.data,
+      exerciseId,
+    });
+    refresh(programId);
+    if (result.ok) return { error: null, savedIds: [result.id] };
+    const error =
+      result.reason === "limit"
+        ? exerciseId
+          ? messages.limit
+          : "La semana admite hasta 7 sesiones."
+        : result.reason === "invalid"
+          ? "Quita los ejercicios archivados antes de duplicar y revisa el origen de la copia."
+          : messages[result.reason];
+    return { error, savedIds: [] };
+  } catch {
+    return {
+      error: "No se pudo confirmar la copia. Puedes reintentar sin crear otra copia.",
+      savedIds: [],
+      uncertain: true,
+    };
   }
 }

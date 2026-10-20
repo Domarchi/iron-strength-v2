@@ -19,3 +19,5 @@ Validación final y limitaciones: `validation.md`. Las casillas marcan implement
 - [x] **T139 · Completar E2E y corregir regresiones** — Supabase E2E aislado y limpieza acotada; selectores ambiguos y credenciales fijas corregidos; dos escenarios del editor añadidos. Pasan los 35 E2E y el check completo (373 pruebas). Los perfiles, programas, prescripciones y entrenamientos del desarrollo se conservaron.
 
 - [x] **T140 · Orden por arrastre** — Asa táctil y de teclado, destino/scroll, guardado automático y reintento, conservación de permisos. Pasan 38 E2E y el check completo (378 pruebas); editor real abierto con controles de arrastre.
+
+- [x] **T141 · Flujo completo y duplicación** — Coach → alumno verificado; copias independientes y atómicas de ejercicios/sesiones con reintento seguro. Pasan 40 E2E, 207 de integración, 296 SQL y check completo (381 pruebas). Migración local aplicada conservando los datos; editor abierto.

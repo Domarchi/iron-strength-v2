@@ -2,7 +2,7 @@
 // invitar → registrarse → asignar → ejecutar sesión → el coach ve el progreso y comenta.
 import { expect, test, type Browser } from "@playwright/test";
 import { mondayOf, santiagoDate } from "../src/domain/dates";
-import { COACH, resetAll, seedCoach } from "./support/db";
+import { COACH, admin, resetAll, seedCoach } from "./support/db";
 import { login } from "./support/ui";
 
 const STUDENT = {
@@ -75,6 +75,12 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await coach.reload();
   await expect(coach.getByLabel("Series de Sentadilla", { exact: true })).toHaveValue("4");
   await expect(coach.getByLabel("Reps mín. de Press de banca", { exact: true })).toHaveValue("9");
+  const handle = coach.getByRole("button", { name: "Reordenar Sentadilla", exact: true });
+  await handle.focus();
+  await handle.press("Space");
+  await handle.press("ArrowDown");
+  await handle.press("Enter");
+  await expect(coach.getByText("Orden guardado.", { exact: true })).toBeVisible();
 
   // --- El coach invita a la alumna ------------------------------------------------------------------------
   await coach.goto("/coach/students");
@@ -110,6 +116,11 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   // Base UI marca los enlaces con apariencia de botón con role="button".
   await student.getByText("Empezar", { exact: true }).click();
   await expect(student.getByRole("heading", { name: /Sesión A/ })).toBeVisible();
+  await expect(student.getByRole("heading", { level: 2 })).toHaveText([
+    "Press de banca",
+    "Sentadilla",
+  ]);
+  await expect(student.getByLabel("Repeticiones de la serie 4 de Sentadilla")).toBeVisible();
 
   // Sentadilla: 2 series con peso y repeticiones; Press de banca: 1 serie
   await student.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("60");
@@ -132,6 +143,19 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await student.getByRole("button", { name: "Sí, finalizar" }).click();
   await expect(student.getByText("¡Entrenamiento guardado!")).toBeVisible();
   await expect(student.getByText("62,5 kg × 8")).toBeVisible();
+  await student.reload();
+  await expect(student.getByText("62,5 kg × 8")).toBeVisible();
+  const { data: profile } = await admin()
+    .from("profiles")
+    .select("id")
+    .eq("full_name", STUDENT.name)
+    .single();
+  const { data: workouts } = await admin()
+    .from("workouts")
+    .select("id,workout_sets(*)")
+    .eq("student_id", profile!.id);
+  expect(workouts).toHaveLength(1);
+  expect(workouts![0].workout_sets).toHaveLength(3);
 
   // --- El coach ve el avance y comenta --------------------------------------------------------------------
   await coach.goto("/coach/students");

@@ -5,10 +5,11 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { WeekWorkspace } from "./week-workspace";
 import { SessionEditor } from "./session-editor";
 import type { SessionRow } from "@/lib/data/programs";
-const mocks = vi.hoisted(() => ({ save: vi.fn(), add: vi.fn() }));
+const mocks = vi.hoisted(() => ({ save: vi.fn(), add: vi.fn(), duplicate: vi.fn() }));
 vi.mock("../editor-actions", () => ({
   savePrescriptionsAction: mocks.save,
   addExercisesAction: mocks.add,
+  duplicateRoutineAction: mocks.duplicate,
 }));
 vi.mock("../actions", () => ({
   moveExerciseAction: vi.fn(),
@@ -105,6 +106,10 @@ it("preserva las ediciones al cambiar semana y bloquea operaciones estructurales
     container.querySelector<HTMLButtonElement>('[aria-label="Quitar Sentadilla"]')!.disabled,
   ).toBe(true);
   expect(btn("Agregar ejercicios").disabled).toBe(true);
+  expect(btn("Duplicar sesión").disabled).toBe(true);
+  expect(
+    container.querySelector<HTMLButtonElement>('[aria-label="Duplicar Sentadilla"]')!.disabled,
+  ).toBe(true);
   await act(() => btn("Semana 2").click());
   await act(() => btn("Semana 1").click());
   expect(
@@ -113,6 +118,25 @@ it("preserva las ediciones al cambiar semana y bloquea operaciones estructurales
   const event = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(event);
   expect(event.defaultPrevented).toBe(true);
+});
+
+it("una respuesta perdida conserva la misma identidad de copia y protege la salida", async () => {
+  mocks.duplicate.mockRejectedValueOnce(new Error("offline"));
+  await act(() =>
+    container.querySelector<HTMLButtonElement>('[aria-label="Duplicar Sentadilla"]')!.click(),
+  );
+  expect(container.textContent).toContain("Reintentar copia");
+  const first = mocks.duplicate.mock.calls[0][0] as FormData;
+  expect(first.get("exerciseId")).toBe("a");
+  const event = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(event);
+  expect(event.defaultPrevented).toBe(true);
+  expect(btn("Agregar ejercicios").disabled).toBe(true);
+  mocks.duplicate.mockResolvedValueOnce({ error: null, savedIds: [first.get("copyId")] });
+  await act(() => btn("Reintentar copia").click());
+  expect(mocks.duplicate.mock.calls[1][0].get("copyId")).toBe(first.get("copyId"));
+  expect(container.textContent).toContain("Ejercicio duplicado.");
+  expect(btn("Agregar ejercicios").disabled).toBe(false);
 });
 it("no envía valores inválidos y conserva datos si falla el guardado", async () => {
   await fill("Reps mín. de Sentadilla", "15");
