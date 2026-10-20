@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { test } from "./support/network";
+import { expect } from "@playwright/test";
 import { admin, COACH, resetAll, seedCoach, seedProgram } from "./support/db";
 import { login } from "./support/ui";
 import { createDraft } from "../src/lib/workout/runner-state";
@@ -74,6 +75,7 @@ test("recupera y migra el borrador anterior; la cuota conserva el origen hasta c
 test("cerrar sesión exige resolver pendientes, sincroniza y limpia solo esa cuenta; otras pestañas se ocultan (T162)", async ({
   page,
   context,
+  network,
 }) => {
   await resetAll();
   const userId = await seedCoach();
@@ -89,7 +91,7 @@ test("cerrar sesión exige resolver pendientes, sincroniza y limpia solo esa cue
   await page
     .getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla", exact: true })
     .click();
-  await context.route("**/api/workouts/sync", (route) => route.abort());
+  network.blocked.add("/api/workouts/sync");
   await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Sí, finalizar", exact: true }).click();
   await expect(
@@ -132,7 +134,7 @@ test("cerrar sesión exige resolver pendientes, sincroniza y limpia solo esa cue
   await page.getByRole("button", { name: "Cerrar sesión", exact: true }).last().click();
   await dialog.getByRole("button", { name: "Sincronizar y salir", exact: true }).click();
   await expect(dialog).toContainText("Aún quedan registros pendientes");
-  await context.unroute("**/api/workouts/sync");
+  network.blocked.delete("/api/workouts/sync");
   await dialog.getByRole("button", { name: "Sincronizar y salir", exact: true }).click();
   await expect(page).toHaveURL(/\/login/);
   await expect(

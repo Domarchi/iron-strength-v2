@@ -68,6 +68,7 @@ Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env
 - Duplicar ejercicios/sesiones usa `duplicate_routine_item` (security invoker), con transacción completa e ID de copia estable para reintentos. El editor conserva ese ID si se pierde la respuesta. Se mantiene RF-17: solo semanas posteriores a la actual en programas activos; las plantillas se editan completas.
 - Las funciones de no leídos (`unread_comments`, `mark_comments_read`) son `security invoker`: no las cambies a `security definer`, la RLS de comentarios es su única barrera.
 - Acabado: reutilizar `NativeSelect`, `Textarea`, `StatusMessage` y `EmptyState` para conservar foco, legibilidad móvil y estados consistentes. Todas las variantes de Button mantienen 44 px; textos largos ajustan sin desbordamiento y movimiento reducido limita animaciones a una iteración. Formularios de salida `data-local-exit` usan la confirmación de pendientes y evitan una segunda confirmación nativa del editor.
+- Validación móvil: Chromium y WebKit, un worker y base aislada. Los casos offline usan `e2e/support/network.ts` para cortar el transporte real también para el service worker; `setOffline` de WebKit y sus interceptores no cubren ese flujo. Solo el gesto touch continuo con CDP es exclusivo de Chromium. Las pruebas físicas se documentan aparte, sin equipararlas a emulación.
 - El linter de React marca `Date.now()` en el render y `setState` dentro de efectos: usa funciones auxiliares y manejadores.
 
 ## Reglas

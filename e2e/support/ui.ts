@@ -6,7 +6,8 @@ export async function login(page: Page, email: string, password: string): Promis
   await page.getByLabel("Correo").fill(email);
   await page.getByLabel("Contraseña").fill(password);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).not.toHaveURL(/\/login/);
+  await expect(page).toHaveURL(/\/(?:coach\/students|week)(?:\?.*)?$/);
+  await expect(page.getByRole("button", { name: "Mi cuenta", exact: true })).toBeVisible();
 }
 
 export async function logout(page: Page): Promise<void> {

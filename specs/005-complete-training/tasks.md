@@ -24,6 +24,6 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T161 · Cola de sincronización**
 - [x] **T162 · Actualizaciones y cuentas**
 - [x] **T163 · Consistencia visual**
-- [ ] **T164 · Validación completa**
+- [x] **T164 · Validación completa**
 - [ ] **T165 · Preparación de publicación**
 - [ ] **T166 · Publicación y prueba final**

@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { test } from "./support/network";
+import { expect, type Page } from "@playwright/test";
 import { admin, COACH, createUser, resetAll, seedCoach, seedProgram } from "./support/db";
 import { login } from "./support/ui";
 import type { QueueEntry } from "../src/lib/offline/queue-contract";
@@ -34,6 +35,7 @@ async function finish(page: Page) {
 test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; conserva sustitución y valoración (T161)", async ({
   page,
   context,
+  network,
 }) => {
   await resetAll();
   const coachId = await seedCoach();
@@ -74,7 +76,7 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
     page.getByRole("region", { name: "Descarga de la semana" }).getByRole("status"),
   ).toContainText("Disponible sin conexión");
   await page.close();
-  await context.setOffline(true);
+  network.offline = true;
   const offline = await context.newPage();
   await offline.goto("/offline");
   await offline.getByRole("button", { name: "Iniciar sesión A", exact: true }).click();
@@ -117,15 +119,8 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
   await expect(panel).toContainText("Prensa de piernas");
   await expect(panel).toContainText("Entrené sin conexión.");
   await pending.close();
-  let lost = false;
-  await context.route("**/api/workouts/sync", async (route) => {
-    if (!lost) {
-      lost = true;
-      await route.fetch();
-      await route.abort("internetdisconnected");
-    } else await route.continue();
-  });
-  await context.setOffline(false);
+  network.lostResponses.add("/api/workouts/sync");
+  network.offline = false;
   const restored = await context.newPage();
   await restored.goto("/offline");
   const restoredPanel = restored.getByRole("region", {
@@ -165,6 +160,7 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
 test("sesión expirada y rechazo conservan la cola; otra cuenta no puede enviarla (T161)", async ({
   page,
   context,
+  network,
   baseURL,
 }) => {
   await resetAll();
@@ -176,13 +172,13 @@ test("sesión expirada y rechazo conservan la cola; otra cuenta no puede enviarl
   await page
     .getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla", exact: true })
     .click();
-  await context.route("**/api/workouts/sync", (route) => route.abort());
+  network.blocked.add("/api/workouts/sync");
   await finish(page);
   await expect(
     page.getByText("Entrenamiento pendiente de sincronizar", { exact: true }),
   ).toBeVisible();
   const frozen = (await queue(page))[0];
-  await context.unroute("**/api/workouts/sync");
+  network.blocked.delete("/api/workouts/sync");
   await context.clearCookies();
   await page.getByRole("button", { name: "Reintentar", exact: true }).click();
   await expect(page.getByText(/Tu sesión expiró/)).toBeVisible();

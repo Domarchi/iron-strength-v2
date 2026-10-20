@@ -1,10 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { test } from "./support/network";
+import { expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { admin, COACH, resetAll, seedCoach, seedProgram, seedWorkout } from "./support/db";
 import { login } from "./support/ui";
 test("cierra, abre sin Internet, consulta historial y recupera series y descanso (T160)", async ({
   page,
   context,
+  network,
   request,
 }) => {
   await resetAll();
@@ -53,7 +55,8 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
   ).toBe(true);
   expect(cached).not.toContain("/week");
   await page.close();
-  await context.setOffline(true);
+  network.offline = true;
+  await expect(request.get("/offline", { maxRetries: 0 })).rejects.toThrow();
   const offline = await context.newPage();
   await offline.goto("/week");
   await expect(offline.getByRole("heading", { name: "Tus semanas descargadas" })).toBeVisible();
@@ -100,16 +103,13 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
     recovered.getByRole("button", { name: "Iniciar sesión B", exact: true }),
   ).toBeDisabled();
   await recovered.clock.setSystemTime(new Date());
-  await context.setOffline(false);
+  network.offline = false;
   await recovered.goto("/account");
   let release!: () => void;
   const gate = new Promise<void>((resolve) => {
     release = resolve;
   });
-  await context.route("**/account", async (route) => {
-    if (route.request().method() === "POST") await gate;
-    await route.continue();
-  });
+  network.holds.set("/account", gate);
   await recovered.getByRole("button", { name: "Cerrar sesión", exact: true }).last().click();
   const logout = recovered
     .getByRole("button", { name: "Eliminar pendientes locales y salir", exact: true })
@@ -120,7 +120,7 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
   release();
   await logout;
   await expect(recovered).toHaveURL(/\/login/);
-  await context.setOffline(true);
+  network.offline = true;
   await recovered.goto("/offline");
   await expect(
     recovered.getByText("Entra con conexión y descarga una semana para usarla aquí.", {
@@ -134,7 +134,7 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
 
 test("un recurso ausente impide confirmar disponibilidad y una descarga posterior repara (T160)", async ({
   page,
-  context,
+  network,
 }) => {
   await resetAll();
   const coachId = await seedCoach();
@@ -142,12 +142,12 @@ test("un recurso ausente impide confirmar disponibilidad y una descarga posterio
   await login(page, COACH.email, COACH.password);
   await page.goto("/week");
   // La petición proviene del worker: se simula la falta de un recurso al instalar.
-  await context.route("**/icons/maskable", (route) => route.abort());
+  network.blocked.add("/icons/maskable");
   const download = page.getByRole("region", { name: "Descarga de la semana", exact: true });
   await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
   await expect(download.getByRole("alert")).toBeVisible();
   await expect(download.getByRole("status")).not.toContainText("Disponible sin conexión");
-  await context.unroute("**/icons/maskable");
+  network.blocked.delete("/icons/maskable");
   await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   await page.evaluate(async () => {
@@ -155,11 +155,11 @@ test("un recurso ausente impide confirmar disponibilidad y una descarga posterio
       if (key.startsWith("iron-strength-ui:"))
         await (await caches.open(key)).delete("/icons/maskable");
   });
-  await context.route("**/icons/maskable", (route) => route.abort());
+  network.blocked.add("/icons/maskable");
   await download.getByRole("button", { name: "Actualizar descarga", exact: true }).click();
   await expect(download.getByRole("alert")).toBeVisible();
   await expect(download.getByRole("status")).toContainText("Datos guardados:");
-  await context.unroute("**/icons/maskable");
+  network.blocked.delete("/icons/maskable");
   await download.getByRole("button", { name: "Actualizar descarga", exact: true }).click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   expect(await page.evaluate(async () => Boolean(await caches.match("/icons/maskable")))).toBe(

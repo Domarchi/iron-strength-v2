@@ -9,7 +9,7 @@ Configurado el 2026-10-19 para probar la aplicación completa con Auth, Postgres
 - Studio: `http://127.0.0.1:54323`.
 - Correo de prueba: `http://127.0.0.1:54324`.
 - `.env.local` contiene las claves locales y está excluido de Git, con permisos de lectura/escritura solo para el usuario.
-- Usuarios creados por `npm run dev:seed`: coach y dos alumnos. Alumno Uno tiene programa de tres semanas e historial. Los datos de acceso están en `outputs/acceso-local.md`, en la carpeta padre del repositorio; no se incluyen en esta documentación ni en Git.
+- Preparación inicial con `npm run dev:seed`: coach y dos alumnos. T164 añadió un tercer alumno y copias de programa para las cuentas que no tenían uno; ahora las cuatro cuentas pueden entrenar. Alumno Uno conserva su programa e historial. Los datos de acceso están en `outputs/acceso-local.md`, en la carpeta padre del repositorio; no se incluyen en esta documentación ni en Git.
 
 Docker está instalado, pero el entorno del agente no tiene acceso a su socket. Se usó el [runtime nativo oficial de Supabase](https://supabase.com/docs/guides/local-development/docker-and-native-runtimes), experimental en la CLI 2.120.0 que ya usa el proyecto. Los servicios y la base son reales; no se usa la demo de Vite.
 
@@ -43,7 +43,7 @@ El supervisor y los archivos de acceso son archivos locales de este equipo, fuer
 - Login del coach: muestra sus dos alumnos y el cumplimiento actualizado del entrenamiento guardado.
 - Esa validación inicial fue manual mediante el navegador integrado. En T139 se ejecutó además la suite automatizada completa contra otra pila local: **35 E2E pasan**, incluido el editor del coach, accesibilidad en ambos temas y las comprobaciones de guardado/permisos. El check final pasa con 373 pruebas.
 
-Antes de correr comandos de la CLI contra esta pila nativa, usar el mismo `SUPABASE_HOME` y activar `SUPABASE_EXPERIMENTAL_STACK=1` y `SUPABASE_STORAGE_VECTOR_ENABLED=false`. Las pruebas de integración borran los usuarios locales y pgTAP exige una base sin perfiles: después de esas pruebas, restaurar los datos de prueba con `npm run dev:seed`, como indica `AGENTS.md`.
+Antes de correr comandos de la CLI contra esta pila nativa, usar el mismo `SUPABASE_HOME` y activar `SUPABASE_EXPERIMENTAL_STACK=1` y `SUPABASE_STORAGE_VECTOR_ENABLED=false`. Las pruebas de integración borran usuarios y pgTAP exige una base sin perfiles: ejecutar ambas exclusivamente en la pila aislada descrita abajo. No resetear ni volver a sembrar la base interactiva para validar cambios.
 
 ## Ejecutar E2E sin borrar el desarrollo interactivo
 
@@ -85,3 +85,11 @@ NEXT_DIST_DIR=.next-interactive npm run start -- -p 3000
 E2E conserva `.next` y el puerto 3100. Los workers se generan con una URL por versión y entorno, de modo que una compilación de pruebas no reemplaza el worker de la vista previa interactiva. Sus archivos generados se excluyen de Git. Las páginas autenticadas, RSC, APIs y fotos privadas no se guardan en Cache Storage.
 
 Prueba: entrar con conexión, descargar, esperar «Disponible sin conexión», cerrar la pestaña, desactivar la red y abrir la app. Una sesión empezada puede recuperarse después de vencer la semana; una sesión nueva solo puede iniciarse dentro de la semana descargada vigente. El historial descargado conserva diez resultados por ejercicio; más resultados y el detalle completo requieren conexión.
+
+## Cuatro cuentas y dos motores de navegador
+
+La preparación manual adicional se ejecuta con `node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file=.env.local scripts/prepare-four-local-accounts.ts`. Es aditiva e idempotente: conserva programas vigentes/futuros y registros existentes, añade alumnos hasta tres y permite entrenar al coach. Requiere una plantilla y el acceso local del coach; no se admite una base remota.
+
+Playwright ejecuta Chromium y WebKit en serie contra la instancia aislada. En una máquina con permisos de instalación: `npx playwright install --with-deps chromium webkit`. Para un solo motor: `npm run test:e2e -- --project=webkit`. El gesto táctil continuo por CDP se limita a Chromium; la [guía para teléfonos](phone-validation.md) identifica la comprobación física de Safari pendiente.
+
+En este equipo Ubuntu 26.04, las bibliotecas que faltaban para WebKit se descargaron como paquetes del sistema y se extrajeron bajo `../work/webkit-deps/root`, sin instalar paquetes globales. Sus bibliotecas compartidas están enlazadas en `minibrowser-wpe/sys/lib` y `minibrowser-gtk/sys/lib` del navegador de pruebas. No se cambiaron binarios del navegador ni archivos del sistema. Si se reinstala el navegador, repetir esa preparación o instalar sus dependencias normalmente. Estos archivos locales no forman parte del despliegue.

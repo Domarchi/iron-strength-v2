@@ -77,8 +77,8 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
           echo "SUPABASE_SECRET_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3100" >> "$GITHUB_ENV"
-      - name: Instalar Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Instalar Chromium y WebKit
+        run: npx playwright install --with-deps chromium webkit
       - name: Pruebas E2E
         run: npm run test:e2e
       - name: Guardar el informe si algo falla

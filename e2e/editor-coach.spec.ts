@@ -187,7 +187,12 @@ test("arrastrar guarda el orden; un fallo conserva el destino y se puede reinten
 test("arrastre touch real con scroll automático y persistencia en móvil", async ({
   page,
   context,
+  browserName,
 }) => {
+  test.skip(
+    browserName !== "chromium",
+    "El gesto táctil continuo usa CDP; WebKit prueba arrastre por puntero/teclado y el gesto real se verifica en iPhone.",
+  );
   await page.setViewportSize({ width: 390, height: 800 });
   await routine(page);
   const handle = page.getByRole("button", { name: "Reordenar Sentadilla", exact: true });

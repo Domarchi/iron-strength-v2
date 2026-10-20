@@ -29,7 +29,10 @@ export default defineConfig({
     screenshot: "only-on-failure",
     ...devices["Pixel 7"],
   },
-  projects: [{ name: "chromium", use: { browserName: "chromium" } }],
+  projects: [
+    { name: "chromium", use: { browserName: "chromium" } },
+    { name: "webkit", use: { ...devices["iPhone 13"], browserName: "webkit" } },
+  ],
   webServer: {
     // Build de producción: es lo que se despliega.
     command: `npm run build && npm run start -- -p ${PORT}`,
