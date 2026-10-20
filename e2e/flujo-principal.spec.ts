@@ -82,6 +82,14 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await handle.press("Enter");
   await expect(coach.getByText("Orden guardado.", { exact: true })).toBeVisible();
 
+  // La asignación conserva la superserie y el descanso prescrito.
+  await coach.getByRole("checkbox", { name: "Seleccionar Press de banca para superserie" }).check();
+  await coach.getByRole("checkbox", { name: "Seleccionar Sentadilla para superserie" }).check();
+  await coach.getByRole("button", { name: "Agrupar seleccionados (2)" }).click();
+  await expect(coach.getByRole("heading", { name: "Superserie 1", exact: true })).toBeVisible();
+  await coach.getByLabel("Descanso de Superserie 1").selectOption("120");
+  await expect(coach.getByText("Configuración guardada.", { exact: true })).toBeVisible();
+
   // --- El coach invita a la alumna ------------------------------------------------------------------------
   await coach.goto("/coach/students");
   await coach.getByLabel("Correo del alumno").fill(STUDENT.email);
@@ -122,6 +130,9 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   ]);
   await expect(student.getByLabel("Repeticiones de la serie 4 de Sentadilla")).toBeVisible();
 
+  await expect(student.getByText("Superserie 1", { exact: true })).toHaveCount(2);
+  await expect(student.getByLabel("Descanso automático de Sentadilla")).toHaveValue("120");
+
   // Sentadilla: 2 series con peso y repeticiones; Press de banca: 1 serie
   await student.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("60");
   await student.getByLabel("Repeticiones de la serie 1 de Sentadilla").fill("10");
@@ -138,6 +149,8 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   // El borrador sobrevive a una recarga
   await student.reload();
   await expect(student.getByLabel("Repeticiones de la serie 2 de Sentadilla")).toHaveValue("8");
+  await expect(student.getByRole("timer")).toBeVisible();
+  await expect(student.getByLabel("Descanso automático de Press de banca")).toHaveValue("120");
 
   await student.getByRole("button", { name: "Finalizar entrenamiento" }).click();
   await student.getByRole("button", { name: "Sí, finalizar" }).click();

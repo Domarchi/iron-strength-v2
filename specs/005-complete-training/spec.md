@@ -20,7 +20,7 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 - La ronda se deriva del ordinal de las series de trabajo; ignora calentamientos y ejercicios saltados. Al recuperar se indica el integrante con la primera ronda pendiente. Completar una serie adelantada no inicia descanso mientras quede pendiente una ronda anterior. Deshacer restaura series y temporizador juntos.
 - Tras cada serie de trabajo avanzar al siguiente integrante pendiente de la ronda. Descansar al acabar ronda; cantidades distintas de series continúan con los pendientes. Calentamientos no avanzan la ronda.
 - Descanso opcional prescrito por ejercicio/grupo: 0 o 15–600 s. Sin prescripción conservar 90 s trabajo/60 s calentamiento. Ajuste del alumno solo afecta su entrenamiento y próximos descansos.
-- Copiar sesión/semana/asignar conserva grupos y descansos con nuevas identidades. Duplicar ejercicio individual lo deja fuera del grupo.
+- Copiar sesión/semana/asignar conserva grupos y descansos con nuevas identidades. Duplicar ejercicio individual lo deja fuera del grupo y conserva su descanso individual. Cada sesión copiada recibe grupos propios incluso si proviene de otra copia; reintentar una duplicación con el mismo ID confirma las mismas identidades.
 
 ## Contexto y alternativas
 

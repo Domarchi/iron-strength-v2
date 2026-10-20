@@ -40,3 +40,9 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - Rondas derivadas de series de trabajo, con cantidades desiguales, omisiones y calentamientos excluidos. Registro y teclado avanzan al integrante pendiente; el descanso se inicia cuando termina la ronda. El cambio de descanso se comparte en el grupo solo dentro del borrador.
 - Contexto y borrador conservan grupos y descansos prescritos; recuperación del integrante pendiente y del tiempo absoluto restante. Los borradores antiguos mantienen su comportamiento y formato compatibles.
 - Pruebas primero: fallaron el módulo de rondas ausente y la precarga/persistencia de metadatos. Check final: 401 pruebas, formato/lint/tipos/build en verde; 220 integración en la instancia aislada. 47/47 E2E en verde, sin reintentos; incluye calentamiento, teclado, rondas desiguales, recarga, descanso compartido y guardado único.
+
+## T148
+
+- Duplicación de sesión, copia de semana y asignación regeneran cada grupo por sesión mediante una copia completa; conservan descansos, notas y prescripciones. Copia individual fuera del grupo con descanso propio. Duplicación reintentada conserva las identidades de la primera copia.
+- Cuatro regresiones de integración fallaron antes de implementar. Check: 401 pruebas, formato/lint/tipos/build en verde. Validación final SQL: 339 comprobaciones; integración: 224. Se conserva el error «no encontrado» para programas invisibles después de detectarlo en la primera pasada SQL.
+- Migración aplicada al desarrollo sin reset: comparación completa, incluidos metadatos nuevos, confirma tres perfiles, dos programas y ocho entrenamientos idénticos. 47/47 E2E en verde, sin reintentos, incluyendo creación/asignación/ejecución agrupada.
