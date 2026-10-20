@@ -48,7 +48,9 @@ test("Mi semana muestra la tira de la semana y qué toca hoy (RF-61, RF-62)", as
   ).toHaveCount(7);
   await expect(page.getByText("Hoy toca")).toBeVisible();
   await expect(page.getByRole("region", { name: "Próxima sesión" })).toContainText("Sentadilla");
-  await expect(page.getByRole("status")).toHaveText("Llevas 0 de 1 sesiones");
+  await expect(page.getByRole("status").filter({ hasText: /^Llevas/ })).toHaveText(
+    "Llevas 0 de 1 sesiones",
+  );
   await expect(page.getByRole("link", { name: /Aún sin racha|Racha/ })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Principal" })).toBeVisible();
 });

@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
 import { PageHeading } from "@/components/layout/page-heading";
 import { WeekOverview } from "@/components/week/week-overview";
+import { DownloadWeek } from "@/components/week/download-week";
 import { PendingWorkouts } from "@/components/week/pending-workouts";
 import { getStreakSummary } from "@/lib/data/streak";
 import { getWeekView } from "@/lib/data/week";
@@ -66,7 +67,17 @@ async function WeekContent() {
       );
 
     case "active":
-      return <WeekOverview view={view} today={today} streak={streak} />;
+      return (
+        <>
+          <WeekOverview view={view} today={today} streak={streak} />
+          <DownloadWeek
+            key={`${user.id}:${view.program.id}:${view.weekStart}`}
+            userId={user.id}
+            programId={view.program.id}
+            weekStart={view.weekStart}
+          />
+        </>
+      );
   }
 }
 

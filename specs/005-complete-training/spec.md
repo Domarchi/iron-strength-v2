@@ -50,7 +50,8 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 
 ## Sin conexión
 
-- Descargar semana vigente explícitamente: contexto, prescripciones, alternativas e historial reciente. Confirmar disponibilidad después de persistir todo; fecha visible.
+- Descargar semana vigente explícitamente: paquete v1 por cuenta/programa/semana con todas las sesiones, prescripciones, alternativas, días y hasta diez entrenamientos recientes por ejercicio original o alternativo. Sin credenciales, fotos ni datos de otras cuentas. Validar integridad y vigencia antes de guardar; comprobar revisiones antes y después de reunir el paquete.
+- Guardar el paquete completo en una sola transacción IndexedDB y confirmar solo al completarse. Error de cuota/acceso conserva la descarga anterior y muestra un error real; actualización explícita, fecha visible y recuperación al recargar. Conservar paquetes anteriores para recuperar sesiones ya iniciadas, pero no permitir inicios fuera de su semana o tras el fin conocido del programa. T159 confirma datos guardados; la disponibilidad sin Internet requiere además los recursos públicos de T160.
 - Service worker para recursos públicos de interfaz y pantalla local, IndexedDB para datos por cuenta. No cachear HTML/RSC autenticado, fotos privadas ni credenciales.
 - Primera entrada y descarga requieren conexión; iniciar solo semana correspondiente; recuperar borradores antiguos iniciados. Identidad estable, misma fecha y duración en reintentos.
 - Cola persistente; sincronizar al abrir, recuperar conexión con app abierta o acción manual. No prometer envío con app cerrada. Borrar solo tras confirmación del servidor; rechazo conserva datos y explicación.

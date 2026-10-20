@@ -19,7 +19,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T156 · Cierre del entrenamiento**
 - [x] **T157 · Panel del coach**
 - [x] **T158 · Progreso conectado**
-- [ ] **T159 · Descarga explícita**
+- [x] **T159 · Descarga explícita**
 - [ ] **T160 · Apertura sin Internet**
 - [ ] **T161 · Cola de sincronización**
 - [ ] **T162 · Actualizaciones y cuentas**

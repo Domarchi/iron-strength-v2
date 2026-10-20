@@ -7,6 +7,7 @@ import {
   type AdminClient,
 } from "@/test/int/helpers";
 import { getWeekView } from "./week";
+import { downloadCurrentWeek } from "./offline-week";
 
 const admin = adminClient();
 
@@ -252,5 +253,20 @@ describe("getWeekView (RF-19, RF-25, DC-11)", () => {
     expect(await getWeekView(studentDb, otherStudentId, "2025-03-05")).toEqual({
       kind: "no_program",
     });
+  });
+  it("descarga todas las sesiones e historial propio y rechaza otra cuenta o semana inactiva", async () => {
+    const workoutId = await workout("1A", "2025-03-04T15:00:00Z");
+    const pack = await downloadCurrentWeek(studentDb, studentId, new Date("2025-03-05T15:00:00Z"));
+    expect(pack.sessions).toHaveLength(2);
+    expect(pack.sessions[0].context.exercises).toHaveLength(2);
+    expect(pack.history[exerciseId].items.map((w) => w.id)).toContain(workoutId);
+    expect(pack.history[exerciseId].items.length).toBeLessThanOrEqual(10);
+    expect(pack.userId).toBe(studentId);
+    await expect(
+      downloadCurrentWeek(studentDb, otherStudentId, new Date("2025-03-05T15:00:00Z")),
+    ).rejects.toThrow();
+    await expect(
+      downloadCurrentWeek(studentDb, studentId, new Date("2025-04-01T15:00:00Z")),
+    ).rejects.toThrow();
   });
 });

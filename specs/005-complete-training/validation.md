@@ -118,3 +118,10 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - Marcas históricas identificadas aparte. Tablas del periodo actual/anterior enlazan cada registro al entrenamiento. El gráfico conserva puntos coincidentes sin claves React duplicadas. Ficha del alumno con esfuerzo y nota en entrenamientos recientes, bajo la RLS existente.
 - Tres reglas de periodos partieron con módulo ausente y la integración detectó valoración ausente en la lista. Check: 435 pruebas, formato/lint/tipos/build en verde; integración: 246. Sin cambios de esquema ni datos interactivos.
 - La suite completa pasó 60/60 en la primera pasada y nuevamente tras reforzar áreas táctiles de los enlaces. Check final en verde. Se verifican filtros, comparación, navegación al registro anterior, valoración en la ficha, accesibilidad y controles de 44 px a 360 px.
+
+## T159
+
+- Paquetes v1 completos por cuenta/programa/semana, con prescripciones, días, alternativas e historial de originales y sustitutos. Identidad derivada de la sesión y comprobación de revisiones/vigencia antes y después de reunir datos. Contrato validado antes de persistir.
+- IndexedDB guarda y relee el paquete dentro de una transacción; la interfaz confirma al completarse, recupera la fecha y permite actualizar explícitamente. Errores de cuota/acceso conservan la descarga anterior. No se cachean páginas ni credenciales. La apertura offline corresponde a T160.
+- Las reglas unitarias partieron con módulo ausente. La primera integración detectó una expectativa incorrecta del fixture: borrar un programa conserva su historial anterior, que también debe descargarse. Se corrigió la comprobación para incluir ese historial, con un máximo de diez resultados.
+- Check final: 438 pruebas, formato/lint/tipos/build en verde; integración: 247. La primera suite E2E pasó 60/61: se precisó un selector antiguo de estado para distinguir cumplimiento y descarga. La segunda suite pasó 61/61, sin reintentos, incluyendo IndexedDB real, recuperación, cuota agotada sin pérdida, actualización y aislamiento entre cuentas. Sin cambios de esquema ni datos interactivos.
