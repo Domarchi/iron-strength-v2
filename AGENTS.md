@@ -73,7 +73,7 @@ Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env
 
 ## Publicación
 
-Ver `docs/despliegue.md` y `docs/backup-restore.md`. El único proyecto Supabase previsto es `udwhjcnlfqlggblnpchu`; verificarlo antes de escribir. Vercel `iron-strength` tiene despliegues del repositorio anterior `Domarchi/iron-strength`: no reemplazarlo con v2 sin resolver el destino. T165 tiene preparación local verificada y comprobación remota pendiente; T166 no está publicado. No ejecutar semillas o pruebas destructivas sobre producción ni trasladar las cuentas locales.
+Ver `docs/despliegue.md` y `docs/backup-restore.md`. El único proyecto Supabase previsto es `udwhjcnlfqlggblnpchu`; verificarlo antes de escribir. El usuario autorizó reemplazar la versión existente de Vercel `iron-strength` por v2, conservando el proyecto `prj_efHmFcgn3IS5Bd4zzNShwGnewXPd` del equipo `team_NW0l4Vd8UMmxgFbZxPETPMph`. Antes de publicar, verificar Supabase y migraciones y preparar el respaldo. T165 tiene preparación local verificada y comprobación remota pendiente; T166 no está publicado. No ejecutar semillas o pruebas destructivas sobre producción ni trasladar las cuentas locales.
 
 ## Reglas
 

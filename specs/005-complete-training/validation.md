@@ -177,3 +177,8 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - Tipos regenerados desde la pila aislada idénticos a src/types/database.ts. Check: formato/lint/tipos/build y 458 pruebas en verde. No hay cambios de esquema o pantallas; la suite T164 (141 aprobados, un caso CDP omitido en WebKit) corresponde al mismo código del producto.
 - Acceso remoto comprobado mediante herramientas: Vercel ofrece iron-strength (prj_efHmFcgn3IS5Bd4zzNShwGnewXPd), pero sus despliegues pertenecen a Domarchi/iron-strength. Requiere decidir el destino para iron-strength-v2. Supabase CLI no tiene sesión autenticada; no se pudo verificar el proyecto exclusivo udwhjcnlfqlggblnpchu. No se enlazó, migró, desplegó ni modificó ningún recurso remoto. T165 y T166 conservan su estado pendiente por estas comprobaciones.
 - Vista previa local recompilada en .next-interactive y reiniciada en el puerto 3000. Se comprobó login del coach, panel con tres alumnos y Mi semana con programa propio. Se conserva la base interactiva y su historial; las credenciales están fuera de Git.
+
+### Decisión de destino y acceso
+
+- El usuario autorizó reemplazar la versión del proyecto Vercel iron-strength por v2. Se volvió a verificar su ID/equipo, Next.js y Node 24, repositorio anterior y dominios. Enlace local preparado en .vercel/project.json (ignorado por Git); no se creó un proyecto nuevo ni se desplegó.
+- Tras el aviso de login, `supabase projects list` sigue respondiendo Access token not provided. No hay token en el entorno de comandos ni archivos de sesión habituales; se solicitó completar la autorización de la CLI en la terminal del proyecto. La sesión remota de Supabase todavía no se considera verificada.

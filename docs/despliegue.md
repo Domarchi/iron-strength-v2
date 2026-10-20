@@ -4,12 +4,12 @@ La publicación sigue T165–T166 de `specs/005-complete-training/`. El código 
 
 ## Destino y estado comprobado
 
-| Recurso           | Destino previsto / evidencia                                                                | Estado                                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Código            | `Domarchi/iron-strength-v2`, rama `main-54qpxa`                                             | Implementación local; commits sin subir                                                                                          |
-| Supabase          | `udwhjcnlfqlggblnpchu`, nombre esperado `iron-strength`                                     | Falta sesión CLI para verificar identidad, esquema y configuración remotos                                                       |
-| Vercel encontrado | `iron-strength`, `prj_efHmFcgn3IS5Bd4zzNShwGnewXPd`, equipo `team_NW0l4Vd8UMmxgFbZxPETPMph` | Sus últimos despliegues corresponden a `Domarchi/iron-strength`, no a v2; pendiente decidir si reemplazarlo o usar otro proyecto |
-| Teléfonos         | Android/Chrome e iPhone/Safari                                                              | Pendiente prueba física por HTTPS                                                                                                |
+| Recurso           | Destino previsto / evidencia                                                                | Estado                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Código            | `Domarchi/iron-strength-v2`, rama `main-54qpxa`                                             | Implementación local; commits sin subir                                                                    |
+| Supabase          | `udwhjcnlfqlggblnpchu`, nombre esperado `iron-strength`                                     | Falta sesión CLI para verificar identidad, esquema y configuración remotos                                 |
+| Vercel encontrado | `iron-strength`, `prj_efHmFcgn3IS5Bd4zzNShwGnewXPd`, equipo `team_NW0l4Vd8UMmxgFbZxPETPMph` | Usuario autorizó reemplazar esa versión por v2 en el mismo proyecto; último despliegue anterior conservado |
+| Teléfonos         | Android/Chrome e iPhone/Safari                                                              | Pendiente prueba física por HTTPS                                                                          |
 
 No modificar RELEVO, relevo1 ni el proyecto Supabase `hmkgxhszamktvisrifxv`. El nombre parecido de un proyecto no basta para elegirlo. Antes de cada escritura remota comprobar referencia, equipo, repositorio, commit y entorno.
 
@@ -57,7 +57,7 @@ Las invitaciones y la recuperación actuales generan enlaces privados `/invite/<
 
 CI comprueba ambas ramas, formato, lint, tipos, unitarias, build, migraciones, pgTAP, integración, tipos generados y E2E Chromium/WebKit en bases efímeras. Las acciones están fijadas a commits, no conservan credenciales de checkout y solo tienen permiso de lectura. CI no despliega automáticamente.
 
-Una vez resuelto el proyecto Vercel correcto, vincularlo al repositorio v2 y al commit revisado. Usar Node 24, Next.js y `npm run build`: ese comando también genera los workers versionados. No sustituirlo por `next build` ni configurar `NEXT_DIST_DIR=.next-interactive` en producción.
+El destino aprobado es el proyecto existente Vercel `iron-strength`. El enlace local `.vercel/project.json` usa su ID y equipo verificados. Al publicar, vincular el código de v2 y el commit revisado; conservar el despliegue anterior para recuperación. Usar Node 24, Next.js y `npm run build`: ese comando también genera los workers versionados. No sustituirlo por `next build` ni configurar `NEXT_DIST_DIR=.next-interactive` en producción.
 
 Preparar un despliegue de producción sin asignarle aún el dominio, verificarlo y promover ese mismo build. Confirmar HTTPS, login, manifest, iconos, `/offline`, URL del worker y guardado autenticado. Las páginas privadas y APIs no deben incorporarse al caché offline; las fotos usan URLs firmadas de cinco minutos. Mantener los recursos del despliegue anterior durante la transición y comprobar una sesión ya iniciada antes de promocionar; no forzar actualización de workers o recarga con borradores abiertos.
 
