@@ -25,5 +25,5 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T162 · Actualizaciones y cuentas**
 - [x] **T163 · Consistencia visual**
 - [x] **T164 · Validación completa**
-- [ ] **T165 · Preparación de publicación**
-- [ ] **T166 · Publicación y prueba final**
+- [ ] **T165 · Preparación de publicación** — CI, documentación y restauración local verificados; falta verificar el proyecto Supabase remoto y resolver el destino Vercel.
+- [ ] **T166 · Publicación y prueba final** — pendiente de acceso/destino remoto y aceptación en teléfonos físicos.

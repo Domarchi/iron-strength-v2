@@ -74,6 +74,7 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 ## Publicación y aceptación
 
 - Verificación coach + tres alumnos (incluido entreno del coach), Chromium y WebKit, guía de comprobación en teléfonos físicos sin afirmar ejecución no realizada. Ejecutar registro, notas/esfuerzo, lectura del coach, comentarios y rechazo de acceso entre alumnos con cuatro sesiones de navegador independientes. El gesto táctil continuo automatizado requiere CDP (Chromium); WebKit conserva arrastre por puntero/teclado y su gesto táctil real queda identificado en la guía para iPhone.
+- CI verifica main y la rama de trabajo, con permisos de lectura, acciones fijadas por commit y Supabase efímero por job. Ensayar respaldo/restauración en una base temporal aislada y comparar filas, políticas y permisos; los archivos de Storage requieren una copia aparte. Documentar el destino remoto observado y mantener pendientes los controles que necesiten acceso.
 - Actualizar CI, autenticación, recursos privados, respaldo/restauración y documentación. Verificar proyecto remoto exclusivo Iron Strength antes de modificarlo. No transferir automáticamente datos locales a producción.
 - Toda tabla nueva: RLS, pgTAP, cascada de borrado; actualizar copias/exportación/tipos. No ampliar service role. Mantener compatibilidad con entrenamientos existentes.
 - Tests primero; check por tarea, SQL/integración al tocar DB y E2E al tocar pantallas. Bases destructivas exclusivamente aisladas; conservar desarrollo interactivo. Corregir fallos antes de avanzar. Commit por tarea.

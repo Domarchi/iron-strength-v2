@@ -1,88 +1,72 @@
-# Puesta en producción — pasos que haces tú
+# Publicación de Iron Strength v2
 
-Estos pasos usan tus credenciales, por eso no los hago yo. Corresponden a las tareas **T36**, **T103** y **T104** de `specs/001-mvp/tasks.md`. Cada paso termina con una comprobación.
+La publicación sigue T165–T166 de `specs/005-complete-training/`. El código local está validado; estos pasos no acreditan un despliegue remoto. No trasladar usuarios, contraseñas, fotos ni entrenamientos de demostración a producción.
 
-Proyecto de Supabase: `udwhjcnlfqlggblnpchu` (`iron-strength`, región East US (Ohio), solo para Iron Strength). **No toques RELEVO ni relevo1.**
+## Destino y estado comprobado
 
-> El proyecto `hmkgxhszamktvisrifxv` de la misma cuenta contiene tablas de otra aplicación (citas, fichas clínicas): **no se usa y no se debe tocar**.
+| Recurso           | Destino previsto / evidencia                                                                | Estado                                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Código            | `Domarchi/iron-strength-v2`, rama `main-54qpxa`                                             | Implementación local; commits sin subir                                                                                          |
+| Supabase          | `udwhjcnlfqlggblnpchu`, nombre esperado `iron-strength`                                     | Falta sesión CLI para verificar identidad, esquema y configuración remotos                                                       |
+| Vercel encontrado | `iron-strength`, `prj_efHmFcgn3IS5Bd4zzNShwGnewXPd`, equipo `team_NW0l4Vd8UMmxgFbZxPETPMph` | Sus últimos despliegues corresponden a `Domarchi/iron-strength`, no a v2; pendiente decidir si reemplazarlo o usar otro proyecto |
+| Teléfonos         | Android/Chrome e iPhone/Safari                                                              | Pendiente prueba física por HTTPS                                                                                                |
 
-## 1. Base de datos (T36)
+No modificar RELEVO, relevo1 ni el proyecto Supabase `hmkgxhszamktvisrifxv`. El nombre parecido de un proyecto no basta para elegirlo. Antes de cada escritura remota comprobar referencia, equipo, repositorio, commit y entorno.
 
-En una terminal, dentro de la carpeta del proyecto:
+## 1. Preparar y verificar la base
 
-```bash
-npx supabase login
+Autenticarse en una terminal con `npx supabase login`, sin pegar tokens en el chat. Listar los proyectos y confirmar que la referencia exclusiva anterior pertenece a Iron Strength. Después:
+
+```sh
 npx supabase link --project-ref udwhjcnlfqlggblnpchu
-npx supabase db push --dry-run
+npx supabase migration list --linked
+npx supabase db push --linked --dry-run
 ```
 
-`--dry-run` solo muestra qué migraciones se aplicarían. Revisa que sean las de `supabase/migrations/` (de `…0009_profiles` a `20261008120084_delete_my_account`: son 23 en total). Luego:
+En este hito hay **36 migraciones**, desde `20261007120009_profiles.sql` hasta `20261020120099_offline_workout_sync.sql`. Comparar el listado real del repositorio y el historial remoto; no reparar el historial automáticamente si difiere. Inspeccionar el esquema remoto para confirmar que solo contiene esta app.
 
-```bash
-npx supabase db push --include-seed
+Antes de aplicar, completar [respaldo y restauración](backup-restore.md). Aplicar solo las migraciones pendientes, nunca un reset remoto:
+
+```sh
+npx supabase db push --linked
+npx supabase migration list --linked
 ```
 
-`--include-seed` carga además el catálogo de 467 ejercicios.
+El catálogo `supabase/seed.sql` contiene ejercicios, no cuentas de prueba. Cargarlo solo si se verificó que falta; revisar el resultado antes de utilizar `--include-seed`. No ejecutar `dev:seed`, `prepare-four-local-accounts.ts`, integración ni E2E contra producción.
 
-**Comprobación:** `npx supabase migration list` muestra las mismas migraciones en local y en remoto. El proyecto está en East US (Ohio): funciona igual que en São Paulo, con algo más de latencia desde Chile.
+Comprobar RLS en todas las tablas públicas, bucket `progress-photos` privado, permisos de fotos por propietario/coach, funciones de escritura y cascadas. La suite local cubre estos contratos, pero no sustituye la comparación con la configuración remota.
 
-### Ajustes en el panel de Supabase
+## 2. Autenticación y variables
 
-En **Authentication**:
+Mantener Email activado y el registro público desactivado. En la configuración local esto significa `[auth] enable_signup=false` y `[auth.email] enable_signup=true`; apagar el proveedor Email impide también entrar a usuarios existentes. Configurar contraseña mínima de ocho caracteres y caducidad de recuperación de 24 horas.
 
-1. _Sign In / Providers → Email_: deja el proveedor **activado** y **desactiva** "Allow new users to sign up" (el alta es solo por invitación).
-2. _Email_: pon la expiración de enlaces/OTP en **86400** segundos (24 h).
-3. _Password_: longitud mínima **8**.
-4. _URL Configuration → Site URL_: la URL de producción de Vercel (la tendrás en el paso 2).
+En Supabase, Site URL debe ser la URL HTTPS final. Usar URLs de redirección exactas cuando se necesiten; no añadir comodines de otros proyectos. [Referencia oficial de redirecciones](https://supabase.com/docs/guides/auth/redirect-urls).
 
-## 2. Aplicación en Vercel (T103)
+| Variable en Vercel                     | Valor requerido                              |
+| -------------------------------------- | -------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | `https://udwhjcnlfqlggblnpchu.supabase.co`   |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave publicable de ese mismo proyecto       |
+| `SUPABASE_SECRET_KEY`                  | Clave solo de servidor, nunca `NEXT_PUBLIC_` |
+| `NEXT_PUBLIC_SITE_URL`                 | Origen HTTPS final de Iron Strength v2       |
 
-1. En Vercel: **Add New → Project**, importa `Domarchi/iron-strength-v2`.
-2. Variables de entorno (Production). Los valores salen de Supabase → Settings → API Keys:
+Configurar secretos directamente en el proveedor, sin publicarlos ni añadirlos a Git. No reutilizar las variables locales ni apuntar previews de pruebas destructivas a producción. Tras cambiar variables públicas, recompilar.
 
-   | Variable                               | Valor                                                                  |
-   | -------------------------------------- | ---------------------------------------------------------------------- |
-   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://udwhjcnlfqlggblnpchu.supabase.co`                             |
-   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | clave **publicable**                                                   |
-   | `SUPABASE_SECRET_KEY`                  | clave **secreta** (nunca con prefijo `NEXT_PUBLIC_`)                   |
-   | `NEXT_PUBLIC_SITE_URL`                 | la URL pública de la app, p. ej. `https://iron-strength-v2.vercel.app` |
+Las invitaciones y la recuperación actuales generan enlaces privados `/invite/<token>` y `/reset/<token>` desde la app del coach. El coach los entrega al alumno; la app no promete envío automático de correo. Comprobar caducidad y un solo uso en el destino final. Si el coach pierde acceso, recuperarlo mediante la administración del proyecto verificado, sin crear otro coach ni cambiar contraseñas existentes por defecto.
 
-3. Despliega. Si cambiaste `NEXT_PUBLIC_SITE_URL` después del primer despliegue, vuelve a desplegar.
+## 3. Publicar un commit validado
 
-## 3. Crear tu cuenta de coach (una sola vez)
+CI comprueba ambas ramas, formato, lint, tipos, unitarias, build, migraciones, pgTAP, integración, tipos generados y E2E Chromium/WebKit en bases efímeras. Las acciones están fijadas a commits, no conservan credenciales de checkout y solo tienen permiso de lectura. CI no despliega automáticamente.
 
-Crea un archivo `.env.production.local` (está en `.gitignore`) con **las claves de producción** y ejecuta el script. La contraseña la escribes tú; no la pegues en ningún chat.
+Una vez resuelto el proyecto Vercel correcto, vincularlo al repositorio v2 y al commit revisado. Usar Node 24, Next.js y `npm run build`: ese comando también genera los workers versionados. No sustituirlo por `next build` ni configurar `NEXT_DIST_DIR=.next-interactive` en producción.
 
-```bash
-# .env.production.local
-NEXT_PUBLIC_SUPABASE_URL=https://udwhjcnlfqlggblnpchu.supabase.co
-SUPABASE_SECRET_KEY=<tu clave secreta>
-COACH_EMAIL=tu-correo@ejemplo.cl
-COACH_NAME="Tu nombre"
-COACH_PASSWORD='<elige una contraseña larga>'
-```
+Preparar un despliegue de producción sin asignarle aún el dominio, verificarlo y promover ese mismo build. Confirmar HTTPS, login, manifest, iconos, `/offline`, URL del worker y guardado autenticado. Las páginas privadas y APIs no deben incorporarse al caché offline; las fotos usan URLs firmadas de cinco minutos. Mantener los recursos del despliegue anterior durante la transición y comprobar una sesión ya iniciada antes de promocionar; no forzar actualización de workers o recarga con borradores abiertos.
 
-```bash
-node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file=.env.production.local scripts/create-coach.ts
-```
+Anotar URL, proyecto, commit, migraciones aplicadas, resultado de los controles y despliegue anterior recuperable. Si falla el frontend, volver al despliegue anterior compatible. No deshacer migraciones destructivamente: detener escrituras si hace falta y preparar una corrección hacia adelante o restauración ensayada.
 
-Después **borra** `.env.production.local` o al menos la línea `COACH_PASSWORD`.
+## 4. Cuatro cuentas y aceptación
 
-**Comprobación:** abre la URL de producción, inicia sesión con ese correo y entras a "Alumnos".
+Si todavía no existe coach, usar `scripts/create-coach.ts` con variables privadas de producción y credenciales elegidas por su propietario. El script rechaza un segundo coach. No usar la contraseña de demostración.
 
-## 4. Prueba en tu móvil e invitaciones (T104)
+Entrar como coach, invitar a **tres alumnos**, entregar cada enlace a su destinatario y asignar copias independientes. El coach puede asignarse un programa para entrenar. No enviar invitaciones a direcciones inventadas ni copiar cuentas locales.
 
-1. Desde el móvil, abre la URL, entra como coach e **instálala en la pantalla de inicio** (Chrome: menú ⋮ → "Instalar app"; iPhone: Compartir → "Agregar a pantalla de inicio").
-2. Crea una plantilla de prueba y asígnatela como coach (aparece en "Mi entreno"). Haz una sesión corta, comprueba que se guarda y que el historial la muestra.
-3. En **Alumnos**, invita al primer alumno con su correo. Copia el enlace (se muestra una sola vez) y envíaselo.
-4. Repite con el segundo alumno.
-5. Cuando cada alumno se registre, asígnales su programa.
-
-**Comprobación:** ambos alumnos aparecen en tu lista y, tras su primer entrenamiento, ves su actividad.
-
-## Si algo falla
-
-- _No puedo iniciar sesión en producción_: revisa que el proveedor Email esté activado en Supabase y que el coach exista (paso 3).
-- _Las invitaciones no abren_: `NEXT_PUBLIC_SITE_URL` debe ser la URL real, y redeploy.
-- _Supabase Free pausa el proyecto tras ~7 días sin uso_: se reactiva desde el panel con un clic.
-- Copias de seguridad: el plan gratuito no las incluye; exporta la base de vez en cuando (Settings → Database).
+Seguir [la guía de teléfonos](phone-validation.md): cada cuenta entra, instala, registra, consulta historial y ve solo sus datos; el coach revisa y responde. Descargar una semana, cerrar, usar modo avión, terminar y reconectar: un solo entrenamiento en el servidor. Verificar recuperación de acceso y dejar los resultados físicos registrados por modelo y navegador.

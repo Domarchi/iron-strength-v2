@@ -71,6 +71,10 @@ Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env
 - Validación móvil: Chromium y WebKit, un worker y base aislada. Los casos offline usan `e2e/support/network.ts` para cortar el transporte real también para el service worker; `setOffline` de WebKit y sus interceptores no cubren ese flujo. Solo el gesto touch continuo con CDP es exclusivo de Chromium. Las pruebas físicas se documentan aparte, sin equipararlas a emulación.
 - El linter de React marca `Date.now()` en el render y `setState` dentro de efectos: usa funciones auxiliares y manejadores.
 
+## Publicación
+
+Ver `docs/despliegue.md` y `docs/backup-restore.md`. El único proyecto Supabase previsto es `udwhjcnlfqlggblnpchu`; verificarlo antes de escribir. Vercel `iron-strength` tiene despliegues del repositorio anterior `Domarchi/iron-strength`: no reemplazarlo con v2 sin resolver el destino. T165 tiene preparación local verificada y comprobación remota pendiente; T166 no está publicado. No ejecutar semillas o pruebas destructivas sobre producción ni trasladar las cuentas locales.
+
 ## Reglas
 
 - Lee `docs/constitution.md` y la spec activa antes de tocar código. Si falta una decisión, detente y pregunta.
