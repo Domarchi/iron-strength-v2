@@ -2,7 +2,15 @@
 // Es una historia en orden: lo que hace cada prueba lo usa la siguiente.
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { COACH, admin, createUser, resetAll, seedCoach, seedProgram } from "./support/db";
+import {
+  COACH,
+  admin,
+  createUser,
+  resetAll,
+  seedCoach,
+  seedProgram,
+  seedWorkout,
+} from "./support/db";
 import { login } from "./support/ui";
 
 test.describe.configure({ mode: "serial" });
@@ -116,10 +124,20 @@ test("exportar el historial a CSV: propio, del coach y sin acceso ajeno (RF-47, 
   browser,
 }) => {
   // Evita que el nombre de un ejercicio se interprete como fórmula.
-  await admin()
-    .from("workout_sets")
-    .update({ exercise_name: "=SUMA(1;1)" })
-    .eq("student_id", evaId);
+  const exercise = (
+    await admin()
+      .from("exercises")
+      .select("id")
+      .eq("name", "Sentadilla")
+      .is("coach_id", null)
+      .single()
+  ).data!;
+  await seedWorkout({
+    studentId: evaId,
+    exerciseId: exercise.id,
+    exerciseName: "=SUMA(1;1)",
+    daysAgo: 1,
+  });
 
   await login(page, EVA.email, EVA.password);
   const own = await page.request.get("/export/history");

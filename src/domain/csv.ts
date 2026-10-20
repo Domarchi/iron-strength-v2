@@ -6,12 +6,22 @@ import type { DateString } from "./dates.ts";
 export const BOM = "﻿";
 const SEPARATOR = ";";
 const EOL = "\r\n";
-const HEADER = ["Fecha", "Sesión", "Ejercicio", "Serie", "Tipo", "Kg", "Reps"];
+const HEADER = [
+  "Fecha",
+  "Sesión",
+  "Ejercicio",
+  "Serie",
+  "Tipo",
+  "Kg",
+  "Reps",
+  "Ejercicio prescrito",
+];
 
 export type ExportSet = {
   date: DateString;
   sessionLabel: string | null;
   exerciseName: string;
+  prescribedExerciseName?: string | null;
   setNumber: number;
   isWarmup: boolean;
   weightKg: number;
@@ -40,6 +50,7 @@ export function buildHistoryCsv(rows: ExportSet[]): string {
       r.isWarmup ? "Calentamiento" : "Trabajo",
       decimal(r.weightKg),
       String(r.reps),
+      r.prescribedExerciseName ?? r.exerciseName,
     ]
       .map(escapeField)
       .join(SEPARATOR),

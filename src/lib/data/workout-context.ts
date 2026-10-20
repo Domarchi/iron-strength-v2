@@ -10,9 +10,10 @@ import type { PrefillExercise } from "../workout/runner-state.ts";
 
 type Client = SupabaseClient<Database>;
 
-export type ContextExercise = PrefillExercise & {
+export type ContextExercise = Omit<PrefillExercise, "alternatives"> & {
   muscleGroup?: string;
   equipment?: string | null;
+  alternatives?: ContextExercise[];
   note: string | null;
   last: Pick<LastPerformance, "date" | "sets"> | null;
   suggestion: Suggestion | null;
@@ -51,7 +52,9 @@ export async function getWorkoutContext(
        programs ( name, start_date, ends_on, weeks_count, student_id ),
        session_exercises (
          id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note, rest_seconds, superset_id, superset_rest_seconds,
-         exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg )
+         exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg ),
+         session_exercise_alternatives ( exercise_id, position, sets, reps_min, reps_max, target_weight_kg,
+           exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg ) )
        )`,
     )
     .eq("id", plannedSessionId)
@@ -101,7 +104,7 @@ export async function getWorkoutContext(
   const lastBy = lastByExercise(history);
 
   const exercises: ContextExercise[] = [...session.session_exercises]
-    .sort((a, b) => a.position - b.position)
+    .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id))
     .map((row) => {
       const exercise = row.exercises as unknown as {
         name: string;
@@ -118,6 +121,38 @@ export async function getWorkoutContext(
       };
       const last = lastBy.get(row.exercise_id) ?? null;
       return {
+        alternatives: [...row.session_exercise_alternatives]
+          .sort((a, b) => a.position - b.position)
+          .map((a) => {
+            const catalog = a.exercises!;
+            const rx = {
+              sets: a.sets,
+              repsMin: a.reps_min,
+              repsMax: a.reps_max,
+              targetWeightKg: a.target_weight_kg === null ? null : Number(a.target_weight_kg),
+            };
+            const previous = lastBy.get(a.exercise_id) ?? null;
+            return {
+              sessionExerciseId: row.id,
+              exerciseId: a.exercise_id,
+              name: catalog.name,
+              isBodyweight: catalog.is_bodyweight,
+              muscleGroup: catalog.muscle_group,
+              equipment: catalog.equipment,
+              prescribed: rx,
+              note: null,
+              lastWeightKg: previous && previous.topWeightKg > 0 ? previous.topWeightKg : null,
+              last: previous ? { date: previous.date, sets: previous.sets } : null,
+              suggestion: previous
+                ? suggestProgression({
+                    prescription: rx,
+                    lastSets: previous.sets,
+                    incrementKg: Number(catalog.progression_increment_kg),
+                    isBodyweight: catalog.is_bodyweight,
+                  })
+                : null,
+            };
+          }),
         sessionExerciseId: row.id,
         exerciseId: row.exercise_id,
         name: exercise.name,

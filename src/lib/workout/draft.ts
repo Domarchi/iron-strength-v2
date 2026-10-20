@@ -17,6 +17,19 @@ const setSchema = z.object({
   isWarmup: z.boolean(),
 });
 
+const choiceSchema = z.object({
+  exerciseId: z.string(),
+  name: z.string(),
+  isBodyweight: z.boolean(),
+  prescribed: z.object({
+    sets: z.number(),
+    repsMin: z.number(),
+    repsMax: z.number(),
+    targetWeightKg: z.number().nullable(),
+  }),
+  lastWeightKg: z.number().nullable(),
+});
+
 const exerciseSchema = z.object({
   sessionExerciseId: z.string(),
   exerciseId: z.string(),
@@ -28,6 +41,8 @@ const exerciseSchema = z.object({
     repsMax: z.number(),
     targetWeightKg: z.number().nullable(),
   }),
+  original: choiceSchema.optional(),
+  alternatives: z.array(choiceSchema).max(3).optional(),
   skipped: z.boolean(),
   // Opcional para recuperar también borradores anteriores a T135 (90 s por defecto).
   restSeconds: z.union([z.literal(0), z.number().int().min(15).max(600)]).optional(),

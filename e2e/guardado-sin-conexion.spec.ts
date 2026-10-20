@@ -28,6 +28,14 @@ test("recupera desde Mi semana un entrenamiento pendiente de la semana anterior 
     })
     .eq("id", seeded.programId);
   expect(error).toBeNull();
+  const sourceRow = (
+    await admin()
+      .from("session_exercises")
+      .select("id")
+      .eq("program_session_id", seeded.sessionId)
+      .eq("position", 0)
+      .single()
+  ).data!;
   const started = new Date(`${addDays(thisMonday, -1)}T15:00:00.000Z`);
   const initial = createDraft({
     workoutId: crypto.randomUUID(),
@@ -36,7 +44,7 @@ test("recupera desde Mi semana un entrenamiento pendiente de la semana anterior 
     now: started,
     exercises: [
       {
-        sessionExerciseId: crypto.randomUUID(),
+        sessionExerciseId: sourceRow.id,
         exerciseId: seeded.exercises.get("Sentadilla")!,
         name: "Sentadilla",
         isBodyweight: false,

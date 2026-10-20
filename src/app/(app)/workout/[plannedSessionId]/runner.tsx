@@ -34,6 +34,7 @@ import {
 } from "@/lib/workout/runner-state";
 import { saveWorkoutAction } from "./actions";
 import { ExerciseHistoryPanel } from "./exercise-history-panel";
+import { substituteExercise } from "@/lib/workout/substitution";
 import { ExerciseCard } from "./exercise-card";
 import { RestBar } from "./rest-bar";
 
@@ -73,6 +74,7 @@ function initialDraft(
       restSeconds: e.restSeconds,
       supersetId: e.supersetId,
       supersetRestSeconds: e.supersetRestSeconds,
+      alternatives: e.alternatives,
     })),
     now: new Date(),
   });
@@ -85,6 +87,8 @@ const FAILURE_MESSAGES = {
     "Esta sesión pertenece a otra semana del programa y ya no se puede guardar. Puedes descartarla.",
   not_found: "La sesión ya no existe en tu programa. Puedes descartar este entrenamiento.",
   id_taken: "No se pudo guardar este entrenamiento. Descártalo e inténtalo de nuevo.",
+  alternative_unavailable:
+    "La rutina cambió o el ejercicio elegido ya no está autorizado. Conservamos tu registro en este dispositivo para revisarlo.",
   forbidden: "No tienes permiso para guardar este entrenamiento.",
 } as const;
 
@@ -300,7 +304,11 @@ function ActiveWorkoutRunner({
 
   const previousOf = (exIdx: number, setIdx: number) => {
     const exercise = draftRef.current.exercises[exIdx];
-    const info = context.exercises.find((c) => c.sessionExerciseId === exercise?.sessionExerciseId);
+    const base = context.exercises.find((c) => c.sessionExerciseId === exercise?.sessionExerciseId);
+    const info =
+      base?.exerciseId === exercise?.exerciseId
+        ? base
+        : base?.alternatives?.find((a) => a.exerciseId === exercise?.exerciseId);
     return exercise ? previousForSet(info?.last ?? null, exercise, setIdx) : null;
   };
 
@@ -606,9 +614,13 @@ function ActiveWorkoutRunner({
         </p>
       ) : null}
       {draft.exercises.map((exercise, exIdx) => {
-        const info = context.exercises.find(
+        const base = context.exercises.find(
           (c) => c.sessionExerciseId === exercise.sessionExerciseId,
         );
+        const info =
+          base?.exerciseId === exercise.exerciseId
+            ? base
+            : base?.alternatives?.find((a) => a.exerciseId === exercise.exerciseId);
 
         if (exercise.skipped) {
           return (
@@ -672,6 +684,9 @@ function ActiveWorkoutRunner({
               );
             }}
             onAddSet={() => update((d) => addSet(d, exIdx))}
+            onSubstitute={(id) =>
+              commit(substituteExercise(draftRef.current, exIdx, id), "Ejercicio sustituido")
+            }
             onHistory={() => setHistoryExercise({ id: exercise.exerciseId, name: exercise.name })}
             onSkip={() => update((d) => setSkipped(d, exIdx, true))}
             onRestChange={(seconds) => update((d) => setExerciseRestSeconds(d, exIdx, seconds))}

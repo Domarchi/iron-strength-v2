@@ -25,7 +25,7 @@ export async function getHistoryExport(db: Client, studentId: string): Promise<H
     .from("workouts")
     .select(
       `started_at, performed_on, session_label,
-       workout_sets ( exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
+       workout_sets ( prescribed_exercise_name, exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
     )
     .eq("student_id", studentId)
     .order("started_at", { ascending: true })
@@ -39,6 +39,7 @@ export async function getHistoryExport(db: Client, studentId: string): Promise<H
         date: workout.performed_on as string,
         sessionLabel: workout.session_label,
         exerciseName: set.exercise_name,
+        prescribedExerciseName: set.prescribed_exercise_name,
         setNumber: set.set_number,
         isWarmup: set.is_warmup,
         weightKg: Number(set.weight_kg),

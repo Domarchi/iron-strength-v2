@@ -23,6 +23,8 @@ export type WorkoutSetRow = {
 };
 
 export type WorkoutExerciseRow = {
+  prescribedExerciseId?: string | null;
+  prescribedExerciseName?: string | null;
   position: number;
   exerciseId: string;
   name: string;
@@ -73,7 +75,7 @@ export async function getWorkoutDetail(db: Client, id: string): Promise<WorkoutD
     .select(
       `id, student_id, program_id, session_label, started_at, duration_seconds, performed_on,
        programs ( name ),
-       workout_sets ( id, exercise_id, exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
+       workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -88,6 +90,8 @@ export async function getWorkoutDetail(db: Client, id: string): Promise<WorkoutD
       position: s.position,
       exerciseId: s.exercise_id,
       name: s.exercise_name,
+      prescribedExerciseId: s.prescribed_exercise_id,
+      prescribedExerciseName: s.prescribed_exercise_name,
       sets: [],
     };
     row.sets.push({

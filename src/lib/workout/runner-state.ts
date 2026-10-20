@@ -7,16 +7,20 @@ import { setVolume } from "../../domain/volume.ts";
 import { MAX_REST_SECONDS, MIN_REST_SECONDS } from "../../domain/rest-timer.ts";
 import type { DraftExercise, DraftSet, WorkoutDraft } from "./draft.ts";
 
-export type PrefillExercise = {
-  sessionExerciseId: string;
+export type PrefillChoice = {
   exerciseId: string;
   name: string;
   isBodyweight: boolean;
   prescribed: DraftExercise["prescribed"];
+  lastWeightKg: number | null;
+};
+
+export type PrefillExercise = PrefillChoice & {
+  sessionExerciseId: string;
+  alternatives?: PrefillChoice[];
   restSeconds?: number | null;
   supersetId?: string | null;
   supersetRestSeconds?: number | null;
-  lastWeightKg: number | null; // último peso usado en este ejercicio (cualquier programa)
 };
 
 const asText = (kg: number | null) => (kg === null ? "" : String(kg).replace(".", ","));
@@ -45,6 +49,18 @@ export function createDraft(input: {
       isBodyweight: e.isBodyweight,
       prescribed: e.prescribed,
       skipped: false,
+      ...(e.alternatives?.length
+        ? {
+            original: {
+              exerciseId: e.exerciseId,
+              name: e.name,
+              isBodyweight: e.isBodyweight,
+              prescribed: e.prescribed,
+              lastWeightKg: e.lastWeightKg,
+            },
+            alternatives: e.alternatives,
+          }
+        : {}),
       ...(e.restSeconds != null ? { restSeconds: e.restSeconds } : {}),
       ...(e.supersetId ? { supersetId: e.supersetId } : {}),
       ...(e.supersetRestSeconds != null ? { supersetRestSeconds: e.supersetRestSeconds } : {}),
@@ -321,6 +337,8 @@ export type WorkoutPayload = {
   finishedAt: string;
   durationSeconds: number;
   sets: {
+    sessionExerciseId?: string;
+    prescribedExerciseId?: string;
     exerciseId: string;
     exerciseName: string;
     position: number;
@@ -350,6 +368,8 @@ export function buildPayload(
       if (!parsed.success) continue;
       setNumber += 1;
       sets.push({
+        sessionExerciseId: exercise.sessionExerciseId,
+        prescribedExerciseId: exercise.original?.exerciseId ?? exercise.exerciseId,
         exerciseId: exercise.exerciseId,
         exerciseName: exercise.name,
         position,

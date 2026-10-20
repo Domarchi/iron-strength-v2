@@ -83,6 +83,20 @@ describe("saveWorkout (RF-23, RF-24, DC-8)", () => {
           { program_id: program!.id, week_number: 2, label: "A" },
         ])
         .select("id, week_number");
+      expect(
+        (
+          await admin.from("session_exercises").insert(
+            sessions!.map((s) => ({
+              program_session_id: s.id,
+              exercise_id: exerciseId,
+              position: 0,
+              sets: 2,
+              reps_min: 8,
+              reps_max: 12,
+            })),
+          )
+        ).error,
+      ).toBeNull();
       return {
         program: program!.id,
         w1: sessions!.find((s) => s.week_number === 1)!.id,

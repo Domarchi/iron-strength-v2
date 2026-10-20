@@ -204,6 +204,8 @@ describe("buildPayload (RF-23: guardar solo series completadas)", () => {
     });
     expect(result.payload.sets).toEqual([
       {
+        sessionExerciseId: "se-1",
+        prescribedExerciseId: "ex-1",
         exerciseId: "ex-1",
         exerciseName: "Sentadilla",
         position: 0,
@@ -213,6 +215,8 @@ describe("buildPayload (RF-23: guardar solo series completadas)", () => {
         isWarmup: false,
       },
       {
+        sessionExerciseId: "se-1",
+        prescribedExerciseId: "ex-1",
         exerciseId: "ex-1",
         exerciseName: "Sentadilla",
         position: 0,
@@ -222,6 +226,8 @@ describe("buildPayload (RF-23: guardar solo series completadas)", () => {
         isWarmup: false,
       },
       {
+        sessionExerciseId: "se-2",
+        prescribedExerciseId: "ex-2",
         exerciseId: "ex-2",
         exerciseName: "Dominadas",
         position: 1,

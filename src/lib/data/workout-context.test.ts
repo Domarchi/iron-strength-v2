@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Database } from "@/types/database";
 import { getWorkoutContext } from "./workout-context";
 
-function client(studentId = "student-1", withExercise = false) {
+function client(studentId = "student-1", withExercise = false, tiedPositions = false) {
   return createClient<Database>("http://127.0.0.1:54321", "test-key", {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
@@ -33,6 +33,7 @@ function client(studentId = "student-1", withExercise = false) {
                         reps_max: 12,
                         target_weight_kg: 60,
                         note: null,
+                        session_exercise_alternatives: [],
                         exercises: {
                           name: "Sentadilla",
                           muscle_group: "Piernas",
@@ -41,7 +42,7 @@ function client(studentId = "student-1", withExercise = false) {
                           progression_increment_kg: 2.5,
                         },
                       },
-                    ]
+                    ].flatMap((row) => (tiedPositions ? [{ ...row, id: "se2" }, row] : [row]))
                   : [],
               }
             : [],
@@ -96,4 +97,17 @@ describe("recuperación de una sesión al cambiar de semana (RF-22, RF-24)", () 
       await getWorkoutContext(client("other"), "student-1", "session-1", "2026-10-19", true),
     ).toEqual({ ok: false, reason: "not_found" });
   });
+});
+
+it("desempata posiciones antiguas por ID igual que la autorización SQL", async () => {
+  const result = await getWorkoutContext(
+    client("student-1", true, true),
+    "student-1",
+    "session-1",
+    "2026-10-18",
+  );
+  expect(result.ok && result.context.exercises.map((e) => e.sessionExerciseId)).toEqual([
+    "se1",
+    "se2",
+  ]);
 });

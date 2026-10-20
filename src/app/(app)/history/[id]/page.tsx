@@ -133,6 +133,12 @@ export default async function WorkoutDetailPage({
         <Card key={exercise.position}>
           <CardHeader>
             <CardTitle className="text-base">{exercise.name}</CardTitle>
+            {exercise.prescribedExerciseId &&
+            exercise.prescribedExerciseId !== exercise.exerciseId ? (
+              <p className="text-sm text-muted-foreground">
+                En lugar de {exercise.prescribedExerciseName}
+              </p>
+            ) : null}
           </CardHeader>
           <CardContent>
             <ol className="flex flex-col divide-y">

@@ -10,6 +10,8 @@ import type { Database } from "../../types/database.ts";
 type Client = SupabaseClient<Database>;
 
 const setSchema = z.object({
+  sessionExerciseId: z.uuid().optional(),
+  prescribedExerciseId: z.uuid().optional(),
   exerciseId: z.uuid(),
   exerciseName: z.string().min(1).max(100),
   position: z.number().int().min(0).max(100),
@@ -34,7 +36,14 @@ export type SaveWorkoutResult =
   | { ok: true; status: "created" | "duplicate" }
   | {
       ok: false;
-      reason: "invalid" | "no_sets" | "wrong_week" | "not_found" | "id_taken" | "forbidden";
+      reason:
+        | "alternative_unavailable"
+        | "invalid"
+        | "no_sets"
+        | "wrong_week"
+        | "not_found"
+        | "id_taken"
+        | "forbidden";
     };
 
 export async function saveWorkout(args: {
@@ -79,6 +88,7 @@ export async function saveWorkout(args: {
 
   const { data, error: rpcError } = await args.db.rpc("save_workout", { p_workout: payload });
   if (rpcError) {
+    if (rpcError.code === "P0001") return { ok: false, reason: "alternative_unavailable" };
     if (rpcError.code === "22023") return { ok: false, reason: "no_sets" };
     if (rpcError.code === "23505") return { ok: false, reason: "id_taken" };
     if (rpcError.code === "42501") return { ok: false, reason: "forbidden" };

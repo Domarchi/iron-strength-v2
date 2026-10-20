@@ -12,7 +12,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T149 · Historial dentro del entrenamiento**
 - [x] **T150 · Comparación y progresión**
 - [x] **T151 · Alternativas del coach**
-- [ ] **T152 · Sustitución durante el entrenamiento**
+- [x] **T152 · Sustitución durante el entrenamiento**
 - [ ] **T153 · Biblioteca de rutinas**
 - [ ] **T154 · Edición múltiple**
 - [ ] **T155 · Organización semanal**

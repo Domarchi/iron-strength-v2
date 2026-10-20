@@ -347,14 +347,14 @@ isOneToOne: false
                   ]
                 },"workout_sets": {
                   Row: {
-                    "exercise_id": string,"exercise_name": string,"id": string,"is_warmup": boolean,"position": number,"reps": number,"set_number": number,"student_id": string,"weight_kg": number,"workout_id": string
+                    "exercise_id": string,"exercise_name": string,"id": string,"is_warmup": boolean,"position": number,"prescribed_exercise_id": string | null,"prescribed_exercise_name": string | null,"reps": number,"session_exercise_id": string | null,"set_number": number,"student_id": string,"weight_kg": number,"workout_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"exercise_name": string,"id"?: string,"is_warmup"?: boolean,"position": number,"reps": number,"set_number": number,"student_id": string,"weight_kg": number,"workout_id": string
+                    "exercise_id": string,"exercise_name": string,"id"?: string,"is_warmup"?: boolean,"position": number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"reps": number,"session_exercise_id"?: string | null,"set_number": number,"student_id": string,"weight_kg": number,"workout_id": string
                   }
                   Update: {
-                    "exercise_id"?: string,"exercise_name"?: string,"id"?: string,"is_warmup"?: boolean,"position"?: number,"reps"?: number,"set_number"?: number,"student_id"?: string,"weight_kg"?: number,"workout_id"?: string
+                    "exercise_id"?: string,"exercise_name"?: string,"id"?: string,"is_warmup"?: boolean,"position"?: number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"reps"?: number,"session_exercise_id"?: string | null,"set_number"?: number,"student_id"?: string,"weight_kg"?: number,"workout_id"?: string
                   }
                   Relationships: [
                     {
@@ -362,6 +362,18 @@ isOneToOne: false
       columns: ["exercise_id"]
 isOneToOne: false
       referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "workout_sets_prescribed_exercise_id_fkey"
+      columns: ["prescribed_exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "workout_sets_session_exercise_id_fkey"
+      columns: ["session_exercise_id"]
+isOneToOne: false
+      referencedRelation: "session_exercises"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "workout_sets_workout_fk"

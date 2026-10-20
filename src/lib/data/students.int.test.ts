@@ -79,6 +79,20 @@ describe("listStudentOverviews (RF-33, DC-22)", () => {
         { program_id: programId, week_number: 1, label: "B" },
       ])
       .select("id, label");
+    expect(
+      (
+        await admin.from("session_exercises").insert(
+          rows!.map((r) => ({
+            program_session_id: r.id,
+            exercise_id: exerciseId,
+            position: 0,
+            sets: 3,
+            reps_min: 8,
+            reps_max: 12,
+          })),
+        )
+      ).error,
+    ).toBeNull();
     sessionA = rows!.find((r) => r.label === "A")!.id;
     sessionB = rows!.find((r) => r.label === "B")!.id;
   });
@@ -94,7 +108,7 @@ describe("listStudentOverviews (RF-33, DC-22)", () => {
       finished_at: new Date(Date.parse(startedAt) + 3600_000).toISOString(),
       duration_seconds: 3600,
     });
-    await admin.from("workout_sets").insert({
+    const inserted = await admin.from("workout_sets").insert({
       workout_id: id,
       student_id: student,
       exercise_id: exerciseId,
@@ -105,6 +119,7 @@ describe("listStudentOverviews (RF-33, DC-22)", () => {
       reps: 10,
       is_warmup: false,
     });
+    expect(inserted.error).toBeNull();
     return id;
   }
 

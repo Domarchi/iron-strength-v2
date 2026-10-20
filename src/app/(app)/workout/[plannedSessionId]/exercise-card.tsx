@@ -42,6 +42,7 @@ type Props = {
   onAddSet: () => void;
   onSkip: () => void;
   onHistory: () => void;
+  onSubstitute: (exerciseId: string) => void;
   onRestChange: (seconds: number) => void;
   active: boolean;
   onActivate: () => void;
@@ -65,11 +66,13 @@ export function ExerciseCard({
   onAddSet,
   onSkip,
   onHistory,
+  onSubstitute,
   onRestChange,
   active,
   onActivate,
   onCompleteAndAdvance,
 }: Props) {
+  const [choice, setChoice] = useState(exercise.exerciseId);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openSet, setOpenSet] = useState<number | null>(null);
   const [reopened, setReopened] = useState(false);
@@ -194,6 +197,46 @@ export function ExerciseCard({
         </div>
       ) : null}
 
+      {exercise.original && exercise.original.exerciseId !== exercise.exerciseId ? (
+        <p className="px-1 text-sm text-muted-foreground">En lugar de {exercise.original.name}</p>
+      ) : null}
+      {exercise.alternatives?.length ? (
+        <details className="rounded-lg border p-3">
+          <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">
+            Alternativas del coach
+          </summary>
+          <p className="mb-2 text-xs text-muted-foreground">
+            {done
+              ? "Ya registraste series. El ejercicio queda fijado."
+              : "La elección reemplaza los valores pendientes con la prescripción de esa alternativa."}
+          </p>
+          <label className="block text-sm">
+            Ejercicio a realizar
+            <select
+              className="mt-1 min-h-11 w-full rounded-md border bg-background px-3"
+              value={choice}
+              disabled={done > 0}
+              onChange={(e) => setChoice(e.target.value)}
+            >
+              {[exercise.original, ...exercise.alternatives]
+                .filter((e) => e !== undefined)
+                .map((e) => (
+                  <option key={e.exerciseId} value={e.exerciseId}>
+                    {e.name} · {e.prescribed.sets} × {e.prescribed.repsMin}–{e.prescribed.repsMax}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <Button
+            className="mt-2"
+            variant="outline"
+            disabled={done > 0 || choice === exercise.exerciseId}
+            onClick={() => onSubstitute(choice)}
+          >
+            Usar alternativa
+          </Button>
+        </details>
+      ) : null}
       <ExerciseComparison
         exercise={exercise}
         info={info}

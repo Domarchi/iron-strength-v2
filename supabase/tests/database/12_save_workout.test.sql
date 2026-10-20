@@ -1,6 +1,6 @@
 -- T74 · save_workout (RF-23, RF-24, DC-8): atómico, idempotente y sujeto a la RLS de quien llama.
 begin;
-select plan(18);
+select plan(25);
 
 select tests.setup_basic();
 insert into public.exercises (id, coach_id, name, muscle_group) values
@@ -13,6 +13,11 @@ insert into public.programs (id, coach_id, student_id, name, weeks_count, start_
 insert into public.program_sessions (id, program_id, week_number, label) values
   ('a2000000-0000-0000-0000-00000000000a', 'a1000000-0000-0000-0000-00000000000a', 1, 'A'),
   ('a2000000-0000-0000-0000-00000000000b', 'a1000000-0000-0000-0000-00000000000b', 1, 'A');
+
+insert into public.session_exercises (program_session_id, exercise_id, position, sets, reps_min, reps_max)
+select ps.id, e.id, case when e.name = 'Sentadilla' then 0 else 1 end, 3, 8, 12
+from public.program_sessions ps cross join public.exercises e
+where e.id in ('e0000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000002');
 
 create function pg_temp.payload(p_id text, p_session text, p_program text, p_sets jsonb) returns jsonb language sql as $$
   select jsonb_build_object(
@@ -100,6 +105,36 @@ select tests.authenticate_as_anon();
 select throws_ok(
   $$ select public.save_workout('{}'::jsonb) $$, '42501', null, 'un visitante no puede ejecutarla');
 reset role;
+
+-- T152: las escrituras directas tampoco permiten una sustitución arbitraria.
+select tests.authenticate_as(tests.student_a_id());
+select throws_ok($$ insert into public.workout_sets(workout_id,student_id,exercise_id,exercise_name,position,set_number,weight_kg,reps)
+values('d0000000-0000-0000-0000-0000000000a1',auth.uid(),'e0000000-0000-0000-0000-000000000002','Press',0,3,20,8) $$,
+'P0001',null,'rechaza alternativa no autorizada directamente');
+reset role;
+select throws_ok($$ update public.workout_sets set exercise_id='e0000000-0000-0000-0000-000000000002'
+where workout_id='d0000000-0000-0000-0000-0000000000a1' $$,
+'P0001',null,'identidad histórica inmutable');
+reset role;
+insert into public.session_exercise_alternatives(session_exercise_id,exercise_id,position,sets,reps_min,reps_max)
+select id,'e0000000-0000-0000-0000-000000000002',0,2,6,10 from public.session_exercises
+where program_session_id='a2000000-0000-0000-0000-00000000000a' and position=0;
+select tests.authenticate_as(tests.student_a_id());
+select is(public.save_workout(pg_temp.payload('d0000000-0000-0000-0000-0000000000a5',
+'a2000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-00000000000a',
+jsonb_build_array(jsonb_build_object('exerciseId','e0000000-0000-0000-0000-000000000002','exerciseName','Inventado',
+'position',0,'setNumber',1,'weightKg',20,'reps',8))))->>'status','created','alternativa autorizada válida');
+select is((select prescribed_exercise_name from public.workout_sets where workout_id='d0000000-0000-0000-0000-0000000000a5'),
+'Sentadilla','conserva nombre original');
+select is((select exercise_name from public.workout_sets where workout_id='d0000000-0000-0000-0000-0000000000a5'),
+'Press de banca','nombre realizado canónico');
+select throws_ok($$ insert into public.workout_sets(workout_id,student_id,exercise_id,exercise_name,position,set_number,weight_kg,reps)
+values('d0000000-0000-0000-0000-0000000000a5',auth.uid(),'e0000000-0000-0000-0000-000000000001','Sentadilla',0,2,20,8) $$,
+'P0001',null,'no mezcla original y alternativa en una posición');
+reset role;
+delete from public.programs where id='a1000000-0000-0000-0000-00000000000a';
+select is((select prescribed_exercise_name from public.workout_sets where workout_id='d0000000-0000-0000-0000-0000000000a5'),
+'Sentadilla','borrar rutina conserva el nombre prescrito');
 
 select * from finish();
 rollback;

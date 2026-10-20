@@ -73,6 +73,20 @@ describe("getStreakSummary (RF-29, DC-11)", () => {
         { program_id: programId, week_number: 5, label: "A" },
       ])
       .select("id, week_number, label");
+    expect(
+      (
+        await admin.from("session_exercises").insert(
+          rows!.map((r) => ({
+            program_session_id: r.id,
+            exercise_id: exerciseId,
+            position: 0,
+            sets: 3,
+            reps_min: 8,
+            reps_max: 12,
+          })),
+        )
+      ).error,
+    ).toBeNull();
     sessions = Object.fromEntries(rows!.map((r) => [`${r.week_number}${r.label}`, r.id]));
   });
 
@@ -87,7 +101,7 @@ describe("getStreakSummary (RF-29, DC-11)", () => {
       finished_at: new Date(Date.parse(startedAt) + 3600_000).toISOString(),
       duration_seconds: 3600,
     });
-    await admin.from("workout_sets").insert({
+    const inserted = await admin.from("workout_sets").insert({
       workout_id: id,
       student_id: studentId,
       exercise_id: exerciseId,
@@ -98,6 +112,7 @@ describe("getStreakSummary (RF-29, DC-11)", () => {
       reps: 10,
       is_warmup: false,
     });
+    expect(inserted.error).toBeNull();
   }
 
   it("sin programa no hay racha ni semanas", async () => {
