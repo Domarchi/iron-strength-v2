@@ -8,6 +8,8 @@ Next.js 16 (App Router) + TypeScript estricto + Supabase (Postgres, Auth, Storag
 
 Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitution.md` → `specs/001-mvp/spec.md` → `plan.md` → `tasks.md`, más `specs/002-mobile-ux/` (experiencia móvil) y `specs/003-fase2/` (logros, resumen, no leídos, CSV, borrar cuenta). El estado de verificación está en `specs/001-mvp/validation.md`. Las correcciones de concurrencia y recuperación, y el rediseño inspirado en Hevy de 2026-10-19, se describen en `specs/004-review-redesign/` (con su validación local y limitaciones de entorno).
 
+La evolución aprobada para un coach y tres alumnos está en `specs/005-complete-training/`: editor fiable, superseries, alternativas, seguimiento y entrenamiento offline. Sus tareas pendientes no representan funciones ya disponibles.
+
 ## Comandos
 
 - Desarrollo: `npm run dev` (datos de prueba: `npm run dev:seed`)
