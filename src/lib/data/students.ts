@@ -14,6 +14,9 @@ export type WeekSummary =
   | {
       kind: "active";
       programName: string;
+      programId?: string;
+      startDate?: DateString;
+      endsOn?: DateString;
       weekNumber: number;
       planned: number;
       done: number;
@@ -25,6 +28,7 @@ export type StudentOverview = {
   fullName: string;
   isActive: boolean;
   lastWorkoutDate: DateString | null;
+  lastWorkoutId?: string | null;
   lastCommentAt: string | null;
   week: WeekSummary;
 };
@@ -45,7 +49,7 @@ export async function listStudentOverviews(
       const [lastWorkout, lastComment, view] = await Promise.all([
         db
           .from("workouts")
-          .select("started_at")
+          .select("id, started_at, workout_sets!inner(id)")
           .eq("student_id", student.id)
           .order("started_at", { ascending: false })
           .limit(1)
@@ -71,6 +75,9 @@ export async function listStudentOverviews(
             ? {
                 kind: "active",
                 programName: view.program.name,
+                programId: view.program.id,
+                startDate: view.program.startDate,
+                endsOn: view.program.endsOn,
                 weekNumber: view.weekNumber,
                 planned: view.compliance.planned,
                 done: view.compliance.done,
@@ -82,6 +89,7 @@ export async function listStudentOverviews(
         id: student.id,
         fullName: student.full_name,
         isActive: student.is_active,
+        lastWorkoutId: lastWorkout.data?.id ?? null,
         lastWorkoutDate: lastWorkout.data
           ? santiagoDate(new Date(lastWorkout.data.started_at))
           : null,

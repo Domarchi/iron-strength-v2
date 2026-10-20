@@ -17,7 +17,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T154 · Edición múltiple**
 - [x] **T155 · Organización semanal**
 - [x] **T156 · Cierre del entrenamiento**
-- [ ] **T157 · Panel del coach**
+- [x] **T157 · Panel del coach**
 - [ ] **T158 · Progreso conectado**
 - [ ] **T159 · Descarga explícita**
 - [ ] **T160 · Apertura sin Internet**

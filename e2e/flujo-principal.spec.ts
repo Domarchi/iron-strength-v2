@@ -172,7 +172,9 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
 
   // --- El coach ve el avance y comenta --------------------------------------------------------------------
   await coach.goto("/coach/students");
-  const row = coach.getByRole("link", { name: new RegExp(STUDENT.name) });
+  const row = coach
+    .getByRole("list", { name: "Fichas de alumnos" })
+    .getByRole("link", { name: new RegExp(STUDENT.name) });
   await expect(row).toContainText("1 de 1 sesiones");
   await row.click();
   await expect(coach.getByRole("heading", { name: STUDENT.name })).toBeVisible();

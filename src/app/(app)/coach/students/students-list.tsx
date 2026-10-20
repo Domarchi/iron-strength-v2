@@ -1,14 +1,15 @@
 import { santiagoDate } from "@/domain/dates";
-import { StudentOverviewList } from "@/components/coach/student-overview-list";
+import { CoachDashboard } from "@/components/coach/coach-dashboard";
 import { listStudentOverviews } from "@/lib/data/students";
-import { getUnreadSummary } from "@/lib/data/unread";
+import { listUnread } from "@/lib/data/unread";
 import { createClient } from "@/lib/supabase/server";
 
 export async function StudentsList() {
   const db = await createClient();
+  const today = santiagoDate(new Date());
   const [overviews, unread] = await Promise.all([
-    listStudentOverviews(db, santiagoDate(new Date())),
-    getUnreadSummary(db).catch(() => null),
+    listStudentOverviews(db, today),
+    listUnread(db).catch(() => null),
   ]);
   const counts = [
     { label: "Alumnos", value: overviews.length },
@@ -30,12 +31,7 @@ export async function StudentsList() {
           </div>
         ))}
       </dl>
-      <StudentOverviewList
-        overviews={overviews}
-        unreadByStudent={
-          new Map([...(unread?.byStudent ?? [])].map(([id, value]) => [id, value.comments]))
-        }
-      />
+      <CoachDashboard overviews={overviews} unread={unread} today={today} />
     </div>
   );
 }

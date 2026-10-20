@@ -104,3 +104,10 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - Guardado atómico con restricciones SQL, lectura privada por RLS existente, compatibilidad con registros antiguos sin valoración. El detalle reúne ejecución, sustituciones, récords y valoración; el CSV añade esfuerzo/nota neutralizando fórmulas.
 - Pruebas primero: payload, borrador, exportación e integración fallaron al no conservar campos nuevos. Check: 428 pruebas, formato/lint/tipos/build en verde. Pasan 244 integración y 404 comprobaciones SQL. Migración aplicada al desarrollo sin reset; perfiles, programas, entrenamientos y días elegidos conservados.
 - 58/58 E2E en verde en la primera pasada, sin reintentos. Incluye valoración recuperada tras cerrar/recargar, accesibilidad a 360 × 640, respuesta perdida después de guardar y confirmación posterior sin duplicar series, además del circuito completo existente.
+
+## T157
+
+- Panel con filtro por alumno y señales informativas enlazadas: comentarios pendientes, sin programa vigente/próximo, fin de programa esta semana e inactividad de siete días. No modifica cargas ni programas. Aviso explícito y actualización manual si falla la consulta de no leídos.
+- La última actividad requiere series; el plazo empieza como mínimo al iniciar el programa. No se muestra inactividad durante descarga, sin sesiones previstas o para alumnos desactivados. Se conserva acceso a las fichas y a sus contadores existentes.
+- Cuatro reglas unitarias partieron con módulo ausente. Se corrigió el fixture de entrenamiento vacío para incluir su ID obligatorio. Check en verde con 432 pruebas, formato/lint/tipos/build; integración: 245. Sin cambios de esquema ni de datos interactivos.
+- 59/59 E2E en verde en la primera pasada, sin reintentos. Se prueban tres alumnos, filtros, descarga sin señal de inactividad, apertura del comentario pendiente y respuesta desde el entrenamiento, ausencia del aviso después de leer y acceso a la ficha sin programa. Accesibilidad y ancho de 360 px verificados.

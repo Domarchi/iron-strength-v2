@@ -164,6 +164,27 @@ describe("listStudentOverviews (RF-33, DC-22)", () => {
     expect(ana.lastCommentAt).toBe("2025-03-05T12:00:00+00:00");
   });
 
+  it("expone fechas/evidencia y no considera actividad los entrenamientos vacíos (T157)", async () => {
+    const id = await workout(anaId, "2025-03-04T15:00:00Z", sessionA);
+    expect(
+      (
+        await admin.from("workouts").insert({
+          id: crypto.randomUUID(),
+          student_id: anaId,
+          started_at: "2025-03-07T15:00:00Z",
+          finished_at: "2025-03-07T16:00:00Z",
+          duration_seconds: 3600,
+        })
+      ).error,
+    ).toBeNull();
+    const ana = (await listStudentOverviews(coachDb, "2025-03-08")).find((o) => o.id === anaId)!;
+    expect(ana).toMatchObject({
+      lastWorkoutId: id,
+      lastWorkoutDate: "2025-03-04",
+      week: { programId, startDate: "2025-03-03", endsOn: "2025-03-16" },
+    });
+  });
+
   it("marca a los alumnos desactivados", async () => {
     await admin.from("profiles").update({ is_active: false }).eq("id", beaId);
     const bea = (await listStudentOverviews(coachDb, "2025-03-05")).find((o) => o.id === beaId)!;

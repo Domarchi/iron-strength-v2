@@ -47,7 +47,7 @@ export function StudentOverviewList({
   }
 
   return (
-    <ul className="grid gap-4 lg:grid-cols-2">
+    <ul aria-label="Fichas de alumnos" className="grid gap-4 lg:grid-cols-2">
       {overviews.map((student) => {
         const ratio =
           student.week.kind === "active" && student.week.planned > 0
