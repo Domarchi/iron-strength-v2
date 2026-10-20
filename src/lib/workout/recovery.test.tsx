@@ -3,13 +3,24 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkoutRunner } from "@/app/(app)/workout/[plannedSessionId]/runner";
-import { saveWorkoutAction } from "@/app/(app)/workout/[plannedSessionId]/actions";
+import { sendWorkout } from "@/lib/offline/sync";
 import type { WorkoutContext } from "@/lib/data/workout-context";
 import { createDraft, finishDraft } from "./runner-state";
 import { saveDraft, draftKey } from "./draft";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/app/(app)/workout/[plannedSessionId]/actions", () => ({ saveWorkoutAction: vi.fn() }));
+vi.mock("@/app/(app)/workout/[plannedSessionId]/actions", () => ({
+  exerciseHistoryAction: vi.fn(),
+}));
+const router = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
+vi.mock("@/lib/offline/queue", () => ({
+  enqueueWorkout: vi.fn().mockRejectedValue(new Error("IndexedDB unavailable")),
+  removeConfirmedWorkout: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock("@/lib/offline/sync", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/offline/sync")>()),
+  sendWorkout: vi.fn(),
+}));
 
 const context: WorkoutContext = {
   session: {
@@ -68,16 +79,22 @@ describe("pantalla de recuperación sin iniciar una sesión antigua", () => {
     });
     initial.exercises[0].sets[0] = { ...initial.exercises[0].sets[0], done: true, reps: "10" };
     saveDraft(localStorage, finishDraft(initial, new Date("2026-10-18T16:00:00.000Z")));
-    vi.mocked(saveWorkoutAction).mockResolvedValue({ ok: true, status: "created" });
+    vi.mocked(sendWorkout)
+      .mockResolvedValueOnce({ ok: false, reason: "network" })
+      .mockResolvedValueOnce({ ok: true, status: "created" });
     await act(() =>
       root.render(<WorkoutRunner userId="student-1" context={context} recoveryOnly />),
     );
-    expect(container.textContent).toContain("Tu entrenamiento terminó, pero no se guardó");
+    expect(container.textContent).toContain("Entrenamiento pendiente de sincronizar");
+    expect(sendWorkout).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(draftKey("student-1", "session-1"))).not.toBeNull();
     const retry = [...container.querySelectorAll("button")].find(
       (button) => button.textContent === "Reintentar",
     );
     await act(() => retry!.click());
-    expect(saveWorkoutAction).toHaveBeenCalledWith(
+    expect(sendWorkout).toHaveBeenCalledTimes(2);
+    expect(sendWorkout).toHaveBeenLastCalledWith(
+      "student-1",
       expect.objectContaining({
         id: initial.workoutId,
         startedAt: initial.startedAt,

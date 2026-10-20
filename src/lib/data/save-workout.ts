@@ -3,8 +3,6 @@
 // función SQL save_workout, que es atómica e idempotente por el id que genera el cliente.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { santiagoDate } from "../../domain/dates.ts";
-import { programWeekNumber } from "../../domain/program-weeks.ts";
 import type { Database } from "../../types/database.ts";
 
 type Client = SupabaseClient<Database>;
@@ -59,37 +57,11 @@ export async function saveWorkout(args: {
   if (Date.parse(payload.finishedAt) < Date.parse(payload.startedAt))
     return { ok: false, reason: "invalid" };
 
-  // La sesión planificada debe ser del programa del propio alumno (la RLS oculta las ajenas) y su
-  // semana debe ser la semana (en Santiago) en que se inició el entrenamiento.
-  const { data: session, error } = await args.db
-    .from("program_sessions")
-    .select("week_number, program_id, programs(start_date, ends_on, weeks_count, student_id)")
-    .eq("id", payload.programSessionId)
-    .maybeSingle();
-  if (error) throw new Error(`No se pudo leer la sesión: ${error.message}`);
-
-  const program = session?.programs as unknown as {
-    start_date: string | null;
-    ends_on: string | null;
-    weeks_count: number;
-  } | null;
-  if (
-    !session ||
-    !program?.start_date ||
-    !program.ends_on ||
-    session.program_id !== payload.programId
-  ) {
-    return { ok: false, reason: "not_found" };
-  }
-
-  const startedWeek = programWeekNumber(
-    { startDate: program.start_date, endsOn: program.ends_on, weeksCount: program.weeks_count },
-    santiagoDate(new Date(payload.startedAt)),
-  );
-  if (startedWeek !== session.week_number) return { ok: false, reason: "wrong_week" };
-
+  // SQL confirma primero los duplicados propios; después valida rutina/semana y guarda atómicamente.
   const { data, error: rpcError } = await args.db.rpc("save_workout", { p_workout: payload });
   if (rpcError) {
+    if (rpcError.code === "P0002")
+      return { ok: false, reason: rpcError.details === "wrong_week" ? "wrong_week" : "not_found" };
     if (rpcError.code === "P0001") return { ok: false, reason: "alternative_unavailable" };
     if (rpcError.code === "22023") return { ok: false, reason: "no_sets" };
     if (rpcError.code === "23505") return { ok: false, reason: "id_taken" };

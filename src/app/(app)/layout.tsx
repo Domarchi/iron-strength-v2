@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SyncWorkouts } from "@/components/offline/sync-workouts";
 import { OfflineAccount } from "@/components/offline/account";
 import { CircleUser, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       nav={<AppNav items={items} />}
     >
       <OfflineAccount userId={user.id} />
+      <SyncWorkouts key={user.id} userId={user.id} />
       {children}
     </AppChrome>
   );

@@ -21,7 +21,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T158 · Progreso conectado**
 - [x] **T159 · Descarga explícita**
 - [x] **T160 · Apertura sin Internet**
-- [ ] **T161 · Cola de sincronización**
+- [x] **T161 · Cola de sincronización**
 - [ ] **T162 · Actualizaciones y cuentas**
 - [ ] **T163 · Consistencia visual**
 - [ ] **T164 · Validación completa**

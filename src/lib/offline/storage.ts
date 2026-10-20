@@ -1,5 +1,6 @@
 import { parseWeekPackage, type WeekPackage } from "./package";
 export const OFFLINE_DB = "iron-strength-offline";
+export const WORKOUT_QUEUE_DB = "iron-strength-workout-queue";
 const STORE = "weeks";
 export const weekPackageKey = (userId: string, programId: string, weekStart: string) => [
   userId,
@@ -7,15 +8,20 @@ export const weekPackageKey = (userId: string, programId: string, weekStart: str
   weekStart,
 ];
 
-function openDatabase(): Promise<IDBDatabase> {
+function openDatabase(storeName: "weeks" | "queue"): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (typeof indexedDB === "undefined")
-      return reject(new Error("Este navegador no permite guardar semanas en el dispositivo."));
-    const request = indexedDB.open(OFFLINE_DB, 1);
+      return reject(new Error("Este navegador no permite guardar datos en el dispositivo."));
+    const request = indexedDB.open(storeName === "weeks" ? OFFLINE_DB : WORKOUT_QUEUE_DB, 1);
     let failed = false;
     request.onupgradeneeded = () => {
       const db = request.result;
-      if (!db.objectStoreNames.contains(STORE))
+      if (storeName === "queue" && !db.objectStoreNames.contains("queue"))
+        db.createObjectStore("queue", { keyPath: ["userId", "workoutId"] }).createIndex(
+          "userId",
+          "userId",
+        );
+      if (storeName === "weeks" && !db.objectStoreNames.contains(STORE))
         db.createObjectStore(STORE, { keyPath: ["userId", "program.id", "weekStart"] }).createIndex(
           "userId",
           "userId",
@@ -38,13 +44,14 @@ function openDatabase(): Promise<IDBDatabase> {
     };
   });
 }
-async function transaction<T>(
+export async function offlineTransaction<T>(
   mode: IDBTransactionMode,
   run: (store: IDBObjectStore, result: (value: T) => void) => void,
+  storeName: "weeks" | "queue" = "weeks",
 ): Promise<T> {
-  const db = await openDatabase();
+  const db = await openDatabase(storeName);
   return new Promise<T>((resolve, reject) => {
-    const tx = db.transaction(STORE, mode);
+    const tx = db.transaction(storeName, mode);
     let result: T;
     let synchronousError: unknown;
     tx.oncomplete = () => {
@@ -57,8 +64,12 @@ async function transaction<T>(
         new Error(
           (synchronousError instanceof DOMException ? synchronousError.name : tx.error?.name) ===
             "QuotaExceededError"
-            ? "No hay espacio suficiente. Libera espacio y vuelve a descargar. La descarga anterior se conserva."
-            : "No se pudo guardar o leer la semana. La descarga anterior se conserva.",
+            ? storeName === "weeks"
+              ? "No hay espacio suficiente. Libera espacio y vuelve a descargar. La descarga anterior se conserva."
+              : "No hay espacio suficiente para guardar el entrenamiento en este dispositivo."
+            : storeName === "weeks"
+              ? "No se pudo guardar o leer la semana. La descarga anterior se conserva."
+              : "No se pudo acceder a los entrenamientos pendientes. Sus datos se conservan.",
         ),
       );
     };
@@ -66,7 +77,7 @@ async function transaction<T>(
       /* onabort informa el resultado de toda la transacción. */
     };
     try {
-      run(tx.objectStore(STORE), (value) => {
+      run(tx.objectStore(storeName), (value) => {
         result = value;
       });
     } catch (error) {
@@ -78,7 +89,7 @@ async function transaction<T>(
 export async function saveWeekPackage(value: unknown, userId: string): Promise<WeekPackage> {
   const pack = parseWeekPackage(value, userId);
   if (!pack) throw new Error("La descarga está incompleta o pertenece a otra cuenta.");
-  return transaction("readwrite", (store, result) => {
+  return offlineTransaction("readwrite", (store, result) => {
     const put = store.put(pack);
     put.onsuccess = () => {
       const read = store.get(weekPackageKey(userId, pack.program.id, pack.weekStart));
@@ -98,7 +109,7 @@ export async function loadWeekPackage(
   programId: string,
   weekStart: string,
 ): Promise<WeekPackage | null> {
-  return transaction("readonly", (store, result) => {
+  return offlineTransaction("readonly", (store, result) => {
     const request = store.get(weekPackageKey(userId, programId, weekStart));
     request.onsuccess = () => {
       if (request.result === undefined) return result(null);
@@ -112,7 +123,7 @@ export async function loadWeekPackage(
   });
 }
 export async function listWeekPackages(userId: string): Promise<WeekPackage[]> {
-  return transaction("readonly", (store, result) => {
+  return offlineTransaction("readonly", (store, result) => {
     const request = store.index("userId").getAll(userId);
     request.onsuccess = () => {
       const packs = (request.result as unknown[]).map((p) => parseWeekPackage(p, userId));

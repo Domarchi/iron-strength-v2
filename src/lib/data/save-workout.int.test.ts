@@ -353,4 +353,23 @@ describe("saveWorkout (RF-23, RF-24, DC-8)", () => {
     if (view.kind !== "active") throw new Error("debía estar activo");
     expect(view.sessions[0]).toMatchObject({ label: "A", status: "done" });
   });
+  it("confirma una respuesta perdida incluso si después se eliminó la rutina (T161)", async () => {
+    const p = payload();
+    expect((await saveWorkout({ db: studentDb, payload: p })).ok).toBe(true);
+    expect((await admin.from("programs").delete().eq("id", programId)).error).toBeNull();
+    expect(await saveWorkout({ db: studentDb, payload: p })).toEqual({
+      ok: true,
+      status: "duplicate",
+    });
+    expect(
+      (await admin.from("workout_sets").select("id").eq("workout_id", p.id)).data,
+    ).toHaveLength(2);
+  });
+  it("la RPC rechaza directamente una semana de inicio incorrecta sin guardar parcialmente (T161)", async () => {
+    const p = payload({ programSessionId: sessionW2 });
+    const result = await studentDb.rpc("save_workout", { p_workout: p });
+    expect(result.error?.code).toBe("P0002");
+    expect(result.error?.details).toBe("wrong_week");
+    expect((await admin.from("workouts").select("id").eq("id", p.id)).data).toHaveLength(0);
+  });
 });

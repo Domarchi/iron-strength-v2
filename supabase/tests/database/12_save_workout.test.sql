@@ -1,6 +1,6 @@
 -- T74 · save_workout (RF-23, RF-24, DC-8): atómico, idempotente y sujeto a la RLS de quien llama.
 begin;
-select plan(31);
+select plan(35);
 
 select tests.setup_basic();
 insert into public.exercises (id, coach_id, name, muscle_group) values
@@ -87,11 +87,15 @@ select throws_ok(
 select is((select count(*)::int from public.workouts where id = 'd0000000-0000-0000-0000-0000000000a3'), 0,
   'y no deja el entrenamiento a medias');
 
+-- T161: el transporte JSON no puede eludir la semana de inicio.
+select throws_ok($$select public.save_workout(pg_temp.payload('d0000000-0000-0000-0000-000000000161','a2000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-00000000000a',pg_temp.sets_ok()) || '{"startedAt":"2025-03-11T15:00:00Z","finishedAt":"2025-03-11T16:00:00Z"}'::jsonb)$$,'P0002',null,'la base rechaza una semana de inicio incorrecta');
+select is((select count(*)::int from public.workouts where id='d0000000-0000-0000-0000-000000000161'),0,'no deja registro parcial de otra semana');
+
 -- Una sesión de otro alumno no se puede usar
 select throws_ok(
   $$ select public.save_workout(pg_temp.payload('d0000000-0000-0000-0000-0000000000a4', 'a2000000-0000-0000-0000-00000000000b',
        'a1000000-0000-0000-0000-00000000000b', pg_temp.sets_ok())) $$,
-  '23514', null, 'no se guarda sobre la sesión planificada de otro alumno');
+  'P0002', null, 'no se guarda sobre la sesión planificada de otro alumno');
 reset role;
 
 -- Un id que ya usa otro usuario no se puede reclamar (y no se revela quién)
@@ -145,6 +149,11 @@ reset role;
 delete from public.programs where id='a1000000-0000-0000-0000-00000000000a';
 select is((select prescribed_exercise_name from public.workout_sets where workout_id='d0000000-0000-0000-0000-0000000000a5'),
 'Sentadilla','borrar rutina conserva el nombre prescrito');
+
+select tests.authenticate_as(tests.student_a_id());
+select is(public.save_workout(pg_temp.payload('d0000000-0000-0000-0000-0000000000a1','a2000000-0000-0000-0000-00000000000a','a1000000-0000-0000-0000-00000000000a',pg_temp.sets_ok()))->>'status','duplicate','confirma una respuesta perdida tras borrar la rutina');
+select is((select count(*)::int from public.workout_sets where workout_id='d0000000-0000-0000-0000-0000000000a1'),3,'confirmar no cambia las series originales');
+reset role;
 
 select * from finish();
 rollback;

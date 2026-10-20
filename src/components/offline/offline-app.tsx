@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { RunnerLoader } from "@/app/(app)/workout/[plannedSessionId]/runner-loader";
+import { SyncWorkouts } from "@/components/offline/sync-workouts";
 import { Button } from "@/components/ui/button";
 import { listWeekPackages } from "@/lib/offline/storage";
 import { canStartDownloadedSession, type WeekPackage } from "@/lib/offline/package";
@@ -85,6 +86,7 @@ function AccountWeeks({ userId }: { userId: string }) {
   }
   return (
     <div className="py-6 flex flex-col gap-4">
+      <SyncWorkouts userId={userId} localMode />
       <header>
         <p className="text-sm text-muted-foreground">Iron Strength · En este dispositivo</p>
         <h1 className="text-2xl font-semibold">Tus semanas descargadas</h1>

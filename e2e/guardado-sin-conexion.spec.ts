@@ -61,9 +61,9 @@ test("recupera desde Mi semana un entrenamiento pendiente de la semana anterior 
     draft: pending,
   });
   await page.goto("/week");
-  await page.getByRole("button", { name: "Recuperar", exact: true }).click();
-  await expect(page.getByText("Tu entrenamiento terminó, pero no se guardó")).toBeVisible();
-  await page.getByRole("button", { name: "Reintentar", exact: true }).click();
+  const sync = page.getByRole("region", { name: "Sincronización de entrenamientos", exact: true });
+  await expect(sync.getByRole("status")).toContainText("Entrenamiento sincronizado.");
+  await sync.getByRole("link", { name: "Ver entrenamiento", exact: true }).click();
   await expect(page.getByText("¡Entrenamiento guardado!")).toBeVisible();
   const { data: saved, error: readError } = await admin()
     .from("workouts")
@@ -101,7 +101,7 @@ test("sin conexión al finalizar: el entrenamiento queda a salvo y se guarda una
   await page.getByRole("button", { name: "Finalizar entrenamiento" }).click();
   await page.getByRole("button", { name: "Sí, finalizar" }).click();
 
-  await expect(page.getByText("Tu entrenamiento terminó, pero no se guardó")).toBeVisible();
+  await expect(page.getByText("Entrenamiento pendiente de sincronizar")).toBeVisible();
   await expect(page.getByText(/No hay conexión con el servidor/)).toBeVisible();
   const { count: beforeRetry } = await admin()
     .from("workouts")
@@ -109,13 +109,8 @@ test("sin conexión al finalizar: el entrenamiento queda a salvo y se guarda una
     .eq("student_id", studentId);
   expect(beforeRetry).toBe(0);
 
-  // Aunque se recargue la página, el entrenamiento terminado sigue ahí
+  // Recuperar conexión con la app abierta sincroniza automáticamente.
   await context.setOffline(false);
-  await page.reload();
-  await expect(page.getByText("Tu entrenamiento terminó, pero no se guardó")).toBeVisible();
-
-  // Vuelve la conexión: el reintento guarda una sola vez
-  await page.getByRole("button", { name: "Reintentar" }).click();
   await expect(page.getByText("¡Entrenamiento guardado!")).toBeVisible();
 
   const { count } = await admin()

@@ -33,7 +33,9 @@ import {
   updateSetField,
   workoutVolume,
 } from "@/lib/workout/runner-state";
-import { saveWorkoutAction } from "./actions";
+import { enqueueWorkout, removeConfirmedWorkout } from "@/lib/offline/queue";
+import { sendWorkout, syncQueuedWorkout, clearConfirmedDraft } from "@/lib/offline/sync";
+import { SYNC_MESSAGES } from "@/lib/offline/sync-contract";
 import { ExerciseHistoryPanel } from "./exercise-history-panel";
 import { substituteExercise } from "@/lib/workout/substitution";
 import { ExerciseCard } from "./exercise-card";
@@ -81,20 +83,9 @@ function initialDraft(
   });
 }
 
-const FAILURE_MESSAGES = {
-  invalid: "Hay datos inválidos en el entrenamiento. Revisa los pesos y las repeticiones.",
-  no_sets: "No completaste ninguna serie.",
-  wrong_week:
-    "Esta sesión pertenece a otra semana del programa y ya no se puede guardar. Puedes descartarla.",
-  not_found: "La sesión ya no existe en tu programa. Puedes descartar este entrenamiento.",
-  id_taken: "No se pudo guardar este entrenamiento. Descártalo e inténtalo de nuevo.",
-  alternative_unavailable:
-    "La rutina cambió o el ejercicio elegido ya no está autorizado. Conservamos tu registro en este dispositivo para revisarlo.",
-  forbidden: "No tienes permiso para guardar este entrenamiento.",
-} as const;
-
+const FAILURE_MESSAGES = SYNC_MESSAGES;
 const NETWORK_MESSAGE =
-  "No hay conexión con el servidor. Tu entrenamiento está a salvo en este dispositivo; se guardará solo cuando vuelva la conexión.";
+  "No hay conexión con el servidor. Tu entrenamiento está a salvo en este dispositivo; se reintentará al abrir la app o recuperar conexión mientras esté abierta.";
 const UNSAVED_NETWORK_MESSAGE =
   "No hay conexión con el servidor y no se pudo guardar una copia en el dispositivo. Mantén esta página abierta y reintenta el guardado.";
 
@@ -276,6 +267,7 @@ function ActiveWorkoutRunner({
   const [historyExercise, setHistoryExercise] = useState<{ id: string; name: string } | null>(null);
   const [confirming, setConfirming] = useState<"finish" | "discard" | null>(null);
   const [saving, setSaving] = useState(false);
+  const [queuedLocally, setQueuedLocally] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<{ setId: string; text: string } | null>(null);
   const [activeId, setActiveId] = useState(
@@ -440,9 +432,21 @@ function ActiveWorkoutRunner({
       setSaving(true);
       setError(null);
       try {
-        const result = await saveWorkoutAction(built.payload);
+        let entry = null;
+        try {
+          entry = await enqueueWorkout(d.userId, built.payload);
+          setQueuedLocally(true);
+        } catch {
+          setQueuedLocally(false);
+        }
+        const result = entry
+          ? await syncQueuedWorkout(d.userId, entry.workoutId, entry.payload)
+          : await sendWorkout(d.userId, built.payload);
         if (result.ok) {
-          clearDraft(storage(), d.userId, d.plannedSessionId);
+          if (!entry) {
+            clearConfirmedDraft(d.userId, built.payload);
+            await removeConfirmedWorkout(d.userId, d.workoutId).catch(() => undefined);
+          }
           const logros = result.achievements?.length
             ? `&logros=${result.achievements.join(",")}`
             : "";
@@ -452,10 +456,18 @@ function ActiveWorkoutRunner({
           else router.push(`/history/${d.workoutId}?nuevo=1${logros}`);
           return;
         }
-        setError(FAILURE_MESSAGES[result.reason]);
+        setError(
+          result.reason === "network"
+            ? entry || persistence.getSnapshot() === "saved"
+              ? NETWORK_MESSAGE
+              : UNSAVED_NETWORK_MESSAGE
+            : FAILURE_MESSAGES[result.reason],
+        );
       } catch {
         // Sin red (RF-24): el borrador queda como "pendiente de guardar" y se reintenta solo.
-        setError(persistence.getSnapshot() === "saved" ? NETWORK_MESSAGE : UNSAVED_NETWORK_MESSAGE);
+        setError(
+          "No se pudo confirmar la sincronización. Conservamos el registro; vuelve a intentarlo.",
+        );
       } finally {
         savingRef.current = false;
         setSaving(false);
@@ -467,8 +479,10 @@ function ActiveWorkoutRunner({
   // Al volver la conexión, reintenta una sesión terminada que no se pudo guardar.
   useEffect(() => {
     const retry = () => {
-      if (draftRef.current.status === "pending_save") void submit(draftRef.current);
+      if (draftRef.current.status === "pending_save" && navigator.onLine)
+        void submit(draftRef.current);
     };
+    void Promise.resolve().then(retry);
     window.addEventListener("online", retry);
     return () => window.removeEventListener("online", retry);
   }, [submit]);
@@ -493,7 +507,16 @@ function ActiveWorkoutRunner({
     await submit(finished);
   }
 
-  function confirmDiscard() {
+  async function confirmDiscard() {
+    if (savingRef.current) return;
+    try {
+      await removeConfirmedWorkout(userId, draftRef.current.workoutId);
+    } catch {
+      setError(
+        "No se pudo retirar el entrenamiento pendiente. No se descartó; vuelve a intentarlo.",
+      );
+      return;
+    }
     clearDraft(storage(), userId, draft.plannedSessionId);
     // El regreso local debe funcionar también sin RSC ni conexión.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
@@ -508,17 +531,17 @@ function ActiveWorkoutRunner({
         <Card role="region" aria-label="Entrenamiento pendiente de guardar">
           <CardHeader>
             <CardTitle className="text-lg">
-              {saving ? "Guardando entrenamiento…" : "Tu entrenamiento terminó, pero no se guardó"}
+              {saving ? "Guardando entrenamiento…" : "Entrenamiento pendiente de sincronizar"}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <p className="text-sm text-muted-foreground">
-              {saveStatus === "saved"
-                ? "Está a salvo en este dispositivo. Reintenta cuando tengas conexión: no se duplicará."
+              {queuedLocally || saveStatus === "saved"
+                ? "Está a salvo en este dispositivo. Se reintenta al abrir la app o recuperar conexión mientras está abierta. No se duplicará."
                 : "Tu avance sigue en esta página. Mantenla abierta hasta que se guarde correctamente."}
             </p>
             <DraftStatus
-              status={saveStatus}
+              status={queuedLocally ? "saved" : saveStatus}
               onRetry={() => persistence.persist(draftRef.current)}
             />
             {error ? (
@@ -530,9 +553,15 @@ function ActiveWorkoutRunner({
               <Button onClick={() => submit(draft)} disabled={saving}>
                 {saving ? "Guardando…" : "Reintentar"}
               </Button>
+              <Button
+                variant="outline"
+                render={localMode ? <a href="/offline" /> : <Link href="/week" />}
+              >
+                Volver a Mi semana
+              </Button>
               {confirming === "discard" ? (
                 <>
-                  <Button variant="destructive" onClick={confirmDiscard}>
+                  <Button variant="destructive" disabled={saving} onClick={confirmDiscard}>
                     Sí, descartar
                   </Button>
                   <Button variant="ghost" onClick={() => setConfirming(null)}>
@@ -540,7 +569,11 @@ function ActiveWorkoutRunner({
                   </Button>
                 </>
               ) : (
-                <Button variant="outline" onClick={() => setConfirming("discard")}>
+                <Button
+                  variant="outline"
+                  disabled={saving}
+                  onClick={() => setConfirming("discard")}
+                >
                   Descartar
                 </Button>
               )}

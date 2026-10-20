@@ -472,12 +472,8 @@ test("esfuerzo y nota se recuperan y se guardan una sola vez tras perder la resp
     result.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
   ).toEqual([]);
   let intercepted = false;
-  await page.route(page.url(), async (route) => {
-    if (
-      !intercepted &&
-      route.request().method() === "POST" &&
-      route.request().headers()["next-action"]
-    ) {
+  await page.route("**/api/workouts/sync", async (route) => {
+    if (!intercepted && route.request().method() === "POST") {
       intercepted = true;
       await route.fetch();
       await route.abort("internetdisconnected");
@@ -488,7 +484,6 @@ test("esfuerzo y nota se recuperan y se guardan una sola vez tras perder la resp
     page.getByRole("region", { name: "Entrenamiento pendiente de guardar" }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("button", { name: "Reintentar", exact: true }).click();
   await expect(page.getByText("¡Entrenamiento guardado!", { exact: true })).toBeVisible();
   await expect(page.getByText("8/10", { exact: true })).toBeVisible();
   await expect(page.getByText("Buen ritmo, última serie exigente.", { exact: true })).toBeVisible();

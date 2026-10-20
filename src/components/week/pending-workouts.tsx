@@ -9,9 +9,11 @@ import { listDrafts, type WorkoutDraft } from "@/lib/workout/draft";
 function subscribe(notify: () => void) {
   window.addEventListener("storage", notify);
   window.addEventListener("focus", notify);
+  window.addEventListener("offline-queue", notify);
   return () => {
     window.removeEventListener("storage", notify);
     window.removeEventListener("focus", notify);
+    window.removeEventListener("offline-queue", notify);
   };
 }
 

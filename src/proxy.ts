@@ -29,7 +29,8 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const decision = accessDecision(request.nextUrl.pathname, Boolean(data?.claims));
 
-  if (decision === "redirect-login") {
+  // El endpoint JSON devuelve su propio 401, sin redirigir un reintento offline a HTML.
+  if (decision === "redirect-login" && request.nextUrl.pathname !== "/api/workouts/sync") {
     const redirect = NextResponse.redirect(new URL("/login", request.url));
     // Conserva las cookies refrescadas (o borradas) en la redirección.
     for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
