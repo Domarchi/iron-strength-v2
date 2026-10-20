@@ -111,3 +111,10 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - La última actividad requiere series; el plazo empieza como mínimo al iniciar el programa. No se muestra inactividad durante descarga, sin sesiones previstas o para alumnos desactivados. Se conserva acceso a las fichas y a sus contadores existentes.
 - Cuatro reglas unitarias partieron con módulo ausente. Se corrigió el fixture de entrenamiento vacío para incluir su ID obligatorio. Check en verde con 432 pruebas, formato/lint/tipos/build; integración: 245. Sin cambios de esquema ni de datos interactivos.
 - 59/59 E2E en verde en la primera pasada, sin reintentos. Se prueban tres alumnos, filtros, descarga sin señal de inactividad, apertura del comentario pendiente y respuesta desde el entrenamiento, ausencia del aviso después de leer y acceso a la ficha sin programa. Accesibilidad y ancho de 360 px verificados.
+
+## T158
+
+- Progreso del ejercicio con 4/8/12 semanas (8 iniciales), fechas explícitas hasta hoy en Santiago y periodo anterior equivalente. Se conserva métrica/alumno al navegar. Comparación de mejor 1RM, volumen total o repeticiones; sin tendencias inventadas cuando falta información o la base es cero.
+- Marcas históricas identificadas aparte. Tablas del periodo actual/anterior enlazan cada registro al entrenamiento. El gráfico conserva puntos coincidentes sin claves React duplicadas. Ficha del alumno con esfuerzo y nota en entrenamientos recientes, bajo la RLS existente.
+- Tres reglas de periodos partieron con módulo ausente y la integración detectó valoración ausente en la lista. Check: 435 pruebas, formato/lint/tipos/build en verde; integración: 246. Sin cambios de esquema ni datos interactivos.
+- La suite completa pasó 60/60 en la primera pasada y nuevamente tras reforzar áreas táctiles de los enlaces. Check final en verde. Se verifican filtros, comparación, navegación al registro anterior, valoración en la ficha, accesibilidad y controles de 44 px a 360 px.

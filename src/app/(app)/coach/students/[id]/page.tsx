@@ -149,6 +149,14 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
                     {w.workingSets} series · {formatDuration(w.durationSeconds)}
                     {w.volumeKg > 0 ? ` · ${formatKg(w.volumeKg)}` : ""}
                   </span>
+                  {w.perceivedEffort != null ? (
+                    <span className="text-sm">Esfuerzo: {w.perceivedEffort}/10</span>
+                  ) : null}
+                  {w.note ? (
+                    <span className="line-clamp-3 break-words text-sm text-muted-foreground">
+                      {w.note}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             ))}

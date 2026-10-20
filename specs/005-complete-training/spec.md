@@ -45,7 +45,8 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 - El cierre muestra series y volumen; el detalle guardado reúne ejecución, sustituciones, récords y valoración para alumno/coach. Exportación CSV incluye esfuerzo y nota protegida contra fórmulas. Registros antiguos sin valoración siguen legibles. La base valida rangos también en escritura directa y guarda valoración y series atómicamente.
 - Panel del coach: filtro por alumno y señales con enlaces a evidencia. Comentarios pendientes llevan al entrenamiento más reciente con no leídos; sin programa vigente/próximo lleva a la ficha; programa activo que termina esta semana lleva al programa.
 - Siete días sin entrenar requiere alumno activo, programa activo con sesiones previstas y semana actual no de descarga. Contar desde la fecha más reciente entre inicio del programa y último entrenamiento con series (incluidos extras); no contar registros vacíos. Alumnos desactivados no generan señales nuevas. Las señales informan, sin automatizar cargas ni programas. Si falla la lectura de comentarios, mostrarlo en lugar de afirmar que no hay pendientes.
-- Progreso: periodos 4/8/12 semanas comparados con periodo anterior equivalente, enlaces a entrenamientos, esfuerzo/notas en ficha.
+- Progreso del ejercicio: filtros de 4/8/12 semanas (8 por defecto), periodos móviles de 28/56/84 días hasta hoy en Santiago inclusive y comparación con los días inmediatamente anteriores de igual duración. Conservar el filtro al cambiar métrica.
+- Comparar mejor 1RM estimado, volumen total o repeticiones de peso corporal según la métrica, con cantidad de entrenamientos y fechas explícitas. Sin datos en alguno de los periodos, no presentar una tendencia; nunca dividir por cero. Las marcas históricas permanecen identificadas como tales. Cada resultado visible enlaza a su entrenamiento desde la tabla. La ficha del alumno muestra esfuerzo y notas de sus entrenamientos recientes.
 
 ## Sin conexión
 

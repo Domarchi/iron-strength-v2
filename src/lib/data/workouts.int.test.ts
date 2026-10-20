@@ -120,6 +120,24 @@ describe("historial de entrenamientos (RF-34, RF-77)", () => {
     return id;
   }
 
+  it("la ficha recibe valoración con sus entrenamientos y respeta permisos (T158)", async () => {
+    const id = await addWorkout(studentId, "2025-03-04T15:00:00Z");
+    expect(
+      (
+        await admin
+          .from("workouts")
+          .update({ perceived_effort: 7, note: "Buen control" })
+          .eq("id", id)
+      ).error,
+    ).toBeNull();
+    expect((await listWorkouts(coachDb, studentId)).items[0]).toMatchObject({
+      id,
+      perceivedEffort: 7,
+      note: "Buen control",
+    });
+    expect((await listWorkouts(otherDb, studentId)).items).toEqual([]);
+  });
+
   it("el detalle agrupa las series por ejercicio, en orden, e incluye el resumen", async () => {
     const id = await addWorkout(studentId, "2026-10-01T15:00:00Z");
     const detail = await getWorkoutDetail(studentDb, id);

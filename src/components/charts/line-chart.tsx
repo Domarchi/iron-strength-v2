@@ -70,9 +70,9 @@ export function LineChart({
         />
       ) : null}
 
-      {chart.points.map((p) => (
+      {chart.points.map((p, index) => (
         <circle
-          key={p.x + p.y}
+          key={`${index}-${p.x}-${p.y}`}
           cx={p.px}
           cy={p.py}
           r="4"

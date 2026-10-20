@@ -124,6 +124,8 @@ export async function getWorkoutDetail(db: Client, id: string): Promise<WorkoutD
 
 export type WorkoutListItem = {
   id: string;
+  perceivedEffort: number | null;
+  note: string | null;
   sessionLabel: string | null;
   startedAt: string;
   performedOn: DateString;
@@ -139,7 +141,7 @@ export async function listWorkouts(
   let query = db
     .from("workouts")
     .select(
-      "id, session_label, started_at, performed_on, duration_seconds, workout_sets(exercise_id, weight_kg, reps, is_warmup)",
+      "id, session_label, started_at, performed_on, duration_seconds, perceived_effort, note, workout_sets(exercise_id, weight_kg, reps, is_warmup)",
     )
     .eq("student_id", studentId)
     .order("started_at", { ascending: false })
@@ -157,6 +159,8 @@ export async function listWorkouts(
       startedAt: w.started_at,
       performedOn: w.performed_on as string,
       durationSeconds: w.duration_seconds,
+      perceivedEffort: w.perceived_effort,
+      note: w.note,
       ...summarize(w.workout_sets),
     })),
     nextCursor: data.length > limit ? page[page.length - 1].started_at : null,
