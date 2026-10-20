@@ -40,6 +40,9 @@ test("recupera y migra el borrador anterior; la cuota conserva el origen hasta c
   value.perceivedEffort = 8;
   value.rest = { endsAt: Date.now() + 180000, totalSeconds: 180 };
   await login(page, COACH.email, COACH.password);
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("is:offline:active-user")))
+    .toBe(userId);
   const oldKey = legacyDraftKey(userId, program.sessionId),
     newKey = draftKey(userId, program.sessionId);
   await page.evaluate(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), {

@@ -54,7 +54,7 @@ export function LogoutForm({ children, userId }: { children: React.ReactNode; us
   }
   return (
     <>
-      <form action={() => attempt("inspect")}>
+      <form data-local-exit action={() => attempt("inspect")}>
         <fieldset disabled={busy}>{children}</fieldset>
       </form>
       <dialog

@@ -1,4 +1,5 @@
 "use client";
+import { StatusMessage } from "@/components/ui/status-message";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { formatKg } from "@/domain/format";
@@ -117,11 +118,7 @@ export function SyncWorkouts({
           ))}
         </div>
       )}
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <StatusMessage error>{error}</StatusMessage>}
       {entries.length > 0 && (
         <>
           <p className="text-sm text-muted-foreground">

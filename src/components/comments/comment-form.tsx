@@ -1,4 +1,5 @@
 "use client";
+import { Textarea } from "@/components/ui/textarea";
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
@@ -15,14 +16,7 @@ export function CommentForm({
   return (
     <form action={formAction} className="flex flex-col gap-2">
       <Label htmlFor="comment-body">Escribe un comentario</Label>
-      <textarea
-        id="comment-body"
-        name="body"
-        rows={3}
-        maxLength={500}
-        required
-        className="min-h-24 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-      />
+      <Textarea id="comment-body" name="body" rows={3} maxLength={500} required />
       <p className="text-xs text-muted-foreground">
         Hasta 500 caracteres. Los comentarios no se pueden editar, solo borrar.
       </p>

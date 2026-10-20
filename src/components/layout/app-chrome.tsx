@@ -28,7 +28,7 @@ export function AppChrome({
     >
       <a
         href="#main-content"
-        className="sr-only z-50 rounded-lg bg-primary p-3 text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        className="sr-only z-50 rounded-lg bg-primary text-primary-foreground focus:p-3 focus:min-h-11 focus:min-w-11 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
         Saltar al contenido
       </a>

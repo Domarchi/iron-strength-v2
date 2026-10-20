@@ -1,4 +1,5 @@
 "use client";
+import { NativeSelect } from "@/components/ui/native-select";
 
 import { useRef, useState } from "react";
 import {
@@ -212,8 +213,8 @@ export function ExerciseCard({
           </p>
           <label className="block text-sm">
             Ejercicio a realizar
-            <select
-              className="mt-1 min-h-11 w-full rounded-md border bg-background px-3"
+            <NativeSelect
+              className="mt-1"
               value={choice}
               disabled={done > 0}
               onChange={(e) => setChoice(e.target.value)}
@@ -225,7 +226,7 @@ export function ExerciseCard({
                     {e.name} · {e.prescribed.sets} × {e.prescribed.repsMin}–{e.prescribed.repsMax}
                   </option>
                 ))}
-            </select>
+            </NativeSelect>
           </label>
           <Button
             className="mt-2"
@@ -260,11 +261,11 @@ export function ExerciseCard({
       <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
         <Timer className="size-4" aria-hidden />
         <span>{groupLabel ? "Entre rondas" : "Descanso"}</span>
-        <select
+        <NativeSelect
           aria-label={`Descanso automático de ${exercise.name}`}
           value={restSeconds}
           onChange={(event) => onRestChange(Number(event.target.value))}
-          className="min-h-11 min-w-24 rounded border border-input bg-background px-2 font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="w-auto min-w-24 font-medium"
         >
           {REST_OPTIONS.map((seconds) => (
             <option key={seconds} value={seconds}>
@@ -274,7 +275,7 @@ export function ExerciseCard({
           {!REST_OPTIONS.includes(restSeconds) ? (
             <option value={restSeconds}>{formatClock(restSeconds)}</option>
           ) : null}
-        </select>
+        </NativeSelect>
       </label>
 
       <div className="flex flex-col gap-1 py-2">

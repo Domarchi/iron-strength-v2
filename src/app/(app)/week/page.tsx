@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/layout/empty-state";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ChevronRight } from "lucide-react";
@@ -30,16 +31,11 @@ async function WeekContent() {
   switch (view.kind) {
     case "no_program":
       return (
-        <Card>
-          <CardContent className="flex flex-col gap-1 pt-6">
-            <p className="font-medium">Todavía no tienes un programa asignado.</p>
-            <p className="text-sm text-muted-foreground">
-              {user.role === "coach"
-                ? "Asígnate una plantilla desde Programas para empezar a entrenar."
-                : "Habla con tu coach para que te asigne uno."}
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState title="Todavía no tienes un programa asignado.">
+          {user.role === "coach"
+            ? "Asígnate una plantilla desde Programas para empezar a entrenar."
+            : "Habla con tu coach para que te asigne uno."}
+        </EmptyState>
       );
 
     case "scheduled":

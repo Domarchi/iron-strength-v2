@@ -1,4 +1,6 @@
 "use client";
+import { Textarea } from "@/components/ui/textarea";
+import { NativeSelect } from "@/components/ui/native-select";
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -847,10 +849,10 @@ function ActiveWorkoutRunner({
             ))}
           <label className="flex flex-col gap-1 text-sm font-medium">
             Esfuerzo percibido (opcional)
-            <select
+            <NativeSelect
               aria-label="Esfuerzo percibido (opcional)"
               aria-describedby="effort-hint"
-              className="min-h-11 rounded-md border bg-background px-3 text-base"
+
               value={draft.perceivedEffort ?? ""}
               onChange={(e) =>
                 commit({
@@ -865,16 +867,16 @@ function ActiveWorkoutRunner({
                   {n}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </label>
           <p id="effort-hint" className="text-xs text-muted-foreground">
             1 = muy fácil · 10 = esfuerzo máximo
           </p>
           <label className="flex flex-col gap-1 text-sm font-medium">
             Nota del entrenamiento (opcional)
-            <textarea
+            <Textarea
               aria-label="Nota del entrenamiento (opcional)"
-              className="min-h-24 w-full resize-y rounded-md border bg-background p-3 text-base font-normal"
+              className="font-normal"
               maxLength={500}
               rows={3}
               value={draft.note ?? ""}

@@ -77,7 +77,8 @@ export function WeekWorkspace({
     const leaveByForm = (event: SubmitEvent) => {
       if (
         !(event.target instanceof HTMLFormElement) ||
-        event.target.closest("[data-routine-editor]")
+        event.target.closest("[data-routine-editor]") ||
+        event.target.hasAttribute("data-local-exit")
       )
         return;
       if (

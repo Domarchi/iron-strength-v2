@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeading } from "@/components/layout/page-heading";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -28,9 +29,9 @@ async function WorkoutList({ cursor }: { cursor?: string }) {
 
   if (items.length === 0 && !cursor) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Todavía no registraste ningún entrenamiento. Cuando termines el primero, aparecerá aquí.
-      </p>
+      <EmptyState title="Todavía no registraste ningún entrenamiento.">
+        Cuando termines el primero, aparecerá aquí.
+      </EmptyState>
     );
   }
 

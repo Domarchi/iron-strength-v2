@@ -65,6 +65,12 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 - Cambiar/cerrar cuenta oculta el contenido de las otras pestañas abiertas y bloquea su registro; la autenticación y RLS siguen validando todos los envíos. No mostrar contenido privado desde la identidad local de otra cuenta.
 - Los workers usan URL inmutable por build y nunca fuerzan recarga ni skipWaiting. Antes de registrar una versión nueva, comprobar borradores de entrenamiento en todas las cuentas locales; mientras existan, conservar el worker anterior y pedir terminar o descartar. Una descarga con la misma interfaz ya disponible no exige actualizarla. No retirar recursos de versiones anteriores durante una sesión.
 
+## Acabado móvil
+
+- Formularios con tipografía legible (16 px en campos móviles), foco visible y la misma superficie/borde/radio para entrada, selector y texto multilínea. Tarjetas y mensajes conservan la paleta clara/oscura existente; textos de estado explican guardado, pendiente o error sin depender solo del color.
+- Sin desbordamiento horizontal desde 360 px, incluso con títulos o notas largos sin espacios. Objetivos táctiles de 44 px para acciones y controles, incluyendo etiquetas de casillas; las variantes compactas de botón también cumplen. Respetar movimiento reducido y navegación por teclado.
+- Cerrar sesión desde un editor con cambios abre una sola confirmación de pendientes locales; el guardado y la protección de otras salidas continúan vigentes.
+
 ## Publicación y aceptación
 
 - Verificación coach + tres alumnos (incluido entreno del coach), Chromium y WebKit, guía de comprobación en teléfonos físicos sin afirmar ejecución no realizada.

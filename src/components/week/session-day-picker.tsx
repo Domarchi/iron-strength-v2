@@ -1,4 +1,6 @@
 "use client";
+import { StatusMessage } from "@/components/ui/status-message";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { WEEKDAYS } from "@/domain/session-schedule";
@@ -27,9 +29,9 @@ export function SessionDayPicker({
       </p>
       <label className="flex flex-col gap-1 text-sm">
         Día de sesión {label}
-        <select
+        <NativeSelect
           aria-label={`Día de sesión ${label}`}
-          className="min-h-11 w-full rounded-md border bg-background px-3 text-base"
+
           value={value}
           disabled={pending}
           onChange={(e) => {
@@ -43,7 +45,7 @@ export function SessionDayPicker({
               {day}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </label>
       <Button
         className="mt-2 w-full"
@@ -69,9 +71,9 @@ export function SessionDayPicker({
         {pending ? "Guardando…" : "Guardar día"}
       </Button>
       {message ? (
-        <p role={message.error ? "alert" : "status"} className="mt-2 text-sm">
+        <StatusMessage error={message.error} className="mt-2">
           {message.text}
-        </p>
+        </StatusMessage>
       ) : null}
     </details>
   );

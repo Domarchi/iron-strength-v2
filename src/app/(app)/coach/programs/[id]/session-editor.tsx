@@ -1,4 +1,5 @@
 "use client";
+import { NativeSelect } from "@/components/ui/native-select";
 
 import {
   useEffect,
@@ -953,10 +954,10 @@ function Editor({
         </label>
         <label className="mt-3 flex flex-col gap-1 text-sm font-medium">
           Día orientativo de sesión {session.label}
-          <select
+          <NativeSelect
             aria-label={`Día orientativo de sesión ${session.label}`}
             aria-describedby={`day-hint-${session.id}`}
-            className="min-h-11 rounded-md border bg-background px-3 text-base"
+
             value={weekday ?? session.weekday ?? -1}
             disabled={
               pending ||
@@ -992,7 +993,7 @@ function Editor({
                 {day}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
         <p id={`day-hint-${session.id}`} className="mt-1 text-xs text-muted-foreground">
           El alumno puede moverlo dentro de su semana.

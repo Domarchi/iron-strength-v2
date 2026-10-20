@@ -23,7 +23,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T160 · Apertura sin Internet**
 - [x] **T161 · Cola de sincronización**
 - [x] **T162 · Actualizaciones y cuentas**
-- [ ] **T163 · Consistencia visual**
+- [x] **T163 · Consistencia visual**
 - [ ] **T164 · Validación completa**
 - [ ] **T165 · Preparación de publicación**
 - [ ] **T166 · Publicación y prueba final**

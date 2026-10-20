@@ -67,6 +67,7 @@ Variables de entorno: copia `.env.example` a `.env.local`. Nunca commitees `.env
 - Superseries: metadatos en `session_exercises`, grupos de 2–4 consecutivos validados al finalizar la transacción. `configure_session_layout` cambia grupos/descansos/orden con revisión y recibo. Copias de sesión/semana/asignación regeneran grupos; una copia individual queda fuera. Las rondas se derivan de series de trabajo en `src/domain/superset-rounds.ts`; conservar metadatos y tiempo absoluto en el borrador.
 - Duplicar ejercicios/sesiones usa `duplicate_routine_item` (security invoker), con transacción completa e ID de copia estable para reintentos. El editor conserva ese ID si se pierde la respuesta. Se mantiene RF-17: solo semanas posteriores a la actual en programas activos; las plantillas se editan completas.
 - Las funciones de no leídos (`unread_comments`, `mark_comments_read`) son `security invoker`: no las cambies a `security definer`, la RLS de comentarios es su única barrera.
+- Acabado: reutilizar `NativeSelect`, `Textarea`, `StatusMessage` y `EmptyState` para conservar foco, legibilidad móvil y estados consistentes. Todas las variantes de Button mantienen 44 px; textos largos ajustan sin desbordamiento y movimiento reducido limita animaciones a una iteración. Formularios de salida `data-local-exit` usan la confirmación de pendientes y evitan una segunda confirmación nativa del editor.
 - El linter de React marca `Date.now()` en el render y `setState` dentro de efectos: usa funciones auxiliares y manejadores.
 
 ## Reglas

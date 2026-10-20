@@ -1,4 +1,5 @@
 "use client";
+import { StatusMessage } from "@/components/ui/status-message";
 import { useEffect, useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,7 @@ export function DownloadWeek({
           Guarda rutinas, alternativas y el historial reciente.
         </p>
       </div>
-      <p role="status" className="text-sm">
+      <StatusMessage>
         {busy
           ? "Descargando y comprobando los datos…"
           : loading
@@ -91,7 +92,7 @@ export function DownloadWeek({
             : savedAt
               ? `${ready ? "Disponible sin conexión" : "Datos guardados"}: ${dateFormat.format(new Date(savedAt))}.`
               : "Todavía no has descargado esta semana."}
-      </p>
+      </StatusMessage>
       <p className="text-xs text-muted-foreground">
         Descarga con conexión antes de ir al gimnasio. Actualízala cuando cambie tu rutina.
       </p>
@@ -100,11 +101,7 @@ export function DownloadWeek({
           Abrir semana descargada
         </Button>
       )}
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <StatusMessage error>{error}</StatusMessage>}
       <Button
         variant="outline"
         disabled={busy || loading}

@@ -1,4 +1,5 @@
 "use client";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -30,9 +31,9 @@ export function CoachDashboard({
       <label htmlFor="coach-student-filter" className="text-sm font-medium">
         Filtrar por alumno
       </label>
-      <select
+      <NativeSelect
         id="coach-student-filter"
-        className="-mt-3 min-h-11 min-w-0 w-full rounded-md border bg-background px-3 text-base"
+        className="-mt-3"
         value={activeFilter}
         onChange={(e) => setStudentId(e.target.value)}
       >
@@ -42,7 +43,7 @@ export function CoachDashboard({
             {s.fullName}
           </option>
         ))}
-      </select>
+      </NativeSelect>
       <section aria-labelledby="coach-signals-heading" className="rounded-lg border bg-card p-4">
         <h3 id="coach-signals-heading" className="font-semibold">
           Para revisar
