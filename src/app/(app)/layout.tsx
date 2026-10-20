@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OfflineAccount } from "@/components/offline/account";
 import { CircleUser, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppChrome } from "@/components/layout/app-chrome";
@@ -8,7 +9,7 @@ import { navItemsFor, withUnreadBadge } from "@/components/layout/nav-items";
 import { requireUser } from "@/lib/auth/session";
 import { getUnreadSummary } from "@/lib/data/unread";
 import { createClient } from "@/lib/supabase/server";
-import { logoutAction } from "../(auth)/actions";
+import { LogoutForm } from "@/components/offline/logout-form";
 
 // Todo lo que cuelga de (app) exige un perfil activo. La RLS sigue siendo la barrera real.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -39,18 +40,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <Button variant="ghost" aria-label="Mi cuenta" render={<Link href="/account" />}>
                 <CircleUser aria-hidden />
               </Button>
-              <form action={logoutAction}>
+              <LogoutForm>
                 <Button type="submit" variant="ghost" aria-label="Cerrar sesión">
                   <LogOut aria-hidden />
                   <span className="hidden sm:inline">Salir</span>
                 </Button>
-              </form>
+              </LogoutForm>
             </div>
           </div>
         </header>
       }
       nav={<AppNav items={items} />}
     >
+      <OfflineAccount userId={user.id} />
       {children}
     </AppChrome>
   );

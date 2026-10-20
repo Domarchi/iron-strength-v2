@@ -15,7 +15,7 @@ async function readPackages(page: Page): Promise<WeekPackage[]> {
   return page.evaluate(
     () =>
       new Promise((resolve, reject) => {
-        const request = indexedDB.open("iron-strength-offline", 1);
+        const request = indexedDB.open("iron-strength-offline");
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
           const db = request.result;
@@ -72,7 +72,7 @@ test("descarga completa, recupera fecha, conserva anterior sin espacio y separa 
   await page.goto("/week");
   const download = page.getByRole("region", { name: "Descarga de la semana", exact: true });
   await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(download.getByRole("status")).toContainText("Datos guardados:");
+  await expect(download.getByRole("status")).toContainText("Disponible sin conexión:");
   const original = (await readPackages(page))[0];
   expect(original.userId).toBe(coachId);
   expect(original.sessions).toHaveLength(1);
@@ -82,7 +82,7 @@ test("descarga completa, recupera fecha, conserva anterior sin espacio y separa 
   expect(original.history[alternativeId].items).toHaveLength(1);
   expect(JSON.stringify(original)).not.toMatch(/access_token|refresh_token|password|signedUrl/);
   await page.reload();
-  await expect(download.getByRole("status")).toContainText("Datos guardados:");
+  await expect(download.getByRole("status")).toContainText("Disponible sin conexión:");
   await page.evaluate(() => {
     IDBObjectStore.prototype.put = function () {
       throw new DOMException("Full", "QuotaExceededError");
@@ -93,7 +93,7 @@ test("descarga completa, recupera fecha, conserva anterior sin espacio y separa 
   expect((await readPackages(page))[0]).toEqual(original);
   await page.reload();
   await download.getByRole("button", { name: "Actualizar descarga", exact: true }).click();
-  await expect(download.getByRole("status")).toContainText("Datos guardados:");
+  await expect(download.getByRole("status")).toContainText("Disponible sin conexión:");
   const updated = (await readPackages(page))[0];
   expect(updated.downloadedAt).not.toBe(original.downloadedAt);
   await page.setViewportSize({ width: 360, height: 800 });
@@ -114,7 +114,7 @@ test("descarga completa, recupera fecha, conserva anterior sin espacio y separa 
   await page.goto("/week");
   await expect(download.getByRole("status")).toContainText("Todavía no has descargado");
   await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(download.getByRole("status")).toContainText("Datos guardados:");
+  await expect(download.getByRole("status")).toContainText("Disponible sin conexión:");
   const all = await readPackages(page);
   expect(all).toHaveLength(2);
   expect(all.find((p) => p.userId === coachId)).toEqual(updated);

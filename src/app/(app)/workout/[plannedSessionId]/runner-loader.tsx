@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { ExerciseHistoryPage } from "@/lib/data/exercise-history";
 import type { WorkoutContext } from "@/lib/data/workout-context";
 
 // El borrador vive en localStorage: el corredor solo se renderiza en el navegador para que el
@@ -14,6 +15,8 @@ export function RunnerLoader(props: {
   userId: string;
   context: WorkoutContext;
   recoveryOnly?: boolean;
+  localMode?: boolean;
+  downloadedHistory?: Record<string, ExerciseHistoryPage>;
 }) {
   return <Runner {...props} />;
 }

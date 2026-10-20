@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { restAfterSet, type Rest } from "@/domain/rest-timer";
 import { nextSupersetSet, finishedSupersetRound } from "@/domain/superset-rounds";
 import { formatKg } from "@/domain/format";
+import type { ExerciseHistoryPage } from "@/lib/data/exercise-history";
 import type { WorkoutContext } from "@/lib/data/workout-context";
 import { clearDraft, loadDraft, type DraftStorage, type WorkoutDraft } from "@/lib/workout/draft";
 import { createDraftPersistence, type DraftSaveStatus } from "@/lib/workout/draft-persistence";
@@ -220,10 +221,14 @@ export function WorkoutRunner({
   userId,
   context,
   recoveryOnly = false,
+  localMode = false,
+  downloadedHistory,
 }: {
   userId: string;
   context: WorkoutContext;
   recoveryOnly?: boolean;
+  localMode?: boolean;
+  downloadedHistory?: Record<string, ExerciseHistoryPage>;
 }) {
   const [initial] = useState(() => initialDraft(userId, context, recoveryOnly));
   if (!initial) {
@@ -235,22 +240,36 @@ export function WorkoutRunner({
             No hay un entrenamiento pendiente en este dispositivo. Solo puedes iniciar sesiones de
             la semana en curso.
           </p>
-          <Button render={<Link href="/week" />}>Volver a mi semana</Button>
+          <Button render={localMode ? <a href="/offline" /> : <Link href="/week" />}>
+            Volver a mi semana
+          </Button>
         </CardContent>
       </Card>
     );
   }
-  return <ActiveWorkoutRunner userId={userId} context={context} initial={initial} />;
+  return (
+    <ActiveWorkoutRunner
+      userId={userId}
+      context={context}
+      initial={initial}
+      localMode={localMode}
+      downloadedHistory={downloadedHistory}
+    />
+  );
 }
 
 function ActiveWorkoutRunner({
   userId,
   context,
   initial,
+  localMode,
+  downloadedHistory,
 }: {
   userId: string;
   context: WorkoutContext;
   initial: WorkoutDraft;
+  localMode: boolean;
+  downloadedHistory?: Record<string, ExerciseHistoryPage>;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<WorkoutDraft>(initial);
@@ -427,7 +446,10 @@ function ActiveWorkoutRunner({
           const logros = result.achievements?.length
             ? `&logros=${result.achievements.join(",")}`
             : "";
-          router.push(`/history/${d.workoutId}?nuevo=1${logros}`);
+          // El modo local necesita una navegación de documento para que el worker sirva el shell; RSC requiere red.
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          if (localMode) window.location.assign(`/history/${d.workoutId}?nuevo=1${logros}`);
+          else router.push(`/history/${d.workoutId}?nuevo=1${logros}`);
           return;
         }
         setError(FAILURE_MESSAGES[result.reason]);
@@ -439,7 +461,7 @@ function ActiveWorkoutRunner({
         setSaving(false);
       }
     },
-    [router, persistence],
+    [router, persistence, localMode],
   );
 
   // Al volver la conexión, reintenta una sesión terminada que no se pudo guardar.
@@ -473,7 +495,10 @@ function ActiveWorkoutRunner({
 
   function confirmDiscard() {
     clearDraft(storage(), userId, draft.plannedSessionId);
-    router.push("/week");
+    // El regreso local debe funcionar también sin RSC ni conexión.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    if (localMode) window.location.assign("/offline");
+    else router.push("/week");
   }
 
   // Sesión terminada que no llegó al servidor ------------------------------------------------------
@@ -544,7 +569,7 @@ function ActiveWorkoutRunner({
                 ? "Volver a Mi semana (copia local no disponible)"
                 : "Volver a Mi semana (tu avance queda guardado)"
             }
-            render={<Link href="/week" />}
+            render={localMode ? <a href="/offline" /> : <Link href="/week" />}
           >
             <ChevronLeft aria-hidden />
           </Button>
@@ -712,6 +737,7 @@ function ActiveWorkoutRunner({
           key={historyExercise.id}
           exerciseId={historyExercise.id}
           name={historyExercise.name}
+          downloaded={downloadedHistory?.[historyExercise.id]}
           onClose={() => setHistoryExercise(null)}
         />
       ) : null}

@@ -1,3 +1,4 @@
+import { OfflineAccount } from "@/components/offline/account";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LoginPanel } from "@/components/layout/login-panel";
@@ -22,6 +23,7 @@ export default async function LoginPage({
 
   return (
     <LoginPanel message={motivo ? REASONS[motivo] : undefined}>
+      <OfflineAccount userId={null} />
       <LoginForm />
     </LoginPanel>
   );

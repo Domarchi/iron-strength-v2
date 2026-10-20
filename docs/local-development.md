@@ -70,3 +70,18 @@ En este equipo, el supervisor nativo aislado se puede iniciar desde el repo con 
 ```sh
 PLAYWRIGHT_BROWSERS_PATH=../work/playwright-browsers npm run test:e2e
 ```
+
+## Preparar y probar la apertura sin conexión
+
+`npm run build` prepara los recursos públicos de la pantalla local. La descarga explícita de Mi semana instala esa versión y solo confirma disponibilidad cuando la interfaz y el paquete de datos están completos. `/offline` no consulta la sesión en el servidor ni contiene datos privados en su HTML. El navegador carga únicamente los datos de la cuenta habilitada en el dispositivo.
+
+El servidor de desarrollo no instala el service worker. Para una vista previa local con la base interactiva de `.env.local`, después de detener el servidor que ocupa 3000:
+
+```sh
+NEXT_DIST_DIR=.next-interactive npm run build
+NEXT_DIST_DIR=.next-interactive npm run start -- -p 3000
+```
+
+E2E conserva `.next` y el puerto 3100. Los workers se generan con una URL por versión y entorno, de modo que una compilación de pruebas no reemplaza el worker de la vista previa interactiva. Sus archivos generados se excluyen de Git. Las páginas autenticadas, RSC, APIs y fotos privadas no se guardan en Cache Storage.
+
+Prueba: entrar con conexión, descargar, esperar «Disponible sin conexión», cerrar la pestaña, desactivar la red y abrir la app. Una sesión empezada puede recuperarse después de vencer la semana; una sesión nueva solo puede iniciarse dentro de la semana descargada vigente. El historial descargado conserva diez resultados por ejercicio; más resultados y el detalle completo requieren conexión.

@@ -9,9 +9,15 @@ const PUBLIC_PREFIXES = [
   "/manifest.webmanifest",
   "/icons/",
   "/apple-icon",
+  "/offline",
 ];
 
+export function isOfflineResource(pathname: string): boolean {
+  return pathname === "/offline" || /^\/offline-workers\/[a-f0-9]{32}\.js$/.test(pathname);
+}
+
 export function isPublicPath(pathname: string): boolean {
+  if (isOfflineResource(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) =>
     prefix.endsWith("/") ? pathname.startsWith(prefix) : pathname === prefix,
   );

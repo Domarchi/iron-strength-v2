@@ -54,7 +54,7 @@ Se copian patrones probados de **Hevy** y **Strong** (las apps de registro de pe
 
 ## 4. Fuera de alcance
 
-- Modo offline completo y service worker (la 001 ya lo excluye; la sesión en curso se protege con el borrador local).
+- Modo offline completo y service worker (la 001 ya lo excluye; la sesión en curso se protege con el borrador local). Esta exclusión corresponde al alcance original; la spec 005 amplía descarga, apertura local y sincronización (consultar su estado en `tasks.md`).
 - Notificaciones push (el aviso del descanso es en pantalla y vibración).
 - Sonido del temporizador.
 - Reordenar o sustituir ejercicios durante la sesión (RF-26 lo sigue prohibiendo).

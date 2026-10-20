@@ -4,6 +4,8 @@ import { Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { downloadWeekAction } from "@/app/(app)/week/download-actions";
 import { loadWeekPackage, saveWeekPackage } from "@/lib/offline/storage";
+import { isOfflineInterfaceReady, prepareOfflineInterface } from "@/lib/offline/interface";
+import { activeOfflineAccount } from "@/lib/offline/account";
 const dateFormat = new Intl.DateTimeFormat("es-CL", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -19,14 +21,18 @@ export function DownloadWeek({
   weekStart: string;
 }) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    loadWeekPackage(userId, programId, weekStart)
-      .then((p) => {
-        if (active) setSavedAt(p?.downloadedAt ?? null);
+    Promise.all([loadWeekPackage(userId, programId, weekStart), isOfflineInterfaceReady()])
+      .then(([p, prepared]) => {
+        if (active) {
+          setSavedAt(p?.downloadedAt ?? null);
+          setReady(prepared);
+        }
       })
       .catch(() => {
         if (active)
@@ -49,9 +55,16 @@ export function DownloadWeek({
       if (!result.ok) throw new Error(result.error);
       if (result.pack.program.id !== programId || result.pack.weekStart !== weekStart)
         throw new Error("La semana cambió. Actualiza esta pantalla antes de descargar.");
+      await prepareOfflineInterface();
+      if (activeOfflineAccount() !== userId)
+        throw new Error(
+          "La cuenta cambió o no se pudo guardar su identidad en el dispositivo. Vuelve a entrar y reintenta.",
+        );
       const saved = await saveWeekPackage(result.pack, userId);
+      setReady(true);
       setSavedAt(saved.downloadedAt);
     } catch (e) {
+      setReady(await isOfflineInterfaceReady().catch(() => false));
       setError(
         e instanceof Error ? e.message : "No se pudo guardar la descarga en este dispositivo.",
       );
@@ -76,12 +89,17 @@ export function DownloadWeek({
           : loading
             ? "Comprobando descarga…"
             : savedAt
-              ? `Datos guardados: ${dateFormat.format(new Date(savedAt))}.`
+              ? `${ready ? "Disponible sin conexión" : "Datos guardados"}: ${dateFormat.format(new Date(savedAt))}.`
               : "Todavía no has descargado esta semana."}
       </p>
       <p className="text-xs text-muted-foreground">
-        Los datos quedan guardados aquí. Por ahora, necesitas conexión para abrir la app.
+        Descarga con conexión antes de ir al gimnasio. Actualízala cuando cambie tu rutina.
       </p>
+      {savedAt && ready && (
+        <Button variant="outline" className="self-start" render={<a href="/offline" />}>
+          Abrir semana descargada
+        </Button>
+      )}
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}

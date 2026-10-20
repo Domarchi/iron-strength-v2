@@ -2,7 +2,7 @@ import { PageHeading } from "@/components/layout/page-heading";
 import { Download, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
-import { logoutAction } from "../../(auth)/actions";
+import { LogoutForm } from "@/components/offline/logout-form";
 import { DeleteAccount } from "./delete-account";
 
 export const metadata = { title: "Mi cuenta · Iron Strength" };
@@ -47,11 +47,11 @@ export default async function AccountPage() {
         </div>
       </section>
 
-      <form action={logoutAction}>
+      <LogoutForm>
         <Button type="submit" variant="outline" className="w-full sm:w-auto">
           <LogOut aria-hidden /> Cerrar sesión
         </Button>
-      </form>
+      </LogoutForm>
 
       {user.role === "student" ? <DeleteAccount /> : null}
     </div>

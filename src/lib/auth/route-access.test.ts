@@ -10,6 +10,8 @@ describe("rutas públicas", () => {
     "/icons/192",
     "/icons/maskable",
     "/apple-icon",
+    "/offline",
+    "/offline-workers/0123456789abcdef0123456789abcdef.js",
   ])("%s es pública", (path) => {
     expect(isPublicPath(path)).toBe(true);
   });
@@ -23,6 +25,9 @@ describe("rutas públicas", () => {
     "/workout/123",
     "/iconsx/1",
     "/manifest.webmanifestx",
+    "/offline/private",
+    "/offline-workers/private.js",
+    "/offline-workers/0123456789abcdef0123456789abcdef.js/private",
   ])("%s es protegida", (path) => {
     expect(isPublicPath(path)).toBe(false);
   });

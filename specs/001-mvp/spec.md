@@ -142,7 +142,7 @@ Iron Strength v1 fue una PWA personal que creció sin especificación y terminó
 
 - Múltiples coaches, equipos o pagos y suscripciones.
 - Registro público de alumnos.
-- Modo offline completo (solo se protege la sesión en curso, ver RF-22 y RF-24).
+- Modo offline completo (solo se protege la sesión en curso, ver RF-22 y RF-24). Esta exclusión corresponde al alcance original; la spec 005 amplía descarga, apertura local y sincronización (consultar su estado en `tasks.md`).
 - Sustituir ejercicios por el alumno.
 - Prescripción por RPE/RIR, % del 1RM, tempo o superseries.
 - Videos de técnica, chat en tiempo real, notificaciones push y por correo (salvo recuperación de contraseña).

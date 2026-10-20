@@ -12,15 +12,17 @@ export function ExerciseHistoryPanel({
   exerciseId,
   name,
   onClose,
+  downloaded,
 }: {
   exerciseId: string;
   name: string;
   onClose: () => void;
+  downloaded?: ExerciseHistoryPage;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
-  const [page, setPage] = useState<ExerciseHistoryPage | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState<ExerciseHistoryPage | null>(downloaded ?? null);
+  const [loading, setLoading] = useState(!downloaded);
   const [error, setError] = useState(false);
   const pending = useRef(false);
   const mounted = useRef(false);
@@ -31,26 +33,27 @@ export function ExerciseHistoryPanel({
     element?.showModal();
     mounted.current = true;
     let cancelled = false;
-    void exerciseHistoryAction(exerciseId)
-      .then((result) => {
-        if (cancelled) return;
-        if (result.ok) setPage(result.page);
-        else setError(true);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError(true);
+    if (!downloaded)
+      void exerciseHistoryAction(exerciseId)
+        .then((result) => {
+          if (cancelled) return;
+          if (result.ok) setPage(result.page);
+          else setError(true);
           setLoading(false);
-        }
-      });
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setError(true);
+            setLoading(false);
+          }
+        });
     return () => {
       cancelled = true;
       mounted.current = false;
       element?.close();
       if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
-  }, [exerciseId]);
+  }, [exerciseId, downloaded]);
 
   async function loadMore() {
     if (pending.current) return;
@@ -95,7 +98,9 @@ export function ExerciseHistoryPanel({
             Historial de {name}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tu registro y el descanso siguen activos.
+            {downloaded
+              ? "Historial descargado. Para más resultados o abrir el detalle, necesitas conexión."
+              : "Tu registro y el descanso siguen activos."}
           </p>
         </div>
         <Button variant="ghost" size="icon" aria-label="Cerrar historial" onClick={close}>

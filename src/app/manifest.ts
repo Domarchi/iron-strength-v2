@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 
 // App instalable (RF-45, DC-25): se agrega a la pantalla de inicio y abre sin la barra del navegador.
-// No hay service worker: instalar no cambia que la app necesita conexión (la sesión en curso se
-// protege con el borrador local, RF-22).
+// La descarga explícita prepara una pantalla local y recursos públicos para abrir sin conexión.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Iron Strength",

@@ -3,3 +3,6 @@ node_modules
 package-lock.json
 supabase/migrations
 src/types/database.ts
+
+public/offline-workers/
+.next-interactive/
