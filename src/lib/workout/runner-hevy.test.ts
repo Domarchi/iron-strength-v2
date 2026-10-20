@@ -107,16 +107,18 @@ describe("descanso por ejercicio", () => {
   });
 
   it("recupera la selección y sigue aceptando borradores anteriores sin ese campo", () => {
-    let raw: string | null = null;
+    const values = new Map<string, string>();
     const storage: DraftStorage = {
-      length: 1,
-      key: () => "",
-      getItem: () => raw,
-      setItem: (_key, value) => {
-        raw = value;
+      get length() {
+        return values.size;
       },
-      removeItem: () => {
-        raw = null;
+      key: (i) => [...values.keys()][i] ?? null,
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => {
+        values.set(key, value);
+      },
+      removeItem: (key) => {
+        values.delete(key);
       },
     };
     saveDraft(storage, create());

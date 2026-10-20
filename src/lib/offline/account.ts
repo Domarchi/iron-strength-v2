@@ -1,18 +1,26 @@
+let memoryAccount: string | null = null;
 const KEY = "is:offline:active-user";
 export function activeOfflineAccount(): string | null {
   try {
-    return localStorage.getItem(KEY);
+    const value = localStorage.getItem(KEY);
+    memoryAccount = value;
+    return value;
   } catch {
-    return null;
+    return memoryAccount;
   }
 }
 export function setOfflineAccount(userId: string | null): boolean {
   try {
     if (userId) localStorage.setItem(KEY, userId);
     else localStorage.removeItem(KEY);
+    memoryAccount = userId;
     window.dispatchEvent(new Event("offline-account"));
     return true;
   } catch {
+    if (userId) {
+      memoryAccount = userId;
+      window.dispatchEvent(new Event("offline-account"));
+    }
     return false;
   }
 }

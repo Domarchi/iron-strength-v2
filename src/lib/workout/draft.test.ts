@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clearDraft,
   draftKey,
+  legacyDraftKey,
   listDrafts,
   loadDraft,
   saveDraft,
@@ -80,10 +81,10 @@ describe("borrador de la sesión en curso (RF-22, RF-24, DC-8)", () => {
     expect(draftKey("user-a", "session-1")).not.toBe(draftKey("user-b", "session-1"));
   });
 
-  it("devuelve null y limpia un borrador con JSON corrupto", () => {
+  it("devuelve null y conserva un borrador con JSON corrupto", () => {
     const storage = fakeStorage({ [draftKey("user-a", "session-1")]: "{no es json" });
     expect(loadDraft(storage, "user-a", "session-1")).toBeNull();
-    expect(storage.data.size).toBe(0);
+    expect(storage.data.size).toBe(1);
   });
 
   it("descarta un borrador de otra versión o con forma inválida", () => {
@@ -125,7 +126,14 @@ describe("borrador de la sesión en curso (RF-22, RF-24, DC-8)", () => {
   it("lista solo los borradores del usuario, ignorando otras claves", () => {
     const storage = fakeStorage({ otra: "cosa" });
     saveDraft(storage, draft());
-    saveDraft(storage, draft({ plannedSessionId: "session-2", sessionLabel: "B" }));
+    saveDraft(
+      storage,
+      draft({
+        plannedSessionId: "session-2",
+        sessionLabel: "B",
+        workoutId: "11111111-1111-4111-8111-111111111113",
+      }),
+    );
     saveDraft(storage, draft({ userId: "user-b" }));
     expect(
       listDrafts(storage, "user-a")
@@ -193,4 +201,53 @@ it("recupera esfuerzo y nota sin exigirlos a borradores antiguos (T156)", () => 
   expect(loadDraft(store, "user-a", "session-1")).toEqual(value);
   saveDraft(store, draft());
   expect(loadDraft(store, "user-a", "session-1")).toEqual(draft());
+});
+
+it("migra v1 al sobre v2 solo tras confirmar la copia completa (T162)", () => {
+  const value = draft({
+    note: "Conservar nota",
+    perceivedEffort: 8,
+    rest: { endsAt: 1792422090000, totalSeconds: 90 },
+  });
+  const storage = fakeStorage({ [legacyDraftKey("user-a", "session-1")]: JSON.stringify(value) });
+  expect(loadDraft(storage, "user-a", "session-1")).toEqual(value);
+  expect(JSON.parse(storage.getItem(draftKey("user-a", "session-1"))!)).toEqual({
+    version: 2,
+    draft: value,
+  });
+  expect(storage.getItem(legacyDraftKey("user-a", "session-1"))).toBeNull();
+});
+it("si no cabe la migración conserva y recupera v1 sin afirmar un guardado nuevo (T162)", () => {
+  const storage = fakeStorage({ [legacyDraftKey("user-a", "session-1")]: JSON.stringify(draft()) });
+  storage.setItem = () => {
+    throw new DOMException("Full", "QuotaExceededError");
+  };
+  expect(loadDraft(storage, "user-a", "session-1")).toEqual(draft());
+  expect(storage.getItem(legacyDraftKey("user-a", "session-1"))).not.toBeNull();
+  expect(saveDraft(storage, draft({ note: "nueva" }))).toBe(false);
+});
+it("no sobrescribe ni elimina un sobre de versión desconocida (T162)", () => {
+  const raw = JSON.stringify({ version: 99, draft: draft() });
+  const storage = fakeStorage({ [draftKey("user-a", "session-1")]: raw });
+  expect(loadDraft(storage, "user-a", "session-1")).toBeNull();
+  expect(saveDraft(storage, draft())).toBe(false);
+  expect(storage.getItem(draftKey("user-a", "session-1"))).toBe(raw);
+});
+it("conserva un borrador distinto de una pestaña anterior al confirmar el actual (T162)", () => {
+  const old = draft({ workoutId: "11111111-1111-4111-8111-111111111112" });
+  const storage = fakeStorage({ [legacyDraftKey("user-a", "session-1")]: JSON.stringify(old) });
+  saveDraft(storage, draft());
+  expect(listDrafts(storage, "user-a")).toHaveLength(2);
+  clearDraft(storage, "user-a", "session-1", draft().workoutId);
+  expect(loadDraft(storage, "user-a", "session-1")?.workoutId).toBe(old.workoutId);
+});
+
+it("una copia v2 confirmada sigue guardada aunque no se pueda limpiar v1 (T162)", () => {
+  const storage = fakeStorage({ [legacyDraftKey("user-a", "session-1")]: JSON.stringify(draft()) });
+  storage.removeItem = () => {
+    throw new Error("blocked");
+  };
+  expect(saveDraft(storage, draft())).toBe(true);
+  expect(storage.getItem(legacyDraftKey("user-a", "session-1"))).not.toBeNull();
+  expect(JSON.parse(storage.getItem(draftKey("user-a", "session-1"))!).draft).toEqual(draft());
 });

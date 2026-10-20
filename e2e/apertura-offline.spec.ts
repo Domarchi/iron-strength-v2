@@ -110,9 +110,9 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
     if (route.request().method() === "POST") await gate;
     await route.continue();
   });
+  await recovered.getByRole("button", { name: "Cerrar sesión", exact: true }).last().click();
   const logout = recovered
-    .getByRole("button", { name: "Cerrar sesión", exact: true })
-    .last()
+    .getByRole("button", { name: "Eliminar pendientes locales y salir", exact: true })
     .click();
   await expect
     .poll(() => recovered.evaluate(() => localStorage.getItem("is:offline:active-user")))

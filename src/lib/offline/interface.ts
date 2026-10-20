@@ -1,3 +1,4 @@
+import { hasLocalTraining } from "./local-account";
 const BUILD_ID = process.env.NEXT_PUBLIC_OFFLINE_BUILD_ID;
 function checkWorker(worker: ServiceWorker, prepare = false): Promise<boolean> {
   return new Promise((resolve) => {
@@ -29,6 +30,14 @@ export async function prepareOfflineInterface(): Promise<void> {
     throw new Error(
       "Este navegador no permite preparar la app sin conexión. Ábrela mediante HTTPS en un navegador compatible.",
     );
+  // La URL del worker es inmutable: solo esta acción registra una versión nueva.
+  // Incluso un borrador cerrado o de otra cuenta mantiene la interfaz anterior.
+  if (hasLocalTraining(localStorage)) {
+    if (await isOfflineInterfaceReady()) return;
+    throw new Error(
+      "Termina o descarta los entrenamientos pendientes antes de actualizar la app sin conexión. Conservamos la versión anterior y tus datos.",
+    );
+  }
   const registration = await navigator.serviceWorker.register(`/offline-workers/${BUILD_ID}.js`, {
     scope: "/",
     updateViaCache: "none",

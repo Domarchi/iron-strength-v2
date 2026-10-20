@@ -27,13 +27,14 @@ const OLGA = {
 };
 let coachId: string;
 let evaId: string;
+let olgaId: string;
 let sessionId: string;
 
 test.beforeAll(async () => {
   await resetAll();
   coachId = await seedCoach();
   evaId = await createUser(admin(), { role: "student", ...EVA, coachId });
-  await createUser(admin(), { role: "student", ...OLGA, coachId });
+  olgaId = await createUser(admin(), { role: "student", ...OLGA, coachId });
   sessionId = (await seedProgram({ coachId, studentId: evaId })).sessionId;
 });
 
@@ -187,6 +188,13 @@ test("Mi cuenta: el coach no ve el borrado y la alumna borra su cuenta (RF-48, R
 
   await login(page, EVA.email, EVA.password);
   await page.getByRole("button", { name: "Mi cuenta" }).click();
+  await page.evaluate(
+    ({ own, other }) => {
+      localStorage.setItem(`is:draft:v99:${own}:pending`, "Pending own data");
+      localStorage.setItem(`is:draft:v99:${other}:pending`, "Pending other data");
+    },
+    { own: evaId, other: olgaId },
+  );
   await page.getByRole("button", { name: "Quiero borrar mi cuenta" }).click();
 
   const confirm = page.getByRole("button", { name: "Borrar mi cuenta para siempre" });
@@ -200,6 +208,13 @@ test("Mi cuenta: el coach no ve el borrado y la alumna borra su cuenta (RF-48, R
   await expect(page).toHaveURL(/\/login\?motivo=cuenta-borrada/);
   await expect(page.getByText("Tu cuenta y tus datos fueron borrados.")).toBeVisible();
 
+  expect(
+    await page.evaluate((id) => localStorage.getItem(`is:draft:v99:${id}:pending`), evaId),
+  ).toBeNull();
+  expect(
+    await page.evaluate((id) => localStorage.getItem(`is:draft:v99:${id}:pending`), olgaId),
+  ).toBe("Pending other data");
+  expect(await page.evaluate(() => localStorage.getItem("is:offline:active-user"))).toBeNull();
   // Ya no puede entrar y no queda nada suyo.
   await page.getByLabel("Correo").fill(EVA.email);
   await page.getByLabel("Contraseña").fill(EVA.password);

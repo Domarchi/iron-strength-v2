@@ -47,13 +47,13 @@ export default async function AccountPage() {
         </div>
       </section>
 
-      <LogoutForm>
+      <LogoutForm userId={user.id}>
         <Button type="submit" variant="outline" className="w-full sm:w-auto">
           <LogOut aria-hidden /> Cerrar sesión
         </Button>
       </LogoutForm>
 
-      {user.role === "student" ? <DeleteAccount /> : null}
+      {user.role === "student" ? <DeleteAccount userId={user.id} /> : null}
     </div>
   );
 }

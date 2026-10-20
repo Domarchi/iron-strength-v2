@@ -4,7 +4,7 @@ import { admin, createUser, resetAll, seedCoach, seedProgram } from "./support/d
 import { login } from "./support/ui";
 import { addDays, mondayOf, santiagoDate } from "../src/domain/dates";
 import { createDraft, finishDraft } from "../src/lib/workout/runner-state";
-import { draftKey } from "../src/lib/workout/draft";
+import { legacyDraftKey } from "../src/lib/workout/draft";
 
 const STUDENT = {
   email: "luz@iron-strength.e2e.test",
@@ -57,7 +57,7 @@ test("recupera desde Mi semana un entrenamiento pendiente de la semana anterior 
   const pending = finishDraft(initial, new Date(started.getTime() + 3600_000));
   await login(page, STUDENT.email, STUDENT.password);
   await page.evaluate(({ key, draft }) => localStorage.setItem(key, JSON.stringify(draft)), {
-    key: draftKey(studentId, seeded.sessionId),
+    key: legacyDraftKey(studentId, seeded.sessionId),
     draft: pending,
   });
   await page.goto("/week");

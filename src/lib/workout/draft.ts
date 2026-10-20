@@ -7,7 +7,8 @@ import { z } from "zod";
 // Subconjunto de la API Storage del navegador (permite probarlo con un almacenamiento falso).
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
 
-const PREFIX = "is:draft:v1:";
+const PREFIX = "is:draft:v2:";
+const LEGACY_PREFIX = "is:draft:v1:";
 
 const setSchema = z.object({
   id: z.string(),
@@ -82,41 +83,78 @@ export type WorkoutDraft = z.infer<typeof draftSchema>;
 
 export const draftKey = (userId: string, plannedSessionId: string) =>
   `${PREFIX}${userId}:${plannedSessionId}`;
+export const legacyDraftKey = (userId: string, plannedSessionId: string) =>
+  `${LEGACY_PREFIX}${userId}:${plannedSessionId}`;
 
 function parse(raw: string | null): WorkoutDraft | null {
   if (!raw) return null;
   try {
-    const result = draftSchema.safeParse(JSON.parse(raw));
+    const value = JSON.parse(raw);
+    const result = draftSchema.safeParse(value?.version === 2 ? value.draft : value);
     return result.success ? result.data : null;
   } catch {
     return null;
   }
 }
-
+function belongs(draft: WorkoutDraft | null, userId: string, sessionId: string) {
+  return draft?.userId === userId && draft.plannedSessionId === sessionId;
+}
 export function loadDraft(
   storage: DraftStorage | undefined,
   userId: string,
   plannedSessionId: string,
 ): WorkoutDraft | null {
   if (!storage) return null;
-  const key = draftKey(userId, plannedSessionId);
   try {
-    const draft = parse(storage.getItem(key));
-    // Un borrador cuyo contenido no corresponde a su clave es basura (o de otra cuenta).
-    if (draft && draft.userId === userId && draft.plannedSessionId === plannedSessionId)
-      return draft;
-    if (storage.getItem(key) !== null) storage.removeItem(key);
-    return null;
+    const raw = storage.getItem(draftKey(userId, plannedSessionId));
+    const current = parse(raw);
+    const old = parse(storage.getItem(legacyDraftKey(userId, plannedSessionId)));
+    const value = belongs(current, userId, plannedSessionId)
+      ? belongs(old, userId, plannedSessionId) &&
+        old!.workoutId === current!.workoutId &&
+        old!.updatedAt > current!.updatedAt
+        ? old
+        : current
+      : belongs(old, userId, plannedSessionId)
+        ? old
+        : null;
+    if (value) saveDraft(storage, value);
+    // Un formato desconocido se conserva para una versión capaz de recuperarlo.
+    return value;
   } catch {
     return null;
   }
 }
 
-// Devuelve false si no se pudo guardar (el alumno puede seguir: el borrador solo es una red de seguridad).
 export function saveDraft(storage: DraftStorage | undefined, draft: WorkoutDraft): boolean {
   if (!storage) return false;
   try {
-    storage.setItem(draftKey(draft.userId, draft.plannedSessionId), JSON.stringify(draft));
+    const key = draftKey(draft.userId, draft.plannedSessionId);
+    const previousRaw = storage.getItem(key);
+    const previous = parse(previousRaw);
+    if (
+      previousRaw !== null &&
+      (!belongs(previous, draft.userId, draft.plannedSessionId) ||
+        previous!.workoutId !== draft.workoutId)
+    )
+      return false;
+    const encoded = JSON.stringify({ version: 2, draft });
+    storage.setItem(key, encoded);
+    if (storage.getItem(key) !== encoded) return false;
+    try {
+      const oldKey = legacyDraftKey(draft.userId, draft.plannedSessionId);
+      const oldRaw = storage.getItem(oldKey);
+      const old = parse(oldRaw);
+      if (
+        belongs(old, draft.userId, draft.plannedSessionId) &&
+        old!.workoutId === draft.workoutId &&
+        old!.updatedAt <= draft.updatedAt &&
+        storage.getItem(oldKey) === oldRaw
+      )
+        storage.removeItem(oldKey);
+    } catch {
+      // La copia v2 ya está confirmada; conservar v1 no invalida el guardado.
+    }
     return true;
   } catch {
     return false;
@@ -127,28 +165,52 @@ export function clearDraft(
   storage: DraftStorage | undefined,
   userId: string,
   plannedSessionId: string,
+  workoutId?: string,
 ): void {
   if (!storage) return;
   try {
-    storage.removeItem(draftKey(userId, plannedSessionId));
+    for (const key of [
+      draftKey(userId, plannedSessionId),
+      legacyDraftKey(userId, plannedSessionId),
+    ]) {
+      const raw = storage.getItem(key);
+      const value = parse(raw);
+      if (
+        !workoutId ||
+        (belongs(value, userId, plannedSessionId) && value!.workoutId === workoutId)
+      )
+        if (storage.getItem(key) === raw) storage.removeItem(key);
+    }
   } catch {
-    // sin almacenamiento disponible: nada que limpiar
+    // La copia confirmada en servidor permite reintentar la limpieza.
   }
 }
-
 export function listDrafts(storage: DraftStorage | undefined, userId: string): WorkoutDraft[] {
   if (!storage) return [];
   try {
-    const prefix = `${PREFIX}${userId}:`;
-    const drafts: WorkoutDraft[] = [];
+    const drafts = new Map<string, WorkoutDraft>();
     for (let i = 0; i < storage.length; i++) {
       const key = storage.key(i);
-      if (!key?.startsWith(prefix)) continue;
+      if (!key || ![PREFIX, LEGACY_PREFIX].some((p) => key.startsWith(`${p}${userId}:`))) continue;
       const draft = parse(storage.getItem(key));
-      if (draft && draft.userId === userId) drafts.push(draft);
+      if (
+        !draft ||
+        draft.userId !== userId ||
+        ![
+          draftKey(userId, draft.plannedSessionId),
+          legacyDraftKey(userId, draft.plannedSessionId),
+        ].includes(key)
+      )
+        continue;
+      const existing = drafts.get(draft.workoutId);
+      if (!existing || draft.updatedAt > existing.updatedAt) drafts.set(draft.workoutId, draft);
     }
-    return drafts;
+    return [...drafts.values()];
   } catch {
     return [];
   }
+}
+export function migrateDrafts(storage: DraftStorage, userId: string): void {
+  for (const draft of listDrafts(storage, userId))
+    loadDraft(storage, userId, draft.plannedSessionId);
 }

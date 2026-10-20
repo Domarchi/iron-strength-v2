@@ -6,7 +6,7 @@ import { WorkoutRunner } from "@/app/(app)/workout/[plannedSessionId]/runner";
 import { PendingWorkouts } from "@/components/week/pending-workouts";
 import type { WorkoutContext } from "@/lib/data/workout-context";
 import { createDraft } from "./runner-state";
-import { draftKey, loadDraft, saveDraft } from "./draft";
+import { clearDraft, draftKey, loadDraft, saveDraft } from "./draft";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/app/(app)/workout/[plannedSessionId]/actions", () => ({ saveWorkoutAction: vi.fn() }));
@@ -182,6 +182,7 @@ it("Enter en repeticiones marca y enfoca la siguiente serie; con datos inválido
   expect(current().exercises[0].sets[0].done).toBe(true);
   expect(document.activeElement).toBe(field("Peso de la serie 2 de Sentadilla (kg)"));
   await act(() => root.unmount());
+  clearDraft(localStorage, "student", "session");
   const invalid = initial();
   invalid.exercises[0].sets[0].weight = "";
   saveDraft(localStorage, invalid);

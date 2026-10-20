@@ -517,7 +517,7 @@ function ActiveWorkoutRunner({
       );
       return;
     }
-    clearDraft(storage(), userId, draft.plannedSessionId);
+    clearDraft(storage(), userId, draft.plannedSessionId, draft.workoutId);
     // El regreso local debe funcionar también sin RSC ni conexión.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     if (localMode) window.location.assign("/offline");

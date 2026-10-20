@@ -1,6 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { clearLocalAccount } from "@/lib/offline/local-account";
+import { setOfflineAccount } from "@/lib/offline/account";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +12,45 @@ import { DELETE_CONFIRMATION, isDeleteConfirmation } from "@/domain/account";
 import { deleteAccountAction, type DeleteAccountState } from "./actions";
 
 // Borrar mi cuenta (RF-48): zona separada, con lo que se pierde a la vista y una confirmación escrita.
-export function DeleteAccount() {
+export function DeleteAccount({ userId }: { userId: string }) {
+  const router = useRouter();
+  const [cleanupError, setCleanupError] = useState<string | null>(null);
+  const [cleaning, setCleaning] = useState(false);
+  async function finishCleanup() {
+    setCleaning(true);
+    try {
+      await clearLocalAccount(userId);
+      if (!setOfflineAccount(null)) throw new Error("No se pudo ocultar la cuenta local.");
+      router.replace("/login?motivo=cuenta-borrada");
+      router.refresh();
+    } catch {
+      setCleanupError(
+        "La cuenta ya fue borrada del servidor, pero no se pudo completar la limpieza de este dispositivo. Reintenta para eliminar sus descargas y borradores locales.",
+      );
+    } finally {
+      setCleaning(false);
+    }
+  }
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [state, action, pending] = useActionState<DeleteAccountState, FormData>(
-    deleteAccountAction,
+    async (previous, form) => {
+      const result = await deleteAccountAction(previous, form);
+      if (result.status === "deleted") await finishCleanup();
+      return result;
+    },
     { status: "idle" },
   );
+
+  if (state.status === "deleted")
+    return (
+      <section className="space-y-3">
+        <p role="alert">{cleanupError ?? "Limpiando los datos de este dispositivo…"}</p>
+        <Button disabled={cleaning} onClick={() => void finishCleanup()}>
+          Reintentar limpieza local
+        </Button>
+      </section>
+    );
 
   return (
     <section

@@ -1,12 +1,12 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { isDeleteConfirmation } from "@/domain/account";
 import { requireUser } from "@/lib/auth/session";
 import { deleteOwnAccount } from "@/lib/data/account";
 import { createClient } from "@/lib/supabase/server";
 
-export type DeleteAccountState = { status: "idle" } | { status: "error"; message: string };
+export type DeleteAccountState =
+  { status: "idle" } | { status: "deleted" } | { status: "error"; message: string };
 
 const MESSAGES = {
   photos:
@@ -32,5 +32,5 @@ export async function deleteAccountAction(
 
   // El usuario ya no existe: se limpian las cookies de sesión y se vuelve al inicio.
   await db.auth.signOut({ scope: "local" }).catch(() => undefined);
-  redirect("/login?motivo=cuenta-borrada");
+  return { status: "deleted" };
 }

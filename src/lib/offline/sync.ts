@@ -9,12 +9,12 @@ import {
   setQueueError,
 } from "./queue";
 import type { WorkoutPayload } from "./queue-contract";
-import { clearDraft, listDrafts, loadDraft } from "@/lib/workout/draft";
+import { clearDraft, listDrafts } from "@/lib/workout/draft";
 import { buildPayload } from "@/lib/workout/runner-state";
 
 export async function sendWorkout(userId: string, payload: WorkoutPayload): Promise<SyncResult> {
   const active = activeOfflineAccount();
-  if (active && active !== userId) return { ok: false, reason: "account_changed" };
+  if (active !== userId) return { ok: false, reason: "account_changed" };
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
   try {
@@ -38,8 +38,7 @@ export async function sendWorkout(userId: string, payload: WorkoutPayload): Prom
 }
 export function clearConfirmedDraft(userId: string, payload: WorkoutPayload) {
   try {
-    const draft = loadDraft(localStorage, userId, payload.programSessionId);
-    if (draft?.workoutId === payload.id) clearDraft(localStorage, userId, payload.programSessionId);
+    clearDraft(localStorage, userId, payload.programSessionId, payload.id);
   } catch {
     /* La confirmación en la base permite reintentar la limpieza sin duplicar. */
   }
