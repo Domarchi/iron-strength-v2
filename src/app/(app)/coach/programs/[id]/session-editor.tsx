@@ -136,6 +136,7 @@ function Editor({
     id: string;
     revision: number;
     rows: PrescriptionDraft[];
+    title?: string;
   } | null>(restored?.saveRequest ?? null);
   const [orderRequest, setOrderRequest] = useState<{ id: string; revision: number } | null>(
     restored?.orderRequest ?? null,
@@ -149,6 +150,7 @@ function Editor({
       !restored.layoutRequest &&
       !restored.alternativeRequest,
   );
+  const [title, setTitle] = useState<string | undefined>(restored?.title);
   const [edits, setEdits] = useState<Record<string, PrescriptionDraft>>(restored?.edits ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<string | null>(null);
@@ -209,7 +211,8 @@ function Editor({
   const orphanEdits = Object.values(edits).filter(
     (row) => !session.exercises.some((e) => e.id === row.id),
   );
-  const dirty = changed.length > 0 || orphanEdits.length > 0 || !!saveRequest;
+  const dirty =
+    title !== undefined || changed.length > 0 || orphanEdits.length > 0 || !!saveRequest;
   const totalSets = drafts.reduce(
     (sum, row) => sum + (/^\d+$/.test(row.sets) ? Number(row.sets) : 0),
     0,
@@ -244,6 +247,7 @@ function Editor({
       revision: baseRevision.current ?? session.revision,
       updatedAt: new Date().toISOString(),
       edits,
+      title,
       order,
       orderRequest,
       saveRequest,
@@ -255,6 +259,7 @@ function Editor({
     };
     lastDraft.current = next;
     if (
+      next.title !== undefined ||
       Object.keys(next.edits).length ||
       next.order ||
       next.saveRequest ||
@@ -285,7 +290,9 @@ function Editor({
     persistence.restored();
     setGuardDirty(
       serverSession.id,
-      Object.keys(restored.edits).length > 0 || !!restored.saveRequest,
+      restored.title !== undefined ||
+        Object.keys(restored.edits).length > 0 ||
+        !!restored.saveRequest,
     );
     setGuardDirty(`${serverSession.id}-order`, !!restored.order);
     setGuardDirty(`${serverSession.id}-copy`, !!restored.copyRequest);
@@ -512,10 +519,11 @@ function Editor({
     setStatus(null);
     guard.setDirty(
       session.id,
-      session.exercises.some(
-        (row) =>
-          next[row.id] && JSON.stringify(next[row.id]) !== JSON.stringify(prescriptionDraft(row)),
-      ),
+      title !== undefined ||
+        session.exercises.some(
+          (row) =>
+            next[row.id] && JSON.stringify(next[row.id]) !== JSON.stringify(prescriptionDraft(row)),
+        ),
     );
   }
   function save() {
@@ -523,8 +531,12 @@ function Editor({
       id: crypto.randomUUID(),
       revision: baseRevision.current ?? session.revision,
       rows: changed,
+      ...(title !== undefined ? { title } : {}),
     };
-    const validation = validatePrescriptions(request.rows);
+    const validation =
+      request.rows.length === 0 && request.title !== undefined
+        ? { rows: [], errors: {}, error: null }
+        : validatePrescriptions(request.rows);
     setErrors(validation.errors);
     setError(validation.error);
     setStatus(null);
@@ -535,6 +547,7 @@ function Editor({
     persistLocal({ saveRequest: request });
     setSaveRequest(request);
     fd.set("rows", JSON.stringify(request.rows));
+    if (request.title !== undefined) fd.set("title", request.title);
     fd.set("requestId", request.id);
     fd.set("revision", String(request.revision));
     startTransition(async () => {
@@ -548,17 +561,24 @@ function Editor({
         );
         persistLocal({
           edits: nextEdits,
+          title: result.error ? title : undefined,
           saveRequest: result.uncertain ? request : null,
           revision: result.error ? request.revision : (result.revision ?? session.revision),
         });
         if (!result.error) removeRecovered();
         if (!result.error) setReview(null);
         setEdits(nextEdits);
+        if (!result.error) setTitle(undefined);
         const remaining = changed.filter((row) => !result.savedIds.includes(row.id));
-        guard.setDirty(session.id, remaining.length > 0 || !!result.uncertain);
+        guard.setDirty(
+          session.id,
+          remaining.length > 0 ||
+            !!result.uncertain ||
+            (!!result.error && request.title !== undefined),
+        );
         setError(result.error);
         setStatus(
-          result.savedIds.length
+          result.savedIds.length || (!result.error && request.title !== undefined)
             ? remaining.length
               ? `${result.savedIds.length} cambios guardados; ${remaining.length} pendientes.`
               : "Cambios guardados."
@@ -799,6 +819,7 @@ function Editor({
           <div>
             <CardTitle className="text-base" role="heading" aria-level={3}>
               Sesión {session.label}
+              {session.title ? ` · ${session.title}` : ""}
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
               {session.exercises.length} ejercicios · {totalSets} series
@@ -825,6 +846,38 @@ function Editor({
             />
           </div>
         </div>
+        <label className="mt-3 block text-sm font-medium">
+          Nombre de sesión {session.label}
+          <Input
+            value={title ?? session.title ?? ""}
+            maxLength={80}
+            placeholder="Por ejemplo, Tren superior"
+            disabled={
+              pending ||
+              orderPending ||
+              dragging ||
+              conflict ||
+              !!saveRequest ||
+              !!copyRequest ||
+              !!layoutRequest ||
+              alternativesDirty ||
+              selected.length > 0
+            }
+            onChange={(event) => {
+              const next =
+                event.target.value === (session.title ?? "") ? undefined : event.target.value;
+              if (baseRevision.current === null) baseRevision.current = session.revision;
+              setTitle(next);
+              persistLocal({ title: next });
+              setStatus(null);
+              setError(null);
+              guard.setDirty(
+                session.id,
+                next !== undefined || changed.length > 0 || orphanEdits.length > 0,
+              );
+            }}
+          />
+        </label>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {!session.exercises.length ? (
@@ -1023,7 +1076,9 @@ function Editor({
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-muted/50 p-3">
             <div className="text-xs">
               <p className="font-medium">
-                {dirty ? `${changed.length} ejercicios con cambios` : "Prescripción al día"}
+                {dirty
+                  ? `${changed.length} ejercicios con cambios${title !== undefined ? " · título pendiente" : ""}`
+                  : "Prescripción al día"}
               </p>
               <p className="mt-1 text-muted-foreground">
                 {dirty
@@ -1045,10 +1100,9 @@ function Editor({
                     selected.length > 0
                   }
                   onClick={() => {
-                    if (
-                      window.confirm("¿Descartar las prescripciones sin guardar de esta sesión?")
-                    ) {
-                      persistLocal({ edits: {}, saveRequest: null });
+                    if (window.confirm("¿Descartar los cambios sin guardar de esta sesión?")) {
+                      persistLocal({ edits: {}, title: undefined, saveRequest: null });
+                      setTitle(undefined);
                       removeRecovered();
                       baseRevision.current = null;
                       setConflict(false);
@@ -1164,6 +1218,13 @@ function Editor({
             </Button>
             {review ? (
               <div className="mt-3 space-y-3">
+                {title !== undefined ? (
+                  <div className="rounded border p-2">
+                    <p className="font-medium">Título de sesión</p>
+                    <p>Tu borrador: {title || "Sin título"}</p>
+                    <p>Actual: {review.title || "Sin título"}</p>
+                  </div>
+                ) : null}
                 {Object.values(edits).map((row) => {
                   const remote = review.exercises.find((e) => e.id === row.id);
                   return (

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCoach } from "@/lib/auth/session";
 import {
+  duplicateProgram,
   addSession,
   assignProgram,
   copyWeek,
@@ -148,4 +149,31 @@ export async function assignProgramAction(_prev: ActionState, fd: FormData): Pro
   if (!result.ok) return failed(result.reason);
   refresh();
   redirect(`/coach/programs/${result.programId}`);
+}
+
+export async function duplicateProgramAction(input: {
+  sourceId: string;
+  copyId: string;
+  name: string;
+}): Promise<{ ok: true; id: string } | { ok: false; error: string; uncertain?: boolean }> {
+  await requireCoach();
+  try {
+    const result = await duplicateProgram({ db: await createClient(), ...input });
+    if (!result.ok)
+      return {
+        ok: false,
+        error:
+          result.reason === "invalid"
+            ? "Revisa el nombre y los ejercicios o alternativas archivados del programa antes de duplicar."
+            : FAILURES[result.reason],
+      };
+    refresh();
+    return result;
+  } catch {
+    return {
+      ok: false,
+      error: "No se pudo confirmar la copia. Reintenta con la misma petición.",
+      uncertain: true,
+    };
+  }
 }

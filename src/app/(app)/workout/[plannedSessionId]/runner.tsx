@@ -543,6 +543,11 @@ function ActiveWorkoutRunner({
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base leading-tight font-semibold">
               Sesión {context.session.label} · Semana {context.session.weekNumber}
+              {context.session.title ? (
+                <span className="block text-sm font-normal text-muted-foreground">
+                  {context.session.title}
+                </span>
+              ) : null}
             </h1>
           </div>
           <Button onClick={requestFinish} disabled={saving} aria-label="Terminar entrenamiento">

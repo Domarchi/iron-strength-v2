@@ -30,7 +30,9 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 
 ## Planificación
 
-- Buscar plantillas, duplicar programas completos sin registros, títulos de sesión conservando A–G; vistas previas con conteos.
+- Buscar plantillas por nombre, título de sesión o ejercicio, ignorando tildes y mayúsculas. Vistas previas con cantidad de sesiones, ejercicios previstos (ocurrencias) y series, sin sumar alternativas como trabajo adicional.
+- Duplicar cualquier programa propio como una plantilla independiente, sin alumnos, fechas, registros ni comentarios. Conservar semanas, títulos, prescripciones, notas, alternativas, grupos y descansos con IDs nuevos. Copia atómica desde una instantánea coherente; ID de petición estable y recibo privado para confirmar respuestas perdidas, incluso tras recargar. Una alternativa archivada impide la copia completa y se explica al coach.
+- Título opcional de sesión de hasta 80 caracteres, conservando A–G. Se muestra al coach y al alumno, se copia y asigna con la rutina. El título comparte revisión, guardado atómico, borrador y resolución explícita de conflictos con las prescripciones; vacío vuelve a mostrar solo la letra.
 - Edición múltiple de series/rango/descanso con selección y vista previa, atómica, sin modificar otros campos.
 - Día orientativo opcional por sesión. Alumno puede mover dentro de la misma semana, sin cambiar rutina ni bloquear inicio ni alterar cumplimiento.
 

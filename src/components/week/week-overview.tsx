@@ -30,7 +30,10 @@ function RoutineCard({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-lg font-semibold">Sesión {session.label}</h3>
+        <h3 className="text-lg font-semibold">
+          Sesión {session.label}
+          {session.title ? ` · ${session.title}` : ""}
+        </h3>
         {next ? (
           <span className="rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
             {trainedToday ? "Siguiente sesión" : "Hoy toca"}

@@ -1,5 +1,5 @@
 import { PageHeading } from "@/components/layout/page-heading";
-import Link from "next/link";
+import { TemplateLibrary } from "./template-library";
 import { Suspense } from "react";
 import { listTemplates } from "@/lib/data/programs";
 import { createClient } from "@/lib/supabase/server";
@@ -10,31 +10,7 @@ export const metadata = { title: "Programas · Iron Strength" };
 async function TemplateList() {
   const templates = await listTemplates(await createClient());
 
-  if (templates.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Aún no tienes plantillas. Crea la primera con el formulario de arriba.
-      </p>
-    );
-  }
-  return (
-    <ul className="divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
-      {templates.map((template) => (
-        <li key={template.id}>
-          <Link
-            href={`/coach/programs/${template.id}`}
-            className="flex min-h-14 items-center justify-between gap-3 p-3 hover:bg-muted/50"
-          >
-            <span className="min-w-0 truncate font-medium">{template.name}</span>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {template.weeksCount} {template.weeksCount === 1 ? "semana" : "semanas"} ·{" "}
-              {template.sessionCount} {template.sessionCount === 1 ? "sesión" : "sesiones"}
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
+  return <TemplateLibrary templates={templates} />;
 }
 
 export default function ProgramsPage() {

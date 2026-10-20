@@ -19,6 +19,7 @@ import { ActionForm } from "../action-form";
 import { AssignForm } from "./assign-form";
 import { CopyWeekForm } from "./copy-week-form";
 import { SessionEditor } from "./session-editor";
+import { DuplicateProgramForm } from "../duplicate-program-form";
 import { CleanEditor, WeekWorkspace } from "./week-workspace";
 
 export const metadata = { title: "Programa · Iron Strength" };
@@ -116,20 +117,28 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
             .reduce((n, s) => n + s.exercises.length, 0),
         }))}
         tools={
-          isTemplate ? (
-            <details className="rounded-lg border bg-card p-4">
-              <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">
-                Asignar a un alumno
-              </summary>
-              <div className="pt-3">
-                <AssignForm
-                  templateId={tree.id}
-                  targets={assignTargets}
-                  defaultStartDate={defaultStartDate(today)}
-                />
-              </div>
-            </details>
-          ) : null
+          <div className="space-y-3">
+            <DuplicateProgramForm
+              key={tree.id}
+              userId={tree.coachId}
+              programId={tree.id}
+              name={tree.name}
+            />
+            {isTemplate ? (
+              <details className="rounded-lg border bg-card p-4">
+                <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">
+                  Asignar a un alumno
+                </summary>
+                <div className="pt-3">
+                  <AssignForm
+                    templateId={tree.id}
+                    targets={assignTargets}
+                    defaultStartDate={defaultStartDate(today)}
+                  />
+                </div>
+              </details>
+            ) : null}
+          </div>
         }
         footer={
           isTemplate ? (
@@ -223,6 +232,7 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
                     <CardHeader>
                       <CardTitle className="text-base" role="heading" aria-level={3}>
                         Sesión {session.label}
+                        {session.title ? ` · ${session.title}` : ""}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>

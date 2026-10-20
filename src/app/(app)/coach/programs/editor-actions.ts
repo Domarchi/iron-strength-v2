@@ -58,9 +58,12 @@ export async function savePrescriptionsAction(fd: FormData): Promise<EditorResul
   await requireCoach();
   const identity = mutationIdentity(fd);
   if (!identity.success) return { error: messages.invalid, savedIds: [] };
+  const title = fd.has("title") ? String(fd.get("title")) : undefined;
+  if (title !== undefined && title.trim().length > 80)
+    return { error: messages.invalid, savedIds: [] };
   const parsed = z
     .array(sessionExerciseSchema.extend({ id: z.string().min(1) }))
-    .min(1)
+    .min(title !== undefined ? 0 : 1)
     .max(15)
     .safeParse(readJson(fd, "rows"));
   if (!parsed.success || new Set(parsed.data.map((r) => r.id)).size !== parsed.data.length)
@@ -82,6 +85,7 @@ export async function savePrescriptionsAction(fd: FormData): Promise<EditorResul
       db,
       sessionId: session.id,
       rows: parsed.data,
+      ...(title !== undefined ? { title } : {}),
       ...identity.data,
     });
     if (!result.ok)

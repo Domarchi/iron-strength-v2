@@ -46,7 +46,7 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await expect(coach.getByRole("heading", { name: "Plan E2E" })).toBeVisible();
 
   await coach.getByRole("button", { name: "Agregar sesión" }).first().click();
-  await expect(coach.getByText("Sesión A")).toBeVisible();
+  await expect(coach.getByRole("heading", { name: "Sesión A", exact: true })).toBeVisible();
 
   // Catálogo de selección múltiple: la selección se conserva entre búsquedas.
   await coach.getByRole("button", { name: "Agregar ejercicios", exact: true }).click();

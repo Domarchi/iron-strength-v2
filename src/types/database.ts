@@ -195,16 +195,42 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"program_sessions": {
+                },"program_copy_receipts": {
                   Row: {
-                    "id": string,"label": string,"position": number,"program_id": string,"revision": number,"week_number": number
+                    "coach_id": string,"created_at": string,"id": string,"payload": NonNullable<Json>
                   }
                   ComputedFields: never
                   Insert: {
-                    "id"?: string,"label": string,"position"?: number,"program_id": string,"revision"?: number,"week_number": number
+                    "coach_id": string,"created_at"?: string,"id": string,"payload": NonNullable<Json>
                   }
                   Update: {
-                    "id"?: string,"label"?: string,"position"?: number,"program_id"?: string,"revision"?: number,"week_number"?: number
+                    "coach_id"?: string,"created_at"?: string,"id"?: string,"payload"?: NonNullable<Json>
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "program_copy_receipts_coach_id_fkey"
+      columns: ["coach_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "program_copy_receipts_id_fkey"
+      columns: ["id"]
+isOneToOne: true
+      referencedRelation: "programs"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"program_sessions": {
+                  Row: {
+                    "id": string,"label": string,"position": number,"program_id": string,"revision": number,"title": string | null,"week_number": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "id"?: string,"label": string,"position"?: number,"program_id": string,"revision"?: number,"title"?: string | null,"week_number": number
+                  }
+                  Update: {
+                    "id"?: string,"label"?: string,"position"?: number,"program_id"?: string,"revision"?: number,"title"?: string | null,"week_number"?: number
                   }
                   Relationships: [
                     {
@@ -445,6 +471,9 @@ isOneToOne: false
 "delete_my_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"duplicate_program":
+{ Args: { "p_copy_id": string,"p_name": string,"p_source_id": string }; Returns: string
+                           },
 "duplicate_routine_item":
 { Args: { "p_copy_id": string,"p_exercise_id"?: string,"p_session_id": string }; Returns: string
                            },
@@ -464,7 +493,7 @@ isOneToOne: false
 { Args: { "p_workout_id": string }; Returns: undefined
                            },
 "mutate_routine_session":
-{ Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string }; Returns: number
+{ Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string,"p_title"?: string }; Returns: number
                            },
 "record_login_failure":
 { Args: { "p_email_hash": string }; Returns: undefined

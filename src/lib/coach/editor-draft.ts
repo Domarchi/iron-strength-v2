@@ -21,10 +21,11 @@ const schema = z.object({
   sessionId: text,
   revision: z.number().int().nonnegative(),
   updatedAt: z.iso.datetime(),
+  title: z.string().optional(),
   edits: z.record(z.string(), row),
   order: z.array(text).nullable(),
   orderRequest: request.nullable(),
-  saveRequest: request.extend({ rows: z.array(row) }).nullable(),
+  saveRequest: request.extend({ rows: z.array(row), title: z.string().optional() }).nullable(),
   layoutRequest: request
     .extend({ layout: z.array(layoutRowSchema) })
     .nullable()

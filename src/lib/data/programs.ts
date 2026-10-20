@@ -48,6 +48,7 @@ export type SessionExerciseRow = {
 export type SessionRow = {
   id: string;
   revision: number;
+  title?: string | null;
   weekNumber: number;
   label: string;
   position: number;
@@ -82,14 +83,70 @@ function failureFromError(error: { code?: string; message: string }): Failure {
 }
 
 // Lectura ----------------------------------------------------------------------------------------
-export async function listTemplates(db: Client): Promise<ProgramSummary[]> {
+export type TemplateSummary = ProgramSummary & {
+  exerciseCount: number;
+  totalSets: number;
+  sessions: {
+    title: string | null;
+    label: string;
+    weekNumber: number;
+    exercises: { name: string; sets: number }[];
+  }[];
+};
+export async function listTemplates(db: Client): Promise<TemplateSummary[]> {
   const { data, error } = await db
     .from("programs")
-    .select("id, name, weeks_count, student_id, start_date, ends_on, program_sessions(count)")
+    .select(
+      "id,name,weeks_count,student_id,start_date,ends_on,program_sessions(title,label,week_number,session_exercises(sets,exercises(name)))",
+    )
     .is("student_id", null)
     .order("created_at", { ascending: false });
   if (error) throw new Error(`No se pudieron cargar las plantillas: ${error.message}`);
-  return data.map(toSummary);
+  return data.map((p) => {
+    const sessions = p.program_sessions.map((s) => ({
+      title: s.title,
+      label: s.label,
+      weekNumber: s.week_number,
+      exercises: s.session_exercises.map((e) => ({ name: e.exercises!.name, sets: e.sets })),
+    }));
+    return {
+      id: p.id,
+      name: p.name,
+      weeksCount: p.weeks_count,
+      studentId: p.student_id,
+      startDate: p.start_date,
+      endsOn: p.ends_on,
+      sessionCount: sessions.length,
+      exerciseCount: sessions.reduce((n, s) => n + s.exercises.length, 0),
+      totalSets: sessions.reduce(
+        (n, s) => n + s.exercises.reduce((count, e) => count + e.sets, 0),
+        0,
+      ),
+      sessions,
+    };
+  });
+}
+export async function duplicateProgram(args: {
+  db: Client;
+  sourceId: string;
+  copyId: string;
+  name: string;
+}): Promise<Result<{ id: string }>> {
+  if (
+    !z
+      .object({ sourceId: z.uuid(), copyId: z.uuid(), name: z.string().trim().min(1).max(100) })
+      .safeParse(args).success
+  )
+    return { ok: false, reason: "invalid" };
+  const { data, error } = await args.db.rpc("duplicate_program", {
+    p_source_id: args.sourceId,
+    p_copy_id: args.copyId,
+    p_name: args.name,
+  });
+  if (!error) return { ok: true, id: data };
+  if (error.code === "P0002") return { ok: false, reason: "not_found" };
+  if (["22023", "23505", "23514"].includes(error.code)) return { ok: false, reason: "invalid" };
+  return { ok: false, reason: failureFromError(error) };
 }
 
 export async function listAssignedPrograms(
@@ -131,7 +188,7 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
     .select(
       `id, coach_id, student_id, name, weeks_count, start_date, ends_on,
        program_sessions (
-         id, week_number, label, position, revision,
+         id, week_number, label, position, revision, title,
          session_exercises (
            id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note, rest_seconds, superset_id, superset_rest_seconds,
            exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg, archived_at ),
@@ -158,6 +215,7 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
         weekNumber: s.week_number,
         revision: s.revision,
         label: s.label,
+        title: s.title,
         position: s.position,
         exercises: s.session_exercises
           .map((e) => {
@@ -458,7 +516,7 @@ type MutationArgs = {
   requestId: string;
 };
 async function mutateSession(
-  args: MutationArgs & { rows?: unknown; orderedIds?: string[] },
+  args: MutationArgs & { rows?: unknown; orderedIds?: string[]; title?: string },
 ): Promise<Result<{ revision: number }>> {
   if (
     !z.uuid().safeParse(args.requestId).success ||
@@ -470,6 +528,7 @@ async function mutateSession(
     p_session_id: args.sessionId,
     p_expected_revision: args.expectedRevision,
     p_request_id: args.requestId,
+    ...(args.title !== undefined ? { p_title: args.title } : {}),
     ...(args.rows
       ? { p_rows: args.rows as Database["public"]["Tables"]["routine_mutations"]["Row"]["payload"] }
       : {}),
@@ -484,14 +543,16 @@ async function mutateSession(
   return { ok: false, reason: failureFromError(error) };
 }
 export async function saveSessionPrescriptions(
-  args: MutationArgs & { rows: unknown },
+  args: MutationArgs & { rows: unknown; title?: string },
 ): Promise<Result<{ revision: number }>> {
   const parsed = z
     .array(sessionExerciseSchema.extend({ id: z.uuid() }))
-    .min(1)
+    .min(args.title !== undefined ? 0 : 1)
     .max(15)
     .safeParse(args.rows);
   if (!parsed.success || new Set(parsed.data.map((row) => row.id)).size !== parsed.data.length)
+    return { ok: false, reason: "invalid" };
+  if (args.title !== undefined && !z.string().trim().max(80).safeParse(args.title).success)
     return { ok: false, reason: "invalid" };
   return mutateSession({ ...args, rows: parsed.data });
 }

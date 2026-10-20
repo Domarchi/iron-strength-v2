@@ -136,3 +136,14 @@ it("conserva alternativas incompletas y la solicitud estable sin perder los otro
   writer.persist(value);
   expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([value]);
 });
+it("recupera el título pendiente y su solicitud junto a las prescripciones", () => {
+  const store = storage();
+  const writer = createEditorPersistence(() => store);
+  const pending = {
+    ...draft,
+    title: "Tren superior",
+    saveRequest: { id: "title-request", revision: 2, rows: [], title: "Tren superior" },
+  };
+  writer.persist(pending);
+  expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([pending]);
+});

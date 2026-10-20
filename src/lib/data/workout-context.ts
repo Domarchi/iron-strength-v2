@@ -23,6 +23,7 @@ export type WorkoutContext = {
   session: {
     id: string;
     label: string;
+    title?: string | null;
     programId: string;
     programName: string;
     weekNumber: number;
@@ -48,7 +49,7 @@ export async function getWorkoutContext(
   const { data: session, error } = await db
     .from("program_sessions")
     .select(
-      `id, week_number, label, program_id,
+      `id, week_number, label, title, program_id,
        programs ( name, start_date, ends_on, weeks_count, student_id ),
        session_exercises (
          id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note, rest_seconds, superset_id, superset_rest_seconds,
@@ -184,6 +185,7 @@ export async function getWorkoutContext(
       session: {
         id: session.id,
         label: session.label,
+        title: session.title,
         programId: session.program_id,
         programName: program.name,
         weekNumber: session.week_number,

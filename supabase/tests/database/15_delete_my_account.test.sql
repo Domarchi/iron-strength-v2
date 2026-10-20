@@ -1,6 +1,6 @@
 -- T126 · Borrar la propia cuenta (RF-48; DC-4, DC-32).
 begin;
-select plan(19);
+select plan(20);
 
 select tests.setup_basic();
 
@@ -41,6 +41,8 @@ insert into public.achievements (student_id, kind) values
 insert into public.comment_reads (user_id, workout_id) values
   (tests.student_a_id(), 'd0000000-0000-0000-0000-0000000000a1');
 
+insert into public.program_copy_receipts(id,coach_id,payload) values('90000000-0000-0000-0000-0000000000a1',tests.coach_id(),'{}');
+
 -- ===== Quien no puede =====
 select tests.authenticate_as_anon();
 select throws_ok($$ select public.delete_my_account() $$, '42501', null, 'sin sesión no se borra nada');
@@ -74,6 +76,8 @@ select is((select count(*)::int from public.comment_reads where user_id = tests.
 select is((select count(*)::int from public.comments where body = 'comentario del coach a A'), 0, 'los comentarios sobre sus entrenamientos desaparecen (DC-4)');
 
 select is((select count(*)::int from public.session_exercise_alternatives),0,'sus alternativas asignadas desaparecen');
+
+select is((select count(*)::int from public.program_copy_receipts),0,'los recibos caen al borrar el programa');
 
 -- ===== Lo de los demás sigue intacto =====
 select is((select count(*)::int from public.workouts where student_id = tests.student_b_id()), 1, 'el entrenamiento de B sigue');

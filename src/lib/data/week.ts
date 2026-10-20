@@ -22,7 +22,11 @@ type Client = SupabaseClient<Database>;
 
 export type CurrentProgram = ProgramRange & { id: string; name: string };
 
-export type WeekSession = SessionStatusEntry & { exerciseCount: number; exerciseNames: string[] };
+export type WeekSession = SessionStatusEntry & {
+  title?: string | null;
+  exerciseCount: number;
+  exerciseNames: string[];
+};
 
 export type WeekView =
   | { kind: "no_program" }
@@ -78,7 +82,7 @@ export async function getWeekView(
   const [sessionsResult, workoutsResult] = await Promise.all([
     db
       .from("program_sessions")
-      .select("id, week_number, label, session_exercises(position, exercises(name))")
+      .select("id, week_number, label, title, session_exercises(position, exercises(name))")
       .eq("program_id", program.id),
     db
       .from("workouts")
@@ -143,7 +147,12 @@ export async function getWeekView(
     weekEnd: addDays(weekStart, 6),
     sessions: statuses.map((s) => {
       const names = exerciseNames.get(s.sessionId) ?? [];
-      return { ...s, exerciseCount: names.length, exerciseNames: names };
+      return {
+        ...s,
+        title: sessionsResult.data.find((row) => row.id === s.sessionId)?.title ?? null,
+        exerciseCount: names.length,
+        exerciseNames: names,
+      };
     }),
     compliance,
     allDone: compliance.complete,

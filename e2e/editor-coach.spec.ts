@@ -672,3 +672,109 @@ test("alternativas exige revisar el conflicto y conserva la prescripción remota
     page.getByRole("button", { name: "Guardar alternativas de Sentadilla", exact: true }),
   ).toHaveCount(0);
 });
+
+test("título recuperable, biblioteca y copia completa confirman respuesta perdida (T153)", async ({
+  page,
+}) => {
+  const sourceId = await routine(page);
+  await page.getByLabel("Nombre de sesión A", { exact: true }).fill("Tren superior");
+  await visibleField(page, "Series de Sentadilla").fill("4");
+  await page.reload();
+  await expect(page.getByLabel("Nombre de sesión A", { exact: true })).toHaveValue("Tren superior");
+  await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("4");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.getByText("Duplicar programa", { exact: true }).click();
+  await page.getByLabel("Nombre de la copia", { exact: true }).fill("Fuerza duplicada");
+  const archived = (
+    await admin()
+      .from("exercises")
+      .select("id")
+      .eq("name", "Sentadilla")
+      .is("coach_id", null)
+      .single()
+  ).data!;
+  await admin()
+    .from("exercises")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", archived.id);
+  try {
+    await page.getByRole("button", { name: "Crear copia", exact: true }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "archivados" })).toBeVisible();
+    await expect(page.getByLabel("Nombre de la copia", { exact: true })).toBeEnabled();
+  } finally {
+    await admin().from("exercises").update({ archived_at: null }).eq("id", archived.id);
+  }
+
+  let intercepted = false;
+  await page.route(page.url(), async (route) => {
+    if (
+      !intercepted &&
+      route.request().method() === "POST" &&
+      route.request().headers()["next-action"]
+    ) {
+      intercepted = true;
+      await route.fetch();
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await page.getByRole("button", { name: "Crear copia", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: /confirm|Reintenta/ })).toBeVisible();
+  const copies = (await admin().from("programs").select("id").eq("name", "Fuerza duplicada")).data!;
+  expect(copies).toHaveLength(1);
+  await page.reload();
+  await page.getByRole("button", { name: "Confirmar copia", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/coach/programs/${copies[0].id}$`));
+  await expect(page.getByLabel("Nombre de sesión A", { exact: true })).toHaveValue("Tren superior");
+  await visibleField(page, "Series de Sentadilla").fill("6");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  const original = (
+    await admin()
+      .from("program_sessions")
+      .select("session_exercises(sets,position)")
+      .eq("program_id", sourceId)
+      .single()
+  ).data!;
+  expect(original.session_exercises.find((e) => e.position === 0)?.sets).toBe(4);
+  await page.goto("/coach/programs");
+  await page.getByLabel("Buscar plantillas", { exact: true }).fill("SUPERIOR");
+  await expect(page.getByRole("status")).toHaveText("2 de 2 plantillas");
+  await page.getByLabel("Buscar plantillas", { exact: true }).fill("duplicada");
+  await expect(page.getByRole("status")).toHaveText("1 de 2 plantillas");
+  await page.getByText("Vista previa de Fuerza duplicada", { exact: true }).click();
+  await expect(page.getByText("2 ejercicios · 9 series", { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 360, height: 800 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+});
+
+test("títulos entre pestañas requieren comparación antes de sobrescribir (T153)", async ({
+  page,
+  context,
+}) => {
+  const programId = await routine(page);
+  const other = await context.newPage();
+  await other.goto(page.url());
+  await page.getByLabel("Nombre de sesión A", { exact: true }).fill("Pecho");
+  await other.getByLabel("Nombre de sesión A", { exact: true }).fill("Espalda");
+  await other.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(other.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await page.getByRole("button", { name: "Revisar versión actual", exact: true }).click();
+  await expect(page.getByText("Tu borrador: Pecho", { exact: true })).toBeVisible();
+  await expect(page.getByText("Actual: Espalda", { exact: true })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Aplicar mis cambios a esta versión", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  expect(
+    (await admin().from("program_sessions").select("title").eq("program_id", programId).single())
+      .data?.title,
+  ).toBe("Pecho");
+  await other.close();
+});
