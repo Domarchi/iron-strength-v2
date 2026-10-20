@@ -10,6 +10,7 @@ import {
   Trash2,
   Flame,
   Timer,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ type Props = {
   onRemoveSet: (setIdx: number) => void;
   onAddSet: () => void;
   onSkip: () => void;
+  onHistory: () => void;
   onRestChange: (seconds: number) => void;
   active: boolean;
   onActivate: () => void;
@@ -69,6 +71,7 @@ export function ExerciseCard({
   onRemoveSet,
   onAddSet,
   onSkip,
+  onHistory,
   onRestChange,
   active,
   onActivate,
@@ -118,6 +121,13 @@ export function ExerciseCard({
           </span>
           <ChevronDown className="size-5 shrink-0 text-muted-foreground" aria-hidden />
         </button>
+        <Button
+          variant="ghost"
+          onClick={onHistory}
+          aria-label={`Ver historial de ${exercise.name}`}
+        >
+          <History aria-hidden /> Historial
+        </Button>
       </section>
     );
   }
@@ -201,6 +211,9 @@ export function ExerciseCard({
         </details>
       ) : null}
 
+      <Button variant="ghost" onClick={onHistory} aria-label={`Ver historial de ${exercise.name}`}>
+        <History aria-hidden /> Historial
+      </Button>
       <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
         <Timer className="size-4" aria-hidden />
         <span>{groupLabel ? "Entre rondas" : "Descanso"}</span>

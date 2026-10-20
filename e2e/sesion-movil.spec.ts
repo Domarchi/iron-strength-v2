@@ -1,5 +1,6 @@
 // T115 · Experiencia móvil (spec 002): modo enfoque, "anterior", marcar sin bloqueo, descanso,
 // Mi semana, objetivos táctiles de 44 px y app instalable. Corre con el viewport de móvil de la config.
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { admin, createUser, resetAll, seedCoach, seedProgram, seedWorkout } from "./support/db";
 import { login } from "./support/ui";
@@ -318,4 +319,62 @@ test("superserie: calentamiento, rondas desiguales, recuperación y descanso com
     .eq("program_session_id", session!.id);
   expect(saved).toHaveLength(1);
   expect(saved![0].workout_sets).toHaveLength(6);
+});
+
+test("historial del ejercicio pagina sin perder el registro ni detener el descanso (T149)", async ({
+  page,
+}) => {
+  const db = admin();
+  const { data: program } = await db
+    .from("program_sessions")
+    .select("programs(student_id),session_exercises(exercise_id,exercises(name))")
+    .eq("id", sessionId)
+    .single();
+  const squat = program!.session_exercises.find((e) => e.exercises.name === "Sentadilla")!;
+  for (let i = 1; i <= 12; i++)
+    await seedWorkout({
+      studentId: program!.programs.student_id!,
+      exerciseId: squat.exercise_id,
+      exerciseName: "Sentadilla",
+      daysAgo: i + 10,
+    });
+  await openSession(page);
+  await page.getByLabel("Repeticiones de la serie 1 de Sentadilla").fill("11");
+  await page.getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla" }).click();
+  const before = await clockSeconds(page);
+  const opener = page.getByRole("button", { name: "Ver historial de Sentadilla", exact: true });
+  await opener.click();
+  const panel = page.getByRole("dialog", { name: "Historial de Sentadilla", exact: true });
+  await expect(panel.getByRole("article")).toHaveCount(10);
+  const marks = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(marks.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual(
+    [],
+  );
+  await panel.getByRole("button", { name: "Ver más resultados" }).click();
+  await expect.poll(() => panel.getByRole("article").count()).toBeGreaterThan(10);
+  await expect(panel.getByRole("link", { name: /Ver entrenamiento/ }).first()).toHaveAttribute(
+    "target",
+    "_blank",
+  );
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(opener).toBeFocused();
+  await expect(page.getByLabel("Repeticiones de la serie 1 de Sentadilla")).toHaveValue("11");
+  await expect(
+    page.getByRole("button", { name: "Desmarcar la serie 1 de Sentadilla" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  expect(await clockSeconds(page)).toBeLessThanOrEqual(before);
+  expect(await clockSeconds(page)).toBeGreaterThan(0);
+  await page.route("**/*", (route) =>
+    route.request().method() === "POST" ? route.abort("failed") : route.continue(),
+  );
+  await opener.click();
+  await expect(panel.getByRole("alert")).toContainText("No se pudo cargar el historial");
+  await page.unroute("**/*");
+  await panel.getByRole("button", { name: "Reintentar historial" }).click();
+  await expect(panel.getByRole("article")).toHaveCount(10);
+  await panel.getByRole("button", { name: "Cerrar historial" }).click();
+  await expect(page.getByLabel("Repeticiones de la serie 1 de Sentadilla")).toHaveValue("11");
 });

@@ -5,6 +5,7 @@ import type { AchievementKind } from "@/domain/achievements";
 import { requireUser } from "@/lib/auth/session";
 import { syncAchievements } from "@/lib/data/achievements";
 import { saveWorkout, type SaveWorkoutResult } from "@/lib/data/save-workout";
+import { listExerciseHistory, type ExerciseHistoryPage } from "@/lib/data/exercise-history";
 import { createClient } from "@/lib/supabase/server";
 
 export type SaveWorkoutActionResult = SaveWorkoutResult & { achievements?: AchievementKind[] };
@@ -34,4 +35,17 @@ export async function saveWorkoutAction(payload: unknown): Promise<SaveWorkoutAc
     achievements = [];
   }
   return { ...result, achievements };
+}
+
+export async function exerciseHistoryAction(
+  exerciseId: string,
+  cursor?: unknown,
+): Promise<{ ok: true; page: ExerciseHistoryPage } | { ok: false }> {
+  const user = await requireUser();
+  const db = await createClient();
+  try {
+    return { ok: true, page: await listExerciseHistory(db, user.id, exerciseId, { cursor }) };
+  } catch {
+    return { ok: false };
+  }
 }

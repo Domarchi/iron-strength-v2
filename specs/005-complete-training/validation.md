@@ -46,3 +46,9 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - Duplicación de sesión, copia de semana y asignación regeneran cada grupo por sesión mediante una copia completa; conservan descansos, notas y prescripciones. Copia individual fuera del grupo con descanso propio. Duplicación reintentada conserva las identidades de la primera copia.
 - Cuatro regresiones de integración fallaron antes de implementar. Check: 401 pruebas, formato/lint/tipos/build en verde. Validación final SQL: 339 comprobaciones; integración: 224. Se conserva el error «no encontrado» para programas invisibles después de detectarlo en la primera pasada SQL.
 - Migración aplicada al desarrollo sin reset: comparación completa, incluidos metadatos nuevos, confirma tres perfiles, dos programas y ocho entrenamientos idénticos. 47/47 E2E en verde, sin reintentos, incluyendo creación/asignación/ejecución agrupada.
+
+## T149
+
+- Panel modal nativo por ejercicio: diez entrenamientos, paginación estable por fecha/ID, todas las ocurrencias y calentamientos, enlaces al detalle en otra pestaña. Consulta con el cliente autenticado y RLS; la acción usa la identidad de la sesión, nunca un alumno enviado por el navegador.
+- El registro y el temporizador permanecen montados; el panel tiene carga, vacío, error y reintento. Escape y cierre devuelven al control original.
+- Pruebas primero con módulo ausente; 227 integración en verde. Check: 401 pruebas, formato/lint/tipos/build en verde. Primera suite E2E: 47/48; el foco no volvía al botón al desmontar el diálogo. Se retiró el autoFocus previo a showModal y el cierre restaura explícitamente el control original. Check reparado en verde; reejecución completa: 48/48 E2E, sin reintentos.

@@ -31,6 +31,7 @@ import {
   workoutVolume,
 } from "@/lib/workout/runner-state";
 import { saveWorkoutAction } from "./actions";
+import { ExerciseHistoryPanel } from "./exercise-history-panel";
 import { ExerciseCard } from "./exercise-card";
 import { RestBar } from "./rest-bar";
 
@@ -239,6 +240,7 @@ function ActiveWorkoutRunner({
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<WorkoutDraft>(initial);
+  const [historyExercise, setHistoryExercise] = useState<{ id: string; name: string } | null>(null);
   const [confirming, setConfirming] = useState<"finish" | "discard" | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -655,12 +657,21 @@ function ActiveWorkoutRunner({
               );
             }}
             onAddSet={() => update((d) => addSet(d, exIdx))}
+            onHistory={() => setHistoryExercise({ id: exercise.exerciseId, name: exercise.name })}
             onSkip={() => update((d) => setSkipped(d, exIdx, true))}
             onRestChange={(seconds) => update((d) => setExerciseRestSeconds(d, exIdx, seconds))}
           />
         );
       })}
 
+      {historyExercise ? (
+        <ExerciseHistoryPanel
+          key={historyExercise.id}
+          exerciseId={historyExercise.id}
+          name={historyExercise.name}
+          onClose={() => setHistoryExercise(null)}
+        />
+      ) : null}
       {error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}

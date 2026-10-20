@@ -24,7 +24,7 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 
 ## Contexto y alternativas
 
-- Panel dentro del registro: diez entrenamientos recientes por ejercicio, series y paginación. No desmontar registro ni descanso. Separar prescripción, última ejecución y sugerencia explicada. Copiar valores es explícito y no cambia series hechas.
+- Panel dentro del registro: diez entrenamientos recientes por ejercicio, series y paginación. No desmontar registro ni descanso. Paginar por fecha e ID para conservar entrenamientos con la misma fecha; mostrar todas las ocurrencias del ejercicio y sus calentamientos. El detalle completo se abre en otra pestaña para conservar el registro en curso. Separar prescripción, última ejecución y sugerencia explicada. Copiar valores es explícito y no cambia series hechas.
 - Hasta tres alternativas por ejercicio, catálogo activo, sin duplicados ni autorreferencia, cada una con series/rango/peso opcional. Se copian con la rutina.
 - El alumno puede elegir alternativa autorizada solo antes de completar series del ejercicio. Mantener posición/grupo. Registrar prescrito y realizado; historial/récords corresponden al realizado. Validar autorización también en SQL. Amplía RF-26; no permite agregar ejercicios arbitrarios.
 
