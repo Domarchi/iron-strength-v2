@@ -52,3 +52,9 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - Panel modal nativo por ejercicio: diez entrenamientos, paginación estable por fecha/ID, todas las ocurrencias y calentamientos, enlaces al detalle en otra pestaña. Consulta con el cliente autenticado y RLS; la acción usa la identidad de la sesión, nunca un alumno enviado por el navegador.
 - El registro y el temporizador permanecen montados; el panel tiene carga, vacío, error y reintento. Escape y cierre devuelven al control original.
 - Pruebas primero con módulo ausente; 227 integración en verde. Check: 401 pruebas, formato/lint/tipos/build en verde. Primera suite E2E: 47/48; el foco no volvía al botón al desmontar el diálogo. Se retiró el autoFocus previo a showModal y el cierre restaura explícitamente el control original. Check reparado en verde; reejecución completa: 48/48 E2E, sin reintentos.
+
+## T150
+
+- Prescripción visible y comparación desplegable con fecha/series anteriores, sugerencia y motivo (series incompletas o repeticiones pendientes). Se mantiene el cálculo de progresión existente.
+- Copia explícita de fila, última ejecución o sugerencia: las series completadas no cambian. La sugerencia solo afecta trabajo pendiente; conserva calentamientos, prescripción y temporizador. Copias múltiples admiten Deshacer. Valores fuera de los límites de registro no se aplican.
+- Cuatro regresiones unitarias fallaron primero; check en verde con 405 pruebas, formato/lint/tipos/build. Sin cambio de esquema ni permisos. 49/49 E2E en verde, sin reintentos, incluyendo comparación, protección de series hechas, Deshacer y recuperación.

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   completeSet,
   copyPrevious,
+  copyLastPerformance,
+  copySuggestedValues,
   createDraft,
   exerciseProgress,
   isExerciseComplete,
@@ -128,5 +130,37 @@ describe("progreso del ejercicio (RF-56)", () => {
   it("un ejercicio sin series no está completo", () => {
     const d = draft();
     expect(isExerciseComplete({ ...d.exercises[0], sets: [] })).toBe(false);
+  });
+});
+
+describe("copiar contexto sin sobrescribir series completadas (T150)", () => {
+  it("copiar una fila completada no cambia ningún campo", () => {
+    const value = completeSet(draft(), 0, 0, null).draft;
+    expect(copyPrevious(value, 0, 0, { weightKg: 100, reps: 15 })).toBe(value);
+  });
+  it("copiar última ejecución respeta hechas, calentamientos y filas sin referencia", () => {
+    let value = completeSet(draft(), 0, 0, null).draft;
+    value = toggleWarmup(value, 0, 1);
+    const next = copyLastPerformance(value, 0, last);
+    expect(next.exercises[0].sets[0]).toEqual(value.exercises[0].sets[0]);
+    expect(next.exercises[0].sets[1]).toMatchObject({
+      weight: "40",
+      reps: "12",
+      done: false,
+      isWarmup: true,
+    });
+    expect(next.exercises[0].sets[2]).toMatchObject({ weight: "62,5", reps: "9", done: false });
+    expect(copyLastPerformance(value, 0, null)).toBe(value);
+  });
+  it("la sugerencia solo copia trabajo pendiente, sin cambiar prescripción ni descanso", () => {
+    let value = completeSet(draft(), 0, 0, null).draft;
+    value = toggleWarmup(value, 0, 1);
+    value.rest = { endsAt: 100000, totalSeconds: 90 };
+    const next = copySuggestedValues(value, 0, { weightKg: 67.5, reps: 8 });
+    expect(next.exercises[0].sets.slice(0, 2)).toEqual(value.exercises[0].sets.slice(0, 2));
+    expect(next.exercises[0].sets[2]).toMatchObject({ weight: "67,5", reps: "8", done: false });
+    expect(next.exercises[0].prescribed).toEqual(value.exercises[0].prescribed);
+    expect(next.rest).toEqual(value.rest);
+    expect(copySuggestedValues(value, 0, { weightKg: 501, reps: 8 })).toBe(value);
   });
 });

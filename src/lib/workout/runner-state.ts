@@ -2,7 +2,7 @@
 // el borrador: la interfaz solo las llama y persiste el resultado. Los números se guardan como
 // texto mientras el alumno escribe y se convierten (con los límites de la spec) al finalizar.
 import { workoutSetSchema } from "../../domain/schemas.ts";
-import { prefillWeight } from "../../domain/progression.ts";
+import { prefillWeight, type LastSet } from "../../domain/progression.ts";
 import { setVolume } from "../../domain/volume.ts";
 import { MAX_REST_SECONDS, MIN_REST_SECONDS } from "../../domain/rest-timer.ts";
 import type { DraftExercise, DraftSet, WorkoutDraft } from "./draft.ts";
@@ -183,10 +183,45 @@ export function copyPrevious(
   setIdx: number,
   previous: PreviousSet,
 ): WorkoutDraft {
+  if (draft.exercises[exIdx]?.sets[setIdx]?.done) return draft;
   return mapSet(draft, exIdx, setIdx, (s) => ({
     ...s,
     weight: asText(previous.weightKg),
     reps: String(previous.reps),
+  }));
+}
+
+export function copyLastPerformance(
+  draft: WorkoutDraft,
+  exIdx: number,
+  last: { sets: LastSet[] } | null,
+): WorkoutDraft {
+  const exercise = draft.exercises[exIdx];
+  if (!exercise || !last) return draft;
+  return mapExercise(draft, exIdx, (e) => ({
+    ...e,
+    sets: e.sets.map((set, index) => {
+      const previous = previousForSet(last, e, index);
+      return set.done || !previous
+        ? set
+        : { ...set, weight: asText(previous.weightKg), reps: String(previous.reps) };
+    }),
+  }));
+}
+
+export function copySuggestedValues(
+  draft: WorkoutDraft,
+  exIdx: number,
+  values: PreviousSet,
+): WorkoutDraft {
+  if (!workoutSetSchema.safeParse({ ...values, isWarmup: false }).success) return draft;
+  return mapExercise(draft, exIdx, (e) => ({
+    ...e,
+    sets: e.sets.map((set) =>
+      set.done || set.isWarmup
+        ? set
+        : { ...set, weight: asText(values.weightKg), reps: String(values.reps) },
+    ),
   }));
 }
 

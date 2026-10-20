@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatKg, formatPrescription } from "@/domain/format";
+import { formatPrescription } from "@/domain/format";
+import { ExerciseComparison } from "./exercise-comparison";
 import type { ContextExercise } from "@/lib/data/workout-context";
 import type { DraftExercise } from "@/lib/workout/draft";
 import { exerciseProgress, isExerciseComplete, previousForSet } from "@/lib/workout/runner-state";
@@ -34,6 +35,8 @@ type Props = {
   onField: (setIdx: number, field: "weight" | "reps", value: string) => void;
   onToggleDone: (setIdx: number) => void;
   onCopyPrevious: (setIdx: number) => void;
+  onCopyLast: () => void;
+  onCopySuggestion: () => void;
   onToggleWarmup: (setIdx: number) => void;
   onRemoveSet: (setIdx: number) => void;
   onAddSet: () => void;
@@ -45,18 +48,6 @@ type Props = {
   onCompleteAndAdvance: (setIdx: number) => void;
 };
 
-function Suggestion({ info }: { info: ContextExercise }) {
-  const s = info.suggestion;
-  if (!s) return null;
-  return (
-    <p className="text-xs text-primary">
-      {s.kind === "increase"
-        ? `Sugerencia: sube a ${formatKg(s.weightKg)} y apunta a ${s.reps} repeticiones.`
-        : `Sugerencia: mantén ${formatKg(s.weightKg)} y apunta a ${s.reps} repeticiones.`}
-    </p>
-  );
-}
-
 // Un ejercicio de la sesión (RF-53 a RF-57): filas serie · anterior · kg · reps · hecha. Al completarse
 // se pliega a un resumen que se puede volver a abrir.
 export function ExerciseCard({
@@ -67,6 +58,8 @@ export function ExerciseCard({
   onField,
   onToggleDone,
   onCopyPrevious,
+  onCopyLast,
+  onCopySuggestion,
   onToggleWarmup,
   onRemoveSet,
   onAddSet,
@@ -157,7 +150,9 @@ export function ExerciseCard({
             <p className="mb-1 text-xs font-semibold text-primary">{groupLabel}</p>
           ) : null}
           <h2 className="text-lg leading-tight font-semibold text-primary">{exercise.name}</h2>
-          <p className="mt-1 text-sm font-medium">{formatPrescription(exercise.prescribed)}</p>
+          <p className="mt-1 text-sm font-medium">
+            Prescrito · {formatPrescription(exercise.prescribed)}
+          </p>
           <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
             {active ? <span className="font-semibold text-primary">En curso</span> : null}
             <span className="tabular-nums">
@@ -199,14 +194,19 @@ export function ExerciseCard({
         </div>
       ) : null}
 
-      {info?.note || info?.suggestion ? (
+      <ExerciseComparison
+        exercise={exercise}
+        info={info}
+        onCopyLast={onCopyLast}
+        onCopySuggestion={onCopySuggestion}
+      />
+      {info?.note ? (
         <details className="my-1 rounded-lg bg-muted/40 px-3">
           <summary className="min-h-11 cursor-pointer py-3 text-sm text-muted-foreground">
-            Indicaciones y sugerencias
+            Indicaciones del coach
           </summary>
           <div className="flex flex-col gap-2 pb-3">
             {info.note ? <p className="text-sm">{info.note}</p> : null}
-            <Suggestion info={info} />
           </div>
         </details>
       ) : null}
@@ -282,6 +282,8 @@ export function ExerciseCard({
                   <button
                     type="button"
                     aria-label={`Copiar lo anterior en la serie ${n} de ${exercise.name}: ${previousText} (kg × repeticiones)`}
+                    disabled={set.done}
+                    title={set.done ? "Esta serie ya está completada" : undefined}
                     onClick={() => onCopyPrevious(setIdx)}
                     className="h-11 truncate rounded text-sm text-muted-foreground tabular-nums outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
                   >

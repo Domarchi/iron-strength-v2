@@ -17,6 +17,8 @@ import {
   buildPayload,
   completeSet,
   copyPrevious,
+  copyLastPerformance,
+  copySuggestedValues,
   createDraft,
   finishDraft,
   previousForSet,
@@ -647,6 +649,19 @@ function ActiveWorkoutRunner({
             onCopyPrevious={(setIdx) => {
               const previous = previousOf(exIdx, setIdx);
               if (previous) update((d) => copyPrevious(d, exIdx, setIdx, previous));
+            }}
+            onCopyLast={() =>
+              commit(
+                copyLastPerformance(draftRef.current, exIdx, info?.last ?? null),
+                `Valores anteriores copiados en ${exercise.name}`,
+              )
+            }
+            onCopySuggestion={() => {
+              if (info?.suggestion)
+                commit(
+                  copySuggestedValues(draftRef.current, exIdx, info.suggestion),
+                  `Sugerencia copiada en ${exercise.name}`,
+                );
             }}
             onToggleWarmup={(setIdx) => update((d) => toggleWarmup(d, exIdx, setIdx))}
             onRemoveSet={(setIdx) => {

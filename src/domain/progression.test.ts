@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prefillWeight, suggestProgression, type LastSet } from "./progression";
+import { prefillWeight, suggestProgression, progressionReason, type LastSet } from "./progression";
 
 const prescription = { sets: 3, repsMin: 8, repsMax: 12 };
 const sets = (weight: number, ...reps: number[]): LastSet[] =>
@@ -96,5 +96,19 @@ describe("prefillWeight (DC-9)", () => {
 
   it("sin ninguno, queda vacío", () => {
     expect(prefillWeight(null, null)).toBeNull();
+  });
+});
+
+describe("motivo de progresión (T150)", () => {
+  it("distingue series incompletas, repeticiones pendientes y rango completado", () => {
+    expect(progressionReason(prescription, sets(60, 12, 12))).toBe("missing_sets");
+    expect(progressionReason(prescription, sets(60, 12, 12, 11))).toBe("below_top");
+    expect(progressionReason(prescription, sets(60, 12, 12, 12))).toBe("at_top");
+    expect(
+      progressionReason(prescription, [
+        { weightKg: 20, reps: 12, isWarmup: true },
+        ...sets(60, 12, 12),
+      ]),
+    ).toBe("missing_sets");
   });
 });

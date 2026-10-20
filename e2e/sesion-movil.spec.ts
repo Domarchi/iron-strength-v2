@@ -378,3 +378,71 @@ test("historial del ejercicio pagina sin perder el registro ni detener el descan
   await panel.getByRole("button", { name: "Cerrar historial" }).click();
   await expect(page.getByLabel("Repeticiones de la serie 1 de Sentadilla")).toHaveValue("11");
 });
+
+test("comparación explica la progresión y copiar no modifica series hechas (T150)", async ({
+  page,
+}) => {
+  const db = admin();
+  const { data: session } = await db
+    .from("program_sessions")
+    .select("programs(student_id),session_exercises(exercise_id,exercises(name))")
+    .eq("id", sessionId)
+    .single();
+  const studentId = session!.programs.student_id!,
+    exerciseId = session!.session_exercises.find(
+      (e) => e.exercises.name === "Sentadilla",
+    )!.exercise_id;
+  expect((await db.from("workouts").delete().eq("student_id", studentId)).error).toBeNull();
+  const workoutId = await seedWorkout({
+    studentId,
+    exerciseId,
+    exerciseName: "Sentadilla",
+    daysAgo: 1,
+  });
+  expect(
+    (
+      await db
+        .from("workout_sets")
+        .insert({
+          workout_id: workoutId,
+          student_id: studentId,
+          exercise_id: exerciseId,
+          exercise_name: "Sentadilla",
+          position: 0,
+          set_number: 2,
+          weight_kg: 55,
+          reps: 9,
+          is_warmup: false,
+        })
+    ).error,
+  ).toBeNull();
+  await openSession(page);
+  const exercise = page.getByRole("region", { name: "Sentadilla", exact: true });
+  const comparison = page.getByRole("region", { name: "Comparación de Sentadilla", exact: true });
+  await comparison.getByText("Comparar prescripción y progreso", { exact: true }).click();
+  await expect(comparison.getByText("Prescripción", { exact: true })).toBeVisible();
+  await expect(comparison.getByText(/Última ejecución/)).toBeVisible();
+  await expect(comparison.getByText("Sugerencia", { exact: true })).toBeVisible();
+  await expect(comparison.getByText(/Mantén la carga y completa las series/)).toBeVisible();
+  await page.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("70");
+  await page.getByLabel("Repeticiones de la serie 1 de Sentadilla").fill("7");
+  await page.getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla" }).click();
+  await expect(
+    exercise.getByRole("button", { name: /Copiar lo anterior en la serie 1/ }),
+  ).toBeDisabled();
+  await exercise.getByRole("button", { name: "Copiar sugerencia a pendientes" }).click();
+  await expect(page.getByLabel("Peso de la serie 1 de Sentadilla (kg)")).toHaveValue("70");
+  await expect(page.getByLabel("Repeticiones de la serie 1 de Sentadilla")).toHaveValue("7");
+  await expect(page.getByLabel("Repeticiones de la serie 2 de Sentadilla")).toHaveValue("12");
+  await page.getByRole("button", { name: "Deshacer última acción" }).click();
+  await expect(page.getByLabel("Repeticiones de la serie 2 de Sentadilla")).toHaveValue("");
+  await page.getByRole("button", { name: "Copiar anterior a pendientes" }).click();
+  await expect(page.getByLabel("Repeticiones de la serie 2 de Sentadilla")).toHaveValue("9");
+  await expect(page.getByLabel("Repeticiones de la serie 1 de Sentadilla")).toHaveValue("7");
+  await expect(page.getByRole("timer")).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Peso de la serie 1 de Sentadilla (kg)")).toHaveValue("70");
+  await expect(
+    page.getByRole("button", { name: "Desmarcar la serie 1 de Sentadilla" }),
+  ).toHaveAttribute("aria-pressed", "true");
+});

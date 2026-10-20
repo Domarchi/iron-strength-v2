@@ -12,6 +12,15 @@ export type Suggestion = {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+export function progressionReason(
+  prescription: { sets: number; repsMax: number },
+  lastSets: LastSet[],
+): "missing_sets" | "below_top" | "at_top" {
+  const working = lastSets.filter((set) => !set.isWarmup);
+  if (working.length < prescription.sets) return "missing_sets";
+  return working.every((set) => set.reps >= prescription.repsMax) ? "at_top" : "below_top";
+}
+
 export function suggestProgression(input: {
   prescription: { sets: number; repsMin: number; repsMax: number };
   lastSets: LastSet[]; // series del último entrenamiento de este ejercicio
@@ -29,10 +38,7 @@ export function suggestProgression(input: {
   const topWeight = Math.max(...working.map((s) => s.weightKg));
   if (topWeight <= 0) return null;
 
-  const completedAllSets = working.length >= prescription.sets;
-  const allAtTop = working.every((s) => s.reps >= prescription.repsMax);
-
-  if (completedAllSets && allAtTop) {
+  if (progressionReason(prescription, working) === "at_top") {
     return {
       kind: "increase",
       weightKg: round2(topWeight + incrementKg),
