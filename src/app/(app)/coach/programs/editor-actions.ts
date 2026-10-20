@@ -6,7 +6,7 @@ import { sessionExerciseSchema } from "@/domain/schemas";
 import { requireCoach } from "@/lib/auth/session";
 import {
   getProgramTree,
-  updateSessionExercise,
+  saveSessionPrescriptions,
   addSessionExercise,
   reorderSessionExercises,
   duplicateRoutineItem,
@@ -14,12 +14,20 @@ import {
 } from "@/lib/data/programs";
 import { createClient } from "@/lib/supabase/server";
 
-export type EditorResult = { error: string | null; savedIds: string[]; uncertain?: boolean };
+export type EditorResult = {
+  error: string | null;
+  savedIds: string[];
+  uncertain?: boolean;
+  conflict?: boolean;
+  revision?: number;
+};
 const messages: Record<Failure, string> = {
+  conflict:
+    "La sesión cambió en otra pestaña. Tus cambios siguen aquí; revisa la versión actual antes de guardarlos.",
   invalid: "Revisa los datos ingresados.",
   forbidden: "No tienes permiso para modificar esta sesión.",
   not_found: "La sesión o uno de sus ejercicios cambió. Recarga antes de continuar.",
-  week_locked: "La semana está bloqueada: solo puedes editar la actual y las futuras.",
+  week_locked: "La semana está bloqueada: solo puedes editar las semanas posteriores a la actual.",
   limit: "La sesión admite hasta 15 ejercicios.",
 };
 const temporaryError =
@@ -31,6 +39,12 @@ function readJson(fd: FormData, key: string): unknown {
     return null;
   }
 }
+function mutationIdentity(fd: FormData) {
+  return z.object({ requestId: z.uuid(), expectedRevision: z.number().int().min(0) }).safeParse({
+    requestId: fd.get("requestId"),
+    expectedRevision: fd.has("revision") ? Number(fd.get("revision")) : -1,
+  });
+}
 function refresh(programId: string) {
   revalidatePath(`/coach/programs/${programId}`);
   revalidatePath("/coach/programs");
@@ -38,6 +52,8 @@ function refresh(programId: string) {
 
 export async function savePrescriptionsAction(fd: FormData): Promise<EditorResult> {
   await requireCoach();
+  const identity = mutationIdentity(fd);
+  if (!identity.success) return { error: messages.invalid, savedIds: [] };
   const parsed = z
     .array(sessionExerciseSchema.extend({ id: z.string().min(1) }))
     .min(1)
@@ -57,22 +73,24 @@ export async function savePrescriptionsAction(fd: FormData): Promise<EditorResul
     )
   )
     return { error: messages.not_found, savedIds: [] };
-  const savedIds: string[] = [];
-  let error: string | null = null;
   try {
-    for (const row of parsed.data) {
-      const result = await updateSessionExercise({ db, id: row.id, input: row });
-      if (!result.ok) {
-        error = messages[result.reason];
-        break;
-      }
-      savedIds.push(row.id);
-    }
+    const result = await saveSessionPrescriptions({
+      db,
+      sessionId: session.id,
+      rows: parsed.data,
+      ...identity.data,
+    });
+    if (!result.ok)
+      return {
+        error: messages[result.reason],
+        savedIds: [],
+        conflict: result.reason === "conflict",
+      };
+    refresh(programId);
+    return { error: null, savedIds: parsed.data.map((row) => row.id), revision: result.revision };
   } catch {
-    error = temporaryError;
+    return { error: temporaryError, savedIds: [], uncertain: true };
   }
-  if (savedIds.length) refresh(programId);
-  return { savedIds, error };
 }
 
 export async function addExercisesAction(fd: FormData): Promise<EditorResult> {
@@ -111,6 +129,8 @@ export async function addExercisesAction(fd: FormData): Promise<EditorResult> {
 
 export async function reorderExercisesAction(fd: FormData): Promise<EditorResult> {
   await requireCoach();
+  const identity = mutationIdentity(fd);
+  if (!identity.success) return { error: messages.invalid, savedIds: [] };
   const parsed = z.array(z.string().min(1)).min(2).max(15).safeParse(readJson(fd, "orderedIds"));
   if (!parsed.success || new Set(parsed.data).size !== parsed.data.length)
     return { error: messages.invalid, savedIds: [] };
@@ -129,14 +149,15 @@ export async function reorderExercisesAction(fd: FormData): Promise<EditorResult
       db,
       sessionId: session.id,
       orderedIds: parsed.data,
+      ...identity.data,
     });
     refresh(programId);
     return result.ok
-      ? { error: null, savedIds: parsed.data }
-      : { error: messages[result.reason], savedIds: [] };
+      ? { error: null, savedIds: parsed.data, revision: result.revision }
+      : { error: messages[result.reason], savedIds: [], conflict: result.reason === "conflict" };
   } catch {
     refresh(programId);
-    return { error: temporaryError, savedIds: [] };
+    return { error: temporaryError, savedIds: [], uncertain: true };
   }
 }
 

@@ -3,7 +3,7 @@
 Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 
 - [x] **T142 · Especificación y tareas**
-- [ ] **T143 · Guardado y orden atómicos con revisión**
+- [x] **T143 · Guardado y orden atómicos con revisión**
 - [ ] **T144 · Borradores persistentes del coach**
 - [ ] **T145 · Modelo y reglas de superseries**
 - [ ] **T146 · Editor de grupos**

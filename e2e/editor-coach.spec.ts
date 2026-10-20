@@ -50,6 +50,9 @@ test("copiar y reordenar una semana conserva prescripciones, es accesible y cabe
   await expect(visibleField(page, "Peso (kg) de Sentadilla")).toHaveValue("62.5");
   await page.getByRole("button", { name: "Bajar Sentadilla", exact: true }).click();
   await expect(page.getByRole("heading", { name: /1.*Press de banca/ })).toBeVisible();
+  await expect(
+    page.getByText("Orden guardado.", { exact: true }).filter({ visible: true }),
+  ).toBeVisible();
   const { data, error } = await admin()
     .from("program_sessions")
     .select("session_exercises(position,sets,target_weight_kg,exercises(name))")
@@ -342,4 +345,62 @@ test("duplicar sesión conserva orden y prescripciones y permite editar solo la 
   expect(
     results.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
   ).toEqual([]);
+});
+
+test("dos pestañas conservan sus cambios y rechazan una revisión antigua", async ({ page }) => {
+  await routine(page);
+  const other = await page.context().newPage();
+  await other.goto(page.url());
+  await visibleField(other, "Series de Sentadilla").fill("6");
+  await visibleField(page, "Series de Sentadilla").fill("4");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await other.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(other.getByRole("alert").filter({ hasText: "otra pestaña" })).toBeVisible();
+  await expect(visibleField(other, "Series de Sentadilla")).toHaveValue("6");
+  await page.reload();
+  await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("4");
+  other.once("dialog", (dialog) => dialog.accept());
+  await other.getByRole("button", { name: "Descartar cambios", exact: true }).click();
+  await expect(visibleField(other, "Series de Sentadilla")).toHaveValue("4");
+  await other.close();
+});
+
+test("perder la respuesta de un lote guardado permite confirmar sin duplicar la escritura", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await visibleField(page, "Series de Sentadilla").fill("5");
+  await visibleField(page, "Series de Press de banca").fill("4");
+  let intercepted = false;
+  await page.route(page.url(), async (route) => {
+    if (
+      !intercepted &&
+      route.request().method() === "POST" &&
+      route.request().headers()["next-action"]
+    ) {
+      intercepted = true;
+      await route.fetch();
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Se conservan aquí" })).toBeVisible();
+  const before = await admin()
+    .from("program_sessions")
+    .select("revision")
+    .eq("program_id", programId)
+    .single();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  const after = await admin()
+    .from("program_sessions")
+    .select("revision")
+    .eq("program_id", programId)
+    .single();
+  expect(after.error).toBeNull();
+  expect(after.data!.revision).toBe(before.data!.revision);
+  await page.reload();
+  await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("5");
+  await expect(visibleField(page, "Series de Press de banca")).toHaveValue("4");
 });

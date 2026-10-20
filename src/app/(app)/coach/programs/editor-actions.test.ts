@@ -13,7 +13,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(() => ({})) }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.refresh }));
 vi.mock("@/lib/data/programs", () => ({
   getProgramTree: mocks.tree,
-  updateSessionExercise: mocks.update,
+  saveSessionPrescriptions: mocks.update,
   addSessionExercise: mocks.add,
   reorderSessionExercises: mocks.reorder,
   duplicateRoutineItem: mocks.duplicate,
@@ -38,6 +38,8 @@ const fd = (rows: unknown) => {
   const data = new FormData();
   data.set("programId", "p");
   data.set("sessionId", "s");
+  data.set("requestId", "00000000-0000-4000-8000-000000000099");
+  data.set("revision", "2");
   data.set("rows", JSON.stringify(rows));
   return data;
 };
@@ -72,24 +74,26 @@ it("rechaza rangos invertidos en el servidor aunque se evite la validación del 
   expect(mocks.update).not.toHaveBeenCalled();
 });
 
-it("informa las filas realmente guardadas ante fallo parcial", async () => {
-  mocks.update
-    .mockResolvedValueOnce({ ok: true })
-    .mockResolvedValueOnce({ ok: false, reason: "week_locked" });
+it("un fallo del lote no confirma ninguna fila", async () => {
+  mocks.update.mockResolvedValueOnce({ ok: false, reason: "week_locked" });
   const result = await savePrescriptionsAction(fd([row("a"), row("b")]));
-  expect(result.savedIds).toEqual(["a"]);
+  expect(result.savedIds).toEqual([]);
   expect(result.error).toContain("bloqueada");
-  expect(mocks.requireCoach).toHaveBeenCalled();
-  expect(mocks.refresh).toHaveBeenCalled();
+  expect(mocks.update).toHaveBeenCalledTimes(1);
 });
-it("convierte fallos inesperados en un resultado reintentable sin perder los éxitos", async () => {
-  mocks.update
-    .mockResolvedValueOnce({ ok: true })
-    .mockRejectedValueOnce(new Error("private database detail"));
+it("una respuesta perdida mantiene el lote completo incierto", async () => {
+  mocks.update.mockRejectedValueOnce(new Error("private database detail"));
   const result = await savePrescriptionsAction(fd([row("a"), row("b")]));
-  expect(result.savedIds).toEqual(["a"]);
-  expect(result.error).toBeTruthy();
+  expect(result.savedIds).toEqual([]);
+  expect(result.uncertain).toBe(true);
   expect(result.error).not.toContain("private");
+});
+it("expone el conflicto sin confirmar ni sobrescribir filas", async () => {
+  mocks.update.mockResolvedValueOnce({ ok: false, reason: "conflict" });
+  expect(await savePrescriptionsAction(fd([row("a")]))).toMatchObject({
+    savedIds: [],
+    conflict: true,
+  });
 });
 it("comprueba capacidad y no agrega una selección vacía", async () => {
   const data = fd([]);

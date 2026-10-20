@@ -21,10 +21,12 @@ import { createClient } from "@/lib/supabase/server";
 export type ActionState = { error: string | null; done?: boolean };
 
 const FAILURES: Record<Failure | "destination_not_empty" | AssignFailure, string> = {
+  conflict: "La sesión cambió. Recarga antes de continuar.",
   not_found: "No se encontró lo que intentas modificar. Recarga la página.",
   invalid: "Revisa los datos ingresados.",
   limit: "Alcanzaste el límite: 7 sesiones por semana y 15 ejercicios por sesión.",
-  week_locked: "Esa semana ya terminó: no se puede modificar. Solo la actual y las futuras.",
+  week_locked:
+    "Esa semana ya terminó: no se puede modificar. Solo las semanas posteriores a la actual.",
   forbidden: "No tienes permiso para hacer esto.",
   destination_not_empty:
     "La semana destino ya tiene sesiones. Marca “Reemplazar” para sobrescribirla.",

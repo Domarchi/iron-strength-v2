@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, Check, Copy, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import {
   type PrescriptionDraft,
 } from "@/lib/coach/routine-editor";
 import type { SessionRow } from "@/lib/data/programs";
-import { moveExerciseAction, removeExerciseAction, removeSessionAction } from "../actions";
+import { removeExerciseAction, removeSessionAction } from "../actions";
 import { ActionForm } from "../action-form";
 import {
   duplicateRoutineAction,
@@ -34,6 +35,15 @@ export function SessionEditor({
   exercises: CatalogExercise[];
   canDuplicateSession?: boolean;
 }) {
+  const router = useRouter();
+  const baseRevision = useRef<number | null>(null);
+  const [saveRequest, setSaveRequest] = useState<{
+    id: string;
+    revision: number;
+    rows: PrescriptionDraft[];
+  } | null>(null);
+  const [orderRequest, setOrderRequest] = useState<{ id: string; revision: number } | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [edits, setEdits] = useState<Record<string, PrescriptionDraft>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<string | null>(null);
@@ -52,7 +62,12 @@ export function SessionEditor({
     ? [...session.exercises].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
     : session.exercises;
   const orderPending = order !== null;
-  const dragDisabled = pending || guard.dirtyIds.some((id) => id !== orderKey && id !== dragKey);
+  const dragDisabled =
+    pending ||
+    orderPending ||
+    conflict ||
+    !!saveRequest ||
+    guard.dirtyIds.some((id) => id !== orderKey && id !== dragKey);
   const drafts = orderedExercises.map((row) => edits[row.id] ?? prescriptionDraft(row));
   const changed = drafts.filter(
     (draft, index) =>
@@ -63,7 +78,7 @@ export function SessionEditor({
     (sum, row) => sum + (/^\d+$/.test(row.sets) ? Number(row.sets) : 0),
     0,
   );
-  const structuralDisabled = pending || guard.dirty || dragging;
+  const structuralDisabled = pending || guard.dirty || dragging || conflict || !!saveRequest;
   function duplicate(request: { id: string; exerciseId?: string }) {
     setCopyRequest(request);
     setCopyError(null);
@@ -92,6 +107,8 @@ export function SessionEditor({
     });
   }
   function reorder(ids: string[]) {
+    const request = orderRequest ?? { id: crypto.randomUUID(), revision: session.revision };
+    setOrderRequest(request);
     setOrder(ids);
     setOrderError(null);
     setStatus(null);
@@ -100,12 +117,17 @@ export function SessionEditor({
     fd.set("programId", programId);
     fd.set("sessionId", session.id);
     fd.set("orderedIds", JSON.stringify(ids));
+    fd.set("requestId", request.id);
+    fd.set("revision", String(request.revision));
     startTransition(async () => {
       try {
         const result = await reorderExercisesAction(fd);
-        if (result.error) setOrderError(result.error);
-        else {
+        if (result.error) {
+          setOrderError(result.error);
+          setConflict(result.conflict ?? false);
+        } else {
           setOrder(null);
+          setOrderRequest(null);
           guard.setDirty(orderKey, false);
           setStatus("Orden guardado.");
         }
@@ -117,6 +139,7 @@ export function SessionEditor({
     });
   }
   function change(draft: PrescriptionDraft, field: keyof PrescriptionDraft, value: string) {
+    baseRevision.current ??= session.revision;
     const next = { ...edits, [draft.id]: { ...draft, [field]: value } };
     setEdits(next);
     setErrors((old) => ({ ...old, [draft.id]: "" }));
@@ -131,7 +154,12 @@ export function SessionEditor({
     );
   }
   function save() {
-    const validation = validatePrescriptions(changed);
+    const request = saveRequest ?? {
+      id: crypto.randomUUID(),
+      revision: baseRevision.current ?? session.revision,
+      rows: changed,
+    };
+    const validation = validatePrescriptions(request.rows);
     setErrors(validation.errors);
     setError(validation.error);
     setStatus(null);
@@ -139,10 +167,16 @@ export function SessionEditor({
     const fd = new FormData();
     fd.set("programId", programId);
     fd.set("sessionId", session.id);
-    fd.set("rows", JSON.stringify(changed));
+    setSaveRequest(request);
+    fd.set("rows", JSON.stringify(request.rows));
+    fd.set("requestId", request.id);
+    fd.set("revision", String(request.revision));
     startTransition(async () => {
       try {
         const result = await savePrescriptionsAction(fd);
+        setConflict(result.conflict ?? false);
+        if (!result.uncertain) setSaveRequest(null);
+        if (!result.error) baseRevision.current = null;
         setEdits((old) =>
           Object.fromEntries(Object.entries(old).filter(([id]) => !result.savedIds.includes(id))),
         );
@@ -258,34 +292,33 @@ export function SessionEditor({
                     >
                       <Copy aria-hidden />
                     </Button>
-                    <ActionForm
-                      action={moveExerciseAction}
-                      fields={{
-                        id: exercise.id,
-                        sessionId: session.id,
-                        programId,
-                        direction: "up",
-                      }}
-                      label={<ArrowUp aria-hidden />}
-                      ariaLabel={`Subir ${exercise.name}`}
-                      disabled={index === 0 || structuralDisabled}
-                      size="icon"
-                      variant="ghost"
-                    />
-                    <ActionForm
-                      action={moveExerciseAction}
-                      fields={{
-                        id: exercise.id,
-                        sessionId: session.id,
-                        programId,
-                        direction: "down",
-                      }}
-                      label={<ArrowDown aria-hidden />}
-                      ariaLabel={`Bajar ${exercise.name}`}
-                      disabled={index === session.exercises.length - 1 || structuralDisabled}
-                      size="icon"
-                      variant="ghost"
-                    />
+                    {(
+                      [
+                        [-1, "Subir", ArrowUp],
+                        [1, "Bajar", ArrowDown],
+                      ] as const
+                    ).map(([delta, label, ControlIcon]) => {
+                      return (
+                        <Button
+                          key={delta}
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`${label} ${exercise.name}`}
+                          disabled={
+                            structuralDisabled ||
+                            index + delta < 0 ||
+                            index + delta >= orderedExercises.length
+                          }
+                          onClick={() => {
+                            const ids = orderedExercises.map((e) => e.id);
+                            [ids[index], ids[index + delta]] = [ids[index + delta], ids[index]];
+                            reorder(ids);
+                          }}
+                        >
+                          <ControlIcon aria-hidden />
+                        </Button>
+                      );
+                    })}
                     <ActionForm
                       action={removeExerciseAction}
                       fields={{ id: exercise.id, programId }}
@@ -299,7 +332,7 @@ export function SessionEditor({
                   </div>
                 </div>
                 <fieldset
-                  disabled={pending || orderPending || dragging || !!copyRequest}
+                  disabled={pending || orderPending || dragging || !!copyRequest || !!saveRequest}
                   className="mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
                 >
                   {(
@@ -339,7 +372,7 @@ export function SessionEditor({
                     aria-label={`Nota de ${exercise.name}`}
                     value={draft.note}
                     maxLength={500}
-                    disabled={pending || orderPending || dragging || !!copyRequest}
+                    disabled={pending || orderPending || dragging || !!copyRequest || !!saveRequest}
                     onChange={(e) => change(draft, "note", e.target.value)}
                     placeholder="Técnica, tempo o indicaciones"
                     className="h-11 bg-background"
@@ -375,7 +408,11 @@ export function SessionEditor({
             <p className="mt-1 text-muted-foreground">
               El orden mostrado sigue pendiente de confirmar.
             </p>
-            <Button className="mt-2" disabled={pending} onClick={() => order && reorder(order)}>
+            <Button
+              className="mt-2"
+              disabled={pending || conflict}
+              onClick={() => order && reorder(order)}
+            >
               Reintentar guardar orden
             </Button>
           </div>
@@ -401,11 +438,14 @@ export function SessionEditor({
               {dirty ? (
                 <Button
                   variant="ghost"
-                  disabled={pending || orderPending || dragging}
+                  disabled={pending || orderPending || dragging || !!saveRequest}
                   onClick={() => {
                     if (
                       window.confirm("¿Descartar las prescripciones sin guardar de esta sesión?")
                     ) {
+                      baseRevision.current = null;
+                      setConflict(false);
+                      router.refresh();
                       setEdits({});
                       setErrors({});
                       setError(null);
@@ -418,7 +458,9 @@ export function SessionEditor({
                 </Button>
               ) : null}
               <Button
-                disabled={!dirty || pending || orderPending || dragging || !!copyRequest}
+                disabled={
+                  !dirty || pending || orderPending || dragging || !!copyRequest || conflict
+                }
                 onClick={save}
               >
                 <Save aria-hidden />
@@ -433,6 +475,22 @@ export function SessionEditor({
             {status}
           </p>
         ) : null}
+        {conflict && orderPending ? (
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (!window.confirm("¿Descartar este orden y cargar la sesión actual?")) return;
+              setOrder(null);
+              setOrderRequest(null);
+              setOrderError(null);
+              setConflict(false);
+              guard.setDirty(orderKey, false);
+              router.refresh();
+            }}
+          >
+            Descartar orden y cargar versión actual
+          </Button>
+        ) : null}
         {error ? (
           <p role="alert" className="text-sm text-destructive">
             {error}
@@ -443,7 +501,15 @@ export function SessionEditor({
           sessionId={session.id}
           exercises={exercises}
           count={session.exercises.length}
-          disabled={dirty || pending || orderPending || dragging || !!copyRequest}
+          disabled={
+            dirty ||
+            pending ||
+            orderPending ||
+            dragging ||
+            !!copyRequest ||
+            !!saveRequest ||
+            conflict
+          }
         />
       </CardContent>
     </Card>

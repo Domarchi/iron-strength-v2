@@ -314,14 +314,16 @@ describe("programas (RF-12 a RF-18, DC-10, DC-13)", () => {
           id: added.id,
           input: prescription(squatId, { sets: 5, repsMin: 5, repsMax: 5 }),
         }),
-      ).toEqual({ ok: true });
+      ).toMatchObject({ ok: true });
       expect((await getProgramTree(coachDb, id))!.sessions[0].exercises[0]).toMatchObject({
         sets: 5,
         repsMin: 5,
         repsMax: 5,
       });
 
-      expect(await removeSessionExercise({ db: coachDb, id: added.id })).toEqual({ ok: true });
+      expect(await removeSessionExercise({ db: coachDb, id: added.id })).toMatchObject({
+        ok: true,
+      });
       expect((await getProgramTree(coachDb, id))!.sessions[0].exercises).toHaveLength(0);
     });
 
@@ -347,7 +349,7 @@ describe("programas (RF-12 a RF-18, DC-10, DC-13)", () => {
           sessionId: session.id,
           orderedIds: [b.id, a.id],
         }),
-      ).toEqual({ ok: true });
+      ).toMatchObject({ ok: true });
       expect((await getProgramTree(coachDb, id))!.sessions[0].exercises.map((e) => e.name)).toEqual(
         ["Press de banca", "Sentadilla"],
       );

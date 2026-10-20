@@ -6,6 +6,7 @@ import { WeekWorkspace } from "./week-workspace";
 import { SessionEditor } from "./session-editor";
 import type { SessionRow } from "@/lib/data/programs";
 const mocks = vi.hoisted(() => ({ save: vi.fn(), add: vi.fn(), duplicate: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("../editor-actions", () => ({
   savePrescriptionsAction: mocks.save,
   addExercisesAction: mocks.add,
@@ -23,6 +24,7 @@ vi.mock("../action-form", () => ({
 }));
 const session: SessionRow = {
   id: "s",
+  revision: 2,
   label: "A",
   weekNumber: 1,
   position: 0,
@@ -187,7 +189,7 @@ it("pide confirmación al salir por un enlace o cerrar la sesión y permite canc
   confirm.mockRestore();
 });
 
-it("reintenta solo la prescripción pendiente después de un guardado parcial", async () => {
+it("reintenta el lote completo con la misma identidad tras una respuesta perdida", async () => {
   const second = { ...session.exercises[0], id: "b", name: "Press", position: 1 };
   await act(() =>
     root.render(
@@ -208,14 +210,18 @@ it("reintenta solo la prescripción pendiente después de un guardado parcial", 
   );
   await fill("Series de Sentadilla", "4");
   await fill("Series de Press", "2");
-  mocks.save.mockResolvedValueOnce({ savedIds: ["a"], error: "Semana bloqueada" });
+  mocks.save.mockRejectedValueOnce(new Error("offline"));
   await act(() => btn("Guardar sesión").click());
-  expect(container.textContent).toContain("1 cambios guardados; 1 pendientes.");
+  expect(container.textContent).toContain("Se conservan aquí");
   expect(container.querySelector<HTMLInputElement>('[aria-label="Series de Press"]')!.value).toBe(
     "2",
   );
-  mocks.save.mockResolvedValueOnce({ savedIds: ["b"], error: null });
+  mocks.save.mockResolvedValueOnce({ savedIds: ["a", "b"], error: null, revision: 4 });
   await act(() => btn("Guardar sesión").click());
   const sent = JSON.parse(mocks.save.mock.calls[1][0].get("rows"));
-  expect(sent.map((row: { id: string }) => row.id)).toEqual(["b"]);
+  expect(sent.map((row: { id: string }) => row.id)).toEqual(["a", "b"]);
+  expect(mocks.save.mock.calls[1][0].get("requestId")).toBe(
+    mocks.save.mock.calls[0][0].get("requestId"),
+  );
+  expect(mocks.save.mock.calls[1][0].get("revision")).toBe("2");
 });

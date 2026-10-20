@@ -1,6 +1,7 @@
 // Programas, sesiones y prescripciones (RF-12 a RF-18, DC-10, DC-13). Todas las funciones reciben
 // el cliente con la sesión del usuario: la RLS decide quién puede leer y escribir. Además se aplica
 // la regla de RF-17: en un programa ya asignado solo se editan semanas posteriores a la en curso.
+import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { santiagoDate, type DateString } from "../../domain/dates.ts";
 import { isWeekEditable, type ProgramRange } from "../../domain/program-weeks.ts";
@@ -41,6 +42,7 @@ export type SessionExerciseRow = {
 
 export type SessionRow = {
   id: string;
+  revision: number;
   weekNumber: number;
   label: string;
   position: number;
@@ -58,7 +60,7 @@ export type ProgramTree = {
   sessions: SessionRow[];
 };
 
-export type Failure = "not_found" | "invalid" | "limit" | "week_locked" | "forbidden";
+export type Failure = "not_found" | "invalid" | "limit" | "week_locked" | "forbidden" | "conflict";
 export type Result<T = object> = ({ ok: true } & T) | { ok: false; reason: Failure };
 
 const todayDefault = () => santiagoDate(new Date());
@@ -124,7 +126,7 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
     .select(
       `id, coach_id, student_id, name, weeks_count, start_date, ends_on,
        program_sessions (
-         id, week_number, label, position,
+         id, week_number, label, position, revision,
          session_exercises (
            id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note,
            exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg, archived_at )
@@ -148,6 +150,7 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
       .map((s) => ({
         id: s.id,
         weekNumber: s.week_number,
+        revision: s.revision,
         label: s.label,
         position: s.position,
         exercises: s.session_exercises
@@ -427,39 +430,80 @@ export async function removeSessionExercise(args: {
   return data ? { ok: true } : { ok: false, reason: "not_found" };
 }
 
+type MutationArgs = {
+  db: Client;
+  sessionId: string;
+  expectedRevision: number;
+  requestId: string;
+};
+async function mutateSession(
+  args: MutationArgs & { rows?: unknown; orderedIds?: string[] },
+): Promise<Result<{ revision: number }>> {
+  if (
+    !z.uuid().safeParse(args.requestId).success ||
+    !Number.isInteger(args.expectedRevision) ||
+    args.expectedRevision < 0
+  )
+    return { ok: false, reason: "invalid" };
+  const { data, error } = await args.db.rpc("mutate_routine_session", {
+    p_session_id: args.sessionId,
+    p_expected_revision: args.expectedRevision,
+    p_request_id: args.requestId,
+    ...(args.rows
+      ? { p_rows: args.rows as Database["public"]["Tables"]["routine_mutations"]["Row"]["payload"] }
+      : {}),
+    ...(args.orderedIds ? { p_ordered_ids: args.orderedIds } : {}),
+  });
+  if (!error) return { ok: true, revision: data };
+  if (error.code === "40001") return { ok: false, reason: "conflict" };
+  if (error.code === "55000") return { ok: false, reason: "week_locked" };
+  if (error.code === "P0002") return { ok: false, reason: "not_found" };
+  if (["22023", "23514", "22P02", "23502", "22003"].includes(error.code))
+    return { ok: false, reason: "invalid" };
+  return { ok: false, reason: failureFromError(error) };
+}
+export async function saveSessionPrescriptions(
+  args: MutationArgs & { rows: unknown },
+): Promise<Result<{ revision: number }>> {
+  const parsed = z
+    .array(sessionExerciseSchema.extend({ id: z.uuid() }))
+    .min(1)
+    .max(15)
+    .safeParse(args.rows);
+  if (!parsed.success || new Set(parsed.data.map((row) => row.id)).size !== parsed.data.length)
+    return { ok: false, reason: "invalid" };
+  return mutateSession({ ...args, rows: parsed.data });
+}
 export async function reorderSessionExercises(args: {
   db: Client;
   sessionId: string;
   orderedIds: string[];
   today?: DateString;
-}): Promise<Result> {
-  const context = await contextForSession(args.db, args.sessionId);
-  if (!context) return { ok: false, reason: "not_found" };
-  if (!editable(context, args.today ?? todayDefault())) return { ok: false, reason: "week_locked" };
-
-  const { data: current, error } = await args.db
-    .from("session_exercises")
-    .select("id")
-    .eq("program_session_id", args.sessionId);
-  if (error) throw new Error(error.message);
-
-  const currentIds = new Set(current.map((c) => c.id));
-  const given = new Set(args.orderedIds);
-  const isPermutation =
-    args.orderedIds.length > 0 &&
-    given.size === args.orderedIds.length &&
-    given.size === currentIds.size &&
-    args.orderedIds.every((id) => currentIds.has(id));
-  if (!isPermutation) return { ok: false, reason: "invalid" };
-
-  const updates = await Promise.all(
-    args.orderedIds.map((id, position) =>
-      args.db.from("session_exercises").update({ position }).eq("id", id),
-    ),
-  );
-  const failed = updates.find((u) => u.error);
-  if (failed?.error) return { ok: false, reason: failureFromError(failed.error) };
-  return { ok: true };
+  expectedRevision?: number;
+  requestId?: string;
+}): Promise<Result<{ revision: number }>> {
+  if (
+    !args.orderedIds.length ||
+    args.orderedIds.length > 15 ||
+    new Set(args.orderedIds).size !== args.orderedIds.length
+  )
+    return { ok: false, reason: "invalid" };
+  let revision = args.expectedRevision;
+  if (revision === undefined) {
+    const { data, error } = await args.db
+      .from("program_sessions")
+      .select("revision")
+      .eq("id", args.sessionId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) return { ok: false, reason: "not_found" };
+    revision = data.revision;
+  }
+  return mutateSession({
+    ...args,
+    expectedRevision: revision,
+    requestId: args.requestId ?? crypto.randomUUID(),
+  });
 }
 
 // Copiar semana --------------------------------------------------------------------------------------

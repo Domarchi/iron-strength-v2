@@ -197,14 +197,14 @@ isOneToOne: false
                   ]
                 },"program_sessions": {
                   Row: {
-                    "id": string,"label": string,"position": number,"program_id": string,"week_number": number
+                    "id": string,"label": string,"position": number,"program_id": string,"revision": number,"week_number": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "id"?: string,"label": string,"position"?: number,"program_id": string,"week_number": number
+                    "id"?: string,"label": string,"position"?: number,"program_id": string,"revision"?: number,"week_number": number
                   }
                   Update: {
-                    "id"?: string,"label"?: string,"position"?: number,"program_id"?: string,"week_number"?: number
+                    "id"?: string,"label"?: string,"position"?: number,"program_id"?: string,"revision"?: number,"week_number"?: number
                   }
                   Relationships: [
                     {
@@ -264,6 +264,32 @@ isOneToOne: false
       columns: ["student_id"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"routine_mutations": {
+                  Row: {
+                    "coach_id": string,"created_at": string,"id": string,"payload": NonNullable<Json>,"revision": number,"session_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "coach_id": string,"created_at"?: string,"id": string,"payload": NonNullable<Json>,"revision": number,"session_id": string
+                  }
+                  Update: {
+                    "coach_id"?: string,"created_at"?: string,"id"?: string,"payload"?: NonNullable<Json>,"revision"?: number,"session_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "routine_mutations_coach_id_fkey"
+      columns: ["coach_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "routine_mutations_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "program_sessions"
       referencedColumns: ["id"]
     }
                   ]
@@ -369,11 +395,11 @@ isOneToOne: false
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
-"duplicate_routine_item":
-{ Args: { "p_session_id": string,"p_copy_id": string,"p_exercise_id"?: string }; Returns: string
-                           },
 "delete_my_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"duplicate_routine_item":
+{ Args: { "p_copy_id": string,"p_exercise_id"?: string,"p_session_id": string }; Returns: string
                            },
 "edit_window_start":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -389,6 +415,9 @@ isOneToOne: false
                            },
 "mark_comments_read":
 { Args: { "p_workout_id": string }; Returns: undefined
+                           },
+"mutate_routine_session":
+{ Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string }; Returns: number
                            },
 "record_login_failure":
 { Args: { "p_email_hash": string }; Returns: undefined
