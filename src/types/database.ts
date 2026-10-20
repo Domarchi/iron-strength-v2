@@ -295,14 +295,14 @@ isOneToOne: false
                   ]
                 },"session_exercises": {
                   Row: {
-                    "exercise_id": string,"id": string,"note": string | null,"position": number,"program_session_id": string,"reps_max": number,"reps_min": number,"sets": number,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"note": string | null,"position": number,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id"?: string,"note"?: string | null,"position"?: number,"program_session_id": string,"reps_max": number,"reps_min": number,"sets": number,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id"?: string,"note"?: string | null,"position"?: number,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds"?: number | null,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"position"?: number,"program_session_id"?: string,"reps_max"?: number,"reps_min"?: number,"sets"?: number,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"position"?: number,"program_session_id"?: string,"reps_max"?: number,"reps_min"?: number,"rest_seconds"?: number | null,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
                   }
                   Relationships: [
                     {

@@ -5,7 +5,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T142 · Especificación y tareas**
 - [x] **T143 · Guardado y orden atómicos con revisión**
 - [x] **T144 · Borradores persistentes del coach**
-- [ ] **T145 · Modelo y reglas de superseries**
+- [x] **T145 · Modelo y reglas de superseries**
 - [ ] **T146 · Editor de grupos**
 - [ ] **T147 · Ejecución por rondas**
 - [ ] **T148 · Copias y recuperación de grupos**

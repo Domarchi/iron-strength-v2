@@ -32,6 +32,9 @@ export type SessionExerciseRow = {
   isBodyweight: boolean;
   incrementKg: number;
   archived: boolean;
+  restSeconds?: number | null;
+  supersetId?: string | null;
+  supersetRestSeconds?: number | null;
   position: number;
   sets: number;
   repsMin: number;
@@ -128,7 +131,7 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
        program_sessions (
          id, week_number, label, position, revision,
          session_exercises (
-           id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note,
+           id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note, rest_seconds, superset_id, superset_rest_seconds,
            exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg, archived_at )
          )
        )`,
@@ -165,6 +168,9 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
             };
             return {
               id: e.id,
+              restSeconds: e.rest_seconds,
+              supersetId: e.superset_id,
+              supersetRestSeconds: e.superset_rest_seconds,
               exerciseId: e.exercise_id,
               name: ex.name,
               muscleGroup: ex.muscle_group,

@@ -12,6 +12,8 @@
 
 SessionRow incorpora revision. EditorResult incorpora conflicto/revisión/resultado incierto; cada escritura conserva identificador y payload hasta confirmar. La revisión cambia también por operaciones antiguas para detectar pestañas obsoletas. Registros de operaciones con RLS permiten confirmar reintentos tras modificaciones posteriores.
 
+Los grupos se representan con `superset_id` y descanso común en sus filas de `session_exercises`, con identidad acotada a la sesión y una restricción diferida de tamaño/contigüidad/descanso. Reutilizan RLS y revisión existentes; al quitar un miembro de un grupo de dos, el restante queda independiente.
+
 Extender prescripciones con grupos, descansos, alternativas y día orientativo; extender ejecución con prescrito/realizado, esfuerzo y nota. Nuevos campos opcionales o valores por defecto para datos anteriores. Copias preservan valores y regeneran identidades. Borradores, paquetes y cola versionados; migrar antes de retirar formato antiguo.
 
 ## Verificación
