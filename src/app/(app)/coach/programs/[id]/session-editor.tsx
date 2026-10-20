@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+  type ReactNode,
+} from "react";
 import {
   createEditorPersistence,
   editorStorage,
@@ -18,10 +25,21 @@ import {
   type CatalogExercise,
   type PrescriptionDraft,
 } from "@/lib/coach/routine-editor";
-import type { SessionRow } from "@/lib/data/programs";
+import { exerciseBlocks } from "@/domain/supersets";
+import {
+  groupSelected,
+  separateGroup,
+  separateMember,
+  sessionLayout,
+  type LayoutRequest,
+  type LayoutRow,
+} from "@/lib/coach/routine-layout";
+import { RoutineRestSelect } from "./routine-rest-select";
+import type { SessionExerciseRow, SessionRow } from "@/lib/data/programs";
 import { removeExerciseAction, removeSessionAction } from "../actions";
 import { ActionForm } from "../action-form";
 import {
+  configureLayoutAction,
   reviewSessionAction,
   duplicateRoutineAction,
   reorderExercisesAction,
@@ -118,7 +136,9 @@ function Editor({
     !!restored &&
       restored.revision !== session.revision &&
       !restored.saveRequest &&
-      !restored.orderRequest,
+      !restored.orderRequest &&
+      !restored.copyRequest &&
+      !restored.layoutRequest,
   );
   const [edits, setEdits] = useState<Record<string, PrescriptionDraft>>(restored?.edits ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -134,6 +154,15 @@ function Editor({
   const [copyRequest, setCopyRequest] = useState<{ id: string; exerciseId?: string } | null>(
     restored?.copyRequest ?? null,
   );
+  const [selected, setSelected] = useState<string[]>([]);
+  const [layoutRequest, setLayoutRequest] = useState<LayoutRequest | null>(
+    restored?.layoutRequest ?? null,
+  );
+  const [layoutError, setLayoutError] = useState<string | null>(
+    restored?.layoutRequest ? "Configuración pendiente de confirmar." : null,
+  );
+  const layoutKey = `${session.id}-layout`;
+  const selectionKey = `${session.id}-selection`;
   const [copyError, setCopyError] = useState<string | null>(
     restored?.copyRequest ? "Copia pendiente de confirmar tras recuperar el borrador." : null,
   );
@@ -144,11 +173,14 @@ function Editor({
     ? [...session.exercises].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
     : session.exercises;
   const orderPending = order !== null;
+  const blocks = exerciseBlocks(orderedExercises);
+  const layout = sessionLayout(orderedExercises);
   const dragDisabled =
     pending ||
     orderPending ||
     conflict ||
     !!saveRequest ||
+    !!layoutRequest ||
     guard.dirtyIds.some((id) => id !== orderKey && id !== dragKey);
   const drafts = orderedExercises.map((row) => edits[row.id] ?? prescriptionDraft(row));
   const changed = drafts.filter(
@@ -163,7 +195,18 @@ function Editor({
     (sum, row) => sum + (/^\d+$/.test(row.sets) ? Number(row.sets) : 0),
     0,
   );
-  const structuralDisabled = pending || guard.dirty || dragging || conflict || !!saveRequest;
+  const structuralDisabled =
+    pending || guard.dirty || dragging || conflict || !!saveRequest || !!layoutRequest;
+  const layoutDisabled =
+    pending ||
+    dirty ||
+    orderPending ||
+    dragging ||
+    conflict ||
+    !!saveRequest ||
+    !!copyRequest ||
+    !!layoutRequest ||
+    guard.dirtyIds.some((id) => id !== selectionKey);
   const lastDraft = useRef<EditorDraft | null>(restored ? { ...restored, id: localId } : null);
   function persistLocal(overrides: Partial<EditorDraft> = {}) {
     const next: EditorDraft = {
@@ -179,10 +222,17 @@ function Editor({
       orderRequest,
       saveRequest,
       copyRequest,
+      layoutRequest,
       ...overrides,
     };
     lastDraft.current = next;
-    if (Object.keys(next.edits).length || next.order || next.saveRequest || next.copyRequest) {
+    if (
+      Object.keys(next.edits).length ||
+      next.order ||
+      next.saveRequest ||
+      next.copyRequest ||
+      next.layoutRequest
+    ) {
       if (persistence.persist(next)) {
         remember(localId);
         if (sourceDraft.current && ownsSource) {
@@ -209,7 +259,61 @@ function Editor({
     );
     setGuardDirty(`${serverSession.id}-order`, !!restored.order);
     setGuardDirty(`${serverSession.id}-copy`, !!restored.copyRequest);
+    setGuardDirty(`${serverSession.id}-layout`, !!restored.layoutRequest);
   }, [restored, persistence, serverSession.id, setGuardDirty]);
+  function configure(next: LayoutRow[], savedRequest?: LayoutRequest) {
+    const request = savedRequest ?? {
+      id: crypto.randomUUID(),
+      revision: session.revision,
+      layout: next,
+    };
+    persistLocal({ layoutRequest: request });
+    setLayoutRequest(request);
+    setLayoutError(null);
+    setStatus(null);
+    guard.setDirty(layoutKey, true);
+    startTransition(async () => {
+      try {
+        const result = await configureLayoutAction(programId, session.id, request);
+        if (result.error) {
+          setLayoutError(result.error);
+          return;
+        }
+        baseRevision.current = null;
+        setConflict(false);
+        setLayoutRequest(null);
+        setSelected([]);
+        setReview(null);
+        persistLocal({ layoutRequest: null });
+        removeRecovered();
+        guard.setDirty(layoutKey, false);
+        guard.setDirty(selectionKey, false);
+        setStatus("Configuración guardada.");
+      } catch {
+        setLayoutError(
+          "No se pudo confirmar la configuración. Reintenta sin repetir la operación.",
+        );
+      }
+    });
+  }
+  function selectGroup(id: string) {
+    const next = selected.includes(id)
+      ? selected.filter((value) => value !== id)
+      : [...selected, id];
+    setSelected(next);
+    guard.setDirty(selectionKey, next.length > 0);
+  }
+  function moveBlock(id: string, delta: number) {
+    const ids = blocks.map((block) => block.id),
+      index = ids.indexOf(id);
+    if (index < 0 || index + delta < 0 || index + delta >= ids.length) return;
+    [ids[index], ids[index + delta]] = [ids[index + delta], ids[index]];
+    reorder(
+      ids.flatMap((key) =>
+        blocks.find((block) => block.id === key)!.exercises.map((exercise) => exercise.id),
+      ),
+    );
+  }
   function reviewCurrent() {
     startTransition(async () => {
       try {
@@ -246,6 +350,10 @@ function Editor({
           setCopyRequest(null);
           guard.setDirty(copyKey, false);
         }
+        if (!result.error) {
+          baseRevision.current = null;
+          setConflict(false);
+        }
         if (!result.error)
           setStatus(request.exerciseId ? "Ejercicio duplicado." : "Sesión duplicada.");
       } catch {
@@ -276,6 +384,8 @@ function Editor({
           setOrderError(result.error);
           setConflict(result.conflict ?? false);
         } else {
+          baseRevision.current = null;
+          setConflict(false);
           persistLocal({ order: null, orderRequest: null });
           removeRecovered();
           setOrder(null);
@@ -363,6 +473,196 @@ function Editor({
       }
     });
   }
+  function renderExercise(exercise: SessionExerciseRow, index: number, handle: ReactNode) {
+    const draft = drafts[index];
+    const modified = changed.some((row) => row.id === draft.id);
+    const errorId = `error-${exercise.id}`;
+    return (
+      <div
+        key={exercise.id}
+        className={`rounded-md border p-3 ${modified ? "border-primary/40 bg-primary/5" : "bg-background"}`}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-start gap-1">
+            {handle}
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold">
+                <span className="mr-2 text-muted-foreground">{index + 1}.</span>
+                {exercise.name}
+              </h4>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {exercise.muscleGroup}
+                {exercise.equipment ? ` · ${exercise.equipment}` : ""}
+                {exercise.archived ? " · Archivado" : ""}
+              </p>
+            </div>
+          </div>
+          <div className="flex w-full shrink-0 justify-end gap-0.5 sm:w-auto">
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={`Duplicar ${exercise.name}`}
+              disabled={structuralDisabled || session.exercises.length >= 15 || exercise.archived}
+              onClick={() => duplicate({ id: crypto.randomUUID(), exerciseId: exercise.id })}
+            >
+              <Copy aria-hidden />
+            </Button>
+            {(
+              [
+                [-1, "Subir", ArrowUp],
+                [1, "Bajar", ArrowDown],
+              ] as const
+            ).map(([delta, label, ControlIcon]) => {
+              return (
+                <Button
+                  key={delta}
+                  size="icon"
+                  variant="ghost"
+                  aria-label={`${label} ${exercise.name}`}
+                  disabled={
+                    structuralDisabled ||
+                    index + delta < 0 ||
+                    index + delta >= orderedExercises.length ||
+                    (!!exercise.supersetId &&
+                      orderedExercises[index + delta]?.supersetId !== exercise.supersetId)
+                  }
+                  onClick={() => {
+                    if (!exercise.supersetId) {
+                      moveBlock(exercise.id, delta);
+                      return;
+                    }
+                    const ids = orderedExercises.map((e) => e.id);
+                    [ids[index], ids[index + delta]] = [ids[index + delta], ids[index]];
+                    reorder(ids);
+                  }}
+                >
+                  <ControlIcon aria-hidden />
+                </Button>
+              );
+            })}
+            <ActionForm
+              action={removeExerciseAction}
+              fields={{ id: exercise.id, programId }}
+              label={<Trash2 aria-hidden />}
+              ariaLabel={`Quitar ${exercise.name}`}
+              confirm={`¿Quitar ${exercise.name} de esta sesión?`}
+              disabled={structuralDisabled}
+              size="icon"
+              variant="ghost"
+            />
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {exercise.supersetId ? (
+            <Button
+              variant="ghost"
+              disabled={structuralDisabled}
+              aria-label={`Sacar ${exercise.name} de superserie`}
+              onClick={() => configure(separateMember(layout, exercise.id))}
+            >
+              Sacar de superserie
+            </Button>
+          ) : (
+            <>
+              <label className="flex min-h-11 items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  className="size-11 accent-primary"
+                  aria-label={`Seleccionar ${exercise.name} para superserie`}
+                  checked={selected.includes(exercise.id)}
+                  disabled={
+                    layoutDisabled || (selected.length >= 4 && !selected.includes(exercise.id))
+                  }
+                  onChange={() => selectGroup(exercise.id)}
+                />
+                Agrupar
+              </label>
+              <RoutineRestSelect
+                label={`Descanso de ${exercise.name}`}
+                value={exercise.restSeconds ?? null}
+                disabled={structuralDisabled}
+                onChange={(value) =>
+                  configure(
+                    layout.map((row) =>
+                      row.id === exercise.id ? { ...row, restSeconds: value } : row,
+                    ),
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+        <fieldset
+          disabled={
+            pending ||
+            orderPending ||
+            dragging ||
+            !!copyRequest ||
+            !!saveRequest ||
+            !!layoutRequest ||
+            selected.length > 0
+          }
+          className="mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
+        >
+          {(
+            [
+              ["sets", "Series", "numeric", 1, 10],
+              ["repsMin", "Reps mín.", "numeric", 1, 100],
+              ["repsMax", "Reps máx.", "numeric", 1, 100],
+              ["targetWeightKg", "Peso (kg)", "decimal", undefined, undefined],
+            ] as const
+          ).map(([field, label, inputMode, min, max]) => (
+            <label
+              key={field}
+              className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground"
+            >
+              {label}
+              <Input
+                aria-label={`${label} de ${exercise.name}`}
+                aria-invalid={!!errors[exercise.id]}
+                aria-describedby={errors[exercise.id] ? errorId : undefined}
+                type={inputMode === "numeric" ? "number" : "text"}
+                inputMode={inputMode}
+                min={min}
+                max={max}
+                placeholder={field === "targetWeightKg" ? "Libre" : undefined}
+                value={draft[field]}
+                onChange={(e) => change(draft, field, e.target.value)}
+                className="h-11 min-w-0 bg-background text-base font-medium tabular-nums text-foreground"
+              />
+            </label>
+          ))}
+        </fieldset>
+        <details className="mt-2" open={draft.note ? true : undefined}>
+          <summary className="min-h-11 cursor-pointer py-3 text-xs text-muted-foreground">
+            Nota del ejercicio{draft.note ? "" : " (opcional)"}
+          </summary>
+          <Input
+            aria-label={`Nota de ${exercise.name}`}
+            value={draft.note}
+            maxLength={500}
+            disabled={
+              pending ||
+              orderPending ||
+              dragging ||
+              !!copyRequest ||
+              !!saveRequest ||
+              !!layoutRequest ||
+              selected.length > 0
+            }
+            onChange={(e) => change(draft, "note", e.target.value)}
+            placeholder="Técnica, tempo o indicaciones"
+            className="h-11 bg-background"
+          />
+        </details>
+        {errors[exercise.id] ? (
+          <p id={errorId} role="alert" className="mt-2 text-sm text-destructive">
+            {errors[exercise.id]}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
   return (
     <Card>
       <CardHeader className="border-b pb-4">
@@ -411,147 +711,149 @@ function Editor({
             Arrastra desde el asa para reordenar. El orden se guarda al soltar.
           </p>
         ) : null}
+        {selected.length ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border p-3">
+            <Button
+              disabled={layoutDisabled || !groupSelected(layout, selected, "preview")}
+              onClick={() => {
+                const next = groupSelected(layout, selected, crypto.randomUUID());
+                if (next) configure(next);
+              }}
+            >
+              Agrupar seleccionados ({selected.length})
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={pending || !!layoutRequest}
+              onClick={() => {
+                setSelected([]);
+                guard.setDirty(selectionKey, false);
+              }}
+            >
+              Cancelar selección
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Selecciona de dos a cuatro ejercicios consecutivos.
+            </p>
+          </div>
+        ) : null}
+        {layoutError ? (
+          <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
+            <p>{layoutError}</p>
+            {layoutRequest ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  disabled={pending}
+                  onClick={() => configure(layoutRequest.layout, layoutRequest)}
+                >
+                  Reintentar configuración
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={pending}
+                  onClick={() => {
+                    if (
+                      !window.confirm(
+                        "¿Descartar la configuración pendiente y cargar la versión actual?",
+                      )
+                    )
+                      return;
+                    setLayoutRequest(null);
+                    setLayoutError(null);
+                    setSelected([]);
+                    setReview(null);
+                    persistLocal({ layoutRequest: null });
+                    removeRecovered();
+                    guard.setDirty(layoutKey, false);
+                    guard.setDirty(selectionKey, false);
+                    router.refresh();
+                  }}
+                >
+                  Descartar configuración
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <SortableExerciseList
-          items={orderedExercises}
+          items={blocks}
           disabled={dragDisabled}
-          onReorder={reorder}
+          onReorder={(ids) =>
+            reorder(
+              ids.flatMap((id) =>
+                blocks.find((block) => block.id === id)!.exercises.map((exercise) => exercise.id),
+              ),
+            )
+          }
           onBusyChange={(value) => {
             setDragging(value);
             guard.setDirty(dragKey, value);
           }}
         >
-          {(exercise, index, handle) => {
-            const draft = drafts[index];
-            const modified = changed.some((row) => row.id === draft.id);
-            const errorId = `error-${exercise.id}`;
-            return (
-              <div
-                key={exercise.id}
-                className={`rounded-md border p-3 ${modified ? "border-primary/40 bg-primary/5" : "bg-background"}`}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="flex min-w-0 flex-1 items-start gap-1">
+          {(block, blockIndex, handle) => (
+            <div
+              className={
+                block.supersetId
+                  ? "space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-2"
+                  : ""
+              }
+            >
+              {block.supersetId ? (
+                <div className="flex flex-wrap items-center justify-between gap-2 p-1">
+                  <div className="flex items-center gap-1">
                     {handle}
-                    <div className="min-w-0">
-                      <h4 className="text-sm font-semibold">
-                        <span className="mr-2 text-muted-foreground">{index + 1}.</span>
-                        {exercise.name}
-                      </h4>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {exercise.muscleGroup}
-                        {exercise.equipment ? ` · ${exercise.equipment}` : ""}
-                        {exercise.archived ? " · Archivado" : ""}
-                      </p>
-                    </div>
+                    <h4 className="text-sm font-semibold">{block.name}</h4>
                   </div>
-                  <div className="flex w-full shrink-0 justify-end gap-0.5 sm:w-auto">
+                  <RoutineRestSelect
+                    label={`Descanso de ${block.name}`}
+                    value={block.exercises[0].supersetRestSeconds ?? null}
+                    disabled={structuralDisabled}
+                    onChange={(value) =>
+                      configure(
+                        layout.map((row) =>
+                          row.supersetId === block.supersetId
+                            ? { ...row, supersetRestSeconds: value }
+                            : row,
+                        ),
+                      )
+                    }
+                  />
+                  <div className="flex flex-wrap gap-1">
                     <Button
-                      size="icon"
                       variant="ghost"
-                      aria-label={`Duplicar ${exercise.name}`}
-                      disabled={
-                        structuralDisabled || session.exercises.length >= 15 || exercise.archived
-                      }
-                      onClick={() =>
-                        duplicate({ id: crypto.randomUUID(), exerciseId: exercise.id })
-                      }
+                      disabled={structuralDisabled || blockIndex === 0}
+                      aria-label={`Subir ${block.name}`}
+                      onClick={() => moveBlock(block.id, -1)}
                     >
-                      <Copy aria-hidden />
+                      <ArrowUp aria-hidden />
                     </Button>
-                    {(
-                      [
-                        [-1, "Subir", ArrowUp],
-                        [1, "Bajar", ArrowDown],
-                      ] as const
-                    ).map(([delta, label, ControlIcon]) => {
-                      return (
-                        <Button
-                          key={delta}
-                          size="icon"
-                          variant="ghost"
-                          aria-label={`${label} ${exercise.name}`}
-                          disabled={
-                            structuralDisabled ||
-                            index + delta < 0 ||
-                            index + delta >= orderedExercises.length
-                          }
-                          onClick={() => {
-                            const ids = orderedExercises.map((e) => e.id);
-                            [ids[index], ids[index + delta]] = [ids[index + delta], ids[index]];
-                            reorder(ids);
-                          }}
-                        >
-                          <ControlIcon aria-hidden />
-                        </Button>
-                      );
-                    })}
-                    <ActionForm
-                      action={removeExerciseAction}
-                      fields={{ id: exercise.id, programId }}
-                      label={<Trash2 aria-hidden />}
-                      ariaLabel={`Quitar ${exercise.name}`}
-                      confirm={`¿Quitar ${exercise.name} de esta sesión?`}
-                      disabled={structuralDisabled}
-                      size="icon"
+                    <Button
                       variant="ghost"
-                    />
+                      disabled={structuralDisabled || blockIndex === blocks.length - 1}
+                      aria-label={`Bajar ${block.name}`}
+                      onClick={() => moveBlock(block.id, 1)}
+                    >
+                      <ArrowDown aria-hidden />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={structuralDisabled}
+                      onClick={() => configure(separateGroup(layout, block.supersetId!))}
+                    >
+                      Separar {block.name}
+                    </Button>
                   </div>
                 </div>
-                <fieldset
-                  disabled={pending || orderPending || dragging || !!copyRequest || !!saveRequest}
-                  className="mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
-                >
-                  {(
-                    [
-                      ["sets", "Series", "numeric", 1, 10],
-                      ["repsMin", "Reps mín.", "numeric", 1, 100],
-                      ["repsMax", "Reps máx.", "numeric", 1, 100],
-                      ["targetWeightKg", "Peso (kg)", "decimal", undefined, undefined],
-                    ] as const
-                  ).map(([field, label, inputMode, min, max]) => (
-                    <label
-                      key={field}
-                      className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground"
-                    >
-                      {label}
-                      <Input
-                        aria-label={`${label} de ${exercise.name}`}
-                        aria-invalid={!!errors[exercise.id]}
-                        aria-describedby={errors[exercise.id] ? errorId : undefined}
-                        type={inputMode === "numeric" ? "number" : "text"}
-                        inputMode={inputMode}
-                        min={min}
-                        max={max}
-                        placeholder={field === "targetWeightKg" ? "Libre" : undefined}
-                        value={draft[field]}
-                        onChange={(e) => change(draft, field, e.target.value)}
-                        className="h-11 min-w-0 bg-background text-base font-medium tabular-nums text-foreground"
-                      />
-                    </label>
-                  ))}
-                </fieldset>
-                <details className="mt-2" open={draft.note ? true : undefined}>
-                  <summary className="min-h-11 cursor-pointer py-3 text-xs text-muted-foreground">
-                    Nota del ejercicio{draft.note ? "" : " (opcional)"}
-                  </summary>
-                  <Input
-                    aria-label={`Nota de ${exercise.name}`}
-                    value={draft.note}
-                    maxLength={500}
-                    disabled={pending || orderPending || dragging || !!copyRequest || !!saveRequest}
-                    onChange={(e) => change(draft, "note", e.target.value)}
-                    placeholder="Técnica, tempo o indicaciones"
-                    className="h-11 bg-background"
-                  />
-                </details>
-                {errors[exercise.id] ? (
-                  <p id={errorId} role="alert" className="mt-2 text-sm text-destructive">
-                    {errors[exercise.id]}
-                  </p>
-                ) : null}
-              </div>
-            );
-          }}
+              ) : null}
+              {block.exercises.map((exercise) =>
+                renderExercise(
+                  exercise,
+                  orderedExercises.indexOf(exercise),
+                  block.supersetId ? null : handle,
+                ),
+              )}
+            </div>
+          )}
         </SortableExerciseList>
         {copyError ? (
           <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
@@ -604,7 +906,14 @@ function Editor({
               {dirty ? (
                 <Button
                   variant="ghost"
-                  disabled={pending || orderPending || dragging || !!saveRequest}
+                  disabled={
+                    pending ||
+                    orderPending ||
+                    dragging ||
+                    !!saveRequest ||
+                    !!layoutRequest ||
+                    selected.length > 0
+                  }
                   onClick={() => {
                     if (
                       window.confirm("¿Descartar las prescripciones sin guardar de esta sesión?")
@@ -628,7 +937,14 @@ function Editor({
               ) : null}
               <Button
                 disabled={
-                  !dirty || pending || orderPending || dragging || !!copyRequest || conflict
+                  !dirty ||
+                  pending ||
+                  orderPending ||
+                  dragging ||
+                  !!copyRequest ||
+                  conflict ||
+                  !!layoutRequest ||
+                  selected.length > 0
                 }
                 onClick={save}
               >
@@ -784,7 +1100,9 @@ function Editor({
             dragging ||
             !!copyRequest ||
             !!saveRequest ||
-            conflict
+            conflict ||
+            !!layoutRequest ||
+            selected.length > 0
           }
         />
       </CardContent>

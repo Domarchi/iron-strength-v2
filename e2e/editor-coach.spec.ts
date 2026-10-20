@@ -495,3 +495,56 @@ test("cerrar la pestaña conserva el borrador y confirmar el guardado limpia su 
   ).toEqual([]);
   await reopened.close();
 });
+
+test("el coach agrupa, prescribe descanso y mueve una superserie como bloque", async ({ page }) => {
+  const programId = await routine(page);
+  await page.getByRole("button", { name: "Agregar ejercicios", exact: true }).click();
+  await page.getByLabel("Buscar ejercicios", { exact: true }).fill("Peso muerto");
+  await page.getByRole("checkbox", { name: "Peso muerto Espalda · Barra", exact: true }).check();
+  await page.getByRole("button", { name: "Agregar seleccionados (1)", exact: true }).click();
+  await expect(visibleField(page, "Series de Peso muerto")).toBeVisible();
+  await page
+    .getByRole("checkbox", { name: "Seleccionar Sentadilla para superserie", exact: true })
+    .check();
+  await page
+    .getByRole("checkbox", { name: "Seleccionar Press de banca para superserie", exact: true })
+    .check();
+  await page.getByRole("button", { name: "Agrupar seleccionados (2)", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Superserie 1", exact: true })).toBeVisible();
+  await page.getByLabel("Descanso de Superserie 1", { exact: true }).selectOption("120");
+  await expect(page.getByText("Configuración guardada.", { exact: true })).toBeVisible();
+  const handle = page.getByRole("button", { name: "Reordenar Superserie 1", exact: true });
+  await handle.focus();
+  await handle.press("Space");
+  await handle.press("ArrowDown");
+  await handle.press("Space");
+  await expect(page.getByText("Orden guardado.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /1\.\s*Peso muerto/ })).toBeVisible();
+  await expect(page.getByLabel("Descanso de Superserie 1", { exact: true })).toHaveValue("120");
+  const data = await admin()
+    .from("program_sessions")
+    .select("session_exercises(position,superset_id,superset_rest_seconds,sets)")
+    .eq("program_id", programId)
+    .single();
+  const rows = data.data!.session_exercises.sort((a, b) => a.position - b.position);
+  expect(rows[0].superset_id).toBeNull();
+  expect(rows[1].superset_id).toBe(rows[2].superset_id);
+  expect(rows[1].superset_rest_seconds).toBe(120);
+  await page.setViewportSize({ width: 360, height: 800 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(
+    accessibility.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
+  ).toEqual([]);
+
+  await page.getByRole("button", { name: "Sacar Sentadilla de superserie", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Superserie 1", exact: true })).toHaveCount(0);
+  await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("3");
+});

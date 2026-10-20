@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { layoutRowSchema } from "./routine-layout";
 import type { DraftStorage } from "@/lib/workout/draft";
 const text = z.string();
 const row = z.object({
@@ -23,6 +24,10 @@ const schema = z.object({
   order: z.array(text).nullable(),
   orderRequest: request.nullable(),
   saveRequest: request.extend({ rows: z.array(row) }).nullable(),
+  layoutRequest: request
+    .extend({ layout: z.array(layoutRowSchema) })
+    .nullable()
+    .optional(),
   copyRequest: z.object({ id: text, exerciseId: text.optional() }).nullable(),
 });
 export type EditorDraft = z.infer<typeof schema>;
@@ -68,6 +73,16 @@ export function listEditorDrafts(
   }
   return result.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, entry]) => [name, canonical(entry)]),
+    );
+  return value;
+}
 export function createEditorPersistence(getStorage: () => DraftStorage | undefined) {
   let status: "clean" | "saved" | "error" = "clean";
   const listeners = new Set<() => void>();
@@ -100,7 +115,11 @@ export function createEditorPersistence(getStorage: () => DraftStorage | undefin
       try {
         const storage = getStorage();
         if (!storage) throw new Error("storage");
-        if (!onlyIfUnchanged || storage.getItem(key(draft)) === JSON.stringify(draft))
+        if (
+          !onlyIfUnchanged ||
+          JSON.stringify(canonical(JSON.parse(storage.getItem(key(draft)) ?? "null"))) ===
+            JSON.stringify(canonical(draft))
+        )
           storage.removeItem(key(draft));
         if (!silent) report("clean");
         return true;

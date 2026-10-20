@@ -27,3 +27,10 @@ Especificación y secuencia del plan aprobado registradas. Check completo en ver
 Metadatos opcionales de grupo y descanso por ejercicio, invariantes diferidas de tamaño/contigüidad/descanso común, disolución al borrar uno de dos integrantes y dominio de bloques. No cambia aún los controles del editor ni el recorrido del logger (T146–147). Se reutilizan RLS y revisión de sesión.
 
 Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 216 integración. El reordenamiento de T143 revierte completo si divide un grupo. Migración aplicada al desarrollo sin reset; misma huella de perfiles/programas/entrenamientos antes/después, excluyendo las columnas nuevas nulas.
+
+## T146
+
+- Selección de dos a cuatro ejercicios consecutivos, agrupación/separación, salida de un integrante después del bloque, orden interno con flechas y movimiento del bloque por arrastre/teclado. Descanso prescrito por ejercicio o grupo.
+- `configure_session_layout` guarda orden/grupos/descansos completos con revisión, recibo y RLS, sin modificar series/repeticiones/peso/notas. Peticiones inciertas recuperables en el borrador.
+- Pasan 329 comprobaciones SQL y 219 integración. Check final: 396 pruebas, formato/lint/tipos/build en verde. Migración aplicada al desarrollo conservando la huella de datos.
+- Primera suite E2E: 44/46. Corregida comparación de borradores que dependía del orden de propiedades JSON al incorporar un campo opcional (regresión unitaria añadida); el orden real del bloque era correcto, pero el selector de título nuevo exigía un espacio no presente en el nombre accesible. Validación final: 46/46 E2E en verde, sin reintentos, incluyendo comprobación móvil y accesibilidad del grupo.

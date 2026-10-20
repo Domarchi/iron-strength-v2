@@ -1,5 +1,7 @@
 "use server";
 
+import { configureSessionLayout } from "@/lib/data/session-layout";
+import type { LayoutRequest } from "@/lib/coach/routine-layout";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sessionExerciseSchema } from "@/domain/schemas";
@@ -203,4 +205,37 @@ export async function reviewSessionAction(programId: string, sessionId: string) 
   await requireCoach();
   const tree = await getProgramTree(await createClient(), programId);
   return tree?.sessions.find((session) => session.id === sessionId) ?? null;
+}
+
+export async function configureLayoutAction(
+  programId: string,
+  sessionId: string,
+  request: LayoutRequest,
+): Promise<EditorResult> {
+  await requireCoach();
+  try {
+    const db = await createClient();
+    const tree = await getProgramTree(db, programId);
+    if (!tree?.sessions.some((s) => s.id === sessionId))
+      return { error: messages.not_found, savedIds: [] };
+    const result = await configureSessionLayout(db, sessionId, request);
+    if (!result.ok)
+      return {
+        error: messages[result.reason],
+        savedIds: [],
+        conflict: result.reason === "conflict",
+      };
+    refresh(programId);
+    return {
+      error: null,
+      savedIds: request.layout.map((row) => row.id),
+      revision: result.revision,
+    };
+  } catch {
+    return {
+      error: "No se pudo confirmar la configuración. Reintenta sin repetir la operación.",
+      savedIds: [],
+      uncertain: true,
+    };
+  }
 }

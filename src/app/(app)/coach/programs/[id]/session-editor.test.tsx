@@ -12,6 +12,7 @@ vi.mock("../editor-actions", () => ({
   addExercisesAction: mocks.add,
   duplicateRoutineAction: mocks.duplicate,
   reviewSessionAction: vi.fn(),
+  configureLayoutAction: vi.fn(),
 }));
 vi.mock("../actions", () => ({
   moveExerciseAction: vi.fn(),
@@ -165,10 +166,20 @@ it("no envía valores inválidos y conserva datos si falla el guardado", async (
 });
 it("mantiene la selección al buscar y retira solo los ejercicios agregados en un fallo parcial", async () => {
   await act(() => btn("Agregar ejercicios").click());
-  const boxes = [...container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')];
+  const boxes = [
+    ...container.querySelectorAll<HTMLInputElement>(
+      '[aria-label="Catálogo de ejercicios"] input[type="checkbox"]',
+    ),
+  ];
   await act(() => boxes[0].click());
   await fill("Buscar ejercicios", "barra");
-  await act(() => container.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click());
+  await act(() =>
+    container
+      .querySelector<HTMLInputElement>(
+        '[aria-label="Catálogo de ejercicios"] input[type="checkbox"]',
+      )!
+      .click(),
+  );
   expect(btn("Agregar seleccionados (2)")).toBeTruthy();
   mocks.add.mockResolvedValueOnce({ savedIds: [catalog[0].id], error: "Fallo parcial" });
   await act(() => btn("Agregar seleccionados").click());

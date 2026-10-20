@@ -103,3 +103,12 @@ it("limpiar un origen recuperado nunca elimina una edición posterior de otra pe
   writer.remove(draft, true);
   expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([newer]);
 });
+
+it("limpia el origen aunque el orden de propiedades cambie al leer campos nuevos", () => {
+  const store = storage();
+  const writer = createEditorPersistence(() => store);
+  writer.persist({ ...draft, layoutRequest: null });
+  const restored = listEditorDrafts(store, "coach", "program", "session")[0];
+  writer.remove(restored, true);
+  expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([]);
+});

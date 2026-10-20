@@ -389,6 +389,9 @@ isOneToOne: false
 "auth_email_exists":
 { Args: { "p_email": string }; Returns: boolean
                            },
+"configure_session_layout":
+{ Args: { "p_expected_revision": number,"p_layout": Json,"p_request_id": string,"p_session_id": string }; Returns: number
+                           },
 "copy_program_week":
 { Args: { "p_from": number,"p_program_id": string,"p_replace"?: boolean,"p_to": number }; Returns: number
                            },
