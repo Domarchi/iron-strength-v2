@@ -53,6 +53,7 @@ export type SessionRow = {
   id: string;
   revision: number;
   title?: string | null;
+  weekday?: number | null;
   weekNumber: number;
   label: string;
   position: number;
@@ -192,7 +193,7 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
     .select(
       `id, coach_id, student_id, name, weeks_count, start_date, ends_on,
        program_sessions (
-         id, week_number, label, position, revision, title,
+         id, week_number, label, position, revision, title, weekday,
          session_exercises (
            id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note, rest_seconds, superset_id, superset_rest_seconds,
            exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg, archived_at ),
@@ -220,6 +221,7 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
         revision: s.revision,
         label: s.label,
         title: s.title,
+        weekday: s.weekday,
         position: s.position,
         exercises: s.session_exercises
           .map((e) => {
@@ -520,7 +522,7 @@ type MutationArgs = {
   requestId: string;
 };
 async function mutateSession(
-  args: MutationArgs & { rows?: unknown; orderedIds?: string[]; title?: string },
+  args: MutationArgs & { rows?: unknown; orderedIds?: string[]; title?: string; weekday?: number },
 ): Promise<Result<{ revision: number }>> {
   if (
     !z.uuid().safeParse(args.requestId).success ||
@@ -533,6 +535,7 @@ async function mutateSession(
     p_expected_revision: args.expectedRevision,
     p_request_id: args.requestId,
     ...(args.title !== undefined ? { p_title: args.title } : {}),
+    ...(args.weekday !== undefined ? { p_weekday: args.weekday } : {}),
     ...(args.rows
       ? { p_rows: args.rows as Database["public"]["Tables"]["routine_mutations"]["Row"]["payload"] }
       : {}),
@@ -547,16 +550,21 @@ async function mutateSession(
   return { ok: false, reason: failureFromError(error) };
 }
 export async function saveSessionPrescriptions(
-  args: MutationArgs & { rows: unknown; title?: string },
+  args: MutationArgs & { rows: unknown; title?: string; weekday?: number },
 ): Promise<Result<{ revision: number }>> {
   const parsed = z
     .array(prescriptionMutationSchema.extend({ id: z.uuid() }))
-    .min(args.title !== undefined ? 0 : 1)
+    .min(args.title !== undefined || args.weekday !== undefined ? 0 : 1)
     .max(15)
     .safeParse(args.rows);
   if (!parsed.success || new Set(parsed.data.map((row) => row.id)).size !== parsed.data.length)
     return { ok: false, reason: "invalid" };
   if (args.title !== undefined && !z.string().trim().max(80).safeParse(args.title).success)
+    return { ok: false, reason: "invalid" };
+  if (
+    args.weekday !== undefined &&
+    !z.number().int().min(-1).max(6).safeParse(args.weekday).success
+  )
     return { ok: false, reason: "invalid" };
   return mutateSession({ ...args, rows: parsed.data });
 }

@@ -890,3 +890,45 @@ test("descanso de lote exige la superserie completa y confirma una respuesta per
   for (const row of before.data!.session_exercises)
     expect(row).toMatchObject({ rest_seconds: null, superset_rest_seconds: 180 });
 });
+
+test("día sugerido recupera borrador y el coach puede mover su entrenamiento sin cambiar la rutina (T155)", async ({
+  page,
+}) => {
+  const templateId = await routine(page);
+  await page.getByLabel("Día orientativo de sesión A", { exact: true }).selectOption("6");
+  await page.reload();
+  await expect(page.getByLabel("Día orientativo de sesión A", { exact: true })).toHaveValue("6");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.getByText("Asignar a un alumno", { exact: true }).click();
+  await page.getByLabel("Inicio", { exact: true }).fill(mondayOf(santiagoDate(new Date())));
+  await page.getByRole("button", { name: "Asignar", exact: true }).click();
+  await expect(page.getByText(`Programa de ${COACH.name}`, { exact: true })).toBeVisible();
+  const assignedId = page.url().split("/").at(-1)!;
+  await page.goto("/week");
+  await expect(page.getByText("Llevas 0 de 1 sesiones", { exact: true })).toBeVisible();
+  await page.getByText("Cambiar día de sesión A", { exact: true }).click();
+  await page.getByLabel("Día de sesión A", { exact: true }).selectOption("0");
+  await page.getByRole("button", { name: "Guardar día", exact: true }).click();
+  await expect(page.getByText("Día guardado.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(/Pendiente: Lunes/)).toBeVisible();
+  await expect(page.getByText("Llevas 0 de 1 sesiones", { exact: true })).toBeVisible();
+  const { data, error } = await admin()
+    .from("program_sessions")
+    .select("weekday,session_day_overrides(weekday)")
+    .eq("program_id", assignedId)
+    .single();
+  expect(error).toBeNull();
+  expect(data).toMatchObject({ weekday: 6, session_day_overrides: { weekday: 0 } });
+  expect(
+    (await admin().from("program_sessions").select("weekday").eq("program_id", templateId).single())
+      .data?.weekday,
+  ).toBe(6);
+  await page.getByText("Cambiar día de sesión A", { exact: true }).click();
+  await page.getByLabel("Día de sesión A", { exact: true }).selectOption("coach");
+  await page.getByRole("button", { name: "Guardar día", exact: true }).click();
+  await expect(page.getByText("Día guardado.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Empezar", exact: true }).click();
+  await expect(page).toHaveURL(/\/workout\//);
+});

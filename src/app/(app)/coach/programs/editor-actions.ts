@@ -58,12 +58,15 @@ export async function savePrescriptionsAction(fd: FormData): Promise<EditorResul
   await requireCoach();
   const identity = mutationIdentity(fd);
   if (!identity.success) return { error: messages.invalid, savedIds: [] };
+  const weekday = fd.has("weekday") ? Number(fd.get("weekday")) : undefined;
+  if (weekday !== undefined && !z.number().int().min(-1).max(6).safeParse(weekday).success)
+    return { error: messages.invalid, savedIds: [] };
   const title = fd.has("title") ? String(fd.get("title")) : undefined;
   if (title !== undefined && title.trim().length > 80)
     return { error: messages.invalid, savedIds: [] };
   const parsed = z
     .array(prescriptionMutationSchema.extend({ id: z.string().min(1) }))
-    .min(title !== undefined ? 0 : 1)
+    .min(title !== undefined || weekday !== undefined ? 0 : 1)
     .max(15)
     .safeParse(readJson(fd, "rows"));
   if (!parsed.success || new Set(parsed.data.map((r) => r.id)).size !== parsed.data.length)
@@ -86,6 +89,7 @@ export async function savePrescriptionsAction(fd: FormData): Promise<EditorResul
       sessionId: session.id,
       rows: parsed.data,
       ...(title !== undefined ? { title } : {}),
+      ...(weekday !== undefined ? { weekday } : {}),
       ...identity.data,
     });
     if (!result.ok)

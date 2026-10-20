@@ -1,0 +1,78 @@
+"use client";
+import { useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import { WEEKDAYS } from "@/domain/session-schedule";
+import { moveDayAction } from "@/app/(app)/week/actions";
+export function SessionDayPicker({
+  sessionId,
+  label,
+  prescribed,
+  override,
+}: {
+  sessionId: string;
+  label: string;
+  prescribed: number | null;
+  override: number | null;
+}) {
+  const [value, setValue] = useState(override === null ? "coach" : String(override));
+  const [pending, startTransition] = useTransition();
+  const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null);
+  return (
+    <details className="mt-3 border-t pt-1">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">
+        Cambiar día de sesión {label}
+      </summary>
+      <p className="mb-2 text-xs text-muted-foreground">
+        Puedes entrenar cualquier día de esta semana.
+      </p>
+      <label className="flex flex-col gap-1 text-sm">
+        Día de sesión {label}
+        <select
+          aria-label={`Día de sesión ${label}`}
+          className="min-h-11 w-full rounded-md border bg-background px-3 text-base"
+          value={value}
+          disabled={pending}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setMessage(null);
+          }}
+        >
+          <option value="coach">Sugerido: {WEEKDAYS[prescribed ?? -1] ?? "sin día"}</option>
+          {WEEKDAYS.map((day, i) => (
+            <option value={i} key={day}>
+              {day}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Button
+        className="mt-2 w-full"
+        variant="outline"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            try {
+              const result = await moveDayAction(
+                sessionId,
+                value === "coach" ? null : Number(value),
+              );
+              setMessage({ error: !!result.error, text: result.error ?? "Día guardado." });
+            } catch {
+              setMessage({
+                error: true,
+                text: "No se pudo confirmar el día. Reintenta cuando tengas conexión.",
+              });
+            }
+          })
+        }
+      >
+        {pending ? "Guardando…" : "Guardar día"}
+      </Button>
+      {message ? (
+        <p role={message.error ? "alert" : "status"} className="mt-2 text-sm">
+          {message.text}
+        </p>
+      ) : null}
+    </details>
+  );
+}

@@ -65,7 +65,7 @@ for (const scheme of ["light", "dark"] as const) {
 
       await login(page, ANA.email, ANA.password);
       await page.goto("/week");
-      await expect(page.getByText("Sesión A")).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Sesión A", exact: true })).toBeVisible();
       await audit(page, "mi semana");
 
       await page.goto(`/workout/${sessionId}`);

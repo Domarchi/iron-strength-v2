@@ -174,3 +174,15 @@ it("conserva la preparación de un lote y los campos explícitos tras recargar",
   writer.persist(pending);
   expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([pending]);
 });
+
+it("recupera el día pendiente y su solicitud sin perder títulos o prescripciones", () => {
+  const store = storage();
+  const writer = createEditorPersistence(() => store);
+  const pending = {
+    ...draft,
+    weekday: 4,
+    saveRequest: { id: "day-request", revision: 2, rows: [], weekday: 4 },
+  };
+  writer.persist(pending);
+  expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([pending]);
+});

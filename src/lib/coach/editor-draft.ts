@@ -28,10 +28,17 @@ const schema = z.object({
   updatedAt: z.iso.datetime(),
   bulk: bulkDraftSchema.nullable().optional(),
   title: z.string().optional(),
+  weekday: z.number().int().min(-1).max(6).optional(),
   edits: z.record(z.string(), row),
   order: z.array(text).nullable(),
   orderRequest: request.nullable(),
-  saveRequest: request.extend({ rows: z.array(row), title: z.string().optional() }).nullable(),
+  saveRequest: request
+    .extend({
+      rows: z.array(row),
+      title: z.string().optional(),
+      weekday: z.number().int().min(-1).max(6).optional(),
+    })
+    .nullable(),
   layoutRequest: request
     .extend({ layout: z.array(layoutRowSchema) })
     .nullable()

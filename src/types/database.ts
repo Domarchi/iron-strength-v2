@@ -223,14 +223,14 @@ isOneToOne: true
                   ]
                 },"program_sessions": {
                   Row: {
-                    "id": string,"label": string,"position": number,"program_id": string,"revision": number,"title": string | null,"week_number": number
+                    "id": string,"label": string,"position": number,"program_id": string,"revision": number,"title": string | null,"week_number": number,"weekday": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "id"?: string,"label": string,"position"?: number,"program_id": string,"revision"?: number,"title"?: string | null,"week_number": number
+                    "id"?: string,"label": string,"position"?: number,"program_id": string,"revision"?: number,"title"?: string | null,"week_number": number,"weekday"?: number | null
                   }
                   Update: {
-                    "id"?: string,"label"?: string,"position"?: number,"program_id"?: string,"revision"?: number,"title"?: string | null,"week_number"?: number
+                    "id"?: string,"label"?: string,"position"?: number,"program_id"?: string,"revision"?: number,"title"?: string | null,"week_number"?: number,"weekday"?: number | null
                   }
                   Relationships: [
                     {
@@ -316,6 +316,32 @@ isOneToOne: false
       columns: ["session_id"]
 isOneToOne: false
       referencedRelation: "program_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"session_day_overrides": {
+                  Row: {
+                    "session_id": string,"student_id": string,"weekday": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "session_id": string,"student_id": string,"weekday": number
+                  }
+                  Update: {
+                    "session_id"?: string,"student_id"?: string,"weekday"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "session_day_overrides_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: true
+      referencedRelation: "program_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "session_day_overrides_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -493,7 +519,7 @@ isOneToOne: false
 { Args: { "p_workout_id": string }; Returns: undefined
                            },
 "mutate_routine_session":
-{ Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string,"p_title"?: string }; Returns: number
+{ Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string,"p_title"?: string,"p_weekday"?: number }; Returns: number
                            },
 "record_login_failure":
 { Args: { "p_email_hash": string }; Returns: undefined

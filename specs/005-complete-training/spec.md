@@ -35,7 +35,9 @@ Un coach (también entrena) y tres alumnos, acceso desde teléfonos por Internet
 - Título opcional de sesión de hasta 80 caracteres, conservando A–G. Se muestra al coach y al alumno, se copia y asigna con la rutina. El título comparte revisión, guardado atómico, borrador y resolución explícita de conflictos con las prescripciones; vacío vuelve a mostrar solo la letra.
 - Edición múltiple de 1–15 ejercicios: activar explícitamente series, rango de repeticiones o descanso, revisar vista previa, aplicar al borrador y guardar la sesión atómicamente. Conservar notas, pesos y campos no elegidos también al resolver un conflicto. Las mutaciones de lote indican los campos elegidos; la base valida esa lista y solo actualiza esos campos.
 - En superseries, cambiar el descanso requiere seleccionar todos sus integrantes y modifica el descanso de la ronda; fuera de grupos modifica el individual. La selección puede incluir grupos y ejercicios sueltos. La preparación del lote y su aplicación al borrador se recuperan tras recargar; cancelar la preparación no modifica prescripciones.
-- Día orientativo opcional por sesión. Alumno puede mover dentro de la misma semana, sin cambiar rutina ni bloquear inicio ni alterar cumplimiento.
+- Día orientativo opcional por sesión (lunes a domingo), compartiendo guardado, revisión y borrador del título. Viaja en copias y asignaciones; RF-17 también protege cambios directos del día.
+- El alumno puede elegir otro día de la semana vigente o volver al día del coach. Su elección privada por sesión no modifica la prescripción ni la revisión de la rutina, no se copia a otros programas y cae al borrar su cuenta o la sesión. La base rechaza cambios sobre semanas pasadas/futuras o sesiones ajenas.
+- Mi semana muestra el día efectivo y distingue completadas, pendientes (hoy/pasadas/sin día) y previstas (días futuros). Todas pueden iniciarse cualquier día de esa misma semana; el día nunca bloquea inicio ni altera cumplimiento.
 
 ## Seguimiento
 

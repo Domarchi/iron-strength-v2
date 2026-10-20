@@ -25,6 +25,7 @@ import {
   type CatalogExercise,
   type PrescriptionDraft,
 } from "@/lib/coach/routine-editor";
+import { WEEKDAYS } from "@/domain/session-schedule";
 import { exerciseBlocks } from "@/domain/supersets";
 import {
   groupSelected,
@@ -140,6 +141,7 @@ function Editor({
     revision: number;
     rows: PrescriptionDraft[];
     title?: string;
+    weekday?: number;
   } | null>(restored?.saveRequest ?? null);
   const [orderRequest, setOrderRequest] = useState<{ id: string; revision: number } | null>(
     restored?.orderRequest ?? null,
@@ -153,6 +155,7 @@ function Editor({
       !restored.layoutRequest &&
       !restored.alternativeRequest,
   );
+  const [weekday, setWeekday] = useState<number | undefined>(restored?.weekday);
   const [title, setTitle] = useState<string | undefined>(restored?.title);
   const [edits, setEdits] = useState<Record<string, PrescriptionDraft>>(restored?.edits ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -217,7 +220,11 @@ function Editor({
     (row) => !session.exercises.some((e) => e.id === row.id),
   );
   const dirty =
-    title !== undefined || changed.length > 0 || orphanEdits.length > 0 || !!saveRequest;
+    title !== undefined ||
+    weekday !== undefined ||
+    changed.length > 0 ||
+    orphanEdits.length > 0 ||
+    !!saveRequest;
   const totalSets = drafts.reduce(
     (sum, row) => sum + (/^\d+$/.test(row.sets) ? Number(row.sets) : 0),
     0,
@@ -253,6 +260,7 @@ function Editor({
       updatedAt: new Date().toISOString(),
       edits,
       title,
+      weekday,
       bulk,
       order,
       orderRequest,
@@ -267,6 +275,7 @@ function Editor({
     if (
       next.bulk ||
       next.title !== undefined ||
+      next.weekday !== undefined ||
       Object.keys(next.edits).length ||
       next.order ||
       next.saveRequest ||
@@ -298,6 +307,7 @@ function Editor({
     setGuardDirty(
       serverSession.id,
       restored.title !== undefined ||
+        restored.weekday !== undefined ||
         Object.keys(restored.edits).length > 0 ||
         !!restored.saveRequest,
     );
@@ -564,7 +574,8 @@ function Editor({
     const original = session.exercises.find((e) => e.id === draft.id);
     if (original && JSON.stringify(next[draft.id]) === JSON.stringify(prescriptionDraft(original)))
       delete next[draft.id];
-    if (!Object.keys(next).length && title === undefined && !bulk) baseRevision.current = null;
+    if (!Object.keys(next).length && title === undefined && weekday === undefined && !bulk)
+      baseRevision.current = null;
     persistLocal({ edits: next });
     setEdits(next);
     setErrors((old) => ({ ...old, [draft.id]: "" }));
@@ -573,6 +584,7 @@ function Editor({
     guard.setDirty(
       session.id,
       title !== undefined ||
+        weekday !== undefined ||
         session.exercises.some(
           (row) =>
             next[row.id] && JSON.stringify(next[row.id]) !== JSON.stringify(prescriptionDraft(row)),
@@ -585,9 +597,10 @@ function Editor({
       revision: baseRevision.current ?? session.revision,
       rows: changed,
       ...(title !== undefined ? { title } : {}),
+      ...(weekday !== undefined ? { weekday } : {}),
     };
     const validation =
-      request.rows.length === 0 && request.title !== undefined
+      request.rows.length === 0 && (request.title !== undefined || request.weekday !== undefined)
         ? { rows: [], errors: {}, error: null }
         : validatePrescriptions(request.rows);
     setErrors(validation.errors);
@@ -601,6 +614,7 @@ function Editor({
     setSaveRequest(request);
     fd.set("rows", JSON.stringify(request.rows));
     if (request.title !== undefined) fd.set("title", request.title);
+    if (request.weekday !== undefined) fd.set("weekday", String(request.weekday));
     fd.set("requestId", request.id);
     fd.set("revision", String(request.revision));
     startTransition(async () => {
@@ -615,23 +629,28 @@ function Editor({
         persistLocal({
           edits: nextEdits,
           title: result.error ? title : undefined,
+          weekday: result.error ? weekday : undefined,
           saveRequest: result.uncertain ? request : null,
           revision: result.error ? request.revision : (result.revision ?? session.revision),
         });
         if (!result.error) removeRecovered();
         if (!result.error) setReview(null);
         setEdits(nextEdits);
-        if (!result.error) setTitle(undefined);
+        if (!result.error) {
+          setTitle(undefined);
+          setWeekday(undefined);
+        }
         const remaining = changed.filter((row) => !result.savedIds.includes(row.id));
         guard.setDirty(
           session.id,
           remaining.length > 0 ||
             !!result.uncertain ||
-            (!!result.error && request.title !== undefined),
+            (!!result.error && (request.title !== undefined || request.weekday !== undefined)),
         );
         setError(result.error);
         setStatus(
-          result.savedIds.length || (!result.error && request.title !== undefined)
+          result.savedIds.length ||
+            (!result.error && (request.title !== undefined || request.weekday !== undefined))
             ? remaining.length
               ? `${result.savedIds.length} cambios guardados; ${remaining.length} pendientes.`
               : "Cambios guardados."
@@ -924,11 +943,60 @@ function Editor({
               setError(null);
               guard.setDirty(
                 session.id,
-                next !== undefined || changed.length > 0 || orphanEdits.length > 0,
+                next !== undefined ||
+                  weekday !== undefined ||
+                  changed.length > 0 ||
+                  orphanEdits.length > 0,
               );
             }}
           />
         </label>
+        <label className="mt-3 flex flex-col gap-1 text-sm font-medium">
+          Día orientativo de sesión {session.label}
+          <select
+            aria-label={`Día orientativo de sesión ${session.label}`}
+            aria-describedby={`day-hint-${session.id}`}
+            className="min-h-11 rounded-md border bg-background px-3 text-base"
+            value={weekday ?? session.weekday ?? -1}
+            disabled={
+              pending ||
+              orderPending ||
+              dragging ||
+              conflict ||
+              !!saveRequest ||
+              !!copyRequest ||
+              !!layoutRequest ||
+              alternativesDirty ||
+              selected.length > 0
+            }
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              const next = value === (session.weekday ?? -1) ? undefined : value;
+              baseRevision.current ??= session.revision;
+              setWeekday(next);
+              persistLocal({ weekday: next });
+              setStatus(null);
+              setError(null);
+              guard.setDirty(
+                session.id,
+                next !== undefined ||
+                  title !== undefined ||
+                  changed.length > 0 ||
+                  orphanEdits.length > 0,
+              );
+            }}
+          >
+            <option value={-1}>Sin día sugerido</option>
+            {WEEKDAYS.map((day, index) => (
+              <option key={day} value={index}>
+                {day}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p id={`day-hint-${session.id}`} className="mt-1 text-xs text-muted-foreground">
+          El alumno puede moverlo dentro de su semana.
+        </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {!session.exercises.length ? (
@@ -1132,7 +1200,7 @@ function Editor({
             <div className="text-xs">
               <p className="font-medium">
                 {dirty
-                  ? `${changed.length} ejercicios con cambios${title !== undefined ? " · título pendiente" : ""}`
+                  ? `${changed.length} ejercicios con cambios${title !== undefined ? " · título pendiente" : ""}${weekday !== undefined ? " · día pendiente" : ""}`
                   : "Prescripción al día"}
               </p>
               <p className="mt-1 text-muted-foreground">
@@ -1156,8 +1224,14 @@ function Editor({
                   }
                   onClick={() => {
                     if (window.confirm("¿Descartar los cambios sin guardar de esta sesión?")) {
-                      persistLocal({ edits: {}, title: undefined, saveRequest: null });
+                      persistLocal({
+                        edits: {},
+                        title: undefined,
+                        weekday: undefined,
+                        saveRequest: null,
+                      });
                       setTitle(undefined);
+                      setWeekday(undefined);
                       removeRecovered();
                       baseRevision.current = null;
                       setConflict(false);
@@ -1298,6 +1372,13 @@ function Editor({
                         Descartar lote de ejercicios eliminados
                       </Button>
                     ) : null}
+                  </div>
+                ) : null}
+                {weekday !== undefined ? (
+                  <div className="rounded border p-2">
+                    <p className="font-medium">Día orientativo</p>
+                    <p>Tu borrador: {WEEKDAYS[weekday] ?? "Sin día sugerido"}</p>
+                    <p>Actual: {WEEKDAYS[review.weekday ?? -1] ?? "Sin día sugerido"}</p>
                   </div>
                 ) : null}
                 {title !== undefined ? (

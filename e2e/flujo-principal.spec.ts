@@ -112,7 +112,7 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await coach.goto("/coach/programs");
   await coach.getByRole("link", { name: /Plan E2E/ }).click();
   await coach.getByText("Asignar a un alumno", { exact: true }).click();
-  await coach.getByLabel("Alumno").selectOption({ label: STUDENT.name });
+  await coach.getByLabel("Alumno", { exact: true }).selectOption({ label: STUDENT.name });
   const today = santiagoDate(new Date());
   await coach.getByLabel("Inicio", { exact: true }).fill(mondayOf(today));
   await coach.getByRole("button", { name: "Asignar" }).click();

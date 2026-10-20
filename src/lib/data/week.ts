@@ -18,12 +18,17 @@ import {
 } from "../../domain/program-weeks.ts";
 import type { Database } from "../../types/database.ts";
 
+import { scheduledDate } from "@/domain/session-schedule";
+
 type Client = SupabaseClient<Database>;
 
 export type CurrentProgram = ProgramRange & { id: string; name: string };
 
 export type WeekSession = SessionStatusEntry & {
   title?: string | null;
+  weekday?: number | null;
+  overrideWeekday?: number | null;
+  scheduledOn?: string | null;
   exerciseCount: number;
   exerciseNames: string[];
 };
@@ -82,7 +87,9 @@ export async function getWeekView(
   const [sessionsResult, workoutsResult] = await Promise.all([
     db
       .from("program_sessions")
-      .select("id, week_number, label, title, session_exercises(position, exercises(name))")
+      .select(
+        "id, week_number, label, title, weekday, session_day_overrides(weekday), session_exercises(position, exercises(name))",
+      )
       .eq("program_id", program.id),
     db
       .from("workouts")
@@ -150,6 +157,16 @@ export async function getWeekView(
       return {
         ...s,
         title: sessionsResult.data.find((row) => row.id === s.sessionId)?.title ?? null,
+        weekday: sessionsResult.data.find((row) => row.id === s.sessionId)?.weekday ?? null,
+        overrideWeekday:
+          sessionsResult.data.find((row) => row.id === s.sessionId)?.session_day_overrides
+            ?.weekday ?? null,
+        scheduledOn: scheduledDate(
+          weekStart,
+          sessionsResult.data.find((row) => row.id === s.sessionId)?.weekday ?? null,
+          sessionsResult.data.find((row) => row.id === s.sessionId)?.session_day_overrides
+            ?.weekday ?? null,
+        ),
         exerciseCount: names.length,
         exerciseNames: names,
       };

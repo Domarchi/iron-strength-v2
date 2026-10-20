@@ -6,7 +6,7 @@ insert into public.programs (id,coach_id,name,weeks_count) values ('a1000000-000
 insert into public.program_sessions(id,program_id,week_number,label) values ('a2000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000001',1,'A');
 insert into public.session_exercises(id,program_session_id,exercise_id,sets,reps_min,reps_max) values ('a3000000-0000-0000-0000-000000000001','a2000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000001',3,8,12);
 select ok((select relrowsecurity from pg_class where oid='public.routine_mutations'::regclass),'recibos con RLS');
-select isnt_definer('public','mutate_routine_session',array['uuid','integer','uuid','jsonb','uuid[]','text'],'RPC respeta RLS');
+select isnt_definer('public','mutate_routine_session',array['uuid','integer','uuid','jsonb','uuid[]','text','integer'],'RPC respeta RLS');
 select tests.authenticate_as(tests.coach_id());
 select is((select revision from public.program_sessions limit 1),1,'inserción incrementa revisión');
 select lives_ok($$select public.mutate_routine_session('a2000000-0000-0000-0000-000000000001',1,'a4000000-0000-0000-0000-000000000001',null,array['a3000000-0000-0000-0000-000000000001']::uuid[])$$,'coach ordena');

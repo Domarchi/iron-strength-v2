@@ -1,3 +1,4 @@
+import { WEEKDAYS } from "@/domain/session-schedule";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -233,6 +234,7 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
                       <CardTitle className="text-base" role="heading" aria-level={3}>
                         Sesión {session.label}
                         {session.title ? ` · ${session.title}` : ""}
+                        {session.weekday != null ? ` · ${WEEKDAYS[session.weekday]}` : ""}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>

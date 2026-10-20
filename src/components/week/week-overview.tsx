@@ -1,3 +1,5 @@
+import { orderScheduledSessions, scheduleState, WEEKDAYS } from "@/domain/session-schedule";
+import { SessionDayPicker } from "./session-day-picker";
 import Link from "next/link";
 import { Check, ChevronRight, Clock, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,12 +16,15 @@ function RoutineCard({
   session,
   next,
   trainedToday,
+  today,
 }: {
   session: WeekSession;
   next: boolean;
   trainedToday: boolean;
+  today: string;
 }) {
   const done = session.status === "done";
+  const planned = scheduleState(session.status, session.scheduledOn ?? null, today) === "planned";
   const names = session.exerciseNames.slice(0, 4);
   return (
     <section
@@ -36,7 +41,7 @@ function RoutineCard({
         </h3>
         {next ? (
           <span className="rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-            {trainedToday ? "Siguiente sesión" : "Hoy toca"}
+            {planned || trainedToday ? "Siguiente sesión" : "Hoy toca"}
           </span>
         ) : done ? (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
@@ -44,11 +49,18 @@ function RoutineCard({
             Hecha
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">Pendiente</span>
+          <span className="text-xs text-muted-foreground">
+            {planned ? "Prevista" : "Pendiente"}
+          </span>
         )}
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         {session.exerciseCount} {session.exerciseCount === 1 ? "ejercicio" : "ejercicios"}
+      </p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {session.scheduledOn
+          ? `${planned ? "Prevista" : done ? "Programada" : "Pendiente"}: ${WEEKDAYS[session.overrideWeekday ?? session.weekday ?? 0]} ${fmt(session.scheduledOn)}`
+          : "Sin día sugerido"}
       </p>
       <ul className="my-4 flex flex-1 flex-col gap-2.5">
         {names.map((name, i) => (
@@ -91,6 +103,12 @@ function RoutineCard({
           <ChevronRight className="size-4" aria-hidden />
         </Button>
       )}
+      <SessionDayPicker
+        sessionId={session.sessionId}
+        label={session.label}
+        prescribed={session.weekday ?? null}
+        override={session.overrideWeekday ?? null}
+      />
     </section>
   );
 }
@@ -104,14 +122,13 @@ export function WeekOverview({
   today: string;
   streak: { current: number; longest: number };
 }) {
-  const next = nextPendingSession(view.sessions);
+  const scheduled = orderScheduledSessions(view.sessions);
+  const next = nextPendingSession(scheduled);
   const percent =
     view.compliance.planned > 0
       ? Math.round((view.compliance.done / view.compliance.planned) * 100)
       : 0;
-  const ordered = next
-    ? [next, ...view.sessions.filter((session) => session !== next)]
-    : view.sessions;
+  const ordered = next ? [next, ...scheduled.filter((session) => session !== next)] : scheduled;
   return (
     <div className="flex flex-col gap-5">
       <section aria-label="Tu semana de entrenamiento" className="border-b pb-4">
@@ -167,6 +184,7 @@ export function WeekOverview({
                   session={session}
                   next={session === next}
                   trainedToday={view.trainedDates.includes(today)}
+                  today={today}
                 />
               </li>
             ))}
