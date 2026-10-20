@@ -50,7 +50,7 @@ export async function getWorkoutContext(
       `id, week_number, label, program_id,
        programs ( name, start_date, ends_on, weeks_count, student_id ),
        session_exercises (
-         id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note,
+         id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note, rest_seconds, superset_id, superset_rest_seconds,
          exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg )
        )`,
     )
@@ -126,6 +126,9 @@ export async function getWorkoutContext(
         isBodyweight: exercise.is_bodyweight,
         prescribed,
         note: row.note,
+        restSeconds: row.rest_seconds,
+        supersetId: row.superset_id,
+        supersetRestSeconds: row.superset_rest_seconds,
         lastWeightKg: last && last.topWeightKg > 0 ? last.topWeightKg : null,
         last: last ? { date: last.date, sets: last.sets } : null,
         suggestion: last

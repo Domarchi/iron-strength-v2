@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addSet,
+  setExerciseRestSeconds,
   buildPayload,
   canComplete,
   createDraft,
@@ -268,5 +269,24 @@ describe("finishDraft (RF-24)", () => {
       finishedAt: "2026-10-07T15:45:30.000Z",
       durationSeconds: 2730,
     });
+  });
+});
+
+describe("prescripciones de descanso y grupos (T147)", () => {
+  it("precarga metadatos y ajusta solo el descanso compartido del entrenamiento", () => {
+    const draft = create([
+      { ...squat, restSeconds: 45, supersetId: "g", supersetRestSeconds: 120 },
+      { ...pullUp, restSeconds: 30, supersetId: "g", supersetRestSeconds: 120 },
+      bench,
+    ]);
+    expect(draft.exercises[0]).toMatchObject({
+      restSeconds: 45,
+      supersetId: "g",
+      supersetRestSeconds: 120,
+    });
+    const updated = setExerciseRestSeconds(draft, 1, 0);
+    expect(updated.exercises.slice(0, 2).map((e) => e.supersetRestSeconds)).toEqual([0, 0]);
+    expect(updated.exercises[0].restSeconds).toBe(45);
+    expect(updated.exercises[2]).toEqual(draft.exercises[2]);
   });
 });

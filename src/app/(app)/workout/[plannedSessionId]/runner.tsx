@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, CircleCheck, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { restAfterSet, type Rest } from "@/domain/rest-timer";
+import { nextSupersetSet, finishedSupersetRound } from "@/domain/superset-rounds";
 import { formatKg } from "@/domain/format";
 import type { WorkoutContext } from "@/lib/data/workout-context";
 import { clearDraft, loadDraft, type DraftStorage, type WorkoutDraft } from "@/lib/workout/draft";
@@ -66,6 +67,9 @@ function initialDraft(
       isBodyweight: e.isBodyweight,
       prescribed: e.prescribed,
       lastWeightKg: e.lastWeightKg,
+      restSeconds: e.restSeconds,
+      supersetId: e.supersetId,
+      supersetRestSeconds: e.supersetRestSeconds,
     })),
     now: new Date(),
   });
@@ -126,6 +130,12 @@ function Elapsed({ startedAt }: { startedAt: string }) {
   const mm = String(m).padStart(2, "0");
   const ss = String(s).padStart(2, "0");
   return <span>{h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`}</span>;
+}
+
+function resumeExercise(draft: WorkoutDraft) {
+  const first = nextPendingExercise(draft);
+  const target = first?.supersetId ? nextSupersetSet(draft.exercises, first.supersetId) : null;
+  return target ? draft.exercises[target.exerciseIndex] : first;
 }
 
 const HINT_TEXT = "Revisa el peso y las repeticiones para marcar la serie.";
@@ -234,7 +244,7 @@ function ActiveWorkoutRunner({
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<{ setId: string; text: string } | null>(null);
   const [activeId, setActiveId] = useState(
-    () => nextPendingExercise(initial)?.sessionExerciseId ?? null,
+    () => resumeExercise(initial)?.sessionExerciseId ?? null,
   );
   const [undo, setUndo] = useState<{
     draft: WorkoutDraft;
@@ -301,14 +311,21 @@ function ActiveWorkoutRunner({
       return false;
     }
     setHint(null);
+    const exercise = current.exercises[exIdx];
+    const groupId = exercise.supersetId;
+    const groupWork = !!groupId && !result.wasWarmup;
+    const shouldRest =
+      !groupWork || finishedSupersetRound(current.exercises, result.draft.exercises, groupId);
     const next = result.completed
       ? {
           ...result.draft,
-          rest: restAfterSet(
-            new Date().getTime(),
-            result.wasWarmup,
-            current.exercises[exIdx].restSeconds,
-          ),
+          rest: shouldRest
+            ? restAfterSet(
+                new Date().getTime(),
+                result.wasWarmup,
+                groupId ? exercise.supersetRestSeconds : exercise.restSeconds,
+              )
+            : null,
         }
       : result.draft;
     commit(
@@ -319,7 +336,10 @@ function ActiveWorkoutRunner({
     );
     if (result.completed) {
       const exercise = next.exercises[exIdx];
-      if (isExerciseComplete(exercise))
+      const target = groupWork ? nextSupersetSet(next.exercises, groupId) : null;
+      if (target)
+        focusField(next.exercises[target.exerciseIndex].sessionExerciseId, undefined, false);
+      else if (isExerciseComplete(exercise))
         setActiveId(
           nextPendingExercise(next, exercise.sessionExerciseId)?.sessionExerciseId ?? null,
         );
@@ -327,7 +347,7 @@ function ActiveWorkoutRunner({
     return true;
   }
 
-  function focusField(exerciseId: string, setId?: string) {
+  function focusField(exerciseId: string, setId?: string, focusInput = true) {
     setActiveId(exerciseId);
     requestAnimationFrame(() => {
       const section = [
@@ -336,7 +356,7 @@ function ActiveWorkoutRunner({
       const input = [
         ...(section?.querySelectorAll<HTMLInputElement>("input[data-set-id]") ?? []),
       ].find((node) => !setId || node.dataset.setId === setId);
-      input?.focus({ preventScroll: true });
+      if (focusInput) input?.focus({ preventScroll: true });
       section?.scrollIntoView?.({
         block: "start",
         behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
@@ -350,6 +370,15 @@ function ActiveWorkoutRunner({
     const exercise = draftRef.current.exercises[exIdx];
     if (!exercise.sets[setIdx].done && !toggleSet(exIdx, setIdx)) return;
     const updated = draftRef.current.exercises[exIdx];
+    const groupTarget =
+      updated.supersetId && !updated.sets[setIdx].isWarmup
+        ? nextSupersetSet(draftRef.current.exercises, updated.supersetId)
+        : null;
+    if (groupTarget) {
+      const target = draftRef.current.exercises[groupTarget.exerciseIndex];
+      focusField(target.sessionExerciseId, target.sets[groupTarget.setIndex].id);
+      return;
+    }
     const nextSet =
       updated.sets.slice(setIdx + 1).find((set) => !set.done) ??
       updated.sets.find((set) => !set.done);
@@ -561,6 +590,17 @@ function ActiveWorkoutRunner({
         </div>
       </header>
 
+      {draft.exercises.some((e) => e.supersetId) ? (
+        <p
+          role="status"
+          className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm"
+        >
+          Alterna los ejercicios de cada superserie. Descansa al terminar la ronda.
+          {activeId
+            ? ` Ahora: ${draft.exercises.find((e) => e.sessionExerciseId === activeId)?.name ?? ""}.`
+            : ""}
+        </p>
+      ) : null}
       {draft.exercises.map((exercise, exIdx) => {
         const info = context.exercises.find(
           (c) => c.sessionExerciseId === exercise.sessionExerciseId,
@@ -588,6 +628,11 @@ function ActiveWorkoutRunner({
           <ExerciseCard
             key={exercise.sessionExerciseId}
             exercise={exercise}
+            groupLabel={
+              exercise.supersetId
+                ? `Superserie ${[...new Set(draft.exercises.map((e) => e.supersetId).filter(Boolean))].indexOf(exercise.supersetId) + 1}`
+                : undefined
+            }
             active={activeId === exercise.sessionExerciseId}
             onActivate={() => setActiveId(exercise.sessionExerciseId)}
             onCompleteAndAdvance={(setIdx) => completeAndAdvance(exIdx, setIdx)}

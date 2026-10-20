@@ -170,3 +170,18 @@ describe("borrador de la sesión en curso (RF-22, RF-24, DC-8)", () => {
     });
   });
 });
+
+it("recupera grupo, descanso compartido y serie pendiente sin alterar borradores antiguos", () => {
+  const store = fakeStorage(),
+    value = draft();
+  const group = "11111111-1111-4111-8111-111111111112";
+  value.exercises[0] = {
+    ...value.exercises[0],
+    supersetId: group,
+    supersetRestSeconds: 120,
+    restSeconds: 45,
+  };
+  value.rest = { endsAt: 1792422090000, totalSeconds: 120 };
+  saveDraft(store, value);
+  expect(loadDraft(store, value.userId, value.plannedSessionId)).toEqual(value);
+});

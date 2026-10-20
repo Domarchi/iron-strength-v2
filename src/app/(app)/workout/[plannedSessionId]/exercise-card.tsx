@@ -23,10 +23,11 @@ import { ExerciseThumbnail } from "@/components/workout/exercise-thumbnail";
 
 const COLUMNS =
   "grid grid-cols-[2.75rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_3rem] items-center gap-2";
-const REST_OPTIONS = [0, 30, 60, 90, 120, 180, 300];
+const REST_OPTIONS = [0, 30, 60, 90, 120, 180, 300, 600];
 
 type Props = {
   exercise: DraftExercise;
+  groupLabel?: string;
   info: ContextExercise | undefined;
   hint: { setId: string; text: string } | null;
   onField: (setIdx: number, field: "weight" | "reps", value: string) => void;
@@ -58,6 +59,7 @@ function Suggestion({ info }: { info: ContextExercise }) {
 // se pliega a un resumen que se puede volver a abrir.
 export function ExerciseCard({
   exercise,
+  groupLabel,
   info,
   hint,
   onField,
@@ -81,6 +83,9 @@ export function ExerciseCard({
   const complete = isExerciseComplete(exercise);
   const collapsed = complete && !reopened;
   const last = info?.last ?? null;
+  const restSeconds =
+    (exercise.supersetId ? exercise.supersetRestSeconds : exercise.restSeconds) ??
+    DEFAULT_REST_SECONDS;
 
   if (collapsed) {
     const summary = exercise.sets
@@ -108,6 +113,7 @@ export function ExerciseCard({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold">{exercise.name}</span>
+            {groupLabel ? <span className="block text-xs text-primary">{groupLabel}</span> : null}
             <span className="block truncate text-xs text-muted-foreground">{summary}</span>
           </span>
           <ChevronDown className="size-5 shrink-0 text-muted-foreground" aria-hidden />
@@ -137,6 +143,9 @@ export function ExerciseCard({
             {[info?.muscleGroup, info?.equipment].filter(Boolean).join(" · ") ||
               "Entrenamiento de fuerza"}
           </p>
+          {groupLabel ? (
+            <p className="mb-1 text-xs font-semibold text-primary">{groupLabel}</p>
+          ) : null}
           <h2 className="text-lg leading-tight font-semibold text-primary">{exercise.name}</h2>
           <p className="mt-1 text-sm font-medium">{formatPrescription(exercise.prescribed)}</p>
           <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
@@ -194,10 +203,10 @@ export function ExerciseCard({
 
       <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
         <Timer className="size-4" aria-hidden />
-        <span>Descanso</span>
+        <span>{groupLabel ? "Entre rondas" : "Descanso"}</span>
         <select
           aria-label={`Descanso automático de ${exercise.name}`}
-          value={exercise.restSeconds ?? DEFAULT_REST_SECONDS}
+          value={restSeconds}
           onChange={(event) => onRestChange(Number(event.target.value))}
           className="min-h-11 min-w-24 rounded border border-input bg-background px-2 font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
@@ -206,8 +215,8 @@ export function ExerciseCard({
               {seconds === 0 ? "Desactivado" : formatClock(seconds)}
             </option>
           ))}
-          {exercise.restSeconds !== undefined && !REST_OPTIONS.includes(exercise.restSeconds) ? (
-            <option value={exercise.restSeconds}>{formatClock(exercise.restSeconds)}</option>
+          {!REST_OPTIONS.includes(restSeconds) ? (
+            <option value={restSeconds}>{formatClock(restSeconds)}</option>
           ) : null}
         </select>
       </label>

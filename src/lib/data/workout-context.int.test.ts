@@ -158,6 +158,28 @@ describe("getWorkoutContext (RF-19, RF-20, RF-15b, DC-9)", () => {
     expect(result.context.exercises[1].isBodyweight).toBe(true);
   });
 
+  it("carga los grupos y descansos prescritos sin quitar el contexto anterior", async () => {
+    const group = crypto.randomUUID();
+    const { error } = await admin
+      .from("session_exercises")
+      .update({
+        superset_id: group,
+        superset_rest_seconds: 120,
+        rest_seconds: 45,
+      })
+      .eq("program_session_id", sessionA);
+    expect(error).toBeNull();
+    const result = await load(sessionA);
+    if (!result.ok) throw new Error("debía cargar");
+    expect(result.context.exercises).toHaveLength(2);
+    for (const exercise of result.context.exercises)
+      expect(exercise).toMatchObject({
+        supersetId: group,
+        supersetRestSeconds: 120,
+        restSeconds: 45,
+      });
+  });
+
   it("sin historial: sin 'última vez', sin peso previo y sin sugerencia", async () => {
     const result = await load(sessionA);
     if (!result.ok) throw new Error("debía cargar");

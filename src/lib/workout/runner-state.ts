@@ -13,6 +13,9 @@ export type PrefillExercise = {
   name: string;
   isBodyweight: boolean;
   prescribed: DraftExercise["prescribed"];
+  restSeconds?: number | null;
+  supersetId?: string | null;
+  supersetRestSeconds?: number | null;
   lastWeightKg: number | null; // último peso usado en este ejercicio (cualquier programa)
 };
 
@@ -42,6 +45,9 @@ export function createDraft(input: {
       isBodyweight: e.isBodyweight,
       prescribed: e.prescribed,
       skipped: false,
+      ...(e.restSeconds != null ? { restSeconds: e.restSeconds } : {}),
+      ...(e.supersetId ? { supersetId: e.supersetId } : {}),
+      ...(e.supersetRestSeconds != null ? { supersetRestSeconds: e.supersetRestSeconds } : {}),
       sets: Array.from({ length: e.prescribed.sets }, (_, i) => ({
         id: `${e.sessionExerciseId}-${i + 1}`,
         weight: asText(prefillWeight(e.prescribed.targetWeightKg, e.lastWeightKg)),
@@ -105,6 +111,14 @@ export function setExerciseRestSeconds(
   ) {
     return draft;
   }
+  const groupId = draft.exercises[exIdx]?.supersetId;
+  if (groupId)
+    return {
+      ...draft,
+      exercises: draft.exercises.map((e) =>
+        e.supersetId === groupId ? { ...e, supersetRestSeconds: restSeconds } : e,
+      ),
+    };
   return mapExercise(draft, exIdx, (e) => ({ ...e, restSeconds }));
 }
 

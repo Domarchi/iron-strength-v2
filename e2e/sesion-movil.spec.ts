@@ -238,3 +238,84 @@ test("la app se puede instalar: manifiesto e iconos públicos (RF-45)", async ({
   );
   await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute("content", /#/);
 });
+
+test("superserie: calentamiento, rondas desiguales, recuperación y descanso compartido (T147)", async ({
+  page,
+}) => {
+  const db = admin();
+  const { data: parent } = await db
+    .from("program_sessions")
+    .select("program_id")
+    .eq("id", sessionId)
+    .single();
+  const { data: session, error } = await db
+    .from("program_sessions")
+    .insert({ program_id: parent!.program_id, week_number: 1, label: "B" })
+    .select("id")
+    .single();
+  expect(error).toBeNull();
+  const { data: exercises } = await db
+    .from("exercises")
+    .select("id, name")
+    .in("name", ["Sentadilla", "Press de banca"])
+    .is("coach_id", null);
+  const group = crypto.randomUUID();
+  const { error: insertError } = await db.from("session_exercises").insert(
+    ["Sentadilla", "Press de banca"].map((name, position) => ({
+      program_session_id: session!.id,
+      exercise_id: exercises!.find((e) => e.name === name)!.id,
+      position,
+      sets: position === 0 ? 3 : 2,
+      reps_min: 8,
+      reps_max: 12,
+      target_weight_kg: 60,
+      superset_id: group,
+      superset_rest_seconds: 120,
+    })),
+  );
+  expect(insertError).toBeNull();
+  await login(page, LUIS.email, LUIS.password);
+  await page.goto(`/workout/${session!.id}`);
+  const squat = page.getByRole("region", { name: "Sentadilla", exact: true });
+  const bench = page.getByRole("region", { name: "Press de banca", exact: true });
+  await expect(squat.getByText("Superserie 1", { exact: true })).toBeVisible();
+  await squat.getByRole("button", { name: "Agregar serie" }).click();
+  await page.getByRole("button", { name: "Serie 4 de Sentadilla, opciones", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Serie 4 de Sentadilla como calentamiento", exact: true })
+    .click();
+  await page.getByLabel("Repeticiones de la serie 4 de Sentadilla").press("Enter");
+  expect(await clockSeconds(page)).toBeGreaterThan(50);
+  await expect(page.getByLabel("Peso de la serie 1 de Sentadilla (kg)")).toBeFocused();
+  await page.getByLabel("Repeticiones de la serie 1 de Sentadilla").press("Enter");
+  await expect(page.getByLabel("Peso de la serie 1 de Press de banca (kg)")).toBeFocused();
+  await expect(page.getByRole("timer")).toHaveCount(0);
+  await page.reload();
+  await expect(bench).toHaveAttribute("data-active", "true");
+  await page.getByLabel("Repeticiones de la serie 1 de Press de banca").press("Enter");
+  await expect(page.getByLabel("Peso de la serie 2 de Sentadilla (kg)")).toBeFocused();
+  const remaining = await clockSeconds(page);
+  expect(remaining).toBeGreaterThan(110);
+  await page.reload();
+  expect(await clockSeconds(page)).toBeLessThanOrEqual(remaining);
+  expect(await clockSeconds(page)).toBeGreaterThan(100);
+  await page.getByLabel("Descanso automático de Sentadilla").selectOption("180");
+  await expect(page.getByLabel("Descanso automático de Press de banca")).toHaveValue("180");
+  await page.getByLabel("Repeticiones de la serie 2 de Sentadilla").press("Enter");
+  await expect(page.getByRole("timer")).toHaveCount(0);
+  await page.getByLabel("Repeticiones de la serie 2 de Press de banca").press("Enter");
+  await expect(page.getByLabel("Peso de la serie 3 de Sentadilla (kg)")).toBeFocused();
+  expect(await clockSeconds(page)).toBeGreaterThan(170);
+  await page.getByLabel("Repeticiones de la serie 3 de Sentadilla").press("Enter");
+  await expect(squat.getByRole("button", { name: /completado/ })).toBeVisible();
+  await expect(bench.getByRole("button", { name: /completado/ })).toBeVisible();
+  await page.getByRole("button", { name: "Terminar entrenamiento" }).click();
+  await page.getByRole("button", { name: "Sí, finalizar" }).click();
+  await expect(page.getByText("¡Entrenamiento guardado!")).toBeVisible();
+  const { data: saved } = await db
+    .from("workouts")
+    .select("id, workout_sets(id)")
+    .eq("program_session_id", session!.id);
+  expect(saved).toHaveLength(1);
+  expect(saved![0].workout_sets).toHaveLength(6);
+});

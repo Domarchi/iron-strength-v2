@@ -7,7 +7,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T144 · Borradores persistentes del coach**
 - [x] **T145 · Modelo y reglas de superseries**
 - [x] **T146 · Editor de grupos**
-- [ ] **T147 · Ejecución por rondas**
+- [x] **T147 · Ejecución por rondas**
 - [ ] **T148 · Copias y recuperación de grupos**
 - [ ] **T149 · Historial dentro del entrenamiento**
 - [ ] **T150 · Comparación y progresión**
