@@ -72,7 +72,7 @@ export async function savePrescriptionsAction(fd: FormData): Promise<EditorResul
       (row) => !session.exercises.some((e) => e.id === row.id && e.exerciseId === row.exerciseId),
     )
   )
-    return { error: messages.not_found, savedIds: [] };
+    return { error: messages.not_found, savedIds: [], conflict: true };
   try {
     const result = await saveSessionPrescriptions({
       db,
@@ -197,4 +197,10 @@ export async function duplicateRoutineAction(fd: FormData): Promise<EditorResult
       uncertain: true,
     };
   }
+}
+
+export async function reviewSessionAction(programId: string, sessionId: string) {
+  await requireCoach();
+  const tree = await getProgramTree(await createClient(), programId);
+  return tree?.sessions.find((session) => session.id === sessionId) ?? null;
 }

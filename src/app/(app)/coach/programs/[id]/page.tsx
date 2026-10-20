@@ -211,6 +211,7 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
               {sessions.map((session) =>
                 editable ? (
                   <SessionEditor
+                    userId={tree.coachId}
                     key={session.id}
                     programId={tree.id}
                     session={session}

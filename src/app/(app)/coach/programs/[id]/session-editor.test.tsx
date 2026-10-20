@@ -11,6 +11,7 @@ vi.mock("../editor-actions", () => ({
   savePrescriptionsAction: mocks.save,
   addExercisesAction: mocks.add,
   duplicateRoutineAction: mocks.duplicate,
+  reviewSessionAction: vi.fn(),
 }));
 vi.mock("../actions", () => ({
   moveExerciseAction: vi.fn(),
@@ -66,6 +67,8 @@ let root: ReturnType<typeof createRoot>;
 beforeEach(async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.clearAllMocks();
+  localStorage.clear();
+  sessionStorage.clear();
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -79,7 +82,13 @@ beforeEach(async () => {
         initialWeek={1}
       >
         {[
-          <SessionEditor key="s" programId="p" session={session} exercises={catalog} />,
+          <SessionEditor
+            key="s"
+            userId="coach"
+            programId="p"
+            session={session}
+            exercises={catalog}
+          />,
           <p key="second">Segunda semana</p>,
         ]}
       </WeekWorkspace>,
@@ -200,6 +209,7 @@ it("reintenta el lote completo con la misma identidad tras una respuesta perdida
         {[
           <SessionEditor
             key="s"
+            userId="coach"
             programId="p"
             session={{ ...session, exercises: [...session.exercises, second] }}
             exercises={catalog}
@@ -224,4 +234,27 @@ it("reintenta el lote completo con la misma identidad tras una respuesta perdida
     mocks.save.mock.calls[0][0].get("requestId"),
   );
   expect(mocks.save.mock.calls[1][0].get("revision")).toBe("2");
+});
+
+it("persiste campos incompletos en el dispositivo y muestra el resultado real", async () => {
+  await fill("Series de Sentadilla", "");
+  const keys = Object.keys(localStorage).filter((k) => k.startsWith("is:coach-draft:"));
+  expect(keys).toHaveLength(1);
+  const stored = JSON.parse(localStorage.getItem(keys[0])!);
+  expect(stored.edits.a.sets).toBe("");
+  expect(stored.userId).toBe("coach");
+  expect(stored.revision).toBe(2);
+  expect(container.textContent).toContain("Guardado en este dispositivo");
+});
+
+it("no afirma protección local cuando falla la cuota y permite reintentar", async () => {
+  const fail = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new Error("quota");
+  });
+  await fill("Series de Sentadilla", "5");
+  expect(container.textContent).toContain("No se pudo guardar en este dispositivo");
+  expect(container.textContent).not.toContain("Guardado en este dispositivo");
+  fail.mockRestore();
+  await act(() => btn("Reintentar guardado local").click());
+  expect(container.textContent).toContain("Guardado en este dispositivo");
 });

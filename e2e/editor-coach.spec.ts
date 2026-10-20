@@ -404,3 +404,94 @@ test("perder la respuesta de un lote guardado permite confirmar sin duplicar la 
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("5");
   await expect(visibleField(page, "Series de Press de banca")).toHaveValue("4");
 });
+
+test("recarga recupera el borrador del coach y permite resolver un conflicto conservando valores", async ({
+  page,
+}) => {
+  await routine(page);
+  await visibleField(page, "Series de Sentadilla").fill("7");
+  await page.getByText("Nota del ejercicio (opcional)", { exact: true }).first().click();
+  await visibleField(page, "Nota de Sentadilla").fill("Pausa de dos segundos");
+  await expect(page.getByText("Guardado en este dispositivo", { exact: true })).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.reload();
+  await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("7");
+  await expect(visibleField(page, "Nota de Sentadilla")).toHaveValue("Pausa de dos segundos");
+  const programId = new URL(page.url()).pathname.split("/").at(-1)!;
+  const sessions = await admin().from("program_sessions").select("id").eq("program_id", programId);
+  await admin()
+    .from("session_exercises")
+    .update({ sets: 4 })
+    .eq("program_session_id", sessions.data![0].id);
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "otra pestaña" })).toBeVisible();
+  await page.getByRole("button", { name: "Revisar versión actual", exact: true }).click();
+  await expect(page.getByText(/Tu borrador: 7/)).toBeVisible();
+  await expect(page.getByText(/Actual: 4/).first()).toBeVisible();
+  await page
+    .getByRole("button", { name: "Aplicar mis cambios a esta versión", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("7");
+  await expect(visibleField(page, "Nota de Sentadilla")).toHaveValue("Pausa de dos segundos");
+});
+
+test("una operación guardada sin respuesta se recupera tras recargar con el mismo identificador", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await visibleField(page, "Series de Sentadilla").fill("6");
+  let intercepted = false;
+  await page.route(page.url(), async (route) => {
+    if (
+      !intercepted &&
+      route.request().method() === "POST" &&
+      route.request().headers()["next-action"]
+    ) {
+      intercepted = true;
+      await route.fetch();
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Se conservan aquí" })).toBeVisible();
+  const before = await admin()
+    .from("program_sessions")
+    .select("revision")
+    .eq("program_id", programId)
+    .single();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.reload();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  const after = await admin()
+    .from("program_sessions")
+    .select("revision")
+    .eq("program_id", programId)
+    .single();
+  expect(after.data!.revision).toBe(before.data!.revision);
+});
+
+test("cerrar la pestaña conserva el borrador y confirmar el guardado limpia su origen recuperado", async ({
+  page,
+}) => {
+  await routine(page);
+  await visibleField(page, "Series de Sentadilla").fill("8");
+  await expect(page.getByText("Guardado en este dispositivo", { exact: true })).toBeVisible();
+  const url = page.url();
+  const context = page.context();
+  await page.close();
+  const reopened = await context.newPage();
+  await reopened.goto(url);
+  await expect(visibleField(reopened, "Series de Sentadilla")).toHaveValue("8");
+  await reopened.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(reopened.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  expect(
+    await reopened.evaluate(() =>
+      Object.keys(localStorage).filter((k) => k.startsWith("is:coach-draft:")),
+    ),
+  ).toEqual([]);
+  await reopened.close();
+});

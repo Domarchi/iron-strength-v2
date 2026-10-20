@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import {
+  createEditorPersistence,
+  editorStorage,
+  listEditorDrafts,
+  type EditorDraft,
+} from "@/lib/coach/editor-draft";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, Check, Copy, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +22,7 @@ import type { SessionRow } from "@/lib/data/programs";
 import { removeExerciseAction, removeSessionAction } from "../actions";
 import { ActionForm } from "../action-form";
 import {
+  reviewSessionAction,
   duplicateRoutineAction,
   reorderExercisesAction,
   savePrescriptionsAction,
@@ -24,37 +31,112 @@ import { ExercisePicker } from "./exercise-picker";
 import { useRoutineGuard } from "./week-workspace";
 import { SortableExerciseList } from "./sortable-exercise-list";
 
-export function SessionEditor({
-  programId,
-  session,
-  exercises,
-  canDuplicateSession = true,
-}: {
+type Props = {
+  userId: string;
   programId: string;
   session: SessionRow;
   exercises: CatalogExercise[];
   canDuplicateSession?: boolean;
-}) {
+};
+const subscribeHydration = () => () => {};
+export function SessionEditor(props: Props) {
+  const [restoreId, setRestoreId] = useState<string | null>(null);
+  const hydrated = useSyncExternalStore(
+    subscribeHydration,
+    () => true,
+    () => false,
+  );
+  return hydrated ? (
+    <Editor
+      key={restoreId ?? "current"}
+      {...props}
+      restoreId={restoreId}
+      onRestore={setRestoreId}
+    />
+  ) : (
+    <Card>
+      <CardContent className="p-4">Cargando editor…</CardContent>
+    </Card>
+  );
+}
+function Editor({
+  userId,
+  programId,
+  session: serverSession,
+  exercises,
+  canDuplicateSession = true,
+  restoreId,
+  onRestore,
+}: Props & { restoreId: string | null; onRestore: (id: string) => void }) {
+  const [recovered] = useState(() =>
+    listEditorDrafts(editorStorage(), userId, programId, serverSession.id),
+  );
+  const pointerKey = `is:coach-editor-tab:${userId}:${programId}:${serverSession.id}`;
+  const [pointer] = useState(() => {
+    try {
+      return sessionStorage.getItem(pointerKey);
+    } catch {
+      return null;
+    }
+  });
+  const [restored] = useState(() =>
+    restoreId
+      ? (recovered.find((d) => d.id === restoreId) ?? null)
+      : pointer === "cleared"
+        ? null
+        : (recovered.find((d) => d.id === pointer) ?? recovered[0] ?? null),
+  );
+  const ownsSource = pointer === restored?.id;
+  function remember(id: string) {
+    try {
+      sessionStorage.setItem(pointerKey, id);
+    } catch {
+      /* Los datos siguen en localStorage. */
+    }
+  }
+  const [localId] = useState(() => crypto.randomUUID());
+  const sourceDraft = useRef(restored);
+  const [persistence] = useState(() => createEditorPersistence(editorStorage));
+  const storageStatus = useSyncExternalStore(
+    persistence.subscribe,
+    persistence.getSnapshot,
+    () => "clean",
+  );
+  const [review, setReview] = useState<SessionRow | null>(null);
+  const session = review ?? serverSession;
   const router = useRouter();
-  const baseRevision = useRef<number | null>(null);
+  const baseRevision = useRef<number | null>(restored?.revision ?? null);
   const [saveRequest, setSaveRequest] = useState<{
     id: string;
     revision: number;
     rows: PrescriptionDraft[];
-  } | null>(null);
-  const [orderRequest, setOrderRequest] = useState<{ id: string; revision: number } | null>(null);
-  const [conflict, setConflict] = useState(false);
-  const [edits, setEdits] = useState<Record<string, PrescriptionDraft>>({});
+  } | null>(restored?.saveRequest ?? null);
+  const [orderRequest, setOrderRequest] = useState<{ id: string; revision: number } | null>(
+    restored?.orderRequest ?? null,
+  );
+  const [conflict, setConflict] = useState(
+    !!restored &&
+      restored.revision !== session.revision &&
+      !restored.saveRequest &&
+      !restored.orderRequest,
+  );
+  const [edits, setEdits] = useState<Record<string, PrescriptionDraft>>(restored?.edits ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const guard = useRoutineGuard();
-  const [order, setOrder] = useState<string[] | null>(null);
+  const [order, setOrder] = useState<string[] | null>(restored?.order ?? null);
   const [dragging, setDragging] = useState(false);
-  const [orderError, setOrderError] = useState<string | null>(null);
-  const [copyRequest, setCopyRequest] = useState<{ id: string; exerciseId?: string } | null>(null);
-  const [copyError, setCopyError] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(
+    restored?.orderRequest ? "Orden pendiente de confirmar tras recuperar el borrador." : null,
+  );
+  const [copyRequest, setCopyRequest] = useState<{ id: string; exerciseId?: string } | null>(
+    restored?.copyRequest ?? null,
+  );
+  const [copyError, setCopyError] = useState<string | null>(
+    restored?.copyRequest ? "Copia pendiente de confirmar tras recuperar el borrador." : null,
+  );
   const copyKey = `${session.id}-copy`;
   const orderKey = `${session.id}-order`;
   const dragKey = `${session.id}-drag`;
@@ -73,13 +155,78 @@ export function SessionEditor({
     (draft, index) =>
       JSON.stringify(draft) !== JSON.stringify(prescriptionDraft(orderedExercises[index])),
   );
-  const dirty = changed.length > 0;
+  const orphanEdits = Object.values(edits).filter(
+    (row) => !session.exercises.some((e) => e.id === row.id),
+  );
+  const dirty = changed.length > 0 || orphanEdits.length > 0 || !!saveRequest;
   const totalSets = drafts.reduce(
     (sum, row) => sum + (/^\d+$/.test(row.sets) ? Number(row.sets) : 0),
     0,
   );
   const structuralDisabled = pending || guard.dirty || dragging || conflict || !!saveRequest;
+  const lastDraft = useRef<EditorDraft | null>(restored ? { ...restored, id: localId } : null);
+  function persistLocal(overrides: Partial<EditorDraft> = {}) {
+    const next: EditorDraft = {
+      version: 1,
+      id: localId,
+      userId,
+      programId,
+      sessionId: session.id,
+      revision: baseRevision.current ?? session.revision,
+      updatedAt: new Date().toISOString(),
+      edits,
+      order,
+      orderRequest,
+      saveRequest,
+      copyRequest,
+      ...overrides,
+    };
+    lastDraft.current = next;
+    if (Object.keys(next.edits).length || next.order || next.saveRequest || next.copyRequest) {
+      if (persistence.persist(next)) {
+        remember(localId);
+        if (sourceDraft.current && ownsSource) {
+          persistence.remove(sourceDraft.current, true, true);
+          sourceDraft.current = null;
+        }
+      }
+    } else {
+      persistence.remove(next);
+      remember("cleared");
+    }
+  }
+  function removeRecovered() {
+    if (sourceDraft.current) persistence.remove(sourceDraft.current, true, true);
+    sourceDraft.current = null;
+  }
+  const setGuardDirty = guard.setDirty;
+  useEffect(() => {
+    if (!restored) return;
+    persistence.restored();
+    setGuardDirty(
+      serverSession.id,
+      Object.keys(restored.edits).length > 0 || !!restored.saveRequest,
+    );
+    setGuardDirty(`${serverSession.id}-order`, !!restored.order);
+    setGuardDirty(`${serverSession.id}-copy`, !!restored.copyRequest);
+  }, [restored, persistence, serverSession.id, setGuardDirty]);
+  function reviewCurrent() {
+    startTransition(async () => {
+      try {
+        const current = await reviewSessionAction(programId, session.id);
+        if (!current) {
+          setError("La sesión ya no existe. Tu borrador permanece en este dispositivo.");
+          return;
+        }
+        setReview(current);
+        setConflict(true);
+      } catch {
+        setError("No se pudo cargar la versión actual. Tus cambios se conservan.");
+      }
+    });
+  }
   function duplicate(request: { id: string; exerciseId?: string }) {
+    persistLocal({ copyRequest: request });
     setCopyRequest(request);
     setCopyError(null);
     setStatus(null);
@@ -94,6 +241,8 @@ export function SessionEditor({
         const result = await duplicateRoutineAction(fd);
         setCopyError(result.error);
         if (!result.uncertain) {
+          persistLocal({ copyRequest: null });
+          if (!result.error) removeRecovered();
           setCopyRequest(null);
           guard.setDirty(copyKey, false);
         }
@@ -108,6 +257,7 @@ export function SessionEditor({
   }
   function reorder(ids: string[]) {
     const request = orderRequest ?? { id: crypto.randomUUID(), revision: session.revision };
+    persistLocal({ order: ids, orderRequest: request });
     setOrderRequest(request);
     setOrder(ids);
     setOrderError(null);
@@ -126,6 +276,8 @@ export function SessionEditor({
           setOrderError(result.error);
           setConflict(result.conflict ?? false);
         } else {
+          persistLocal({ order: null, orderRequest: null });
+          removeRecovered();
           setOrder(null);
           setOrderRequest(null);
           guard.setDirty(orderKey, false);
@@ -141,6 +293,11 @@ export function SessionEditor({
   function change(draft: PrescriptionDraft, field: keyof PrescriptionDraft, value: string) {
     baseRevision.current ??= session.revision;
     const next = { ...edits, [draft.id]: { ...draft, [field]: value } };
+    const original = session.exercises.find((e) => e.id === draft.id);
+    if (original && JSON.stringify(next[draft.id]) === JSON.stringify(prescriptionDraft(original)))
+      delete next[draft.id];
+    if (!Object.keys(next).length) baseRevision.current = null;
+    persistLocal({ edits: next });
     setEdits(next);
     setErrors((old) => ({ ...old, [draft.id]: "" }));
     setError(null);
@@ -167,6 +324,7 @@ export function SessionEditor({
     const fd = new FormData();
     fd.set("programId", programId);
     fd.set("sessionId", session.id);
+    persistLocal({ saveRequest: request });
     setSaveRequest(request);
     fd.set("rows", JSON.stringify(request.rows));
     fd.set("requestId", request.id);
@@ -177,11 +335,19 @@ export function SessionEditor({
         setConflict(result.conflict ?? false);
         if (!result.uncertain) setSaveRequest(null);
         if (!result.error) baseRevision.current = null;
-        setEdits((old) =>
-          Object.fromEntries(Object.entries(old).filter(([id]) => !result.savedIds.includes(id))),
+        const nextEdits = Object.fromEntries(
+          Object.entries(edits).filter(([id]) => !result.savedIds.includes(id)),
         );
+        persistLocal({
+          edits: nextEdits,
+          saveRequest: result.uncertain ? request : null,
+          revision: result.error ? request.revision : (result.revision ?? session.revision),
+        });
+        if (!result.error) removeRecovered();
+        if (!result.error) setReview(null);
+        setEdits(nextEdits);
         const remaining = changed.filter((row) => !result.savedIds.includes(row.id));
-        guard.setDirty(session.id, remaining.length > 0);
+        guard.setDirty(session.id, remaining.length > 0 || !!result.uncertain);
         setError(result.error);
         setStatus(
           result.savedIds.length
@@ -422,7 +588,7 @@ export function SessionEditor({
             Guardando orden…
           </p>
         ) : null}
-        {session.exercises.length ? (
+        {session.exercises.length || dirty ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-muted/50 p-3">
             <div className="text-xs">
               <p className="font-medium">
@@ -443,8 +609,11 @@ export function SessionEditor({
                     if (
                       window.confirm("¿Descartar las prescripciones sin guardar de esta sesión?")
                     ) {
+                      persistLocal({ edits: {}, saveRequest: null });
+                      removeRecovered();
                       baseRevision.current = null;
                       setConflict(false);
+                      setReview(null);
                       router.refresh();
                       setEdits({});
                       setErrors({});
@@ -480,6 +649,8 @@ export function SessionEditor({
             variant="outline"
             onClick={() => {
               if (!window.confirm("¿Descartar este orden y cargar la sesión actual?")) return;
+              persistLocal({ order: null, orderRequest: null });
+              removeRecovered();
               setOrder(null);
               setOrderRequest(null);
               setOrderError(null);
@@ -490,6 +661,111 @@ export function SessionEditor({
           >
             Descartar orden y cargar versión actual
           </Button>
+        ) : null}
+        {storageStatus === "error" ? (
+          <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
+            <p>No se pudo guardar en este dispositivo. Mantén esta página abierta.</p>
+            <Button
+              className="mt-2"
+              variant="outline"
+              onClick={() => {
+                if (lastDraft.current) persistLocal(lastDraft.current);
+              }}
+            >
+              Reintentar guardado local
+            </Button>
+          </div>
+        ) : storageStatus === "saved" ? (
+          <p role="status" className="text-xs text-muted-foreground">
+            Guardado en este dispositivo
+          </p>
+        ) : null}
+        {restored ? (
+          <p className="text-xs text-muted-foreground">Borrador recuperado de este dispositivo.</p>
+        ) : null}
+        {recovered.filter((d) => d.id !== restored?.id).length ? (
+          <details>
+            <summary className="min-h-11 cursor-pointer py-3 text-sm">
+              Otros borradores de esta sesión
+            </summary>
+            {recovered
+              .filter((d) => d.id !== restored?.id)
+              .map((d) => (
+                <Button
+                  key={d.id}
+                  className="m-1"
+                  variant="outline"
+                  disabled={pending || storageStatus === "error"}
+                  onClick={() => onRestore(d.id)}
+                >
+                  Recuperar{" "}
+                  {new Date(d.updatedAt).toLocaleString("es-CL", { timeZone: "America/Santiago" })}
+                </Button>
+              ))}
+          </details>
+        ) : null}
+        {conflict ? (
+          <div className="rounded-md border border-primary/40 p-3 text-sm">
+            <p>La sesión cambió. Revisa los valores antes de aplicar tu borrador.</p>
+            <Button
+              variant="outline"
+              className="mt-2"
+              disabled={pending || !!saveRequest || !!orderRequest}
+              onClick={reviewCurrent}
+            >
+              Revisar versión actual
+            </Button>
+            {review ? (
+              <div className="mt-3 space-y-3">
+                {Object.values(edits).map((row) => {
+                  const remote = review.exercises.find((e) => e.id === row.id);
+                  return (
+                    <div key={row.id} className="rounded border p-2">
+                      <p className="font-medium">{remote?.name ?? "Ejercicio eliminado"}</p>
+                      <p>
+                        Tu borrador: {row.sets} × {row.repsMin}–{row.repsMax} ·{" "}
+                        {row.targetWeightKg || "Libre"} kg · {row.note}
+                      </p>
+                      <p>
+                        Actual:{" "}
+                        {remote
+                          ? `${remote.sets} × ${remote.repsMin}–${remote.repsMax} · ${remote.targetWeightKg ?? "Libre"} kg · ${remote.note ?? ""}`
+                          : "Ya no está en la rutina"}
+                      </p>
+                    </div>
+                  );
+                })}
+                {orphanEdits.length ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const next = Object.fromEntries(
+                        Object.entries(edits).filter(([id]) =>
+                          review.exercises.some((e) => e.id === id),
+                        ),
+                      );
+                      setEdits(next);
+                      persistLocal({ edits: next });
+                    }}
+                  >
+                    Descartar cambios de ejercicios eliminados
+                  </Button>
+                ) : null}
+                <Button
+                  disabled={pending || !!orphanEdits.length || orderPending}
+                  onClick={() => {
+                    baseRevision.current = review.revision;
+                    setConflict(false);
+                    setError(null);
+                    setSaveRequest(null);
+                    persistLocal({ revision: review.revision, saveRequest: null });
+                  }}
+                >
+                  Aplicar mis cambios a esta versión
+                </Button>
+              </div>
+            ) : null}
+          </div>
         ) : null}
         {error ? (
           <p role="alert" className="text-sm text-destructive">

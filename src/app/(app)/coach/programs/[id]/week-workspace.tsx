@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,14 +40,14 @@ export function WeekWorkspace({
   const [active, setActive] = useState(initialWeek);
   const [dirtyIds, setDirtyIds] = useState<string[]>([]);
   const dirty = dirtyIds.length > 0;
-  const guard: Guard = {
-    dirtyIds,
-    dirty,
-    setDirty: (id, value) =>
+  const setDirty = useCallback(
+    (id: string, value: boolean) =>
       setDirtyIds((ids) =>
         value ? (ids.includes(id) ? ids : [...ids, id]) : ids.filter((i) => i !== id),
       ),
-  };
+    [],
+  );
+  const guard: Guard = { dirtyIds, dirty, setDirty };
   useEffect(() => {
     if (!dirty) return;
     const beforeUnload = (event: BeforeUnloadEvent) => {
@@ -65,7 +65,11 @@ export function WeekWorkspace({
         event.button !== 0
       )
         return;
-      if (!window.confirm("Tienes cambios sin guardar en el editor. ¿Salir y perderlos?")) {
+      if (
+        !window.confirm(
+          "Tienes cambios sin guardar en el editor. ¿Salir del editor? Los cambios protegidos quedan en este dispositivo.",
+        )
+      ) {
         event.preventDefault();
         event.stopPropagation();
       }
@@ -76,7 +80,11 @@ export function WeekWorkspace({
         event.target.closest("[data-routine-editor]")
       )
         return;
-      if (!window.confirm("Tienes cambios sin guardar en el editor. ¿Salir y perderlos?")) {
+      if (
+        !window.confirm(
+          "Tienes cambios sin guardar en el editor. ¿Salir del editor? Los cambios protegidos quedan en este dispositivo.",
+        )
+      ) {
         event.preventDefault();
         event.stopPropagation();
       }
