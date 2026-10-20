@@ -6,7 +6,7 @@ import { configureAlternatives } from "@/lib/data/routine-alternatives";
 import type { AlternativeRequest } from "@/lib/coach/routine-alternatives";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { sessionExerciseSchema } from "@/domain/schemas";
+import { prescriptionMutationSchema } from "@/domain/schemas";
 import { requireCoach } from "@/lib/auth/session";
 import {
   getProgramTree,
@@ -62,7 +62,7 @@ export async function savePrescriptionsAction(fd: FormData): Promise<EditorResul
   if (title !== undefined && title.trim().length > 80)
     return { error: messages.invalid, savedIds: [] };
   const parsed = z
-    .array(sessionExerciseSchema.extend({ id: z.string().min(1) }))
+    .array(prescriptionMutationSchema.extend({ id: z.string().min(1) }))
     .min(title !== undefined ? 0 : 1)
     .max(15)
     .safeParse(readJson(fd, "rows"));

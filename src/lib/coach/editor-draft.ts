@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { bulkDraftSchema } from "./bulk-editor";
+import { prescriptionFields } from "@/domain/schemas";
 import { alternativeDraftSchema, alternativeRequestSchema } from "./routine-alternatives";
 import { layoutRowSchema } from "./routine-layout";
 import type { DraftStorage } from "@/lib/workout/draft";
@@ -11,6 +13,9 @@ const row = z.object({
   repsMax: text,
   targetWeightKg: text,
   note: text,
+  restSeconds: text.optional(),
+  supersetRestSeconds: text.optional(),
+  fields: z.array(z.enum(prescriptionFields)).optional(),
 });
 const request = z.object({ id: text, revision: z.number().int().nonnegative() });
 const schema = z.object({
@@ -21,6 +26,7 @@ const schema = z.object({
   sessionId: text,
   revision: z.number().int().nonnegative(),
   updatedAt: z.iso.datetime(),
+  bulk: bulkDraftSchema.nullable().optional(),
   title: z.string().optional(),
   edits: z.record(z.string(), row),
   order: z.array(text).nullable(),

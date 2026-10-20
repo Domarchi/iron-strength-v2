@@ -1,4 +1,8 @@
-import { sessionExerciseSchema, type SessionExerciseInput } from "@/domain/schemas";
+import {
+  prescriptionMutationSchema,
+  type PrescriptionField,
+  type SessionExerciseInput,
+} from "@/domain/schemas";
 
 export type PrescriptionDraft = {
   id: string;
@@ -8,6 +12,9 @@ export type PrescriptionDraft = {
   repsMax: string;
   targetWeightKg: string;
   note: string;
+  restSeconds?: string;
+  supersetRestSeconds?: string;
+  fields?: PrescriptionField[];
 };
 export type CatalogExercise = {
   id: string;
@@ -28,7 +35,11 @@ export function prescriptionDraft(row: { id: string } & SessionExerciseInput): P
 }
 export function validatePrescriptions(drafts: PrescriptionDraft[]) {
   const errors: Record<string, string> = {};
-  const rows: ({ id: string } & SessionExerciseInput)[] = [];
+  const rows: ({ id: string } & SessionExerciseInput & {
+      restSeconds?: number | null;
+      supersetRestSeconds?: number | null;
+      fields?: PrescriptionField[];
+    })[] = [];
   if (
     drafts.length === 0 ||
     drafts.length > 15 ||
@@ -37,7 +48,7 @@ export function validatePrescriptions(drafts: PrescriptionDraft[]) {
     return { rows, errors, error: "Selecciona entre 1 y 15 ejercicios distintos." };
   }
   for (const draft of drafts) {
-    const parsed = sessionExerciseSchema.safeParse(draft);
+    const parsed = prescriptionMutationSchema.safeParse(draft);
     if (parsed.success) rows.push({ id: draft.id, ...parsed.data });
     else errors[draft.id] = parsed.error.issues.map((i) => i.message).join(". ");
   }

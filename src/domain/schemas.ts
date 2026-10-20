@@ -112,6 +112,37 @@ export const sessionExerciseSchema = z
     path: ["repsMax"],
   });
 
+// Los lotes declaran campos para preservar los demás incluso al revisar otra versión.
+export const prescriptionFields = [
+  "sets",
+  "repsMin",
+  "repsMax",
+  "targetWeightKg",
+  "note",
+  "restSeconds",
+  "supersetRestSeconds",
+] as const;
+export type PrescriptionField = (typeof prescriptionFields)[number];
+export const prescriptionRestSchema = z.preprocess(
+  (value) =>
+    value === null || (typeof value === "string" && value.trim() === "") ? null : fromForm(value),
+  z.union([z.literal(0), z.number().int().min(15).max(600)]).nullable(),
+);
+export const prescriptionMutationSchema = sessionExerciseSchema
+  .extend({
+    restSeconds: prescriptionRestSchema.optional(),
+    supersetRestSeconds: prescriptionRestSchema.optional(),
+    fields: z
+      .array(z.enum(prescriptionFields))
+      .min(1)
+      .max(7)
+      .refine((fields) => new Set(fields).size === fields.length)
+      .optional(),
+  })
+  .refine((row) => !row.fields || row.fields.every((field) => Object.hasOwn(row, field)), {
+    message: "Falta un campo elegido",
+  });
+
 // Ejercicios ------------------------------------------------------------------------------------
 export const exerciseInputSchema = z.object({
   name: text(LIMITS.nameMax),

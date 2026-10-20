@@ -6,7 +6,11 @@ import type { AlternativeRow } from "@/lib/coach/routine-alternatives";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { santiagoDate, type DateString } from "../../domain/dates.ts";
 import { isWeekEditable, type ProgramRange } from "../../domain/program-weeks.ts";
-import { programInputSchema, sessionExerciseSchema } from "../../domain/schemas.ts";
+import {
+  prescriptionMutationSchema,
+  programInputSchema,
+  sessionExerciseSchema,
+} from "../../domain/schemas.ts";
 import type { Database } from "../../types/database.ts";
 
 type Client = SupabaseClient<Database>;
@@ -546,7 +550,7 @@ export async function saveSessionPrescriptions(
   args: MutationArgs & { rows: unknown; title?: string },
 ): Promise<Result<{ revision: number }>> {
   const parsed = z
-    .array(sessionExerciseSchema.extend({ id: z.uuid() }))
+    .array(prescriptionMutationSchema.extend({ id: z.uuid() }))
     .min(args.title !== undefined ? 0 : 1)
     .max(15)
     .safeParse(args.rows);

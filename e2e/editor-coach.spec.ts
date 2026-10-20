@@ -506,12 +506,8 @@ test("el coach agrupa, prescribe descanso y mueve una superserie como bloque", a
   await page.getByRole("checkbox", { name: "Peso muerto Espalda · Barra", exact: true }).check();
   await page.getByRole("button", { name: "Agregar seleccionados (1)", exact: true }).click();
   await expect(visibleField(page, "Series de Peso muerto")).toBeVisible();
-  await page
-    .getByRole("checkbox", { name: "Seleccionar Sentadilla para superserie", exact: true })
-    .check();
-  await page
-    .getByRole("checkbox", { name: "Seleccionar Press de banca para superserie", exact: true })
-    .check();
+  await page.getByRole("checkbox", { name: "Seleccionar Sentadilla", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Seleccionar Press de banca", exact: true }).check();
   await page.getByRole("button", { name: "Agrupar seleccionados (2)", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Superserie 1", exact: true })).toBeVisible();
   await page.getByLabel("Descanso de Superserie 1", { exact: true }).selectOption("120");
@@ -777,4 +773,120 @@ test("títulos entre pestañas requieren comparación antes de sobrescribir (T15
       .data?.title,
   ).toBe("Pecho");
   await other.close();
+});
+
+test("lote recupera preparación, conserva campos y permite editar después (T154)", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await visibleField(page, "Peso (kg) de Sentadilla").fill("62.5");
+  await page
+    .getByLabel("Nota de Sentadilla", { exact: true })
+    .locator("xpath=..")
+    .locator("summary")
+    .click();
+  await visibleField(page, "Nota de Sentadilla").fill("Conservar técnica");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.getByRole("checkbox", { name: "Seleccionar Sentadilla", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Seleccionar Press de banca", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Cambiar series", exact: true }).check();
+  await page.getByLabel("Series para la selección", { exact: true }).fill("");
+  await page.reload();
+  await expect(page.getByLabel("Series para la selección", { exact: true })).toHaveValue("");
+  await expect(
+    page.getByRole("button", { name: "Aplicar al borrador", exact: true }),
+  ).toBeDisabled();
+  await page.getByLabel("Series para la selección", { exact: true }).fill("5");
+  await page.getByRole("checkbox", { name: "Cambiar repeticiones", exact: true }).check();
+  await page.getByLabel("Repeticiones mínimas para la selección", { exact: true }).fill("6");
+  await page.getByLabel("Repeticiones máximas para la selección", { exact: true }).fill("8");
+  await page.getByRole("checkbox", { name: "Cambiar descanso", exact: true }).check();
+  await page.getByLabel("Descanso para la selección (segundos)", { exact: true }).fill("120");
+  await expect(
+    page
+      .getByRole("region", { name: "Vista previa del lote" })
+      .getByText("Series: 3 → 5", { exact: true }),
+  ).toHaveCount(2);
+  await page.setViewportSize({ width: 360, height: 800 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  const result = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(
+    result.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
+  ).toEqual([]);
+  await page.getByRole("button", { name: "Aplicar al borrador", exact: true }).click();
+  await page.reload();
+  await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("5");
+  await expect(visibleField(page, "Peso (kg) de Sentadilla")).toHaveValue("62.5");
+  await expect(visibleField(page, "Nota de Sentadilla")).toHaveValue("Conservar técnica");
+  await page
+    .getByLabel("Nota de Press de banca", { exact: true })
+    .locator("xpath=..")
+    .locator("summary")
+    .click();
+  await visibleField(page, "Nota de Press de banca").fill("Pausa abajo");
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  const { data, error } = await admin()
+    .from("program_sessions")
+    .select("session_exercises(sets,reps_min,reps_max,rest_seconds,note,target_weight_kg,position)")
+    .eq("program_id", programId)
+    .single();
+  expect(error).toBeNull();
+  const rows = data!.session_exercises.sort((a, b) => a.position - b.position);
+  expect(rows).toHaveLength(2);
+  for (const row of rows)
+    expect(row).toMatchObject({ sets: 5, reps_min: 6, reps_max: 8, rest_seconds: 120 });
+  expect(rows[0]).toMatchObject({ note: "Conservar técnica", target_weight_kg: 62.5 });
+  expect(rows[1]).toMatchObject({ note: "Pausa abajo", target_weight_kg: null });
+});
+
+test("descanso de lote exige la superserie completa y confirma una respuesta perdida (T154)", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await page.getByRole("checkbox", { name: "Seleccionar Sentadilla", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Seleccionar Press de banca", exact: true }).check();
+  await page.getByRole("button", { name: "Agrupar seleccionados (2)", exact: true }).click();
+  await expect(page.getByText("Configuración guardada.", { exact: true })).toBeVisible();
+  await page.getByRole("checkbox", { name: "Seleccionar Sentadilla", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Cambiar descanso", exact: true }).check();
+  await expect(page.getByRole("alert").filter({ hasText: "todos los integrantes" })).toBeVisible();
+  await page.getByRole("checkbox", { name: "Seleccionar Press de banca", exact: true }).check();
+  await page.getByLabel("Descanso para la selección (segundos)", { exact: true }).fill("180");
+  await page.getByRole("button", { name: "Aplicar al borrador", exact: true }).click();
+  let intercepted = false;
+  await page.route(page.url(), async (route) => {
+    if (
+      !intercepted &&
+      route.request().method() === "POST" &&
+      route.request().headers()["next-action"]
+    ) {
+      intercepted = true;
+      await route.fetch();
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "confirmar" })).toBeVisible();
+  const read = () =>
+    admin()
+      .from("program_sessions")
+      .select("revision,session_exercises(rest_seconds,superset_rest_seconds)")
+      .eq("program_id", programId)
+      .single();
+  const before = await read();
+  expect(before.error).toBeNull();
+  await page.reload();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  expect((await read()).data).toEqual(before.data);
+  for (const row of before.data!.session_exercises)
+    expect(row).toMatchObject({ rest_seconds: null, superset_rest_seconds: 180 });
 });

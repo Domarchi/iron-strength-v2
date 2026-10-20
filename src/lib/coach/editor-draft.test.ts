@@ -147,3 +147,30 @@ it("recupera el título pendiente y su solicitud junto a las prescripciones", ()
   writer.persist(pending);
   expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([pending]);
 });
+it("conserva la preparación de un lote y los campos explícitos tras recargar", () => {
+  const store = storage();
+  const writer = createEditorPersistence(() => store);
+  const bulk = {
+    ids: ["ex"],
+    setsEnabled: true,
+    repsEnabled: false,
+    restEnabled: true,
+    sets: "",
+    repsMin: "8",
+    repsMax: "12",
+    restSeconds: "120",
+  };
+  const pending = {
+    ...draft,
+    bulk,
+    edits: {
+      ex: {
+        ...draft.edits.ex,
+        restSeconds: "120",
+        fields: ["sets", "restSeconds"] as ("sets" | "restSeconds")[],
+      },
+    },
+  };
+  writer.persist(pending);
+  expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([pending]);
+});

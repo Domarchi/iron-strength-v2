@@ -14,7 +14,7 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T151 · Alternativas del coach**
 - [x] **T152 · Sustitución durante el entrenamiento**
 - [x] **T153 · Biblioteca de rutinas**
-- [ ] **T154 · Edición múltiple**
+- [x] **T154 · Edición múltiple**
 - [ ] **T155 · Organización semanal**
 - [ ] **T156 · Cierre del entrenamiento**
 - [ ] **T157 · Panel del coach**

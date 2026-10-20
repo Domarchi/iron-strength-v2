@@ -83,8 +83,8 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await expect(coach.getByText("Orden guardado.", { exact: true })).toBeVisible();
 
   // La asignación conserva la superserie y el descanso prescrito.
-  await coach.getByRole("checkbox", { name: "Seleccionar Press de banca para superserie" }).check();
-  await coach.getByRole("checkbox", { name: "Seleccionar Sentadilla para superserie" }).check();
+  await coach.getByRole("checkbox", { name: "Seleccionar Press de banca" }).check();
+  await coach.getByRole("checkbox", { name: "Seleccionar Sentadilla" }).check();
   await coach.getByRole("button", { name: "Agrupar seleccionados (2)" }).click();
   await expect(coach.getByRole("heading", { name: "Superserie 1", exact: true })).toBeVisible();
   await coach.getByLabel("Descanso de Superserie 1").selectOption("120");

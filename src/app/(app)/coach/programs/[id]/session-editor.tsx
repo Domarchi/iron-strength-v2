@@ -40,6 +40,9 @@ import {
   type AlternativeDraft,
   type AlternativeRequest,
 } from "@/lib/coach/routine-alternatives";
+import { BulkEditor } from "./bulk-editor";
+import { defaultBulkDraft, effectivePrescription, type BulkDraft } from "@/lib/coach/bulk-editor";
+import type { PrescriptionField } from "@/domain/schemas";
 import { AlternativesEditor } from "./alternatives-editor";
 import { RoutineRestSelect } from "./routine-rest-select";
 import type { SessionExerciseRow, SessionRow } from "@/lib/data/programs";
@@ -165,7 +168,9 @@ function Editor({
   const [copyRequest, setCopyRequest] = useState<{ id: string; exerciseId?: string } | null>(
     restored?.copyRequest ?? null,
   );
-  const [selected, setSelected] = useState<string[]>([]);
+  const [bulk, setBulk] = useState<BulkDraft | null>(restored?.bulk ?? null);
+  const [selected, setSelected] = useState<string[]>(restored?.bulk?.ids ?? []);
+  const bulkKey = `${session.id}-bulk`;
   const [layoutRequest, setLayoutRequest] = useState<LayoutRequest | null>(
     restored?.layoutRequest ?? null,
   );
@@ -203,7 +208,7 @@ function Editor({
     !!layoutRequest ||
     alternativesDirty ||
     guard.dirtyIds.some((id) => id !== orderKey && id !== dragKey);
-  const drafts = orderedExercises.map((row) => edits[row.id] ?? prescriptionDraft(row));
+  const drafts = orderedExercises.map((row) => effectivePrescription(row, edits[row.id]));
   const changed = drafts.filter(
     (draft, index) =>
       JSON.stringify(draft) !== JSON.stringify(prescriptionDraft(orderedExercises[index])),
@@ -235,7 +240,7 @@ function Editor({
     !!copyRequest ||
     !!layoutRequest ||
     alternativesDirty ||
-    guard.dirtyIds.some((id) => id !== selectionKey);
+    guard.dirtyIds.some((id) => id !== selectionKey && id !== bulkKey);
   const lastDraft = useRef<EditorDraft | null>(restored ? { ...restored, id: localId } : null);
   function persistLocal(overrides: Partial<EditorDraft> = {}) {
     const next: EditorDraft = {
@@ -248,6 +253,7 @@ function Editor({
       updatedAt: new Date().toISOString(),
       edits,
       title,
+      bulk,
       order,
       orderRequest,
       saveRequest,
@@ -259,6 +265,7 @@ function Editor({
     };
     lastDraft.current = next;
     if (
+      next.bulk ||
       next.title !== undefined ||
       Object.keys(next.edits).length ||
       next.order ||
@@ -294,6 +301,8 @@ function Editor({
         Object.keys(restored.edits).length > 0 ||
         !!restored.saveRequest,
     );
+    setGuardDirty(`${serverSession.id}-bulk`, !!restored.bulk);
+    setGuardDirty(`${serverSession.id}-selection`, !!restored.bulk?.ids.length);
     setGuardDirty(`${serverSession.id}-order`, !!restored.order);
     setGuardDirty(`${serverSession.id}-copy`, !!restored.copyRequest);
     setGuardDirty(`${serverSession.id}-layout`, !!restored.layoutRequest);
@@ -406,7 +415,46 @@ function Editor({
       ? selected.filter((value) => value !== id)
       : [...selected, id];
     setSelected(next);
+    if (bulk) {
+      const nextBulk = next.length ? { ...bulk, ids: next } : null;
+      setBulk(nextBulk);
+      persistLocal({ bulk: nextBulk });
+      guard.setDirty(bulkKey, !!nextBulk);
+    }
     guard.setDirty(selectionKey, next.length > 0);
+  }
+  function cancelSelection() {
+    setSelected([]);
+    setBulk(null);
+    persistLocal({ bulk: null });
+    guard.setDirty(selectionKey, false);
+    guard.setDirty(bulkKey, false);
+    if (!dirty) {
+      baseRevision.current = null;
+      setConflict(false);
+      setReview(null);
+      router.refresh();
+    }
+  }
+  function changeBulk(next: BulkDraft) {
+    if (baseRevision.current === null) baseRevision.current = session.revision;
+    setBulk(next);
+    persistLocal({ bulk: next });
+    guard.setDirty(bulkKey, true);
+    setStatus(null);
+  }
+  function applyBulk(rows: PrescriptionDraft[]) {
+    const next = { ...edits, ...Object.fromEntries(rows.map((row) => [row.id, row])) };
+    setEdits(next);
+    setBulk(null);
+    setSelected([]);
+    persistLocal({ edits: next, bulk: null });
+    guard.setDirty(bulkKey, false);
+    guard.setDirty(selectionKey, false);
+    guard.setDirty(session.id, true);
+    setErrors({});
+    setError(null);
+    setStatus("Lote aplicado al borrador. Guarda la sesión.");
   }
   function moveBlock(id: string, delta: number) {
     const ids = blocks.map((block) => block.id),
@@ -505,13 +553,18 @@ function Editor({
       }
     });
   }
-  function change(draft: PrescriptionDraft, field: keyof PrescriptionDraft, value: string) {
+  function change(draft: PrescriptionDraft, field: PrescriptionField, value: string) {
     baseRevision.current ??= session.revision;
-    const next = { ...edits, [draft.id]: { ...draft, [field]: value } };
+    const updated = {
+      ...draft,
+      [field]: value,
+      ...(draft.fields ? { fields: [...new Set([...draft.fields, field])] } : {}),
+    };
+    const next = { ...edits, [draft.id]: updated };
     const original = session.exercises.find((e) => e.id === draft.id);
     if (original && JSON.stringify(next[draft.id]) === JSON.stringify(prescriptionDraft(original)))
       delete next[draft.id];
-    if (!Object.keys(next).length) baseRevision.current = null;
+    if (!Object.keys(next).length && title === undefined && !bulk) baseRevision.current = null;
     persistLocal({ edits: next });
     setEdits(next);
     setErrors((old) => ({ ...old, [draft.id]: "" }));
@@ -671,6 +724,17 @@ function Editor({
           </div>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
+          <label className="flex min-h-11 items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              className="size-11 accent-primary"
+              aria-label={`Seleccionar ${exercise.name}`}
+              checked={selected.includes(exercise.id)}
+              disabled={layoutDisabled}
+              onChange={() => selectGroup(exercise.id)}
+            />
+            Seleccionar
+          </label>
           {exercise.supersetId ? (
             <Button
               variant="ghost"
@@ -682,19 +746,6 @@ function Editor({
             </Button>
           ) : (
             <>
-              <label className="flex min-h-11 items-center gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  className="size-11 accent-primary"
-                  aria-label={`Seleccionar ${exercise.name} para superserie`}
-                  checked={selected.includes(exercise.id)}
-                  disabled={
-                    layoutDisabled || (selected.length >= 4 && !selected.includes(exercise.id))
-                  }
-                  onChange={() => selectGroup(exercise.id)}
-                />
-                Agrupar
-              </label>
               <RoutineRestSelect
                 label={`Descanso de ${exercise.name}`}
                 value={exercise.restSeconds ?? null}
@@ -896,7 +947,7 @@ function Editor({
         {selected.length ? (
           <div className="flex flex-wrap items-center gap-2 rounded-md border p-3">
             <Button
-              disabled={layoutDisabled || !groupSelected(layout, selected, "preview")}
+              disabled={layoutDisabled || !!bulk || !groupSelected(layout, selected, "preview")}
               onClick={() => {
                 const next = groupSelected(layout, selected, crypto.randomUUID());
                 if (next) configure(next);
@@ -904,20 +955,24 @@ function Editor({
             >
               Agrupar seleccionados ({selected.length})
             </Button>
-            <Button
-              variant="ghost"
-              disabled={pending || !!layoutRequest}
-              onClick={() => {
-                setSelected([]);
-                guard.setDirty(selectionKey, false);
-              }}
-            >
+            <Button variant="ghost" disabled={pending || !!layoutRequest} onClick={cancelSelection}>
               Cancelar selección
             </Button>
             <p className="text-xs text-muted-foreground">
-              Selecciona de dos a cuatro ejercicios consecutivos.
+              Para agrupar, selecciona de dos a cuatro ejercicios consecutivos. Para editar, puedes
+              elegir hasta 15.
             </p>
           </div>
+        ) : null}
+        {selected.length ? (
+          <BulkEditor
+            rows={session.exercises}
+            value={bulk ?? defaultBulkDraft(selected)}
+            disabled={pending || conflict || !!saveRequest || !!layoutRequest}
+            onChange={changeBulk}
+            onApply={applyBulk}
+            onCancel={cancelSelection}
+          />
         ) : null}
         {layoutError ? (
           <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
@@ -1218,6 +1273,33 @@ function Editor({
             </Button>
             {review ? (
               <div className="mt-3 space-y-3">
+                {bulk ? (
+                  <div className="rounded border p-2">
+                    <p className="font-medium">Lote pendiente</p>
+                    <p>
+                      {bulk.ids.length} ejercicios ·{" "}
+                      {bulk.setsEnabled ? `Series: ${bulk.sets}. ` : ""}
+                      {bulk.repsEnabled ? `Repeticiones: ${bulk.repsMin}–${bulk.repsMax}. ` : ""}
+                      {bulk.restEnabled ? `Descanso: ${bulk.restSeconds || "Libre"} s.` : ""}
+                    </p>
+                    {bulk.ids.map((id) => {
+                      const row = review.exercises.find((e) => e.id === id);
+                      return (
+                        <p key={id}>
+                          Actual:{" "}
+                          {row
+                            ? `${row.name} · ${row.sets} × ${row.repsMin}–${row.repsMax} · Descanso ${row.supersetId ? (row.supersetRestSeconds ?? "Libre") : (row.restSeconds ?? "Libre")} s`
+                            : "Ejercicio eliminado"}
+                        </p>
+                      );
+                    })}
+                    {bulk.ids.some((id) => !review.exercises.some((e) => e.id === id)) ? (
+                      <Button variant="outline" onClick={cancelSelection}>
+                        Descartar lote de ejercicios eliminados
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
                 {title !== undefined ? (
                   <div className="rounded border p-2">
                     <p className="font-medium">Título de sesión</p>
@@ -1227,12 +1309,13 @@ function Editor({
                 ) : null}
                 {Object.values(edits).map((row) => {
                   const remote = review.exercises.find((e) => e.id === row.id);
+                  const local = remote ? effectivePrescription(remote, row) : row;
                   return (
                     <div key={row.id} className="rounded border p-2">
                       <p className="font-medium">{remote?.name ?? "Ejercicio eliminado"}</p>
                       <p>
-                        Tu borrador: {row.sets} × {row.repsMin}–{row.repsMax} ·{" "}
-                        {row.targetWeightKg || "Libre"} kg · {row.note}
+                        Tu borrador: {local.sets} × {local.repsMin}–{local.repsMax} ·{" "}
+                        {local.targetWeightKg || "Libre"} kg · {local.note}
                       </p>
                       <p>
                         Actual:{" "}
@@ -1240,6 +1323,20 @@ function Editor({
                           ? `${remote.sets} × ${remote.repsMin}–${remote.repsMax} · ${remote.targetWeightKg ?? "Libre"} kg · ${remote.note ?? ""}`
                           : "Ya no está en la rutina"}
                       </p>
+                      {row.fields?.includes("restSeconds") ||
+                      row.fields?.includes("supersetRestSeconds") ? (
+                        <p>
+                          Descanso{row.fields.includes("supersetRestSeconds") ? " de ronda" : ""}:
+                          tu borrador {(local.supersetRestSeconds ?? local.restSeconds) || "Libre"}{" "}
+                          s · actual{" "}
+                          {remote
+                            ? ((row.fields.includes("supersetRestSeconds")
+                                ? remote.supersetRestSeconds
+                                : remote.restSeconds) ?? "Libre")
+                            : "Eliminado"}{" "}
+                          s
+                        </p>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -1294,6 +1391,7 @@ function Editor({
                   disabled={
                     pending ||
                     !!orphanEdits.length ||
+                    !!bulk?.ids.some((id) => !review.exercises.some((e) => e.id === id)) ||
                     orderPending ||
                     Object.keys(alternativeEdits).some(
                       (id) => !review.exercises.some((e) => e.id === id),
