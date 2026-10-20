@@ -1,4 +1,5 @@
 // T139 · Rutinas reales, protección de ediciones y fallos de red del editor T138.
+import { mondayOf, santiagoDate } from "../src/domain/dates";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { COACH, admin, resetAll, seedCoach } from "./support/db";
@@ -127,13 +128,15 @@ test("un fallo al guardar conserva las ediciones y salir requiere confirmación"
 async function mouseReorder(page: Page, first: string, second: string, outside = false) {
   const source = page.getByRole("button", { name: `Reordenar ${first}`, exact: true });
   const target = page.getByRole("button", { name: `Reordenar ${second}`, exact: true });
-  await source.scrollIntoViewIfNeeded();
-  await target.scrollIntoViewIfNeeded();
+  await page
+    .getByRole("list", { name: "Ejercicios de la sesión", exact: true })
+    .scrollIntoViewIfNeeded();
   const from = (await source.boundingBox())!;
   const to = (await target.boundingBox())!;
+  const targetRow = (await page.getByRole("listitem").filter({ has: target }).boundingBox())!;
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
   await page.mouse.down();
-  const y = to.y + to.height / 2 + (to.y > from.y ? 90 : -90);
+  const y = targetRow.y + targetRow.height / 2 + (to.y > from.y ? 20 : -20);
   await page.mouse.move(outside ? 2 : to.x + to.width / 2, y, { steps: 12 });
   await page.mouse.up();
 }
@@ -547,4 +550,125 @@ test("el coach agrupa, prescribe descanso y mueve una superserie como bloque", a
   await page.getByRole("button", { name: "Sacar Sentadilla de superserie", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Superserie 1", exact: true })).toHaveCount(0);
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("3");
+});
+
+test("alternativas recupera campos y confirma una respuesta perdida sin recrear filas (T151)", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await page.getByText("Alternativas de Sentadilla (0/3)", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Agregar alternativa de Sentadilla", exact: true })
+    .click();
+  await page
+    .getByLabel("Alternativa 1 de Sentadilla", { exact: true })
+    .selectOption({ label: "Prensa de piernas" });
+  await page.getByLabel("Series de alternativa 1 de Sentadilla", { exact: true }).fill("");
+  await page.getByLabel("Peso (kg) de alternativa 1 de Sentadilla", { exact: true }).fill("22,5");
+  await page.reload();
+  await expect(
+    page.getByLabel("Series de alternativa 1 de Sentadilla", { exact: true }),
+  ).toHaveValue("");
+  await expect(
+    page.getByLabel("Peso (kg) de alternativa 1 de Sentadilla", { exact: true }),
+  ).toHaveValue("22,5");
+  await page.getByLabel("Series de alternativa 1 de Sentadilla", { exact: true }).fill("2");
+  await expect(page.getByLabel("Series de Sentadilla", { exact: true })).toBeDisabled();
+  let intercepted = false;
+  await page.route(page.url(), async (route) => {
+    if (
+      !intercepted &&
+      route.request().method() === "POST" &&
+      route.request().headers()["next-action"]
+    ) {
+      intercepted = true;
+      await route.fetch();
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await page
+    .getByRole("button", { name: "Guardar alternativas de Sentadilla", exact: true })
+    .click();
+  await expect(page.getByRole("alert").filter({ hasText: "confirmar" })).toBeVisible();
+  const before = await admin()
+    .from("program_sessions")
+    .select("revision,session_exercises(session_exercise_alternatives(*))")
+    .eq("program_id", programId)
+    .single();
+  expect(before.error).toBeNull();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Guardar alternativas de Sentadilla", exact: true })
+    .click();
+  await expect(page.getByText("Alternativas guardadas.", { exact: true })).toBeVisible();
+  const after = await admin()
+    .from("program_sessions")
+    .select("revision,session_exercises(session_exercise_alternatives(*))")
+    .eq("program_id", programId)
+    .single();
+  expect(after.data).toEqual(before.data);
+  const alternatives = after.data!.session_exercises.flatMap(
+    (e) => e.session_exercise_alternatives,
+  );
+  expect(alternatives).toHaveLength(1);
+  expect(alternatives[0]).toMatchObject({ sets: 2, target_weight_kg: 22.5 });
+  await page.setViewportSize({ width: 360, height: 800 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  const result = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(
+    result.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
+  ).toEqual([]);
+});
+
+test("alternativas exige revisar el conflicto y conserva la prescripción remota (T151)", async ({
+  page,
+  context,
+}) => {
+  await routine(page);
+  const other = await context.newPage();
+  await other.goto(page.url());
+  await expect(visibleField(other, "Series de Sentadilla")).toBeVisible();
+  await page.getByText("Alternativas de Sentadilla (0/3)", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Agregar alternativa de Sentadilla", exact: true })
+    .click();
+  await page
+    .getByLabel("Alternativa 1 de Sentadilla", { exact: true })
+    .selectOption({ label: "Zancadas" });
+  await visibleField(other, "Series de Sentadilla").fill("4");
+  await other.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(other.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Guardar alternativas de Sentadilla", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Revisar versión actual", exact: true }).click();
+  await expect(page.getByText("Actual: Sin alternativas", { exact: true })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Aplicar mis cambios a esta versión", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Guardar alternativas de Sentadilla", exact: true })
+    .click();
+  await expect(page.getByText("Alternativas guardadas.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("4");
+  await page.getByText("Alternativas de Sentadilla (1/3)", { exact: true }).click();
+  await expect(
+    page.getByLabel("Alternativa 1 de Sentadilla", { exact: true }).locator("option:checked"),
+  ).toHaveText("Zancadas");
+  await other.close();
+  await page.getByText("Asignar a un alumno", { exact: true }).click();
+  await page.getByLabel("Inicio", { exact: true }).fill(mondayOf(santiagoDate(new Date())));
+  await page.getByRole("button", { name: "Asignar", exact: true }).click();
+  await expect(page.getByText(`Programa de ${COACH.name}`, { exact: true })).toBeVisible();
+  await expect(page.getByText("Alternativa: Zancadas", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Guardar alternativas de Sentadilla", exact: true }),
+  ).toHaveCount(0);
 });

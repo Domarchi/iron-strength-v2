@@ -58,3 +58,11 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 - Prescripción visible y comparación desplegable con fecha/series anteriores, sugerencia y motivo (series incompletas o repeticiones pendientes). Se mantiene el cálculo de progresión existente.
 - Copia explícita de fila, última ejecución o sugerencia: las series completadas no cambian. La sugerencia solo afecta trabajo pendiente; conserva calentamientos, prescripción y temporizador. Copias múltiples admiten Deshacer. Valores fuera de los límites de registro no se aplican.
 - Cuatro regresiones unitarias fallaron primero; check en verde con 405 pruebas, formato/lint/tipos/build. Sin cambio de esquema ni permisos. 49/49 E2E en verde, sin reintentos, incluyendo comparación, protección de series hechas, Deshacer y recuperación.
+
+## T151
+
+- Alternativas por ejercicio (máximo tres, prescripción propia, sin duplicados ni autorreferencia), RLS de lectura y escritura, bloqueo de semanas actuales/pasadas, revisión y recibos para guardado atómico. Cambiar el original tampoco puede producir una autorreferencia. Cascadas verificadas al borrar cuenta.
+- Editor con búsqueda, campos propios, borradores de texto incompleto, peticiones inciertas y comparación local/actual para conflictos. La vista bloqueada muestra alternativas y metadatos de grupo/descanso. Copias de fila/sesión/semana/asignación generan alternativas independientes.
+- La primera copia en una sola consulta no permitía que RLS viera los padres recién insertados. Corregida con comandos separados dentro de la misma transacción, sin ampliar permisos. Pasan 230 integración y 357 comprobaciones SQL, incluidas restricciones de duplicados, rango y catálogo archivado.
+- Check: 408 pruebas, formato/lint/tipos/build en verde. Primera suite E2E: los dos casos nuevos de alternativas pasaron; la prueba de arrastre usaba una distancia fija menor que el nuevo centro de las tarjetas. Corregida para usar geometría real. Check final nuevamente en verde y 51/51 E2E sin reintentos, incluida asignación al propio coach y vista bloqueada.
+- Migración aplicada al desarrollo sin reset, con huella completa idéntica de tres perfiles, dos programas y ocho entrenamientos.

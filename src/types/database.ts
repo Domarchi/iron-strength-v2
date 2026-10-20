@@ -293,6 +293,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"session_exercise_alternatives": {
+                  Row: {
+                    "exercise_id": string,"id": string,"position": number,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "exercise_id": string,"id"?: string,"position": number,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg"?: number | null
+                  }
+                  Update: {
+                    "exercise_id"?: string,"id"?: string,"position"?: number,"reps_max"?: number,"reps_min"?: number,"session_exercise_id"?: string,"sets"?: number,"target_weight_kg"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "session_exercise_alternatives_exercise_id_fkey"
+      columns: ["exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "session_exercise_alternatives_session_exercise_id_fkey"
+      columns: ["session_exercise_id"]
+isOneToOne: false
+      referencedRelation: "session_exercises"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"session_exercises": {
                   Row: {
                     "exercise_id": string,"id": string,"note": string | null,"position": number,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
@@ -388,6 +414,12 @@ isOneToOne: false
                            },
 "auth_email_exists":
 { Args: { "p_email": string }; Returns: boolean
+                           },
+"can_edit_routine_session":
+{ Args: { "p_session_id": string }; Returns: boolean
+                           },
+"configure_session_alternatives":
+{ Args: { "p_alternatives": Json,"p_exercise_row_id": string,"p_expected_revision": number,"p_request_id": string,"p_session_id": string }; Returns: number
                            },
 "configure_session_layout":
 { Args: { "p_expected_revision": number,"p_layout": Json,"p_request_id": string,"p_session_id": string }; Returns: number

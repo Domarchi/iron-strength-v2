@@ -2,6 +2,7 @@
 // el cliente con la sesión del usuario: la RLS decide quién puede leer y escribir. Además se aplica
 // la regla de RF-17: en un programa ya asignado solo se editan semanas posteriores a la en curso.
 import { z } from "zod";
+import type { AlternativeRow } from "@/lib/coach/routine-alternatives";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { santiagoDate, type DateString } from "../../domain/dates.ts";
 import { isWeekEditable, type ProgramRange } from "../../domain/program-weeks.ts";
@@ -32,6 +33,7 @@ export type SessionExerciseRow = {
   isBodyweight: boolean;
   incrementKg: number;
   archived: boolean;
+  alternatives?: AlternativeRow[];
   restSeconds?: number | null;
   supersetId?: string | null;
   supersetRestSeconds?: number | null;
@@ -132,7 +134,8 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
          id, week_number, label, position, revision,
          session_exercises (
            id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note, rest_seconds, superset_id, superset_rest_seconds,
-           exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg, archived_at )
+           exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg, archived_at ),
+           session_exercise_alternatives(id,exercise_id,position,sets,reps_min,reps_max,target_weight_kg,exercises(name,archived_at))
          )
        )`,
     )
@@ -168,6 +171,18 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
             };
             return {
               id: e.id,
+              alternatives: e.session_exercise_alternatives
+                .sort((a, b) => a.position - b.position)
+                .map((a) => ({
+                  id: a.id,
+                  exerciseId: a.exercise_id,
+                  name: a.exercises.name,
+                  archived: a.exercises.archived_at !== null,
+                  sets: a.sets,
+                  repsMin: a.reps_min,
+                  repsMax: a.reps_max,
+                  targetWeightKg: a.target_weight_kg === null ? null : Number(a.target_weight_kg),
+                })),
               restSeconds: e.rest_seconds,
               supersetId: e.superset_id,
               supersetRestSeconds: e.superset_rest_seconds,

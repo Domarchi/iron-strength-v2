@@ -34,12 +34,20 @@ import {
   type LayoutRequest,
   type LayoutRow,
 } from "@/lib/coach/routine-layout";
+import {
+  alternativeDraft,
+  validateAlternatives,
+  type AlternativeDraft,
+  type AlternativeRequest,
+} from "@/lib/coach/routine-alternatives";
+import { AlternativesEditor } from "./alternatives-editor";
 import { RoutineRestSelect } from "./routine-rest-select";
 import type { SessionExerciseRow, SessionRow } from "@/lib/data/programs";
 import { removeExerciseAction, removeSessionAction } from "../actions";
 import { ActionForm } from "../action-form";
 import {
   configureLayoutAction,
+  configureAlternativesAction,
   reviewSessionAction,
   duplicateRoutineAction,
   reorderExercisesAction,
@@ -138,7 +146,8 @@ function Editor({
       !restored.saveRequest &&
       !restored.orderRequest &&
       !restored.copyRequest &&
-      !restored.layoutRequest,
+      !restored.layoutRequest &&
+      !restored.alternativeRequest,
   );
   const [edits, setEdits] = useState<Record<string, PrescriptionDraft>>(restored?.edits ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -161,6 +170,15 @@ function Editor({
   const [layoutError, setLayoutError] = useState<string | null>(
     restored?.layoutRequest ? "Configuración pendiente de confirmar." : null,
   );
+  const [alternativeEdits, setAlternativeEdits] = useState<Record<string, AlternativeDraft[]>>(
+    restored?.alternativeEdits ?? {},
+  );
+  const [alternativeRequest, setAlternativeRequest] = useState<AlternativeRequest | null>(
+    restored?.alternativeRequest ?? null,
+  );
+  const [alternativeError, setAlternativeError] = useState<string | null>(null);
+  const alternativesDirty = Object.keys(alternativeEdits).length > 0 || !!alternativeRequest;
+  const alternativesKey = `${session.id}-alternatives`;
   const layoutKey = `${session.id}-layout`;
   const selectionKey = `${session.id}-selection`;
   const [copyError, setCopyError] = useState<string | null>(
@@ -181,6 +199,7 @@ function Editor({
     conflict ||
     !!saveRequest ||
     !!layoutRequest ||
+    alternativesDirty ||
     guard.dirtyIds.some((id) => id !== orderKey && id !== dragKey);
   const drafts = orderedExercises.map((row) => edits[row.id] ?? prescriptionDraft(row));
   const changed = drafts.filter(
@@ -196,7 +215,13 @@ function Editor({
     0,
   );
   const structuralDisabled =
-    pending || guard.dirty || dragging || conflict || !!saveRequest || !!layoutRequest;
+    pending ||
+    guard.dirty ||
+    dragging ||
+    conflict ||
+    !!saveRequest ||
+    !!layoutRequest ||
+    alternativesDirty;
   const layoutDisabled =
     pending ||
     dirty ||
@@ -206,6 +231,7 @@ function Editor({
     !!saveRequest ||
     !!copyRequest ||
     !!layoutRequest ||
+    alternativesDirty ||
     guard.dirtyIds.some((id) => id !== selectionKey);
   const lastDraft = useRef<EditorDraft | null>(restored ? { ...restored, id: localId } : null);
   function persistLocal(overrides: Partial<EditorDraft> = {}) {
@@ -223,6 +249,8 @@ function Editor({
       saveRequest,
       copyRequest,
       layoutRequest,
+      alternativeEdits,
+      alternativeRequest,
       ...overrides,
     };
     lastDraft.current = next;
@@ -231,7 +259,9 @@ function Editor({
       next.order ||
       next.saveRequest ||
       next.copyRequest ||
-      next.layoutRequest
+      next.layoutRequest ||
+      Object.keys(next.alternativeEdits ?? {}).length ||
+      next.alternativeRequest
     ) {
       if (persistence.persist(next)) {
         remember(localId);
@@ -260,7 +290,75 @@ function Editor({
     setGuardDirty(`${serverSession.id}-order`, !!restored.order);
     setGuardDirty(`${serverSession.id}-copy`, !!restored.copyRequest);
     setGuardDirty(`${serverSession.id}-layout`, !!restored.layoutRequest);
+    setGuardDirty(
+      `${serverSession.id}-alternatives`,
+      !!restored.alternativeRequest || !!Object.keys(restored.alternativeEdits ?? {}).length,
+    );
   }, [restored, persistence, serverSession.id, setGuardDirty]);
+  function changeAlternatives(rowId: string, rows: AlternativeDraft[]) {
+    baseRevision.current ??= session.revision;
+    const next = { ...alternativeEdits, [rowId]: rows };
+    setAlternativeEdits(next);
+    setAlternativeError(null);
+    guard.setDirty(alternativesKey, true);
+    persistLocal({ alternativeEdits: next });
+  }
+  function saveAlternatives(row: SessionExerciseRow) {
+    const parsed = validateAlternatives(row.exerciseId, alternativeEdits[row.id] ?? []);
+    if (!parsed.ok) {
+      setAlternativeError(parsed.error);
+      return;
+    }
+    const request = alternativeRequest ?? {
+      id: crypto.randomUUID(),
+      revision: baseRevision.current ?? session.revision,
+      exerciseRowId: row.id,
+      alternatives: parsed.rows,
+    };
+    setAlternativeRequest(request);
+    persistLocal({ alternativeRequest: request });
+    setAlternativeError(null);
+    setStatus(null);
+    startTransition(async () => {
+      try {
+        const result = await configureAlternativesAction(programId, session.id, request);
+        if (result.error) {
+          setAlternativeError(result.error);
+          if (!result.uncertain) {
+            setAlternativeRequest(null);
+            persistLocal({ alternativeRequest: null });
+          }
+          if (result.conflict) setConflict(true);
+          return;
+        }
+        setAlternativeEdits({});
+        setAlternativeRequest(null);
+        setConflict(false);
+        setReview(null);
+        baseRevision.current = null;
+        guard.setDirty(alternativesKey, false);
+        persistLocal({ alternativeEdits: {}, alternativeRequest: null });
+        removeRecovered();
+        setStatus("Alternativas guardadas.");
+      } catch {
+        setAlternativeError(
+          "No se pudo confirmar el guardado. Reintenta para confirmar la misma operación.",
+        );
+      }
+    });
+  }
+  function discardAlternatives() {
+    setAlternativeEdits({});
+    setAlternativeRequest(null);
+    setAlternativeError(null);
+    setConflict(false);
+    setReview(null);
+    baseRevision.current = null;
+    guard.setDirty(alternativesKey, false);
+    persistLocal({ alternativeEdits: {}, alternativeRequest: null });
+    removeRecovered();
+    router.refresh();
+  }
   function configure(next: LayoutRow[], savedRequest?: LayoutRequest) {
     const request = savedRequest ?? {
       id: crypto.randomUUID(),
@@ -600,6 +698,7 @@ function Editor({
             !!copyRequest ||
             !!saveRequest ||
             !!layoutRequest ||
+            alternativesDirty ||
             selected.length > 0
           }
           className="mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
@@ -648,6 +747,7 @@ function Editor({
               !!copyRequest ||
               !!saveRequest ||
               !!layoutRequest ||
+              alternativesDirty ||
               selected.length > 0
             }
             onChange={(e) => change(draft, "note", e.target.value)}
@@ -655,6 +755,35 @@ function Editor({
             className="h-11 bg-background"
           />
         </details>
+        <AlternativesEditor
+          name={exercise.name}
+          originalId={exercise.exerciseId}
+          rows={
+            alternativeEdits[exercise.id] ?? (exercise.alternatives ?? []).map(alternativeDraft)
+          }
+          catalog={exercises}
+          dirty={
+            !!alternativeEdits[exercise.id] || alternativeRequest?.exerciseRowId === exercise.id
+          }
+          disabled={
+            pending ||
+            conflict ||
+            dirty ||
+            orderPending ||
+            dragging ||
+            !!saveRequest ||
+            !!copyRequest ||
+            !!layoutRequest ||
+            selected.length > 0 ||
+            guard.dirtyIds.some((id) => id !== alternativesKey) ||
+            (alternativesDirty && !alternativeEdits[exercise.id])
+          }
+          locked={!!alternativeRequest}
+          saving={pending}
+          onChange={(rows) => changeAlternatives(exercise.id, rows)}
+          onSave={() => saveAlternatives(exercise)}
+          onDiscard={discardAlternatives}
+        />
         {errors[exercise.id] ? (
           <p id={errorId} role="alert" className="mt-2 text-sm text-destructive">
             {errors[exercise.id]}
@@ -912,6 +1041,7 @@ function Editor({
                     dragging ||
                     !!saveRequest ||
                     !!layoutRequest ||
+                    alternativesDirty ||
                     selected.length > 0
                   }
                   onClick={() => {
@@ -944,6 +1074,7 @@ function Editor({
                   !!copyRequest ||
                   conflict ||
                   !!layoutRequest ||
+                  alternativesDirty ||
                   selected.length > 0
                 }
                 onClick={save}
@@ -1051,6 +1182,37 @@ function Editor({
                     </div>
                   );
                 })}
+                {Object.entries(alternativeEdits).map(([id, rows]) => {
+                  const remote = review.exercises.find((e) => e.id === id);
+                  const describe = (values: AlternativeDraft[]) =>
+                    values.length
+                      ? values
+                          .map(
+                            (r) =>
+                              `${exercises.find((e) => e.id === r.exerciseId)?.name ?? r.exerciseId}: ${r.sets} × ${r.repsMin}–${r.repsMax} · ${r.targetWeightKg || "Libre"} kg`,
+                          )
+                          .join("; ")
+                      : "Sin alternativas";
+                  return (
+                    <div key={`alternatives-${id}`} className="rounded border p-2">
+                      <p className="font-medium">
+                        Alternativas de {remote?.name ?? "ejercicio eliminado"}
+                      </p>
+                      <p>Tu borrador: {describe(rows)}</p>
+                      <p>
+                        Actual:{" "}
+                        {remote
+                          ? describe((remote.alternatives ?? []).map(alternativeDraft))
+                          : "Ya no está en la rutina"}
+                      </p>
+                      {!remote ? (
+                        <Button variant="outline" onClick={discardAlternatives}>
+                          Descartar alternativas del ejercicio eliminado
+                        </Button>
+                      ) : null}
+                    </div>
+                  );
+                })}
                 {orphanEdits.length ? (
                   <Button
                     variant="outline"
@@ -1068,12 +1230,20 @@ function Editor({
                   </Button>
                 ) : null}
                 <Button
-                  disabled={pending || !!orphanEdits.length || orderPending}
+                  disabled={
+                    pending ||
+                    !!orphanEdits.length ||
+                    orderPending ||
+                    Object.keys(alternativeEdits).some(
+                      (id) => !review.exercises.some((e) => e.id === id),
+                    )
+                  }
                   onClick={() => {
                     baseRevision.current = review.revision;
                     setConflict(false);
                     setError(null);
                     setSaveRequest(null);
+                    setAlternativeError(null);
                     persistLocal({ revision: review.revision, saveRequest: null });
                   }}
                 >
@@ -1082,6 +1252,11 @@ function Editor({
               </div>
             ) : null}
           </div>
+        ) : null}
+        {alternativeError ? (
+          <p role="alert" className="text-sm text-destructive">
+            {alternativeError}
+          </p>
         ) : null}
         {error ? (
           <p role="alert" className="text-sm text-destructive">
@@ -1102,6 +1277,7 @@ function Editor({
             !!saveRequest ||
             conflict ||
             !!layoutRequest ||
+            alternativesDirty ||
             selected.length > 0
           }
         />

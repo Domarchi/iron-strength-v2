@@ -401,19 +401,17 @@ test("comparación explica la progresión y copiar no modifica series hechas (T1
   });
   expect(
     (
-      await db
-        .from("workout_sets")
-        .insert({
-          workout_id: workoutId,
-          student_id: studentId,
-          exercise_id: exerciseId,
-          exercise_name: "Sentadilla",
-          position: 0,
-          set_number: 2,
-          weight_kg: 55,
-          reps: 9,
-          is_warmup: false,
-        })
+      await db.from("workout_sets").insert({
+        workout_id: workoutId,
+        student_id: studentId,
+        exercise_id: exerciseId,
+        exercise_name: "Sentadilla",
+        position: 0,
+        set_number: 2,
+        weight_kg: 55,
+        reps: 9,
+        is_warmup: false,
+      })
     ).error,
   ).toBeNull();
   await openSession(page);

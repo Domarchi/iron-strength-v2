@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { alternativeDraftSchema, alternativeRequestSchema } from "./routine-alternatives";
 import { layoutRowSchema } from "./routine-layout";
 import type { DraftStorage } from "@/lib/workout/draft";
 const text = z.string();
@@ -28,6 +29,8 @@ const schema = z.object({
     .extend({ layout: z.array(layoutRowSchema) })
     .nullable()
     .optional(),
+  alternativeEdits: z.record(z.string(), z.array(alternativeDraftSchema)).optional(),
+  alternativeRequest: alternativeRequestSchema.nullable().optional(),
   copyRequest: z.object({ id: text, exerciseId: text.optional() }).nullable(),
 });
 export type EditorDraft = z.infer<typeof schema>;

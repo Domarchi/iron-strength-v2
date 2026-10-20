@@ -233,6 +233,37 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
                             <p className="text-sm text-muted-foreground">
                               {formatPrescription(exercise)}
                             </p>
+                            {exercise.supersetId ? (
+                              <p className="mt-1 text-xs font-medium text-primary">
+                                Superserie{" "}
+                                {[
+                                  ...new Set(
+                                    session.exercises.map((e) => e.supersetId).filter(Boolean),
+                                  ),
+                                ].indexOf(exercise.supersetId) + 1}{" "}
+                                · Descanso entre rondas:{" "}
+                                {exercise.supersetRestSeconds == null
+                                  ? "predeterminado"
+                                  : `${exercise.supersetRestSeconds} s`}
+                              </p>
+                            ) : exercise.restSeconds != null ? (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Descanso: {exercise.restSeconds} s
+                              </p>
+                            ) : null}
+                            {(exercise.alternatives ?? []).length ? (
+                              <ul className="mt-2 space-y-1 border-l-2 border-primary/30 pl-3">
+                                {exercise.alternatives!.map((alt) => (
+                                  <li key={alt.id} className="text-sm">
+                                    <span className="font-medium">Alternativa: {alt.name}</span>
+                                    <p className="text-xs text-muted-foreground">
+                                      {formatPrescription(alt)}
+                                      {alt.archived ? " · Archivado" : ""}
+                                    </p>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
                             {exercise.note ? (
                               <p className="mt-1 text-xs text-muted-foreground">{exercise.note}</p>
                             ) : null}

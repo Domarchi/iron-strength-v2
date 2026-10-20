@@ -112,3 +112,27 @@ it("limpia el origen aunque el orden de propiedades cambie al leer campos nuevos
   writer.remove(restored, true);
   expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([]);
 });
+
+it("conserva alternativas incompletas y la solicitud estable sin perder los otros borradores", () => {
+  const store = storage(),
+    writer = createEditorPersistence(() => store);
+  const exerciseId = crypto.randomUUID(),
+    exerciseRowId = crypto.randomUUID();
+  const value: EditorDraft = {
+    ...draft,
+    edits: {},
+    alternativeEdits: {
+      [exerciseRowId]: [
+        { exerciseId, sets: "", repsMin: "8", repsMax: "12", targetWeightKg: "22,5" },
+      ],
+    },
+    alternativeRequest: {
+      id: crypto.randomUUID(),
+      revision: 2,
+      exerciseRowId,
+      alternatives: [{ exerciseId, sets: 3, repsMin: 8, repsMax: 12, targetWeightKg: 22.5 }],
+    },
+  };
+  writer.persist(value);
+  expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([value]);
+});

@@ -2,6 +2,8 @@
 
 import { configureSessionLayout } from "@/lib/data/session-layout";
 import type { LayoutRequest } from "@/lib/coach/routine-layout";
+import { configureAlternatives } from "@/lib/data/routine-alternatives";
+import type { AlternativeRequest } from "@/lib/coach/routine-alternatives";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sessionExerciseSchema } from "@/domain/schemas";
@@ -234,6 +236,35 @@ export async function configureLayoutAction(
   } catch {
     return {
       error: "No se pudo confirmar la configuración. Reintenta sin repetir la operación.",
+      savedIds: [],
+      uncertain: true,
+    };
+  }
+}
+
+export async function configureAlternativesAction(
+  programId: string,
+  sessionId: string,
+  request: AlternativeRequest,
+): Promise<EditorResult> {
+  await requireCoach();
+  try {
+    const db = await createClient();
+    const tree = await getProgramTree(db, programId);
+    if (!tree?.sessions.some((s) => s.id === sessionId))
+      return { error: messages.not_found, savedIds: [] };
+    const result = await configureAlternatives(db, sessionId, request);
+    if (!result.ok)
+      return {
+        error: messages[result.reason],
+        savedIds: [],
+        conflict: result.reason === "conflict",
+      };
+    refresh(programId);
+    return { error: null, savedIds: [request.exerciseRowId], revision: result.revision };
+  } catch {
+    return {
+      error: "No se pudo confirmar el guardado de alternativas. Reintenta con la misma solicitud.",
       savedIds: [],
       uncertain: true,
     };
