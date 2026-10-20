@@ -110,3 +110,122 @@ test("un fallo al guardar conserva las ediciones y salir requiere confirmación"
   await page.reload();
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("5");
 });
+
+async function mouseReorder(page: Page, first: string, second: string, outside = false) {
+  const source = page.getByRole("button", { name: `Reordenar ${first}`, exact: true });
+  const target = page.getByRole("button", { name: `Reordenar ${second}`, exact: true });
+  await source.scrollIntoViewIfNeeded();
+  await target.scrollIntoViewIfNeeded();
+  const from = (await source.boundingBox())!;
+  const to = (await target.boundingBox())!;
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  const y = to.y + to.height / 2 + (to.y > from.y ? 90 : -90);
+  await page.mouse.move(outside ? 2 : to.x + to.width / 2, y, { steps: 12 });
+  await page.mouse.up();
+}
+
+test("arrastrar guarda el orden; un fallo conserva el destino y se puede reintentar", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  const programId = await routine(page);
+  await mouseReorder(page, "Sentadilla", "Press de banca");
+  await expect(page.getByText("Orden guardado.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /1.*Press de banca/ })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /1.*Press de banca/ })).toBeVisible();
+  let aborted = false;
+  await page.route(page.url(), async (route) => {
+    if (
+      !aborted &&
+      route.request().method() === "POST" &&
+      route.request().headers()["next-action"]
+    ) {
+      aborted = true;
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await mouseReorder(page, "Press de banca", "Sentadilla");
+  const retry = page.getByRole("button", { name: "Reintentar guardar orden", exact: true });
+  await expect(retry).toBeVisible();
+  expect(aborted).toBe(true);
+  await expect(page.getByRole("heading", { name: /1.*Sentadilla/ })).toBeVisible();
+  await retry.click();
+  await expect(page.getByText("Orden guardado.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /1.*Sentadilla/ })).toBeVisible();
+  const { data } = await admin()
+    .from("program_sessions")
+    .select("session_exercises(position,sets,reps_min,reps_max,exercises(name))")
+    .eq("program_id", programId)
+    .eq("week_number", 1)
+    .single();
+  const rows = data!.session_exercises.sort((a, b) => a.position - b.position);
+  expect(rows[0].exercises.name).toBe("Sentadilla");
+  expect(rows.every((row) => row.sets === 3 && row.reps_min === 8 && row.reps_max === 12)).toBe(
+    true,
+  );
+});
+
+test("arrastre touch real con scroll automático y persistencia en móvil", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await routine(page);
+  const handle = page.getByRole("button", { name: "Reordenar Sentadilla", exact: true });
+  await handle.scrollIntoViewIfNeeded();
+  const box = (await handle.boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y, id: 1 }],
+  });
+  for (let step = 1; step <= 12; step++) {
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x, y: y + ((775 - y) * step) / 12, id: 1 }],
+    });
+  }
+  await expect(page.getByTestId("exercise-drop-target")).toHaveCount(1);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await expect(page.getByText("Orden guardado.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /1.*Press de banca/ })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  await cdp.detach();
+});
+
+test("soltar fuera y Escape cancelan; las prescripciones pendientes bloquean el asa", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await routine(page);
+  await mouseReorder(page, "Sentadilla", "Press de banca", true);
+  await expect(page.getByRole("heading", { name: /1.*Sentadilla/ })).toBeVisible();
+  const handle = page.getByRole("button", { name: "Reordenar Sentadilla", exact: true });
+  await handle.focus();
+  await handle.press("Space");
+  await handle.press("ArrowDown");
+  await handle.press("Escape");
+  await expect(page.getByRole("heading", { name: /1.*Sentadilla/ })).toBeVisible();
+  await visibleField(page, "Series de Sentadilla").fill("4");
+  await expect(handle).toBeDisabled();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await expect(handle).toBeEnabled();
+  await handle.focus();
+  await handle.press("Space");
+  await handle.press("ArrowDown");
+  await handle.press("Enter");
+  await expect(page.getByText("Orden guardado.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /1.*Press de banca/ })).toBeVisible();
+  await expect(handle).toBeFocused();
+});

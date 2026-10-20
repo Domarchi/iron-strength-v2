@@ -17,3 +17,5 @@ Validación final y limitaciones: `validation.md`. Las casillas marcan implement
 - [x] **T138 · Editor de rutinas ágil** — Selector de semanas, prescripciones en línea, guardado por sesión con recuperación parcial, catálogo de selección múltiple y protección de cambios pendientes. Check completo en verde (372 tests); alta múltiple, validación, guardado/recarga, copia y orden verificados en la app contra Supabase local. Revisión a 360 px; suite Playwright completa pendiente.
 
 - [x] **T139 · Completar E2E y corregir regresiones** — Supabase E2E aislado y limpieza acotada; selectores ambiguos y credenciales fijas corregidos; dos escenarios del editor añadidos. Pasan los 35 E2E y el check completo (373 pruebas). Los perfiles, programas, prescripciones y entrenamientos del desarrollo se conservaron.
+
+- [x] **T140 · Orden por arrastre** — Asa táctil y de teclado, destino/scroll, guardado automático y reintento, conservación de permisos. Pasan 38 E2E y el check completo (378 pruebas); editor real abierto con controles de arrastre.

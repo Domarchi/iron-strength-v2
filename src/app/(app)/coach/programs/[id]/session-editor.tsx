@@ -14,9 +14,10 @@ import {
 import type { SessionRow } from "@/lib/data/programs";
 import { moveExerciseAction, removeExerciseAction, removeSessionAction } from "../actions";
 import { ActionForm } from "../action-form";
-import { savePrescriptionsAction } from "../editor-actions";
+import { reorderExercisesAction, savePrescriptionsAction } from "../editor-actions";
 import { ExercisePicker } from "./exercise-picker";
 import { useRoutineGuard } from "./week-workspace";
+import { SortableExerciseList } from "./sortable-exercise-list";
 
 export function SessionEditor({
   programId,
@@ -33,17 +34,52 @@ export function SessionEditor({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const guard = useRoutineGuard();
-  const drafts = session.exercises.map((row) => edits[row.id] ?? prescriptionDraft(row));
+  const [order, setOrder] = useState<string[] | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const orderKey = `${session.id}-order`;
+  const dragKey = `${session.id}-drag`;
+  const orderedExercises = order
+    ? [...session.exercises].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+    : session.exercises;
+  const orderPending = order !== null;
+  const dragDisabled = pending || guard.dirtyIds.some((id) => id !== orderKey && id !== dragKey);
+  const drafts = orderedExercises.map((row) => edits[row.id] ?? prescriptionDraft(row));
   const changed = drafts.filter(
     (draft, index) =>
-      JSON.stringify(draft) !== JSON.stringify(prescriptionDraft(session.exercises[index])),
+      JSON.stringify(draft) !== JSON.stringify(prescriptionDraft(orderedExercises[index])),
   );
   const dirty = changed.length > 0;
   const totalSets = drafts.reduce(
     (sum, row) => sum + (/^\d+$/.test(row.sets) ? Number(row.sets) : 0),
     0,
   );
-  const structuralDisabled = pending || guard.dirty;
+  const structuralDisabled = pending || guard.dirty || dragging;
+  function reorder(ids: string[]) {
+    setOrder(ids);
+    setOrderError(null);
+    setStatus(null);
+    guard.setDirty(orderKey, true);
+    const fd = new FormData();
+    fd.set("programId", programId);
+    fd.set("sessionId", session.id);
+    fd.set("orderedIds", JSON.stringify(ids));
+    startTransition(async () => {
+      try {
+        const result = await reorderExercisesAction(fd);
+        if (result.error) setOrderError(result.error);
+        else {
+          setOrder(null);
+          guard.setDirty(orderKey, false);
+          setStatus("Orden guardado.");
+        }
+      } catch {
+        setOrderError(
+          "No se pudo confirmar el orden. Conservamos tu orden aquí; vuelve a intentar.",
+        );
+      }
+    });
+  }
   function change(draft: PrescriptionDraft, field: keyof PrescriptionDraft, value: string) {
     const next = { ...edits, [draft.id]: { ...draft, [field]: value } };
     setEdits(next);
@@ -124,29 +160,45 @@ export function SessionEditor({
             </p>
           </div>
         ) : null}
-        <ol className="flex flex-col gap-4">
-          {session.exercises.map((exercise, index) => {
+        {session.exercises.length > 1 ? (
+          <p className="text-xs text-muted-foreground">
+            Arrastra desde el asa para reordenar. El orden se guarda al soltar.
+          </p>
+        ) : null}
+        <SortableExerciseList
+          items={orderedExercises}
+          disabled={dragDisabled}
+          onReorder={reorder}
+          onBusyChange={(value) => {
+            setDragging(value);
+            guard.setDirty(dragKey, value);
+          }}
+        >
+          {(exercise, index, handle) => {
             const draft = drafts[index];
             const modified = changed.some((row) => row.id === draft.id);
             const errorId = `error-${exercise.id}`;
             return (
-              <li
+              <div
                 key={exercise.id}
                 className={`rounded-md border p-3 ${modified ? "border-primary/40 bg-primary/5" : "bg-background"}`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-semibold">
-                      <span className="mr-2 text-muted-foreground">{index + 1}.</span>
-                      {exercise.name}
-                    </h4>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {exercise.muscleGroup}
-                      {exercise.equipment ? ` · ${exercise.equipment}` : ""}
-                      {exercise.archived ? " · Archivado" : ""}
-                    </p>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex min-w-0 flex-1 items-start gap-1">
+                    {handle}
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-semibold">
+                        <span className="mr-2 text-muted-foreground">{index + 1}.</span>
+                        {exercise.name}
+                      </h4>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {exercise.muscleGroup}
+                        {exercise.equipment ? ` · ${exercise.equipment}` : ""}
+                        {exercise.archived ? " · Archivado" : ""}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 gap-0.5">
+                  <div className="flex w-full shrink-0 justify-end gap-0.5 sm:w-auto">
                     <ActionForm
                       action={moveExerciseAction}
                       fields={{
@@ -188,7 +240,7 @@ export function SessionEditor({
                   </div>
                 </div>
                 <fieldset
-                  disabled={pending}
+                  disabled={pending || orderPending || dragging}
                   className="mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
                 >
                   {(
@@ -228,7 +280,7 @@ export function SessionEditor({
                     aria-label={`Nota de ${exercise.name}`}
                     value={draft.note}
                     maxLength={500}
-                    disabled={pending}
+                    disabled={pending || orderPending || dragging}
                     onChange={(e) => change(draft, "note", e.target.value)}
                     placeholder="Técnica, tempo o indicaciones"
                     className="h-11 bg-background"
@@ -239,10 +291,26 @@ export function SessionEditor({
                     {errors[exercise.id]}
                   </p>
                 ) : null}
-              </li>
+              </div>
             );
-          })}
-        </ol>
+          }}
+        </SortableExerciseList>
+        {orderError ? (
+          <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
+            <p>{orderError}</p>
+            <p className="mt-1 text-muted-foreground">
+              El orden mostrado sigue pendiente de confirmar.
+            </p>
+            <Button className="mt-2" disabled={pending} onClick={() => order && reorder(order)}>
+              Reintentar guardar orden
+            </Button>
+          </div>
+        ) : null}
+        {pending && orderPending ? (
+          <p role="status" className="text-sm text-muted-foreground">
+            Guardando orden…
+          </p>
+        ) : null}
         {session.exercises.length ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-muted/50 p-3">
             <div className="text-xs">
@@ -259,7 +327,7 @@ export function SessionEditor({
               {dirty ? (
                 <Button
                   variant="ghost"
-                  disabled={pending}
+                  disabled={pending || orderPending || dragging}
                   onClick={() => {
                     if (
                       window.confirm("¿Descartar las prescripciones sin guardar de esta sesión?")
@@ -275,14 +343,14 @@ export function SessionEditor({
                   Descartar cambios
                 </Button>
               ) : null}
-              <Button disabled={!dirty || pending} onClick={save}>
+              <Button disabled={!dirty || pending || orderPending || dragging} onClick={save}>
                 <Save aria-hidden />
                 {pending ? "Guardando…" : "Guardar sesión"}
               </Button>
             </div>
           </div>
         ) : null}
-        {status ? (
+        {status && !pending ? (
           <p role="status" className="flex items-center gap-2 text-sm text-success">
             <Check className="size-4" aria-hidden />
             {status}
@@ -298,7 +366,7 @@ export function SessionEditor({
           sessionId={session.id}
           exercises={exercises}
           count={session.exercises.length}
-          disabled={dirty || pending}
+          disabled={dirty || pending || orderPending || dragging}
         />
       </CardContent>
     </Card>

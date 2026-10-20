@@ -8,6 +8,7 @@ import {
   getProgramTree,
   updateSessionExercise,
   addSessionExercise,
+  reorderSessionExercises,
   type Failure,
 } from "@/lib/data/programs";
 import { createClient } from "@/lib/supabase/server";
@@ -105,4 +106,35 @@ export async function addExercisesAction(fd: FormData): Promise<EditorResult> {
   }
   if (savedIds.length) refresh(programId);
   return { savedIds, error };
+}
+
+export async function reorderExercisesAction(fd: FormData): Promise<EditorResult> {
+  await requireCoach();
+  const parsed = z.array(z.string().min(1)).min(2).max(15).safeParse(readJson(fd, "orderedIds"));
+  if (!parsed.success || new Set(parsed.data).size !== parsed.data.length)
+    return { error: messages.invalid, savedIds: [] };
+  const programId = String(fd.get("programId") ?? "");
+  const db = await createClient();
+  const tree = await getProgramTree(db, programId);
+  const session = tree?.sessions.find((s) => s.id === fd.get("sessionId"));
+  if (
+    !session ||
+    session.exercises.length !== parsed.data.length ||
+    parsed.data.some((id) => !session.exercises.some((e) => e.id === id))
+  )
+    return { error: messages.not_found, savedIds: [] };
+  try {
+    const result = await reorderSessionExercises({
+      db,
+      sessionId: session.id,
+      orderedIds: parsed.data,
+    });
+    refresh(programId);
+    return result.ok
+      ? { error: null, savedIds: parsed.data }
+      : { error: messages[result.reason], savedIds: [] };
+  } catch {
+    refresh(programId);
+    return { error: temporaryError, savedIds: [] };
+  }
 }

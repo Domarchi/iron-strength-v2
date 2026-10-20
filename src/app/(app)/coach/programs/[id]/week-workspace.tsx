@@ -4,8 +4,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type Guard = { dirty: boolean; setDirty: (id: string, dirty: boolean) => void };
-const RoutineGuard = createContext<Guard>({ dirty: false, setDirty: () => {} });
+type Guard = { dirtyIds: string[]; dirty: boolean; setDirty: (id: string, dirty: boolean) => void };
+const RoutineGuard = createContext<Guard>({ dirtyIds: [], dirty: false, setDirty: () => {} });
 export const useRoutineGuard = () => useContext(RoutineGuard);
 
 export function CleanEditor({ children }: { children: ReactNode }) {
@@ -41,6 +41,7 @@ export function WeekWorkspace({
   const [dirtyIds, setDirtyIds] = useState<string[]>([]);
   const dirty = dirtyIds.length > 0;
   const guard: Guard = {
+    dirtyIds,
     dirty,
     setDirty: (id, value) =>
       setDirtyIds((ids) =>
@@ -115,7 +116,7 @@ export function WeekWorkspace({
             </Button>
           ))}
         </nav>
-        {dirty ? (
+        {dirtyIds.some((id) => !id.endsWith("-drag")) ? (
           <p
             role="status"
             className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm"

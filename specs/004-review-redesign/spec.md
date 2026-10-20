@@ -55,6 +55,14 @@ Solicitado el 2026-10-19. Amplía RF-22, RF-24, RF-27, RF-50 y RF-53 a RF-60; re
 - La limpieza E2E solo puede borrar cuentas del dominio reservado `iron-strength.e2e.test` y sus datos asociados, nunca las cuentas ni programas del desarrollo interactivo. Usar un coach exclusivo de la suite y limpiar los intentos de login únicamente de sus correos. Mantener la barrera de URL local.
 - Actualizar selectores obsoletos a los roles/nombres accesibles vigentes; conservar comprobaciones de resultado, guardado real, protección de datos y accesibilidad. Registrar el resultado real, los fallos corregidos y los datos locales conservados.
 
+## Reordenar ejercicios arrastrando (T140)
+
+- Cada ejercicio editable ofrece un asa de 44 px para arrastrar con mouse, lápiz o touch. El resto de la tarjeta permite desplazarse normalmente. Mostrar el ejercicio levantado, su destino y la posición; desplazar la página al acercarse a los bordes durante el arrastre. Soltar fuera de la lista o cancelar el gesto/Escape no modifica el orden.
+- Guardar automáticamente el orden completo al soltar dentro de la misma sesión. Mostrar progreso y confirmar solo el guardado real. Si falla, conservar el orden deseado, avisar y permitir reintentar; impedir otras modificaciones hasta resolverlo. La operación sigue siendo idempotente sobre la permutación completa y usa la validación y RLS existentes; no se afirma atomicidad nueva.
+- Conservar flechas accesibles para subir/bajar. En el asa: Espacio/Enter levanta/suelta, flechas cambian destino, Escape cancela; anunciar posición y resultado. Respetar movimiento reducido y foco de teclado.
+- Bloquear el arrastre mientras hay prescripciones/selecciones pendientes, durante guardado y en semanas pasadas. No mover ejercicios entre sesiones ni alterar sus prescripciones. Sin dependencias ni cambios de esquema.
+- Regresiones de permiso/permutación, mouse y touch reales en E2E, cancelación, error/reintento, persistencia tras recarga y accesibilidad.
+
 ## Validación
 
 Regresiones de cálculo, edición, selección de descanso, compatibilidad del borrador y conexión de la UI; check completo y E2E cuando el entorno lo permita. No se incorpora código, recursos ni servicios de Hevy al producto.

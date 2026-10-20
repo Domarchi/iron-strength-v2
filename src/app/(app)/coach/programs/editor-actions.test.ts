@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   add: vi.fn(),
   refresh: vi.fn(),
+  reorder: vi.fn(),
 }));
 vi.mock("@/lib/auth/session", () => ({ requireCoach: mocks.requireCoach }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn(() => ({})) }));
@@ -13,8 +14,13 @@ vi.mock("@/lib/data/programs", () => ({
   getProgramTree: mocks.tree,
   updateSessionExercise: mocks.update,
   addSessionExercise: mocks.add,
+  reorderSessionExercises: mocks.reorder,
 }));
-import { savePrescriptionsAction, addExercisesAction } from "./editor-actions";
+import {
+  savePrescriptionsAction,
+  addExercisesAction,
+  reorderExercisesAction,
+} from "./editor-actions";
 const exerciseId = "00000000-0000-4000-8000-000000000001";
 const row = (id: string) => ({
   id,
@@ -92,4 +98,31 @@ it("comprueba capacidad y no agrega una selección vacía", async () => {
   data.set("exerciseIds", JSON.stringify([exerciseId]));
   expect((await addExercisesAction(data)).error).toContain("15");
   expect(mocks.add).not.toHaveBeenCalled();
+});
+
+it("reordena únicamente una permutación completa de la sesión autenticada", async () => {
+  const data = fd([]);
+  data.set("orderedIds", JSON.stringify(["b", "a"]));
+  mocks.reorder.mockResolvedValue({ ok: true });
+  expect((await reorderExercisesAction(data)).error).toBeNull();
+  expect(mocks.requireCoach).toHaveBeenCalled();
+  expect(mocks.reorder).toHaveBeenCalledWith(
+    expect.objectContaining({ sessionId: "s", orderedIds: ["b", "a"] }),
+  );
+  mocks.reorder.mockClear();
+  for (const ids of [["a"], ["a", "a"], ["foreign", "a"]]) {
+    data.set("orderedIds", JSON.stringify(ids));
+    expect((await reorderExercisesAction(data)).error).toBeTruthy();
+  }
+  expect(mocks.reorder).not.toHaveBeenCalled();
+});
+it("mantiene el bloqueo de semanas y permite reintentar un error de red al ordenar", async () => {
+  const data = fd([]);
+  data.set("orderedIds", JSON.stringify(["b", "a"]));
+  mocks.reorder.mockResolvedValueOnce({ ok: false, reason: "week_locked" });
+  expect((await reorderExercisesAction(data)).error).toContain("bloqueada");
+  mocks.reorder.mockRejectedValueOnce(new Error("private"));
+  const result = await reorderExercisesAction(data);
+  expect(result.error).toContain("intentar");
+  expect(result.error).not.toContain("private");
 });

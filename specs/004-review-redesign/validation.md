@@ -6,6 +6,8 @@ Actualización T136: Supabase local ya está operativo mediante el runtime nativ
 
 Actualización T139: **la suite E2E completa ya pasó: 35 escenarios en 8 archivos**, con el build de producción y una instancia Supabase exclusiva de pruebas. El check completo pasa con 373 pruebas. Esto resuelve los pendientes históricos de Playwright indicados en T131–T138; el detalle del cierre está al final.
 
+Actualización T140: arrastre de ejercicios terminado. Pasan **38 E2E** y el check completo con **378 pruebas**. La sección T140 registra gestos reales, accesibilidad, persistencia y correcciones encontradas.
+
 ## Verificado
 
 - `npm run check`: formato, ESLint, TypeScript, **338 pruebas unitarias/de componentes en 33 archivos** y build de producción con Turbopack.
@@ -83,3 +85,15 @@ La propuesta clara/verde de T133 fue rechazada por el usuario. Se reemplazó por
 - `npm run check` completo en verde: formato, ESLint, TypeScript, **373 pruebas en 40 archivos** y compilación de producción. Sin cambios al esquema o al código funcional de la app, y sin nuevas dependencias npm. Chromium de la versión instalada de Playwright se descargó a la carpeta de trabajo local.
 - Lecturas independientes antes/después: los **3 perfiles, 2 programas (incluida la plantilla abierta), sus sesiones/prescripciones y 8 entrenamientos con sus series** del desarrollo son idénticos. La comparación canónica conserva la misma huella SHA-256. No se hizo reset ni reseed de la base interactiva; sus IDs y datos se mantienen.
 - Evidencia local fuera de Git: `work/t139-e2e-final.log`, `work/t139-check.log` y snapshot privado `work/t139-local-snapshot.json`, en la carpeta padre. Los archivos de entorno, claves, trazas y reportes de Playwright siguen excluidos de Git.
+
+## T140 — Orden de ejercicios por arrastre
+
+- Asa de 44 px por ejercicio con Pointer Events para mouse, touch y lápiz. El pan se bloquea únicamente sobre el asa. Preview compacto y línea de inserción, umbral para no convertir un toque en movimiento y scroll automático cerca de los bordes, limitado a la lista. Escape, cancelación del puntero y soltado fuera no guardan.
+- Teclado: Espacio/Enter levanta y suelta, flechas cambian la posición destino y Escape cancela. Instrucciones y anuncios accesibles; foco recuperado al terminar el guardado. Se conservan las flechas de subir/bajar y se respeta movimiento reducido.
+- El orden completo se guarda al soltar con la sesión autenticada y las validaciones existentes de permutación, semana editable y RLS. La nueva acción rechaza IDs ajenos, duplicados o incompletos. En errores conserva el destino pendiente y permite reintentar idempotentemente; bloquea otras modificaciones. No se cambia esquema, no se añaden dependencias y no se afirma atomicidad para el adaptador existente de actualizaciones individuales.
+- Pruebas primero en rojo: nueva acción y lista ordenable. Regresiones unitarias de permutación/permisos, error de red, teclado, Escape, mismo destino y bloqueo. Se añade la protección contra cambios de geometría: el aviso global no se inserta durante el gesto, aunque las operaciones incompatibles siguen bloqueadas.
+- La primera prueba real de mouse detectó que el aviso superior desplazaba la lista al levantar el ejercicio; se corrigió sin cambiar el criterio de soltado. La primera pasada completa detectó la confirmación de guardado antes de terminar la transición de React; ahora el éxito se muestra cuando los controles están listos y el test lo comprueba antes de continuar por teclado.
+- E2E nuevos con mouse real, error de red/reintento y recarga; touch real mediante eventos de entrada del navegador, con scroll automático; soltado fuera, Escape, bloqueo por prescripción pendiente y restauración de foco. Las lecturas de la base confirman que las series y repeticiones no se alteran al ordenar. Se conservan las auditorías axe en claro/oscuro y móvil.
+- Revisión React: cálculos derivados, refs para el gesto y el frame, cancelación de animación al terminar/desmontar, eventos sin listeners globales adicionales y estado de guardado ligado al resultado real. Captura de la app real en `outputs/editor-arrastre.jpg`, en la carpeta padre; editor abierto con asas visibles.
+
+- Cierre T140: **38/38 E2E en 8 archivos, 2,9 minutos y sin reintentos**; `npm run check` completo en verde con **378 pruebas en 41 archivos**, formato, lint, tipos y build. La app de desarrollo se dejó activa en 3000 con la plantilla original y sin modificar su orden ni sus prescripciones; los gestos que escriben se verificaron en Supabase E2E separado.
