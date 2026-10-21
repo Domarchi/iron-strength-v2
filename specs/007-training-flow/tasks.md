@@ -6,7 +6,7 @@
 - [x] T173 · Cierre y estados únicos de guardado/sincronización.
 - [x] T174 · Diseño consistente, temas y recursos optimizados.
 - [x] T175 · Agregado múltiple atómico con revisión y recibo.
-- [ ] T176 · Sesión activa y editor limpio con borradores.
+- [x] T176 · Sesión activa y editor limpio con borradores.
 - [ ] T177 · Adaptar base, contexto de alumno, copia múltiple y revisión de asignación.
 - [ ] T178 · Modelo y contratos compatibles por serie.
 - [ ] T179 · Prescripción simple/detallada en editor, entrenamiento y copias.

@@ -43,3 +43,13 @@ Selección e intento se guardan en contenido v2 del borrador del coach, conserva
 Base aislada reseteada y migraciones aplicadas: **422 pgTAP** (t175-pgtap.log), **256 integración** (t175-integration.log), incluidas reversión en segunda fila, reintento estable, dos pestañas, límite, permiso y semana bloqueada. Tipos generados de la base aislada. Check final **478 unitarias**, formato, lint sin errores, tipos y build (t175-check-final.log). Datos interactivos conservados con la huella de T170. Sin cambios remotos.
 
 Pasada final de editor y accesibilidad: **51 E2E aprobadas y un skip CDP previsto en WebKit**, sin fallos ni reintentos, 6,5 minutos (t175-e2e.log). Los dos casos nuevos comprueban pérdida real de respuesta tras commit, recarga y confirmación sin duplicados; conflicto con selección conservada y nota remota intacta.
+
+## T176
+
+Pruebas previas de sesión activa y conservación de campos (t176-red.log). SessionWorkspace presenta una sesión y conserva montados los demás editores, con navegación por botones/flechas/Home/End y biblioteca vinculada a la activa. La copia de sesión activa el resultado. Cinta de semanas y sesiones identifican cambios pendientes; herramientas muestran su bloqueo. Notas guardadas plegadas, notas locales pendientes visibles al recuperar; alternativas y acciones colectivas mantienen sus controles existentes.
+
+La regresión de arrastre encontró un cambio de altura al iniciar el gesto: los nuevos indicadores contaban `-drag` como borrador e insertaban un aviso sobre la lista. Corregido excluyendo únicamente el estado transitorio de los indicadores, con prueba unitaria específica. Mantiene el bloqueo de herramientas durante el gesto. El helper de mouse centra de forma explícita la lista antes de calcular coordenadas; la prueba CDP táctil real se mantiene. Una expectativa de mensajes se acotó a la sesión visible, conservando además comprobación SQL de los valores guardados en ambas sesiones. Las notas guardadas se consultan abriendo su detalle, de acuerdo con el nuevo comportamiento.
+
+Check final: **480 unitarias**, formato, lint sin errores, tipos y build (t176-check-fixed.log). Datos interactivos conservados con la huella original. Sin cambios de esquema ni producción.
+
+Pasada final: **57 E2E aprobadas y un skip CDP previsto en WebKit**, sin fallos ni reintentos, 6,3 minutos (t176-verified.log). Incluye editor completo, accesibilidad en ambos temas, composición Azul atleta y el caso nuevo de dos borradores entre sesiones/semanas, bloqueo contextual y confirmación SQL de ambos valores.

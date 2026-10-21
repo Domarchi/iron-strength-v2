@@ -36,7 +36,13 @@ export function WeekWorkspace({
   tools,
   footer,
 }: {
-  weeks: { number: number; editable: boolean; sessions: number; exercises: number }[];
+  weeks: {
+    number: number;
+    editable: boolean;
+    sessions: number;
+    exercises: number;
+    sessionIds?: string[];
+  }[];
   initialWeek: number;
   children: ReactNode[];
   tools?: ReactNode;
@@ -123,9 +129,17 @@ export function WeekWorkspace({
               {!week.editable ? <Lock className="size-4 shrink-0" aria-hidden /> : null}
               <span className="min-w-0">
                 <span className="block font-semibold">Semana {week.number}</span>
-                <span className="block text-xs font-normal">
+                <span className="week-count block text-xs font-normal">
                   {week.sessions} sesiones · {week.exercises} ejercicios
                 </span>
+                {week.sessionIds?.some((sessionId) =>
+                  dirtyIds.some(
+                    (id) =>
+                      !id.endsWith("-drag") && (id === sessionId || id.startsWith(`${sessionId}-`)),
+                  ),
+                ) ? (
+                  <span className="week-pending block text-xs font-normal">Cambios pendientes</span>
+                ) : null}
               </span>
             </Button>
           ))}

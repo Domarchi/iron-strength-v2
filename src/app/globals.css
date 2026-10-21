@@ -528,7 +528,7 @@
     border: 0;
     box-shadow: none;
   }
-  .coach-week-ribbon > button > span > span:last-child {
+  .coach-week-ribbon .week-count {
     display: none;
   }
   .coach-week-ribbon > button[aria-pressed="true"] {

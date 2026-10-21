@@ -19,6 +19,7 @@ import { addSessionAction, deleteTemplateAction } from "../actions";
 import { ActionForm } from "../action-form";
 import { AssignForm } from "./assign-form";
 import { CopyWeekForm } from "./copy-week-form";
+import { SessionWorkspace } from "./session-workspace";
 import { SessionEditor } from "./session-editor";
 import { DuplicateProgramForm } from "../duplicate-program-form";
 import { CleanEditor, WeekWorkspace } from "./week-workspace";
@@ -111,6 +112,7 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
         initialWeek={currentWeek ?? 1}
         weeks={weekNumbers.map((week) => ({
           number: week,
+          sessionIds: tree.sessions.filter((s) => s.weekNumber === week).map((s) => s.id),
           editable: isWeekEditable(range, week, today),
           sessions: tree.sessions.filter((s) => s.weekNumber === week).length,
           exercises: tree.sessions
@@ -218,91 +220,81 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
                   </p>
                 </div>
               ) : null}
-              {sessions.length > 1 ? (
-                <nav
-                  aria-label={`Sesiones de semana ${week}`}
-                  className="coach-session-tabs flex flex-wrap gap-2 border-b"
-                >
-                  {sessions.map((session) => (
-                    <a
+              <SessionWorkspace
+                sessions={sessions.map((s) => ({ id: s.id, label: s.label, title: s.title }))}
+                weekNumber={week}
+              >
+                {sessions.map((session) =>
+                  editable ? (
+                    <SessionEditor
+                      userId={tree.coachId}
                       key={session.id}
-                      href={`#session-${session.id}`}
-                      className="inline-flex min-h-11 items-center border-b-2 border-primary px-3 text-sm font-semibold text-primary"
-                    >
-                      {session.label}
-                      {session.title ? ` · ${session.title}` : ""}
-                    </a>
-                  ))}
-                </nav>
-              ) : null}
-              {sessions.map((session) =>
-                editable ? (
-                  <SessionEditor
-                    userId={tree.coachId}
-                    key={session.id}
-                    programId={tree.id}
-                    session={session}
-                    exercises={pickerExercises}
-                    canDuplicateSession={sessions.length < 7}
-                  />
-                ) : (
-                  <Card key={session.id} id={`session-${session.id}`}>
-                    <CardHeader>
-                      <CardTitle className="text-base" role="heading" aria-level={3}>
-                        Sesión {session.label}
-                        {session.title ? ` · ${session.title}` : ""}
-                        {session.weekday != null ? ` · ${WEEKDAYS[session.weekday]}` : ""}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ol className="divide-y">
-                        {session.exercises.map((exercise) => (
-                          <li key={exercise.id} className="py-3 first:pt-0">
-                            <p className="text-sm font-medium">{exercise.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {formatPrescription(exercise)}
-                            </p>
-                            {exercise.supersetId ? (
-                              <p className="mt-1 text-xs font-medium text-primary">
-                                Superserie{" "}
-                                {[
-                                  ...new Set(
-                                    session.exercises.map((e) => e.supersetId).filter(Boolean),
-                                  ),
-                                ].indexOf(exercise.supersetId) + 1}{" "}
-                                · Descanso entre rondas:{" "}
-                                {exercise.supersetRestSeconds == null
-                                  ? "predeterminado"
-                                  : `${exercise.supersetRestSeconds} s`}
+                      programId={tree.id}
+                      session={session}
+                      exercises={pickerExercises}
+                      canDuplicateSession={sessions.length < 7}
+                    />
+                  ) : (
+                    <Card key={session.id} id={`session-${session.id}`}>
+                      <CardHeader>
+                        <CardTitle className="text-base" role="heading" aria-level={3}>
+                          Sesión {session.label}
+                          {session.title ? ` · ${session.title}` : ""}
+                          {session.weekday != null ? ` · ${WEEKDAYS[session.weekday]}` : ""}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ol className="divide-y">
+                          {session.exercises.map((exercise) => (
+                            <li key={exercise.id} className="py-3 first:pt-0">
+                              <p className="text-sm font-medium">{exercise.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {formatPrescription(exercise)}
                               </p>
-                            ) : exercise.restSeconds != null ? (
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                Descanso: {exercise.restSeconds} s
-                              </p>
-                            ) : null}
-                            {(exercise.alternatives ?? []).length ? (
-                              <ul className="mt-2 space-y-1 border-l-2 border-primary/30 pl-3">
-                                {exercise.alternatives!.map((alt) => (
-                                  <li key={alt.id} className="text-sm">
-                                    <span className="font-medium">Alternativa: {alt.name}</span>
-                                    <p className="text-xs text-muted-foreground">
-                                      {formatPrescription(alt)}
-                                      {alt.archived ? " · Archivado" : ""}
-                                    </p>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : null}
-                            {exercise.note ? (
-                              <p className="mt-1 text-xs text-muted-foreground">{exercise.note}</p>
-                            ) : null}
-                          </li>
-                        ))}
-                      </ol>
-                    </CardContent>
-                  </Card>
-                ),
-              )}
+                              {exercise.supersetId ? (
+                                <p className="mt-1 text-xs font-medium text-primary">
+                                  Superserie{" "}
+                                  {[
+                                    ...new Set(
+                                      session.exercises.map((e) => e.supersetId).filter(Boolean),
+                                    ),
+                                  ].indexOf(exercise.supersetId) + 1}{" "}
+                                  · Descanso entre rondas:{" "}
+                                  {exercise.supersetRestSeconds == null
+                                    ? "predeterminado"
+                                    : `${exercise.supersetRestSeconds} s`}
+                                </p>
+                              ) : exercise.restSeconds != null ? (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  Descanso: {exercise.restSeconds} s
+                                </p>
+                              ) : null}
+                              {(exercise.alternatives ?? []).length ? (
+                                <ul className="mt-2 space-y-1 border-l-2 border-primary/30 pl-3">
+                                  {exercise.alternatives!.map((alt) => (
+                                    <li key={alt.id} className="text-sm">
+                                      <span className="font-medium">Alternativa: {alt.name}</span>
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatPrescription(alt)}
+                                        {alt.archived ? " · Archivado" : ""}
+                                      </p>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                              {exercise.note ? (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {exercise.note}
+                                </p>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ol>
+                      </CardContent>
+                    </Card>
+                  ),
+                )}
+              </SessionWorkspace>
               {editable ? (
                 <CleanEditor>
                   <ActionForm

@@ -130,7 +130,7 @@ async function mouseReorder(page: Page, first: string, second: string, outside =
   const target = page.getByRole("button", { name: `Reordenar ${second}`, exact: true });
   await page
     .getByRole("list", { name: "Ejercicios de la sesión", exact: true })
-    .scrollIntoViewIfNeeded();
+    .evaluate((el) => el.scrollIntoView({ block: "center", behavior: "instant" }));
   const from = (await source.boundingBox())!;
   const to = (await target.boundingBox())!;
   const targetRow = (await page.getByRole("listitem").filter({ has: target }).boundingBox())!;
@@ -309,6 +309,7 @@ test("duplicar sesión conserva orden y prescripciones y permite editar solo la 
   await page.getByRole("button", { name: "Duplicar sesión A", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Sesión B", exact: true })).toBeVisible();
   await page.reload();
+  await page.getByRole("button", { name: /^Sesión B/ }).click();
   const { data, error } = await admin()
     .from("program_sessions")
     .select("id,label,session_exercises(*)")
@@ -336,6 +337,7 @@ test("duplicar sesión conserva orden y prescripciones y permite editar solo la 
       .locator(`[data-sortable-id="${rows[0][0].id}"]`)
       .getByLabel("Series de Sentadilla", { exact: true }),
   ).toHaveValue("4");
+  await page.getByRole("button", { name: /^Sesión B/ }).click();
   await expect(
     page
       .locator(`[data-sortable-id="${rows[1][0].id}"]`)
@@ -424,6 +426,13 @@ test("recarga recupera el borrador del coach y permite resolver un conflicto con
   page.once("dialog", (dialog) => dialog.accept());
   await page.reload();
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("7");
+  if (!(await visibleField(page, "Nota de Sentadilla").isVisible()))
+    await page
+      .locator("[data-session-panel]:visible")
+      .getByLabel("Nota de Sentadilla", { exact: true })
+      .locator("..")
+      .locator("summary")
+      .click();
   await expect(visibleField(page, "Nota de Sentadilla")).toHaveValue("Pausa de dos segundos");
   const programId = new URL(page.url()).pathname.split("/").at(-1)!;
   const sessions = await admin().from("program_sessions").select("id").eq("program_id", programId);
@@ -443,6 +452,13 @@ test("recarga recupera el borrador del coach y permite resolver un conflicto con
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   await page.reload();
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("7");
+  if (!(await visibleField(page, "Nota de Sentadilla").isVisible()))
+    await page
+      .locator("[data-session-panel]:visible")
+      .getByLabel("Nota de Sentadilla", { exact: true })
+      .locator("..")
+      .locator("summary")
+      .click();
   await expect(visibleField(page, "Nota de Sentadilla")).toHaveValue("Pausa de dos segundos");
 });
 
@@ -829,6 +845,13 @@ test("lote recupera preparación, conserva campos y permite editar después (T15
   await page.reload();
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("5");
   await expect(visibleField(page, "Peso (kg) de Sentadilla")).toHaveValue("62.5");
+  if (!(await visibleField(page, "Nota de Sentadilla").isVisible()))
+    await page
+      .locator("[data-session-panel]:visible")
+      .getByLabel("Nota de Sentadilla", { exact: true })
+      .locator("..")
+      .locator("summary")
+      .click();
   await expect(visibleField(page, "Nota de Sentadilla")).toHaveValue("Conservar técnica");
   await page
     .getByLabel("Nota de Press de banca", { exact: true })
@@ -1021,4 +1044,56 @@ test("agregado con revisión antigua conserva selección y requiere revisar ante
   expect(rows.data!.find((r) => r.id === s.data!.session_exercises[0].id)!.note).toBe(
     "Indicación remota",
   );
+});
+
+test("sesión activa conserva borradores y vincula una única biblioteca a la sesión elegida (T176)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const programId = await routine(page);
+  await page.getByRole("button", { name: "Agregar sesión", exact: true }).click();
+  await page.getByRole("button", { name: /^Sesión B/ }).click();
+  const library = page.getByRole("complementary", {
+    name: "Biblioteca de ejercicios",
+    exact: true,
+  });
+  await expect(library).toHaveCount(1);
+  await page.getByLabel("Buscar ejercicios", { exact: true }).fill("Peso muerto");
+  await page.getByRole("checkbox", { name: "Peso muerto Espalda · Barra", exact: true }).check();
+  await page.getByRole("button", { name: "Agregar seleccionados (1)", exact: true }).click();
+  await page.getByLabel("Series de Peso muerto", { exact: true }).fill("5");
+  await expect(page.getByRole("button", { name: /^Sesión B.*Cambios pendientes/ })).toBeVisible();
+  await page.getByRole("button", { name: /^Sesión A/ }).click();
+  await expect(page.getByLabel("Series de Sentadilla", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Agregar ejercicios", exact: true }),
+  ).toBeDisabled();
+  await page.getByLabel("Peso (kg) de Sentadilla", { exact: true }).fill("77.5");
+  await page.getByRole("button", { name: /^Semana 2/ }).click();
+  await expect(page.getByRole("button", { name: /^Semana 1.*Cambios pendientes/ })).toBeVisible();
+  await page.getByRole("button", { name: /^Semana 1/ }).click();
+  await expect(page.getByLabel("Peso (kg) de Sentadilla", { exact: true })).toHaveValue("77.5");
+  await page.getByRole("button", { name: /^Sesión B/ }).click();
+  await expect(page.getByLabel("Series de Peso muerto", { exact: true })).toHaveValue("5");
+  await expect(library).toHaveCount(1);
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await page.getByRole("button", { name: /^Sesión A/ }).click();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(
+    page.getByText("Cambios guardados.", { exact: true }).filter({ visible: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Sesión [AB].*Cambios pendientes/ })).toHaveCount(
+    0,
+  );
+  const stored = await admin()
+    .from("program_sessions")
+    .select("label,session_exercises(sets,target_weight_kg,exercises(name))")
+    .eq("program_id", programId);
+  expect(stored.error).toBeNull();
+  expect(
+    stored
+      .data!.find((s) => s.label === "A")!
+      .session_exercises.find((e) => e.exercises.name === "Sentadilla")!.target_weight_kg,
+  ).toBe(77.5);
+  expect(stored.data!.find((s) => s.label === "B")!.session_exercises[0].sets).toBe(5);
 });

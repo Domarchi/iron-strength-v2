@@ -60,6 +60,7 @@ import {
   savePrescriptionsAction,
 } from "../editor-actions";
 import type { AdditionRequest } from "@/lib/coach/routine-additions";
+import { useSessionWorkspace } from "./session-workspace";
 import { ExercisePicker } from "./exercise-picker";
 import { useRoutineGuard } from "./week-workspace";
 import { SortableExerciseList } from "./sortable-exercise-list";
@@ -173,6 +174,7 @@ function Editor({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const guard = useRoutineGuard();
+  const workspace = useSessionWorkspace();
   const [order, setOrder] = useState<string[] | null>(restored?.order ?? null);
   const [dragging, setDragging] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(
@@ -541,8 +543,10 @@ function Editor({
           baseRevision.current = null;
           setConflict(false);
         }
-        if (!result.error)
+        if (!result.error) {
           setStatus(request.exerciseId ? "Ejercicio duplicado." : "Sesión duplicada.");
+          if (!request.exerciseId && result.savedIds[0]) workspace?.activate(result.savedIds[0]);
+        }
       } catch {
         setCopyError(
           "No se pudo confirmar la copia. Reintenta para comprobarla sin crear duplicados.",
@@ -848,7 +852,7 @@ function Editor({
             </label>
           ))}
         </fieldset>
-        <details className="coach-row-note mt-2" open={draft.note ? true : undefined}>
+        <details className="coach-row-note mt-2" open={edits[exercise.id]?.note ? true : undefined}>
           <summary className="min-h-11 cursor-pointer py-3 text-xs text-muted-foreground">
             Nota del ejercicio{draft.note ? "" : " (opcional)"}
           </summary>
@@ -1558,7 +1562,10 @@ function Editor({
         ) : null}
       </CardContent>
       <ExercisePicker
-        visible={guard.activeWeek === undefined || guard.activeWeek === session.weekNumber}
+        visible={
+          (guard.activeWeek === undefined || guard.activeWeek === session.weekNumber) &&
+          (!workspace || workspace.activeId === session.id)
+        }
         programId={programId}
         sessionId={session.id}
         getRevision={() => baseRevision.current ?? session.revision}
@@ -1582,6 +1589,7 @@ function Editor({
         exercises={exercises}
         count={session.exercises.length}
         disabled={
+          guard.dirtyIds.some((id) => id !== `${session.id}-picker`) ||
           dirty ||
           pending ||
           orderPending ||
