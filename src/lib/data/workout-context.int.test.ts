@@ -132,6 +132,7 @@ describe("getWorkoutContext (RF-19, RF-20, RF-15b, DC-9)", () => {
         is_warmup: s.isWarmup ?? false,
       })),
     );
+    return id;
   }
 
   const load = (sessionId: string, today = "2025-03-05") =>
@@ -203,6 +204,43 @@ describe("getWorkoutContext (RF-19, RF-20, RF-15b, DC-9)", () => {
     expect(squat.lastWeightKg).toBe(60);
     expect(squat.last).toMatchObject({ date: "2025-02-26" });
     expect(squat.last?.sets).toHaveLength(3);
+  });
+
+  it("ordena la última ejecución por serie aunque se haya insertado al revés", async () => {
+    const workoutId = await pastWorkout("2025-02-26T15:00:00Z", []);
+    const { error } = await admin.from("workout_sets").insert([
+      {
+        id: "00000000-0000-4000-8000-000000000001",
+        workout_id: workoutId,
+        student_id: studentId,
+        exercise_id: squatId,
+        exercise_name: "Sentadilla",
+        position: 0,
+        set_number: 2,
+        weight_kg: 55,
+        reps: 9,
+        is_warmup: false,
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000002",
+        workout_id: workoutId,
+        student_id: studentId,
+        exercise_id: squatId,
+        exercise_name: "Sentadilla",
+        position: 0,
+        set_number: 1,
+        weight_kg: 60,
+        reps: 10,
+        is_warmup: false,
+      },
+    ]);
+    expect(error).toBeNull();
+    const result = await load(sessionA);
+    if (!result.ok) throw new Error("debía cargar");
+    expect(result.context.exercises[0].last?.sets).toEqual([
+      { weightKg: 60, reps: 10, isWarmup: false },
+      { weightKg: 55, reps: 9, isWarmup: false },
+    ]);
   });
 
   it("sugiere subir el peso cuando la última vez llegó al tope en todas las series", async () => {

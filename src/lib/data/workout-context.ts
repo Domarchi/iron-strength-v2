@@ -89,6 +89,9 @@ export async function getWorkoutContext(
     .select("id, started_at, workout_sets(exercise_id, weight_kg, reps, is_warmup)")
     .eq("student_id", studentId)
     .order("started_at", { ascending: false })
+    .order("position", { referencedTable: "workout_sets" })
+    .order("set_number", { referencedTable: "workout_sets" })
+    .order("id", { referencedTable: "workout_sets" })
     .limit(HISTORY_WINDOW);
   if (historyError) throw new Error(`No se pudo cargar el historial: ${historyError.message}`);
 
