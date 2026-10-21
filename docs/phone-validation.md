@@ -1,6 +1,6 @@
 # Prueba en teléfonos — Iron Strength
 
-URL publicada: [Iron Strength](https://iron-strength-seven.vercel.app). Se requiere una cuenta de producción por persona; el alta del coach y las tres invitaciones siguen pendientes.
+URL publicada: [Iron Strength](https://iron-strength-seven.vercel.app). Se requiere una cuenta de producción por persona; el coach ya está creado; faltan su contraseña personal y las tres invitaciones.
 
 ## Estado de la evidencia
 
