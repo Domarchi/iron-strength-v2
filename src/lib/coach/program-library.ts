@@ -1,5 +1,6 @@
 type SearchableTemplate = {
   name: string;
+  studentName?: string | null;
   sessions: { title?: string | null; exercises: { name: string }[] }[];
 };
 const normalize = (value: string) =>
@@ -14,6 +15,7 @@ export function filterTemplates<T extends SearchableTemplate>(templates: T[], se
     normalize(
       [
         t.name,
+        t.studentName ?? "",
         ...t.sessions.flatMap((s) => [s.title ?? "", ...s.exercises.map((e) => e.name)]),
       ].join(" "),
     ).includes(needle),

@@ -1,4 +1,9 @@
 "use client";
+import {
+  programHref,
+  navigationContext,
+  type TrainingNavigation,
+} from "@/lib/navigation/training-context";
 import { useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -18,6 +23,7 @@ export function DuplicateProgramForm(props: {
   name: string;
   targetStudentId?: string;
   initialOpen?: boolean;
+  navigation?: TrainingNavigation;
 }) {
   const mounted = useSyncExternalStore(
     subscribe,
@@ -32,12 +38,14 @@ function CopyForm({
   name,
   targetStudentId,
   initialOpen = false,
+  navigation = navigationContext(),
 }: {
   userId: string;
   programId: string;
   name: string;
   targetStudentId?: string;
   initialOpen?: boolean;
+  navigation?: TrainingNavigation;
 }) {
   const pointerKey = `is:program-copy-tab:${userId}:${programId}`;
   const [request, setRequest] = useState<ProgramCopyDraft | null>(() => {
@@ -88,9 +96,7 @@ function CopyForm({
           } catch {
             /* El recibo permite confirmar la misma copia. */
           }
-          router.push(
-            `/coach/programs/${result.id}${targetStudentId ? `?alumno=${targetStudentId}` : ""}`,
-          );
+          router.push(programHref(result.id, navigation, targetStudentId));
           router.refresh();
           return;
         }

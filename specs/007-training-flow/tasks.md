@@ -10,5 +10,5 @@
 - [x] T177 · Adaptar base, contexto de alumno, copia múltiple y revisión de asignación.
 - [x] T178 · Modelo y contratos compatibles por serie.
 - [x] T179 · Prescripción simple/detallada en editor, entrenamiento y copias.
-- [ ] T180 · Continuidad de ficha, evidencia y contexto.
+- [x] T180 · Continuidad de ficha, evidencia y contexto.
 - [ ] T181 · Validación completa y publicación del mismo artefacto.

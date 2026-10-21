@@ -1,3 +1,4 @@
+import { navigationContext, studentHref, workoutHref } from "@/lib/navigation/training-context";
 import type { ProgressPoint } from "@/domain/volume";
 import { z } from "zod";
 import { santiagoDate } from "@/domain/dates";
@@ -57,6 +58,9 @@ export default async function ExerciseProgressPage({
 
   const metric = summary.isBodyweight ? "reps" : vista === "volumen" ? "volume" : "1rm";
   const weeks = parseProgressWeeks(semanas);
+  const navigation = navigationContext({ semanas, vista });
+  const evidenceHref = (workoutId: string) =>
+    workoutHref(workoutId, navigation, alumno, exerciseId);
   const comparison = compareProgressPeriods(series, santiagoDate(new Date()), weeks, metric);
   const periodHref = (period: number, selectedMetric = metric) => {
     const query = new URLSearchParams({
@@ -222,7 +226,11 @@ export default async function ExerciseProgressPage({
           </p>
         ) : null}
         {comparison.current.length ? (
-          <ResultsTable points={comparison.current} bodyweight={summary.isBodyweight} />
+          <ResultsTable
+            points={comparison.current}
+            bodyweight={summary.isBodyweight}
+            evidenceHref={evidenceHref}
+          />
         ) : null}
       </section>
 
@@ -231,22 +239,34 @@ export default async function ExerciseProgressPage({
           <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">
             Ver entrenamientos del periodo anterior
           </summary>
-          <ResultsTable points={comparison.previous} bodyweight={summary.isBodyweight} />
+          <ResultsTable
+            points={comparison.previous}
+            bodyweight={summary.isBodyweight}
+            evidenceHref={evidenceHref}
+          />
         </details>
       ) : null}
       <div>
         <Button
           variant="outline"
-          render={<Link href={alumno ? `/coach/students/${alumno}` : "/progress"} />}
+          render={<Link href={alumno ? studentHref(alumno, navigation) : "/progress"} />}
         >
-          Volver
+          {alumno ? "Volver a la ficha" : "Volver"}
         </Button>
       </div>
     </div>
   );
 }
 
-function ResultsTable({ points, bodyweight }: { points: ProgressPoint[]; bodyweight: boolean }) {
+function ResultsTable({
+  points,
+  bodyweight,
+  evidenceHref,
+}: {
+  points: ProgressPoint[];
+  bodyweight: boolean;
+  evidenceHref: (id: string) => string;
+}) {
   return (
     <table className="w-full text-sm">
       <thead>
@@ -261,7 +281,7 @@ function ResultsTable({ points, bodyweight }: { points: ProgressPoint[]; bodywei
           <tr key={p.workoutId} className="border-t">
             <td>
               <Link
-                href={`/history/${p.workoutId}`}
+                href={evidenceHref(p.workoutId)}
                 aria-label={`Ver entrenamiento del ${p.date}`}
                 className="inline-flex min-h-11 min-w-11 items-center text-primary underline underline-offset-4"
               >

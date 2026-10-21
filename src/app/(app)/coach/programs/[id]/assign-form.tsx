@@ -1,4 +1,9 @@
 "use client";
+import {
+  programHref,
+  navigationContext,
+  type TrainingNavigation,
+} from "@/lib/navigation/training-context";
 import { useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,6 +22,7 @@ type Props = {
   defaultStartDate: string;
   today: string;
   selectedStudentId?: string;
+  navigation?: TrainingNavigation;
 };
 export function AssignForm(props: Props) {
   const ready = useSyncExternalStore(
@@ -33,6 +39,7 @@ function AssignEditor({
   defaultStartDate,
   today,
   selectedStudentId,
+  navigation = navigationContext(),
 }: Props) {
   const local = usePlanningDraft(userId, tree.id, "assign");
   const restored = local.draft?.operation === "assign" ? local.draft.input : null;
@@ -101,7 +108,7 @@ function AssignEditor({
           return;
         }
         local.finish(draft);
-        router.push(`/coach/programs/${result.programId}?alumno=${studentId}`);
+        router.push(programHref(result.programId, navigation, studentId));
         router.refresh();
       } catch {
         setError(

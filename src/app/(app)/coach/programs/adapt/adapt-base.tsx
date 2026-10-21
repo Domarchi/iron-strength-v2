@@ -1,4 +1,9 @@
 "use client";
+import {
+  navigationContext,
+  trainingParams,
+  type TrainingNavigation,
+} from "@/lib/navigation/training-context";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -12,11 +17,13 @@ export function AdaptBase({
   bases,
   studentId,
   selectedBaseId,
+  navigation = navigationContext(),
 }: {
   userId: string;
   bases: TemplateSummary[];
   studentId?: string;
   selectedBaseId?: string;
+  navigation?: TrainingNavigation;
 }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(selectedBaseId);
@@ -48,8 +55,14 @@ export function AdaptBase({
               <li key={b.id} className="space-y-2 rounded-xl border bg-card p-4">
                 <p className="font-semibold">{b.name}</p>
                 <p className="text-xs font-medium text-primary">
-                  {b.studentId ? "Programa anterior" : "Plantilla"}
+                  {b.studentId ? "Programa asignado" : "Plantilla"}
                 </p>
+                {b.studentId ? (
+                  <p className="text-sm text-muted-foreground">
+                    {b.studentName ?? "Alumno no disponible"}
+                    {b.startDate && b.endsOn ? ` · ${b.startDate} al ${b.endsOn}` : ""}
+                  </p>
+                ) : null}
                 <p className="text-sm text-muted-foreground">
                   {b.weeksCount} semanas · {b.sessionCount} sesiones · {b.exerciseCount} ejercicios
                   · {b.totalSets} series
@@ -60,8 +73,7 @@ export function AdaptBase({
                   aria-label={`Usar ${b.name}`}
                   onClick={() => {
                     setSelected(b.id);
-                    const query = new URLSearchParams();
-                    if (studentId) query.set("alumno", studentId);
+                    const query = trainingParams(navigation, studentId);
                     query.set("base", b.id);
                     router.replace(`/coach/programs/adapt?${query}`, { scroll: false });
                   }}
@@ -89,6 +101,7 @@ export function AdaptBase({
             programId={base.id}
             name={base.name}
             targetStudentId={studentId}
+            navigation={navigation}
             initialOpen
           />
         </section>

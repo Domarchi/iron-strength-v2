@@ -10,6 +10,7 @@ import {
   duplicateProgram,
   getProgramTree,
   listTemplates,
+  listProgramBases,
   saveSessionPrescriptions,
 } from "./programs";
 import { mondayOf, santiagoDate } from "@/domain/dates";
@@ -229,4 +230,24 @@ it("un fallo conserva título y prescripciones; una alternativa archivada revier
   } finally {
     await admin.from("exercises").update({ archived_at: null }).eq("id", alternativeId);
   }
+});
+
+it("las bases asignadas conservan alumno y fechas sin ampliar la lectura del alumno", async () => {
+  const start = mondayOf(santiagoDate(new Date()));
+  const assigned = await db.rpc("assign_program", {
+    p_template_id: programId,
+    p_student_id: studentId,
+    p_start_date: start,
+  });
+  expect(assigned.error).toBeNull();
+  const bases = await listProgramBases(db);
+  expect(bases.find((b) => b.id === assigned.data)).toMatchObject({
+    studentId,
+    studentName: "Alumno",
+    startDate: start,
+  });
+  const own = await listProgramBases(studentDb);
+  expect(own.length).toBeGreaterThan(0);
+  expect(own.every((b) => b.studentId === studentId)).toBe(true);
+  expect(own.some((b) => b.id === programId)).toBe(false);
 });

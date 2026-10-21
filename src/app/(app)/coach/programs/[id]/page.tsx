@@ -1,3 +1,4 @@
+import { navigationContext, studentHref, adaptHref } from "@/lib/navigation/training-context";
 import { PrescriptionTargets } from "@/components/workout/prescription-targets";
 import { WEEKDAYS } from "@/domain/session-schedule";
 import Link from "next/link";
@@ -40,7 +41,7 @@ export default async function ProgramEditorPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ alumno?: string }>;
+  searchParams: Promise<{ alumno?: string; semanas?: string; vista?: string }>;
 }) {
   const { id } = await params;
   const db = await createClient();
@@ -48,16 +49,21 @@ export default async function ProgramEditorPage({
   if (!tree) notFound();
 
   const query = await searchParams;
+  const navigation = navigationContext(query);
   const candidate = z.uuid().safeParse(query.alumno);
   const target = candidate.success
     ? await db
         .from("profiles")
-        .select("id,full_name,coach_id")
+        .select("id,full_name,coach_id,role")
         .eq("id", candidate.data)
         .eq("is_active", true)
         .maybeSingle()
     : null;
-  const selectedStudent = target?.data?.coach_id === tree.coachId ? target.data : null;
+  const selectedStudent =
+    target?.data?.coach_id === tree.coachId &&
+    (!tree.studentId || tree.studentId === target.data.id)
+      ? target.data
+      : null;
   const today = santiagoDate(new Date());
   const isTemplate = tree.studentId === null;
   const range: ProgramRange | null =
@@ -70,7 +76,7 @@ export default async function ProgramEditorPage({
   const anyEditable = Array.from({ length: tree.weeksCount }, (_, i) => i + 1).some((w) =>
     isWeekEditable(range, w, today),
   );
-  const [pickerExercises, studentName, assignTargets] = await Promise.all([
+  const [pickerExercises, studentProfile, assignTargets] = await Promise.all([
     anyEditable
       ? listExercises(db, { limit: 1000 }).then((list) =>
           list.map((e) => ({
@@ -84,10 +90,10 @@ export default async function ProgramEditorPage({
     tree.studentId
       ? db
           .from("profiles")
-          .select("full_name")
+          .select("full_name,role")
           .eq("id", tree.studentId)
           .maybeSingle()
-          .then((r) => r.data?.full_name ?? "Alumno")
+          .then((r) => r.data)
       : Promise.resolve(null),
     isTemplate
       ? db
@@ -105,6 +111,12 @@ export default async function ProgramEditorPage({
       : Promise.resolve([]),
   ]);
 
+  const contextStudent =
+    tree.studentId && studentProfile?.role === "student"
+      ? tree.studentId
+      : selectedStudent?.role === "student"
+        ? selectedStudent.id
+        : undefined;
   const weekNumbers = Array.from({ length: tree.weeksCount }, (_, i) => i + 1);
 
   return (
@@ -115,18 +127,23 @@ export default async function ProgramEditorPage({
           className="w-fit -ml-3 text-muted-foreground"
           render={
             <Link
-              href={
-                selectedStudent
-                  ? `/coach/programs/adapt?alumno=${selectedStudent.id}`
-                  : "/coach/programs"
-              }
+              href={selectedStudent ? adaptHref(navigation, selectedStudent.id) : "/coach/programs"}
             />
           }
         >
           <ArrowLeft aria-hidden /> Programas
         </Button>
+        {contextStudent ? (
+          <Button
+            variant="outline"
+            className="self-start"
+            render={<Link href={studentHref(contextStudent, navigation)} />}
+          >
+            Volver a la ficha
+          </Button>
+        ) : null}
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {isTemplate ? "Plantilla" : `Programa de ${studentName}`}
+          {isTemplate ? "Plantilla" : `Programa de ${studentProfile?.full_name ?? "Alumno"}`}
         </p>
         <h1 className="text-xl font-semibold">{tree.name}</h1>
         {isTemplate && selectedStudent ? (
@@ -161,6 +178,7 @@ export default async function ProgramEditorPage({
                 programId={tree.id}
                 name={tree.name}
                 targetStudentId={selectedStudent?.id}
+                navigation={navigation}
               />
             </CleanEditor>
             {tree.weeksCount > 1 ? (
@@ -175,6 +193,7 @@ export default async function ProgramEditorPage({
                 defaultStartDate={defaultStartDate(today)}
                 today={today}
                 selectedStudentId={selectedStudent?.id}
+                navigation={navigation}
               />
             ) : null}
           </div>

@@ -91,6 +91,7 @@ function failureFromError(error: { code?: string; message: string }): Failure {
 
 // Lectura ----------------------------------------------------------------------------------------
 export type TemplateSummary = ProgramSummary & {
+  studentName?: string | null;
   exerciseCount: number;
   totalSets: number;
   sessions: {
@@ -110,7 +111,7 @@ async function readProgramBases(db: Client, templatesOnly: boolean): Promise<Tem
   const query = db
     .from("programs")
     .select(
-      "id,name,weeks_count,student_id,start_date,ends_on,program_sessions(title,label,week_number,session_exercises(sets,exercises(name)))",
+      "id,name,weeks_count,student_id,start_date,ends_on,student:profiles!programs_student_id_fkey(full_name),program_sessions(title,label,week_number,session_exercises(sets,exercises(name)))",
     );
   if (templatesOnly) query.is("student_id", null);
   const { data, error } = await query.order("created_at", { ascending: false });
@@ -127,6 +128,7 @@ async function readProgramBases(db: Client, templatesOnly: boolean): Promise<Tem
       name: p.name,
       weeksCount: p.weeks_count,
       studentId: p.student_id,
+      ...(p.student_id ? { studentName: p.student?.full_name ?? null } : {}),
       startDate: p.start_date,
       endsOn: p.ends_on,
       sessionCount: sessions.length,

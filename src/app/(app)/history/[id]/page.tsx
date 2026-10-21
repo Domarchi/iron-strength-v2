@@ -1,3 +1,4 @@
+import { navigationContext, evidenceReturn } from "@/lib/navigation/training-context";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Trophy } from "lucide-react";
@@ -32,13 +33,17 @@ export default async function WorkoutDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ nuevo?: string; logros?: string }>;
+  searchParams: Promise<{
+    nuevo?: string;
+    logros?: string;
+    semanas?: string;
+    vista?: string;
+    desde?: string;
+    ejercicio?: string;
+  }>;
 }) {
-  const [{ id }, { nuevo, logros }, user] = await Promise.all([
-    params,
-    searchParams,
-    requireUser(),
-  ]);
+  const [{ id }, query, user] = await Promise.all([params, searchParams, requireUser()]);
+  const { nuevo, logros } = query;
   const db = await createClient();
   const workout = await getWorkoutDetail(db, id);
   if (!workout) notFound();
@@ -49,6 +54,13 @@ export default async function WorkoutDetailPage({
   ]);
 
   const own = workout.studentId === user.id;
+  const back = evidenceReturn(
+    navigationContext(query),
+    workout.studentId,
+    own,
+    query,
+    workout.exercises.map((e) => e.exerciseId),
+  );
 
   // Solo se anuncian logros que el alumno realmente tiene (la dirección no es de fiar).
   const announced =
@@ -175,8 +187,8 @@ export default async function WorkoutDetailPage({
 
       <div className="flex flex-wrap gap-2">
         {nuevo && own ? <Button render={<Link href="/week" />}>Volver a mi semana</Button> : null}
-        <Button variant="outline" render={<Link href={own ? "/history" : "/coach/students"} />}>
-          Volver
+        <Button variant="outline" render={<Link href={back.href} />}>
+          {back.label}
         </Button>
         {own && isWorkoutEditable(workout.performedOn, santiagoDate(new Date())) ? (
           <Button variant="secondary" render={<Link href={`/history/${workout.id}/edit`} />}>

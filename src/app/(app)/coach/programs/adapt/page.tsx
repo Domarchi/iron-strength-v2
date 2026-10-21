@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { navigationContext, studentHref } from "@/lib/navigation/training-context";
 import { z } from "zod";
 import { PageHeading } from "@/components/layout/page-heading";
 import { requireCoach } from "@/lib/auth/session";
@@ -8,18 +11,19 @@ export const metadata = { title: "Adaptar una base · Iron Strength" };
 export default async function AdaptBasePage({
   searchParams,
 }: {
-  searchParams: Promise<{ alumno?: string; base?: string }>;
+  searchParams: Promise<{ alumno?: string; base?: string; semanas?: string; vista?: string }>;
 }) {
   const user = await requireCoach(),
     query = await searchParams,
     db = await createClient();
+  const navigation = navigationContext(query);
   const candidate = z.uuid().safeParse(query.alumno);
   const [bases, target] = await Promise.all([
     listProgramBases(db),
     candidate.success
       ? db
           .from("profiles")
-          .select("id,full_name,coach_id")
+          .select("id,full_name,coach_id,role")
           .eq("id", candidate.data)
           .eq("is_active", true)
           .maybeSingle()
@@ -37,7 +41,17 @@ export default async function AdaptBasePage({
             : "Elige una plantilla o un programa anterior para preparar una copia independiente."
         }
       />
+      {student?.role === "student" ? (
+        <Button
+          variant="outline"
+          className="self-start"
+          render={<Link href={studentHref(student.id, navigation)} />}
+        >
+          Volver a la ficha
+        </Button>
+      ) : null}
       <AdaptBase
+        navigation={navigation}
         userId={user.id}
         bases={bases}
         studentId={student?.id}

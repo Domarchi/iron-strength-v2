@@ -78,8 +78,8 @@ test("periodos equivalentes, enlaces a evidencia y valoración en ficha del alum
     [],
   );
   await page.getByText("Ver entrenamientos del periodo anterior", { exact: true }).click();
-  await page.locator(`a[href="/history/${ids[2]}"]`).click();
-  await expect(page).toHaveURL(new RegExp(`/history/${ids[2]}$`));
+  await page.locator(`a[href^="/history/${ids[2]}?"]`).click();
+  await expect(page).toHaveURL(new RegExp(`/history/${ids[2]}\\?`));
   await page.goto(`/progress/${exerciseId}?alumno=${studentId}&semanas=12`);
   await expect(
     page.getByRole("region", { name: "Entrenamientos del periodo", exact: true }).getByRole("link"),

@@ -14,3 +14,11 @@ it("busca por nombre, título y ejercicio sin tildes ni mayúsculas", () => {
   expect(filterTemplates(templates, "")).toEqual(templates);
   expect(filterTemplates(templates, "ausente")).toEqual([]);
 });
+
+it("distingue bases de igual nombre buscando al alumno que las realizó", () => {
+  const bases = [
+    { ...templates[0], studentName: "Ana Pérez" },
+    { ...templates[0], studentName: "Bruno" },
+  ];
+  expect(filterTemplates(bases, "perez")).toEqual([bases[0]]);
+});
