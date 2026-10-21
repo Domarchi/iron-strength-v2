@@ -25,5 +25,5 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T162 · Actualizaciones y cuentas**
 - [x] **T163 · Consistencia visual**
 - [x] **T164 · Validación completa**
-- [ ] **T165 · Preparación de publicación** — CI, documentación y restauración local verificados; respaldo e inspección remotos verificados; regresión WebKit y check aprobados; suite completa final y caducidad de recuperación pendientes. El usuario aprobó reemplazar la versión existente en Vercel iron-strength.
-- [ ] **T166 · Publicación y prueba final** — destinos y acceso Supabase confirmados; servicio saludable; builds Staged disponibles; identidad Git corregida; publicación, alta del coach y aceptación en teléfonos físicos pendientes.
+- [ ] **T165 · Preparación de publicación** — CI, documentación y restauración local verificados; respaldo e inspección remotos verificados; check, 250 integración, 408 pgTAP, regresión WebKit y 141 E2E aprobados sin reintentos en CI 39539977730; caducidad de recuperación pendiente. El usuario aprobó reemplazar la versión existente en Vercel iron-strength.
+- [ ] **T166 · Publicación y prueba final** — destinos y acceso Supabase confirmados; servicio saludable; publicado acafce4 por HTTPS en iron-strength-seven.vercel.app y app abierta; alta del coach, tres invitaciones y aceptación en teléfonos físicos pendientes.

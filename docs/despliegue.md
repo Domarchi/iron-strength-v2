@@ -85,6 +85,10 @@ La pasada de `81c5f4c` corrigió la hora futura de la semilla y aprobó T158 en 
 
 La validación conserva las comprobaciones de recuperación e idempotencia. Playwright 1.64.1 usa Chromium 156 y WebKit 27.2; el transporte de pruebas controla respuestas perdidas sin permitir que un reintento automático oculte el pendiente. El historial de fallos, correcciones y resultados está en specs/005-complete-training/validation.md.
 
-Despliegue anterior recuperable: `dpl_8qth4AaZtLybxjJXN4ZvF6Wi7xPu`. El dominio público todavía apunta a esa versión. No se revierten migraciones de manera destructiva para volver atrás el frontend.
+Publicado el 21 de octubre de 2026: commit `acafce4a0d8fbae8837e3d618c7c16a6f4723cc9`, despliegue `dpl_3yJM97giPeVYPxtWteBQkTEAphz3`, BUILD_ID `ec41f2a47a4c496f9b1103ef21a8a841`. [CI de la versión publicada](https://github.com/Domarchi/iron-strength-v2/actions/runs/39539977730) completo en verde: 458 unitarias, 250 integración, 408 pgTAP, tipos y 141 E2E sin reintentos; seis repeticiones WebKit enfocadas también aprobadas. Suite local completa: 141 E2E sin reintentos. Solo se omite en WebKit el gesto continuo que requiere CDP.
+
+Se promovió el mismo build Staged validado, sin recompilar. El dominio público apunta al despliegue indicado; promoción manual conservada para futuros commits. Verificados por HTTPS login, manifiesto, icono, offline y worker de esta versión (200), páginas privadas redirigidas a login con no-store y ausencia de registros error/fatal en las comprobaciones realizadas. Build generó 58 recursos públicos. Vista previa local del puerto 3000 recompilada con la corrección; datos interactivos idénticos a la referencia anterior.
+
+Despliegue anterior recuperable: `dpl_8qth4AaZtLybxjJXN4ZvF6Wi7xPu`. No se revierten migraciones de manera destructiva para volver atrás el frontend.
 
 La aceptación con cuatro cuentas reales y Android/iPhone físicos continúa pendiente. Seguir la guía de teléfonos después del alta del coach y las tres invitaciones reales; registrar dispositivo, navegador y resultado. Una suite emulada aprobada no sustituye esa comprobación.

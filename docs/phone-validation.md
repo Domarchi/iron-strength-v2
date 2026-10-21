@@ -1,5 +1,7 @@
 # Prueba en teléfonos — Iron Strength
 
+URL publicada: [Iron Strength](https://iron-strength-seven.vercel.app). Se requiere una cuenta de producción por persona; el alta del coach y las tres invitaciones siguen pendientes.
+
 ## Estado de la evidencia
 
 La suite automatizada usa Chromium móvil y WebKit con perfil iPhone, cuatro cuentas aisladas y Supabase exclusivo de pruebas. Esto no acredita una prueba en un teléfono físico. Completar la tabla siguiente en Android/Chrome e iPhone/Safari después de publicar por HTTPS; registrar modelo, sistema, versión de navegador y fecha.
@@ -18,6 +20,13 @@ La apertura sin conexión corta el transporte al servidor de pruebas mediante un
 Un coach y tres alumnos, cada uno con su acceso privado. El coach también tiene Mi semana y puede entrenar. Usar los enlaces de invitación y recuperación del proyecto publicado. Las credenciales locales de demostración están en el archivo privado de acceso fuera del repositorio; no se suben a producción ni se comparten entre personas.
 
 En el equipo de desarrollo, `scripts/prepare-four-local-accounts.ts` añade solo los alumnos que faltan hasta tres y asigna copias de una plantilla existente a quienes no tienen programa vigente o futuro. No modifica perfiles, contraseñas, rutinas ni entrenamientos existentes; rechaza hosts remotos. Usa la credencial del coach configurada para la semilla local y las asignaciones pasan por su cliente autenticado.
+
+## Prueba breve para las cuatro cuentas
+
+1. Coach: entrar, crear una plantilla con superserie y alternativa, asignar una copia a cada alumno y otra a sí mismo.
+2. Cada alumno: entrar con su invitación, descargar la semana, registrar un entrenamiento con esfuerzo/nota y confirmar que solo ve sus propios resultados.
+3. Coach: completar su entrenamiento desde Mi entreno y revisar los tres de sus alumnos, incluidas sustituciones; dejar un comentario en cada uno.
+4. Cada alumno: abrir la respuesta del coach. En el teléfono, comprobar además instalación y el recorrido offline detallado abajo. Anotar resultados reales en la tabla; todavía no están acreditados.
 
 ## Recorrido de prueba
 
