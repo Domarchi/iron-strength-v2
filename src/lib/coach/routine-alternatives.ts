@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { seriesDraftSchema, toSeriesDraft } from "./series-draft";
+import type { SeriesTarget } from "@/domain/prescription-series";
 import { sessionExerciseSchema } from "@/domain/schemas";
 export const alternativeDraftSchema = z.object({
   exerciseId: z.string(),
@@ -6,6 +8,7 @@ export const alternativeDraftSchema = z.object({
   repsMin: z.string(),
   repsMax: z.string(),
   targetWeightKg: z.string(),
+  series: seriesDraftSchema.nullable().optional(),
 });
 export type AlternativeDraft = z.infer<typeof alternativeDraftSchema>;
 export type AlternativeInput = {
@@ -14,6 +17,7 @@ export type AlternativeInput = {
   repsMin: number;
   repsMax: number;
   targetWeightKg: number | null;
+  series?: SeriesTarget[] | null;
 };
 export type AlternativeRow = AlternativeInput & { id: string; name: string; archived: boolean };
 export const alternativeInputSchema = sessionExerciseSchema.transform(
@@ -33,6 +37,9 @@ export function alternativeDraft(row: AlternativeInput): AlternativeDraft {
     repsMin: String(row.repsMin),
     repsMax: String(row.repsMax),
     targetWeightKg: row.targetWeightKg === null ? "" : String(row.targetWeightKg),
+    ...(row.series !== undefined
+      ? { series: row.series === null ? null : toSeriesDraft(row.series) }
+      : {}),
   };
 }
 export function validateAlternatives(

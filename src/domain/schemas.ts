@@ -4,28 +4,10 @@
 import { z } from "zod";
 import { santiagoDate } from "./dates";
 
-export const LIMITS = {
-  weeksMin: 1,
-  weeksMax: 16,
-  setsMin: 1,
-  setsMax: 10,
-  repsMin: 1,
-  repsMax: 100,
-  weightMinKg: 0,
-  weightMaxKg: 500,
-  exercisesPerSession: 15,
-  sessionsPerWeek: 7,
-  nameMax: 100,
-  noteMax: 500,
-  commentMax: 500,
-  photosPerDay: 3,
-  photoMaxBytes: 1_048_576,
-  bodyWeightMinKg: 20,
-  bodyWeightMaxKg: 300,
-  girthMinCm: 10,
-  girthMaxCm: 250,
-  incrementMaxKg: 20,
-} as const;
+export { LIMITS } from "./limits";
+import { LIMITS } from "./limits";
+import { fromFormNumber as fromForm, hasAtMostDecimals } from "./numbers";
+import { prescribedSeriesSchema, coherentPrescriptionSeries } from "./prescription-series";
 
 export const MUSCLE_GROUPS = [
   "Pecho",
@@ -40,17 +22,6 @@ export const PHOTO_MIME_TYPES = ["image/jpeg", "image/webp"] as const;
 export const PHOTO_TAGS = ["frente", "lado", "espalda"] as const;
 
 // Los formularios mandan texto: "" = sin dato, y se acepta la coma decimal ("80,5").
-function fromForm(value: unknown): unknown {
-  if (typeof value !== "string") return value;
-  const text = value.trim();
-  if (text === "") return undefined;
-  return Number(text.replace(",", "."));
-}
-
-const hasAtMostDecimals = (decimals: number) => (n: number) => {
-  const factor = 10 ** decimals;
-  return Math.abs(n * factor - Math.round(n * factor)) < 1e-9;
-};
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 
@@ -106,10 +77,15 @@ export const sessionExerciseSchema = z
     repsMax: integer(LIMITS.repsMin, LIMITS.repsMax),
     targetWeightKg: optionalWeight(LIMITS.weightMinKg, LIMITS.weightMaxKg, 2),
     note: optionalText(LIMITS.noteMax),
+    series: prescribedSeriesSchema.nullable().optional(),
   })
   .refine((v) => v.repsMin <= v.repsMax, {
     message: "El mínimo de repeticiones no puede superar al máximo",
     path: ["repsMax"],
+  })
+  .refine(coherentPrescriptionSeries, {
+    message: "El detalle por serie no coincide con la cantidad y el resumen de la prescripción",
+    path: ["series"],
   });
 
 // Los lotes declaran campos para preservar los demás incluso al revisar otra versión.
@@ -121,6 +97,7 @@ export const prescriptionFields = [
   "note",
   "restSeconds",
   "supersetRestSeconds",
+  "series",
 ] as const;
 export type PrescriptionField = (typeof prescriptionFields)[number];
 export const prescriptionRestSchema = z.preprocess(
@@ -135,7 +112,7 @@ export const prescriptionMutationSchema = sessionExerciseSchema
     fields: z
       .array(z.enum(prescriptionFields))
       .min(1)
-      .max(7)
+      .max(8)
       .refine((fields) => new Set(fields).size === fields.length)
       .optional(),
   })

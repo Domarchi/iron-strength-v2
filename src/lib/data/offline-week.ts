@@ -70,7 +70,7 @@ export async function downloadCurrentWeek(
     throw new Error("La semana cambió. Vuelve a descargarla.");
   const pack = parseWeekPackage(
     {
-      version: 1,
+      version: 2,
       userId,
       downloadedAt: now.toISOString(),
       program: view.program,

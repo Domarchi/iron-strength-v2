@@ -1,3 +1,4 @@
+import { seriesDraftSchema } from "./series-draft";
 import { additionRequestSchema } from "./routine-additions";
 import { z } from "zod";
 import { bulkDraftSchema } from "./bulk-editor";
@@ -17,11 +18,12 @@ const row = z.object({
   restSeconds: text.optional(),
   supersetRestSeconds: text.optional(),
   fields: z.array(z.enum(prescriptionFields)).optional(),
+  series: seriesDraftSchema.nullable().optional(),
 });
 const request = z.object({ id: text, revision: z.number().int().nonnegative() });
 const schema = z
   .object({
-    version: z.union([z.literal(1), z.literal(2)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     additionSelection: z.array(z.uuid()).max(15).optional(),
     additionRequest: additionRequestSchema.nullable().optional(),
     id: text,
@@ -55,7 +57,19 @@ const schema = z
   .refine(
     (d) =>
       d.version !== 1 || (d.additionSelection === undefined && d.additionRequest === undefined),
-  );
+  )
+  .refine((d) => {
+    if (d.version === 3) return true;
+    const localRows = [...Object.values(d.edits), ...(d.saveRequest?.rows ?? [])];
+    const alternatives = [
+      ...Object.values(d.alternativeEdits ?? {}).flat(),
+      ...(d.alternativeRequest?.alternatives ?? []),
+    ];
+    return (
+      !localRows.some((r) => Object.hasOwn(r, "series") || r.fields?.includes("series")) &&
+      !alternatives.some((r) => Object.hasOwn(r, "series"))
+    );
+  });
 export type EditorDraft = z.infer<typeof schema>;
 const prefix = (userId: string, programId: string, sessionId: string) =>
   `is:coach-draft:v1:${userId}:${programId}:${sessionId}:`;

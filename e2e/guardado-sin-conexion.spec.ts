@@ -58,7 +58,7 @@ test("recupera desde Mi semana un entrenamiento pendiente de la semana anterior 
   await login(page, STUDENT.email, STUDENT.password);
   await page.evaluate(({ key, draft }) => localStorage.setItem(key, JSON.stringify(draft)), {
     key: legacyDraftKey(studentId, seeded.sessionId),
-    draft: pending,
+    draft: { ...pending, version: 1 },
   });
   await page.goto("/week");
   const sync = page.getByRole("region", { name: "Sincronización de entrenamientos", exact: true });

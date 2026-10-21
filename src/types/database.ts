@@ -379,14 +379,14 @@ isOneToOne: false
                   ]
                 },"session_exercise_alternatives": {
                   Row: {
-                    "exercise_id": string,"id": string,"position": number,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"position": number,"prescription_sets": Json | null,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id"?: string,"position": number,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id"?: string,"position": number,"prescription_sets"?: Json | null,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg"?: number | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"position"?: number,"reps_max"?: number,"reps_min"?: number,"session_exercise_id"?: string,"sets"?: number,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number,"reps_min"?: number,"session_exercise_id"?: string,"sets"?: number,"target_weight_kg"?: number | null
                   }
                   Relationships: [
                     {
@@ -405,14 +405,14 @@ isOneToOne: false
                   ]
                 },"session_exercises": {
                   Row: {
-                    "exercise_id": string,"id": string,"note": string | null,"position": number,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"note": string | null,"position": number,"prescription_sets": Json | null,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id"?: string,"note"?: string | null,"position"?: number,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds"?: number | null,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds"?: number | null,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"position"?: number,"program_session_id"?: string,"reps_max"?: number,"reps_min"?: number,"rest_seconds"?: number | null,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id"?: string,"reps_max"?: number,"reps_min"?: number,"rest_seconds"?: number | null,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
                   }
                   Relationships: [
                     {
@@ -562,6 +562,9 @@ isOneToOne: false
 "mutate_routine_session":
 { Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string,"p_title"?: string,"p_weekday"?: number }; Returns: number
                            },
+"patch_prescription_series":
+{ Args: { "p_fields": (string)[],"p_row": Json,"p_series": Json }; Returns: Json
+                           },
 "planning_assignment_snapshot":
 { Args: { "p_end_date": string,"p_start_date": string,"p_student_id": string }; Returns: Json
                            },
@@ -581,6 +584,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "last_comment_at": string,"student_id": string,"unread_count": number,"workout_id": string
             }[]
+                           },
+"valid_prescription_series":
+{ Args: { "p_max": number,"p_min": number,"p_series": Json,"p_sets": number,"p_weight": number }; Returns: boolean
                            },
 "validate_invitation":
 { Args: { "p_token_hash": string }; Returns: {

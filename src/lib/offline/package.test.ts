@@ -63,7 +63,7 @@ describe("paquete descargado v1", () => {
   it("conserva contexto y alternativas sin aceptar identidad ajena ni formato futuro", () => {
     expect(parseWeekPackage(sample(), id(1))).toEqual(sample());
     expect(parseWeekPackage(sample(), id(7))).toBeNull();
-    expect(parseWeekPackage({ ...sample(), version: 2 }, id(1))).toBeNull();
+    expect(parseWeekPackage({ ...sample(), version: 99 }, id(1))).toBeNull();
     expect(parseWeekPackage({ ...sample(), accessToken: "no guardar" }, id(1))).toEqual(sample());
   });
   it("rechaza descargas incompletas, referencias cruzadas y fechas incoherentes", () => {
@@ -92,4 +92,34 @@ describe("paquete descargado v1", () => {
       ),
     ).toBe(false);
   });
+});
+
+it("v2 conserva objetivos individuales y v1 no interpreta detalle con una etiqueta antigua", () => {
+  const original = sample();
+  const series = [
+    { repsMin: 6, repsMax: 8, targetWeightKg: 75 },
+    { repsMin: 8, repsMax: 10, targetWeightKg: 70 },
+    { repsMin: 10, repsMax: 12, targetWeightKg: null },
+  ];
+  const next = {
+    ...original,
+    version: 2,
+    sessions: original.sessions.map((s) => ({
+      ...s,
+      context: {
+        ...s.context,
+        exercises: s.context.exercises.map((e) => ({
+          ...e,
+          prescribed: { sets: 3, repsMin: 6, repsMax: 12, targetWeightKg: null, series },
+        })),
+      },
+    })),
+  };
+  expect(parseWeekPackage(next, id(1))).toEqual(next);
+  expect(parseWeekPackage({ ...next, version: 1 }, id(1))).toBeNull();
+  expect(parseWeekPackage({ ...next, version: 99 }, id(1))).toBeNull();
+  expect(parseWeekPackage(original, id(1))).toEqual(original);
+  const invalid = structuredClone(next);
+  invalid.sessions[0].context.exercises[0].prescribed.series[0].targetWeightKg = 500.01;
+  expect(parseWeekPackage(invalid, id(1))).toBeNull();
 });

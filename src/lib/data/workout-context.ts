@@ -1,5 +1,6 @@
 // Contexto de una sesión a entrenar (RF-19, RF-20, RF-15b, DC-9): ejercicios en orden con su
 // prescripción, "última vez", peso previo para precargar y la sugerencia de progresión.
+import { prescribedSeriesSchema, isUniformPrescription } from "@/domain/prescription-series";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, mondayOf, santiagoDate, type DateString } from "../../domain/dates.ts";
 import { lastByExercise, type HistoryWorkout, type LastPerformance } from "../../domain/history.ts";
@@ -52,9 +53,9 @@ export async function getWorkoutContext(
       `id, week_number, label, title, program_id,
        programs ( name, start_date, ends_on, weeks_count, student_id ),
        session_exercises (
-         id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, note, rest_seconds, superset_id, superset_rest_seconds,
+         id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, prescription_sets, note, rest_seconds, superset_id, superset_rest_seconds,
          exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg ),
-         session_exercise_alternatives ( exercise_id, position, sets, reps_min, reps_max, target_weight_kg,
+         session_exercise_alternatives ( exercise_id, position, sets, reps_min, reps_max, target_weight_kg, prescription_sets,
            exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg ) )
        )`,
     )
@@ -122,6 +123,9 @@ export async function getWorkoutContext(
         repsMin: row.reps_min,
         repsMax: row.reps_max,
         targetWeightKg: row.target_weight_kg === null ? null : Number(row.target_weight_kg),
+        ...(row.prescription_sets != null
+          ? { series: prescribedSeriesSchema.parse(row.prescription_sets) }
+          : {}),
       };
       const last = lastBy.get(row.exercise_id) ?? null;
       return {
@@ -134,6 +138,9 @@ export async function getWorkoutContext(
               repsMin: a.reps_min,
               repsMax: a.reps_max,
               targetWeightKg: a.target_weight_kg === null ? null : Number(a.target_weight_kg),
+              ...(a.prescription_sets != null
+                ? { series: prescribedSeriesSchema.parse(a.prescription_sets) }
+                : {}),
             };
             const previous = lastBy.get(a.exercise_id) ?? null;
             return {
@@ -147,14 +154,15 @@ export async function getWorkoutContext(
               note: null,
               lastWeightKg: previous && previous.topWeightKg > 0 ? previous.topWeightKg : null,
               last: previous ? { date: previous.date, sets: previous.sets } : null,
-              suggestion: previous
-                ? suggestProgression({
-                    prescription: rx,
-                    lastSets: previous.sets,
-                    incrementKg: Number(catalog.progression_increment_kg),
-                    isBodyweight: catalog.is_bodyweight,
-                  })
-                : null,
+              suggestion:
+                previous && isUniformPrescription(rx)
+                  ? suggestProgression({
+                      prescription: rx,
+                      lastSets: previous.sets,
+                      incrementKg: Number(catalog.progression_increment_kg),
+                      isBodyweight: catalog.is_bodyweight,
+                    })
+                  : null,
             };
           }),
         sessionExerciseId: row.id,
@@ -170,14 +178,15 @@ export async function getWorkoutContext(
         supersetRestSeconds: row.superset_rest_seconds,
         lastWeightKg: last && last.topWeightKg > 0 ? last.topWeightKg : null,
         last: last ? { date: last.date, sets: last.sets } : null,
-        suggestion: last
-          ? suggestProgression({
-              prescription: prescribed,
-              lastSets: last.sets,
-              incrementKg: Number(exercise.progression_increment_kg),
-              isBodyweight: exercise.is_bodyweight,
-            })
-          : null,
+        suggestion:
+          last && isUniformPrescription(prescribed)
+            ? suggestProgression({
+                prescription: prescribed,
+                lastSets: last.sets,
+                incrementKg: Number(exercise.progression_increment_kg),
+                isBodyweight: exercise.is_bodyweight,
+              })
+            : null,
       };
     });
 

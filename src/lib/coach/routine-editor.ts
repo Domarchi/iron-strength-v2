@@ -1,3 +1,4 @@
+import { toSeriesDraft, type SeriesDraft } from "./series-draft";
 import {
   prescriptionMutationSchema,
   type PrescriptionField,
@@ -15,6 +16,7 @@ export type PrescriptionDraft = {
   restSeconds?: string;
   supersetRestSeconds?: string;
   fields?: PrescriptionField[];
+  series?: SeriesDraft[] | null;
 };
 export type CatalogExercise = {
   id: string;
@@ -31,6 +33,9 @@ export function prescriptionDraft(row: { id: string } & SessionExerciseInput): P
     repsMax: String(row.repsMax),
     targetWeightKg: row.targetWeightKg === null ? "" : String(row.targetWeightKg),
     note: row.note ?? "",
+    ...(row.series !== undefined
+      ? { series: row.series === null ? null : toSeriesDraft(row.series) }
+      : {}),
   };
 }
 export function validatePrescriptions(drafts: PrescriptionDraft[]) {

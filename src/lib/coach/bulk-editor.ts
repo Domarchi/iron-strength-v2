@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { patchSeriesDraft, seriesDraftSummary } from "./series-draft";
 import { prescriptionRestSchema, type PrescriptionField } from "@/domain/schemas";
 import type { SessionExerciseRow } from "@/lib/data/programs";
 import { prescriptionDraft, validatePrescriptions, type PrescriptionDraft } from "./routine-editor";
@@ -27,14 +28,30 @@ export function effectivePrescription(
   row: SessionExerciseRow,
   edit?: PrescriptionDraft,
 ): PrescriptionDraft {
-  if (!edit) return prescriptionDraft(row);
-  if (!edit.fields) return edit;
-  const next = prescriptionDraft(row);
-  for (const field of edit.fields) {
-    const value = edit[field];
-    if (value !== undefined) next[field] = value;
+  const base = prescriptionDraft(row);
+  if (!edit) return base;
+  const next = edit.fields ? { ...base, fields: edit.fields } : { ...edit };
+  if (edit.fields)
+    for (const field of edit.fields) {
+      if (field === "series") {
+        if (edit.series !== undefined) next.series = edit.series;
+      } else {
+        const value = edit[field];
+        if (value !== undefined) next[field] = value;
+      }
+    }
+  const explicitSeries = edit.fields ? edit.fields.includes("series") : edit.series !== undefined;
+  if (row.series && !explicitSeries) {
+    const fields =
+      edit.fields ??
+      (["sets", "repsMin", "repsMax", "targetWeightKg"] as const).filter(
+        (f) => edit[f] !== base[f],
+      );
+    next.series = patchSeriesDraft(row.series, next, fields);
+    const summary = seriesDraftSummary(next.series);
+    if (summary) Object.assign(next, summary);
   }
-  return { ...next, fields: edit.fields };
+  return next;
 }
 export function buildBulkPreview(
   rows: SessionExerciseRow[],
@@ -79,7 +96,7 @@ export function buildBulkPreview(
       next[field] = draft.restSeconds;
       fields.push(field);
     }
-    return { ...next, fields };
+    return effectivePrescription(row, { ...next, fields });
   });
   const validation = validatePrescriptions(changes);
   return validation.error

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { prescribedSeriesSchema, coherentPrescriptionSeries } from "@/domain/prescription-series";
 import { addDays, isMonday } from "@/domain/dates";
 import { programWeekNumber, programWeekStart } from "@/domain/program-weeks";
 import type { ContextExercise, WorkoutContext } from "@/lib/data/workout-context";
@@ -23,8 +24,9 @@ const baseExercise = z.object({
       repsMin: z.number().int().min(1).max(100),
       repsMax: z.number().int().min(1).max(100),
       targetWeightKg: z.number().min(0).max(500).nullable(),
+      series: prescribedSeriesSchema.nullable().optional(),
     })
-    .refine((p) => p.repsMin <= p.repsMax),
+    .refine((p) => p.repsMin <= p.repsMax && coherentPrescriptionSeries(p)),
   lastWeightKg: z.number().min(0).max(500).nullable(),
   note: z.string().nullable(),
   muscleGroup: z.string().optional(),
@@ -78,7 +80,7 @@ const historyPage: z.ZodType<ExerciseHistoryPage> = z.object({
 });
 const weekPackageSchema = z
   .object({
-    version: z.literal(1),
+    version: z.union([z.literal(1), z.literal(2)]),
     userId: uuid,
     downloadedAt: instant,
     program: z.object({
@@ -126,6 +128,7 @@ const weekPackageSchema = z
         if (rows.has(e.sessionExerciseId)) return false;
         rows.add(e.sessionExerciseId);
         const choices = [e, ...(e.alternatives ?? [])];
+        if (p.version === 1 && choices.some((c) => c.prescribed.series !== undefined)) return false;
         if (
           new Set(choices.map((a) => a.exerciseId)).size !== choices.length ||
           choices.some((a) => a.sessionExerciseId !== e.sessionExerciseId)

@@ -49,7 +49,7 @@ test("la tarjeta principal retoma el mismo entrenamiento en curso", async ({ pag
   const original = await page.evaluate(
     () =>
       JSON.parse(
-        localStorage.getItem(Object.keys(localStorage).find((k) => k.startsWith("is:draft:v2:"))!)!,
+        localStorage.getItem(Object.keys(localStorage).find((k) => k.startsWith("is:draft:v3:"))!)!,
       ).draft.workoutId,
   );
   await page.getByRole("button", { name: /Volver a Mi semana/ }).click();
@@ -63,7 +63,7 @@ test("la tarjeta principal retoma el mismo entrenamiento en curso", async ({ pag
       () =>
         JSON.parse(
           localStorage.getItem(
-            Object.keys(localStorage).find((k) => k.startsWith("is:draft:v2:"))!,
+            Object.keys(localStorage).find((k) => k.startsWith("is:draft:v3:"))!,
           )!,
         ).draft.workoutId,
     ),
@@ -110,7 +110,7 @@ test("el índice cambia y recupera el ejercicio sin alterar las series", async (
       () =>
         JSON.parse(
           localStorage.getItem(
-            Object.keys(localStorage).find((k) => k.startsWith("is:draft:v2:"))!,
+            Object.keys(localStorage).find((k) => k.startsWith("is:draft:v3:"))!,
           )!,
         ).draft.rest.endsAt,
     );

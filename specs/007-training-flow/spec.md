@@ -29,7 +29,7 @@ Añadir extensión nullable de lista ordenada a ejercicios y alternativas; `pres
 
 Todas iguales por defecto. Convertir a Por serie replica cada objetivo; volver con diferencias exige revisar y confirmar los valores uniformes. Peso prescrito por serie prioritario; sin él conserva referencia histórica actual. Repeticiones son objetivo hasta confirmar la serie, nunca evidencia de una realizada. Copiar no cambia completadas. Sugerencia actual solo si las series son uniformes; detalle variable muestra historial/prescripción sin sugerencia uniforme.
 
-Actualizar copias, asignación, alternativas, exportación cuando corresponda, borrado, lectura de contexto y representación. Nuevos borradores/paquetes versionados con lectura compatible y migración confirmada antes de retirar origen. Conservar desconocidos, cola congelada y sesiones iniciadas; descarga nueva no reemplaza entrenamiento en curso. No reinterpretar entrenamientos históricos.
+Contrato detallado de límites, resumen compatible, parches y versiones en prescription-series.md. Actualizar copias, asignación, alternativas, exportación cuando corresponda, borrado, lectura de contexto y representación. Nuevos borradores/paquetes versionados con lectura compatible y migración confirmada antes de retirar origen. Conservar desconocidos, cola congelada y sesiones iniciadas; descarga nueva no reemplaza entrenamiento en curso. No reinterpretar entrenamientos históricos.
 
 ## Seguimiento, seguridad y aceptación
 

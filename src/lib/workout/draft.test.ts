@@ -27,7 +27,7 @@ function fakeStorage(
 }
 
 const draft = (over: Partial<WorkoutDraft> = {}): WorkoutDraft => ({
-  version: 1,
+  version: 2,
   workoutId: "11111111-1111-4111-8111-111111111111",
   userId: "user-a",
   plannedSessionId: "session-1",
@@ -63,11 +63,14 @@ describe("borrador de la sesión en curso (RF-22, RF-24, DC-8)", () => {
   it("conserva el descanso y no pierde las series si solo el descanso está corrupto", () => {
     const storage = fakeStorage();
     const rest = { endsAt: 1792422090000, totalSeconds: 90 };
-    storage.setItem(draftKey("user-a", "session-1"), JSON.stringify({ ...draft(), rest }));
+    storage.setItem(
+      draftKey("user-a", "session-1"),
+      JSON.stringify({ ...draft(), version: 1, rest }),
+    );
     expect(loadDraft(storage, "user-a", "session-1")?.rest).toEqual(rest);
     storage.setItem(
       draftKey("user-a", "session-1"),
-      JSON.stringify({ ...draft(), rest: { endsAt: "roto" } }),
+      JSON.stringify({ ...draft(), version: 1, rest: { endsAt: "roto" } }),
     );
     expect(loadDraft(storage, "user-a", "session-1")?.exercises).toEqual(draft().exercises);
     expect(loadDraft(storage, "user-a", "session-1")?.rest).toBeNull();
@@ -203,22 +206,26 @@ it("recupera esfuerzo y nota sin exigirlos a borradores antiguos (T156)", () => 
   expect(loadDraft(store, "user-a", "session-1")).toEqual(draft());
 });
 
-it("migra v1 al sobre v2 solo tras confirmar la copia completa (T162)", () => {
+it("migra v1 al sobre v3 solo tras confirmar la copia completa (T162)", () => {
   const value = draft({
     note: "Conservar nota",
     perceivedEffort: 8,
     rest: { endsAt: 1792422090000, totalSeconds: 90 },
   });
-  const storage = fakeStorage({ [legacyDraftKey("user-a", "session-1")]: JSON.stringify(value) });
+  const storage = fakeStorage({
+    [legacyDraftKey("user-a", "session-1")]: JSON.stringify({ ...value, version: 1 }),
+  });
   expect(loadDraft(storage, "user-a", "session-1")).toEqual(value);
   expect(JSON.parse(storage.getItem(draftKey("user-a", "session-1"))!)).toEqual({
-    version: 2,
+    version: 3,
     draft: value,
   });
   expect(storage.getItem(legacyDraftKey("user-a", "session-1"))).toBeNull();
 });
 it("si no cabe la migración conserva y recupera v1 sin afirmar un guardado nuevo (T162)", () => {
-  const storage = fakeStorage({ [legacyDraftKey("user-a", "session-1")]: JSON.stringify(draft()) });
+  const storage = fakeStorage({
+    [legacyDraftKey("user-a", "session-1")]: JSON.stringify({ ...draft(), version: 1 }),
+  });
   storage.setItem = () => {
     throw new DOMException("Full", "QuotaExceededError");
   };
@@ -235,15 +242,19 @@ it("no sobrescribe ni elimina un sobre de versión desconocida (T162)", () => {
 });
 it("conserva un borrador distinto de una pestaña anterior al confirmar el actual (T162)", () => {
   const old = draft({ workoutId: "11111111-1111-4111-8111-111111111112" });
-  const storage = fakeStorage({ [legacyDraftKey("user-a", "session-1")]: JSON.stringify(old) });
+  const storage = fakeStorage({
+    [legacyDraftKey("user-a", "session-1")]: JSON.stringify({ ...old, version: 1 }),
+  });
   saveDraft(storage, draft());
   expect(listDrafts(storage, "user-a")).toHaveLength(2);
   clearDraft(storage, "user-a", "session-1", draft().workoutId);
   expect(loadDraft(storage, "user-a", "session-1")?.workoutId).toBe(old.workoutId);
 });
 
-it("una copia v2 confirmada sigue guardada aunque no se pueda limpiar v1 (T162)", () => {
-  const storage = fakeStorage({ [legacyDraftKey("user-a", "session-1")]: JSON.stringify(draft()) });
+it("una copia v3 confirmada sigue guardada aunque no se pueda limpiar v1 (T162)", () => {
+  const storage = fakeStorage({
+    [legacyDraftKey("user-a", "session-1")]: JSON.stringify({ ...draft(), version: 1 }),
+  });
   storage.removeItem = () => {
     throw new Error("blocked");
   };

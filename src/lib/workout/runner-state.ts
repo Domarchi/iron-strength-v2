@@ -33,7 +33,7 @@ export function createDraft(input: {
   now: Date;
 }): WorkoutDraft {
   return {
-    version: 1,
+    version: 2,
     workoutId: input.workoutId,
     userId: input.userId,
     plannedSessionId: input.plannedSession.id,

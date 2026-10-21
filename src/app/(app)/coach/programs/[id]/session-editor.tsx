@@ -276,7 +276,6 @@ function Editor({
   const lastDraft = useRef<EditorDraft | null>(restored ? { ...restored, id: localId } : null);
   function persistLocal(overrides: Partial<EditorDraft> = {}) {
     const next: EditorDraft = {
-      version: 2,
       id: localId,
       userId,
       programId,
@@ -297,6 +296,7 @@ function Editor({
       additionRequest,
       additionSelection,
       ...overrides,
+      version: 3,
     };
     lastDraft.current = next;
     if (

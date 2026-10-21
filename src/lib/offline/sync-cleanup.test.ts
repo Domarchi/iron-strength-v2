@@ -26,7 +26,10 @@ it("confirmar el pendiente v1 limpia solo su ID aunque exista otro entrenamiento
   const finished = finishDraft(old, new Date("2026-10-20T12:15:00Z"));
   const current = { ...old, workoutId: id(7) };
   saveDraft(localStorage, current);
-  localStorage.setItem(legacyDraftKey(old.userId, old.plannedSessionId), JSON.stringify(finished));
+  localStorage.setItem(
+    legacyDraftKey(old.userId, old.plannedSessionId),
+    JSON.stringify({ ...finished, version: 1 }),
+  );
   const built = buildPayload(finished, new Date());
   if (!built.ok) throw new Error("fixture inválido");
   clearConfirmedDraft(old.userId, built.payload);

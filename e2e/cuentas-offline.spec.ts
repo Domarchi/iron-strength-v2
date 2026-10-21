@@ -3,74 +3,79 @@ import { expect } from "@playwright/test";
 import { admin, COACH, resetAll, seedCoach, seedProgram } from "./support/db";
 import { login } from "./support/ui";
 import { createDraft } from "../src/lib/workout/runner-state";
-import { legacyDraftKey, draftKey } from "../src/lib/workout/draft";
+import { legacyDraftKey, previousDraftKey, draftKey } from "../src/lib/workout/draft";
 
-test("recupera y migra el borrador anterior; la cuota conserva el origen hasta confirmar v2 (T162)", async ({
-  page,
-}) => {
-  await resetAll();
-  const userId = await seedCoach();
-  const program = await seedProgram({ coachId: userId, studentId: userId });
-  const row = (
-    await admin()
-      .from("session_exercises")
-      .select("id")
-      .eq("program_session_id", program.sessionId)
-      .eq("position", 0)
-      .single()
-  ).data!;
-  const value = createDraft({
-    userId,
-    workoutId: crypto.randomUUID(),
-    plannedSession: { id: program.sessionId, programId: program.programId, label: "A" },
-    now: new Date(),
-    exercises: [
-      {
-        sessionExerciseId: row.id,
-        exerciseId: program.exercises.get("Sentadilla")!,
-        name: "Sentadilla",
-        isBodyweight: false,
-        lastWeightKg: null,
-        prescribed: { sets: 2, repsMin: 8, repsMax: 12, targetWeightKg: 60 },
-      },
-    ],
+for (const sourceVersion of [1, 2] as const)
+  test(`recupera y migra el borrador v${sourceVersion}; la cuota conserva el origen hasta confirmar v3 (T178)`, async ({
+    page,
+  }) => {
+    await resetAll();
+    const userId = await seedCoach();
+    const program = await seedProgram({ coachId: userId, studentId: userId });
+    const row = (
+      await admin()
+        .from("session_exercises")
+        .select("id")
+        .eq("program_session_id", program.sessionId)
+        .eq("position", 0)
+        .single()
+    ).data!;
+    const value = createDraft({
+      userId,
+      workoutId: crypto.randomUUID(),
+      plannedSession: { id: program.sessionId, programId: program.programId, label: "A" },
+      now: new Date(),
+      exercises: [
+        {
+          sessionExerciseId: row.id,
+          exerciseId: program.exercises.get("Sentadilla")!,
+          name: "Sentadilla",
+          isBodyweight: false,
+          lastWeightKg: null,
+          prescribed: { sets: 2, repsMin: 8, repsMax: 12, targetWeightKg: 60 },
+        },
+      ],
+    });
+    value.version = 1;
+    value.exercises[0].sets[0].weight = "62,5";
+    value.exercises[0].sets[0].reps = "9";
+    value.note = "Recuperar exactamente";
+    value.perceivedEffort = 8;
+    value.rest = { endsAt: Date.now() + 180000, totalSeconds: 180 };
+    await login(page, COACH.email, COACH.password);
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem("is:offline:active-user")))
+      .toBe(userId);
+    const oldKey = (sourceVersion === 1 ? legacyDraftKey : previousDraftKey)(
+        userId,
+        program.sessionId,
+      ),
+      newKey = draftKey(userId, program.sessionId);
+    await page.evaluate(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), {
+      key: oldKey,
+      value: sourceVersion === 1 ? value : { version: 2, draft: value },
+    });
+    await page.addInitScript(() => {
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key.startsWith("is:draft:v3:") && !sessionStorage.getItem("allow-migration"))
+          throw new DOMException("full", "QuotaExceededError");
+        return original.call(this, key, value);
+      };
+    });
+    await page.goto(`/workout/${program.sessionId}`);
+    await expect(page.getByLabel("Peso de la serie 1 de Sentadilla (kg)")).toHaveValue("62,5");
+    await expect(page.getByText(/No se pudo guardar en este dispositivo/)).toBeVisible();
+    expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), oldKey)).toEqual(
+      sourceVersion === 1 ? value : { version: 2, draft: value },
+    );
+    await page.evaluate(() => sessionStorage.setItem("allow-migration", "yes"));
+    await page.reload();
+    await expect(page.getByText("Guardado en este dispositivo", { exact: true })).toBeVisible();
+    const migrated = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), newKey);
+    expect(migrated).toEqual({ version: 3, draft: { ...value, version: 2 } });
+    expect(await page.evaluate((key) => localStorage.getItem(key), oldKey)).toBeNull();
   });
-  value.exercises[0].sets[0].weight = "62,5";
-  value.exercises[0].sets[0].reps = "9";
-  value.note = "Recuperar exactamente";
-  value.perceivedEffort = 8;
-  value.rest = { endsAt: Date.now() + 180000, totalSeconds: 180 };
-  await login(page, COACH.email, COACH.password);
-  await expect
-    .poll(() => page.evaluate(() => localStorage.getItem("is:offline:active-user")))
-    .toBe(userId);
-  const oldKey = legacyDraftKey(userId, program.sessionId),
-    newKey = draftKey(userId, program.sessionId);
-  await page.evaluate(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), {
-    key: oldKey,
-    value,
-  });
-  await page.addInitScript(() => {
-    const original = Storage.prototype.setItem;
-    Storage.prototype.setItem = function (key, value) {
-      if (key.startsWith("is:draft:v2:") && !sessionStorage.getItem("allow-migration"))
-        throw new DOMException("full", "QuotaExceededError");
-      return original.call(this, key, value);
-    };
-  });
-  await page.goto(`/workout/${program.sessionId}`);
-  await expect(page.getByLabel("Peso de la serie 1 de Sentadilla (kg)")).toHaveValue("62,5");
-  await expect(page.getByText(/No se pudo guardar en este dispositivo/)).toBeVisible();
-  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), oldKey)).toEqual(
-    value,
-  );
-  await page.evaluate(() => sessionStorage.setItem("allow-migration", "yes"));
-  await page.reload();
-  await expect(page.getByText("Guardado en este dispositivo", { exact: true })).toBeVisible();
-  const migrated = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), newKey);
-  expect(migrated).toEqual({ version: 2, draft: value });
-  expect(await page.evaluate((key) => localStorage.getItem(key), oldKey)).toBeNull();
-});
 
 test("cerrar sesión exige resolver pendientes, sincroniza y limpia solo esa cuenta; otras pestañas se ocultan (T162)", async ({
   page,

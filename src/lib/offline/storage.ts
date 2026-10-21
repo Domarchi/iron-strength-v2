@@ -46,7 +46,7 @@ function openDatabase(storeName: "weeks" | "queue"): Promise<IDBDatabase> {
 }
 export async function offlineTransaction<T>(
   mode: IDBTransactionMode,
-  run: (store: IDBObjectStore, result: (value: T) => void) => void,
+  run: (store: IDBObjectStore, result: (value: T) => void, fail: (error: unknown) => void) => void,
   storeName: "weeks" | "queue" = "weeks",
 ): Promise<T> {
   const db = await openDatabase(storeName);
@@ -76,31 +76,54 @@ export async function offlineTransaction<T>(
     tx.onerror = () => {
       /* onabort informa el resultado de toda la transacción. */
     };
-    try {
-      run(tx.objectStore(storeName), (value) => {
-        result = value;
-      });
-    } catch (error) {
+    const fail = (error: unknown) => {
       synchronousError = error;
       tx.abort();
+    };
+    try {
+      run(
+        tx.objectStore(storeName),
+        (value) => {
+          result = value;
+        },
+        fail,
+      );
+    } catch (error) {
+      fail(error);
     }
   });
 }
 export async function saveWeekPackage(value: unknown, userId: string): Promise<WeekPackage> {
   const pack = parseWeekPackage(value, userId);
   if (!pack) throw new Error("La descarga está incompleta o pertenece a otra cuenta.");
-  return offlineTransaction("readwrite", (store, result) => {
-    const put = store.put(pack);
-    put.onsuccess = () => {
-      const read = store.get(weekPackageKey(userId, pack.program.id, pack.weekStart));
-      read.onsuccess = () => {
-        const saved = parseWeekPackage(read.result, userId);
-        if (!saved) {
+  return offlineTransaction("readwrite", (store, result, fail) => {
+    const previous = store.get(weekPackageKey(userId, pack.program.id, pack.weekStart));
+    previous.onsuccess = () => {
+      try {
+        const old =
+          previous.result === undefined ? null : parseWeekPackage(previous.result, userId);
+        if (
+          previous.result !== undefined &&
+          (!old || old.version > pack.version || old.downloadedAt > pack.downloadedAt)
+        ) {
           store.transaction.abort();
           return;
         }
-        result(saved);
-      };
+        const put = store.put(pack);
+        put.onsuccess = () => {
+          const read = store.get(weekPackageKey(userId, pack.program.id, pack.weekStart));
+          read.onsuccess = () => {
+            const saved = parseWeekPackage(read.result, userId);
+            if (!saved || JSON.stringify(saved) !== JSON.stringify(pack)) {
+              store.transaction.abort();
+              return;
+            }
+            result(saved);
+          };
+        };
+      } catch (error) {
+        fail(error);
+      }
     };
   });
 }

@@ -217,3 +217,42 @@ it("solo confirma escritura local después de releer exactamente el contenido", 
   expect(writer.persist({ ...draft, version: 2 })).toBe(false);
   expect(writer.getSnapshot()).toBe("error");
 });
+
+it("v3 conserva el detalle sin alterar payloads congelados v2 y preserva formatos desconocidos", () => {
+  const store = storage(),
+    writer = createEditorPersistence(() => store);
+  const target = [
+    { repsMin: "6", repsMax: "8", targetWeightKg: "75" },
+    { repsMin: "10", repsMax: "12", targetWeightKg: "70" },
+  ];
+  const detail: EditorDraft = {
+    ...draft,
+    version: 3,
+    edits: {
+      ex: {
+        ...draft.edits.ex,
+        sets: "2",
+        repsMin: "6",
+        repsMax: "12",
+        targetWeightKg: "",
+        series: target,
+      },
+    },
+  };
+  expect(writer.persist(detail)).toBe(true);
+  expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([detail]);
+  const key = store.key(0)!;
+  const wrong = JSON.stringify({ ...detail, version: 2 });
+  store.setItem(key, wrong);
+  expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([]);
+  expect(store.getItem(key)).toBe(wrong);
+  const pending = {
+    ...draft,
+    version: 2 as const,
+    saveRequest: { id: "lost", revision: 2, rows: Object.values(draft.edits) },
+  };
+  writer.persist(pending);
+  const recovered = listEditorDrafts(store, "coach", "program", "session")[0];
+  expect(JSON.stringify(recovered.saveRequest)).toBe(JSON.stringify(pending.saveRequest));
+  expect(Object.hasOwn(recovered.saveRequest!.rows[0], "series")).toBe(false);
+});
