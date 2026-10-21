@@ -844,3 +844,49 @@
   margin: 0;
   padding: 0;
 }
+
+/* El detalle usa su espacio disponible, también dentro de una alternativa estrecha. */
+.prescription-controls {
+  container-type: inline-size;
+}
+.prescription-target-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+@container (min-width: 34rem) {
+  .prescription-target-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (min-width: 50rem) {
+  .prescription-target-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .coach-exercise-row[data-detailed="true"] .coach-row-identity > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+  }
+  .coach-exercise-row[data-detailed="true"] .coach-row-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .coach-exercise-row[data-detailed="true"] .coach-prescription {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .coach-exercise-row[data-detailed="true"] .coach-row-selection {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .coach-exercise-row[data-detailed="true"] .coach-row-note {
+    grid-column: 1;
+    grid-row: 4;
+  }
+  .coach-exercise-row[data-detailed="true"] > details:not(.coach-row-note) {
+    grid-column: 2;
+    grid-row: 4;
+  }
+}

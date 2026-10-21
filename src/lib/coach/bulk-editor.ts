@@ -49,7 +49,12 @@ export function effectivePrescription(
       );
     next.series = patchSeriesDraft(row.series, next, fields);
     const summary = seriesDraftSummary(next.series);
-    if (summary) Object.assign(next, summary);
+    if (summary) {
+      const invalidCount =
+        fields.includes("sets") &&
+        (!/^\d+$/.test(edit.sets) || Number(edit.sets) < 1 || Number(edit.sets) > 10);
+      Object.assign(next, summary, invalidCount ? { sets: edit.sets } : {});
+    }
   }
   return next;
 }

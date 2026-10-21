@@ -39,9 +39,13 @@ self.addEventListener("message", (event) => {
             ASSETS.map((path) => new Request(path, { credentials: "omit", cache: "reload" })),
           );
         }
-        event.ports[0]?.postMessage({ ready: await ready(), buildId: BUILD_ID });
+        event.ports[0]?.postMessage({
+          ready: await ready(),
+          buildId: BUILD_ID,
+          draftVersions: [1, 2, 3],
+        });
       } catch {
-        event.ports[0]?.postMessage({ ready: false, buildId: BUILD_ID });
+        event.ports[0]?.postMessage({ ready: false, buildId: BUILD_ID, draftVersions: [1, 2, 3] });
       }
     })(),
   );

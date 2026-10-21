@@ -1,4 +1,5 @@
 "use client";
+import { PrescriptionTargets } from "@/components/workout/prescription-targets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildBulkPreview, type BulkDraft } from "@/lib/coach/bulk-editor";
@@ -133,6 +134,15 @@ export function BulkEditor({
               <div key={row.id} className="rounded border bg-background p-2 text-sm">
                 <p className="font-medium">{row.name}</p>
                 <p className="text-xs text-muted-foreground">Actual: {formatPrescription(row)}</p>
+                {row.series ? (
+                  <>
+                    <p className="mt-2 text-xs">
+                      Resultado por serie: se conservan los campos no elegidos. Ampliar replica la
+                      última; reducir retira las sobrantes.
+                    </p>
+                    <PrescriptionTargets series={change.series} />
+                  </>
+                ) : null}
                 {fields.map((text) => (
                   <p key={text}>{text}</p>
                 ))}

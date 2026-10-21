@@ -74,7 +74,22 @@ for (const sourceVersion of [1, 2] as const)
     await expect(page.getByText("Guardado en este dispositivo", { exact: true })).toBeVisible();
     const migrated = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), newKey);
     expect(migrated).toEqual({ version: 3, draft: { ...value, version: 2 } });
-    expect(await page.evaluate((key) => localStorage.getItem(key), oldKey)).toBeNull();
+    if (sourceVersion === 1)
+      expect(await page.evaluate((key) => localStorage.getItem(key), oldKey)).toBeNull();
+    else
+      expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), oldKey)).toEqual({
+        version: 2,
+        draft: value,
+      });
+    await page.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("63");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => JSON.parse(localStorage.getItem(key)!).draft.exercises[0].sets[0].weight,
+          previousDraftKey(userId, program.sessionId),
+        ),
+      )
+      .toBe("63");
   });
 
 test("cerrar sesión exige resolver pendientes, sincroniza y limpia solo esa cuenta; otras pestañas se ocultan (T162)", async ({

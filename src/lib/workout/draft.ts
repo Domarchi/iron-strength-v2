@@ -3,7 +3,11 @@
 // "pending_save" con el mismo id de entrenamiento para reintentar sin duplicar. Todo acceso al
 // almacenamiento es defensivo: modo privado, cuota llena o datos corruptos nunca deben romper la app.
 import { z } from "zod";
-import { prescribedSeriesSchema, coherentPrescriptionSeries } from "@/domain/prescription-series";
+import {
+  prescribedSeriesSchema,
+  coherentPrescriptionSeries,
+  isUniformPrescription,
+} from "@/domain/prescription-series";
 
 // Subconjunto de la API Storage del navegador (permite probarlo con un almacenamiento falso).
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
@@ -175,9 +179,55 @@ function writeDraft(
         previous!.workoutId !== draft.workoutId)
     )
       return false;
+    const oldKey = previousDraftKey(draft.userId, draft.plannedSessionId);
+    const oldRaw = storage.getItem(oldKey),
+      old = parse(oldRaw);
+    const legacyKey = legacyDraftKey(draft.userId, draft.plannedSessionId);
+    const legacyRaw = storage.getItem(legacyKey),
+      legacy = parse(legacyRaw);
+    const compatibleOrigin = [old, legacy].some(
+      (d) => belongs(d, draft.userId, draft.plannedSessionId) && d!.workoutId === draft.workoutId,
+    );
+    const uniform = parsed.data.exercises.every((e) =>
+      [e, ...(e.original ? [e.original] : []), ...(e.alternatives ?? [])].every((c) =>
+        isUniformPrescription(c.prescribed),
+      ),
+    );
+    if (previous && previous.updatedAt > draft.updatedAt) return false;
     const encoded = JSON.stringify({ version: 3, draft: { ...parsed.data, version: 2 } });
     storage.setItem(key, encoded);
     if (storage.getItem(key) !== encoded) return false;
+    let bridge = false;
+    if (compatibleOrigin && uniform) {
+      if (
+        (oldRaw !== null &&
+          (!belongs(old, draft.userId, draft.plannedSessionId) ||
+            old!.workoutId !== draft.workoutId ||
+            old!.updatedAt > draft.updatedAt)) ||
+        (snapshots &&
+          (snapshots.get(oldKey) !== oldRaw || snapshots.get(legacyKey) !== legacyRaw)) ||
+        storage.getItem(oldKey) !== oldRaw
+      )
+        return false;
+      const flat = (c: z.infer<typeof choiceSchema>) => ({
+        ...c,
+        prescribed: { ...c.prescribed, series: undefined },
+      });
+      const compatible = {
+        ...parsed.data,
+        version: 1,
+        exercises: parsed.data.exercises.map((e) => ({
+          ...e,
+          prescribed: { ...e.prescribed, series: undefined },
+          ...(e.original ? { original: flat(e.original) } : {}),
+          ...(e.alternatives ? { alternatives: e.alternatives.map(flat) } : {}),
+        })),
+      };
+      const encodedOld = JSON.stringify({ version: 2, draft: compatible });
+      storage.setItem(oldKey, encodedOld);
+      if (storage.getItem(oldKey) !== encodedOld) return false;
+      bridge = true;
+    }
     try {
       for (const oldKey of [
         previousDraftKey(draft.userId, draft.plannedSessionId),
@@ -186,6 +236,7 @@ function writeDraft(
         const oldRaw = storage.getItem(oldKey),
           old = parse(oldRaw);
         if (
+          !(bridge && oldKey === previousDraftKey(draft.userId, draft.plannedSessionId)) &&
           belongs(old, draft.userId, draft.plannedSessionId) &&
           old!.workoutId === draft.workoutId &&
           old!.updatedAt <= draft.updatedAt &&

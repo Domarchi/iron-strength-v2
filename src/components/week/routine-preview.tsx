@@ -1,4 +1,5 @@
 "use client";
+import { PrescriptionTargets } from "@/components/workout/prescription-targets";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -109,6 +110,7 @@ function PreviewPanel({
               <li key={ex.sessionExerciseId} className="space-y-1 py-4">
                 <h3 className="font-semibold">{ex.name}</h3>
                 <p className="text-sm">{formatPrescription(ex.prescribed)}</p>
+                <PrescriptionTargets series={ex.prescribed.series} />
                 {ex.supersetId ? (
                   <p className="text-xs font-medium text-primary">
                     Superserie · alterna con los ejercicios del mismo grupo

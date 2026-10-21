@@ -97,3 +97,23 @@ it("rechaza selección inválida, rangos invertidos y campos incompletos; permit
   const rows = Array.from({ length: 15 }, (_, i) => row(String(i)));
   expect(buildBulkPreview(rows, draft({ ids: rows.map((r) => r.id) })).ok).toBe(true);
 });
+
+it("redimensionar detalle y resolver conflicto conserva los pesos remotos no elegidos", () => {
+  const series = [
+    { repsMin: 6, repsMax: 8, targetWeightKg: 75 },
+    { repsMin: 10, repsMax: 12, targetWeightKg: 70 },
+  ];
+  const source = row("a", { sets: 2, repsMin: 6, repsMax: 12, targetWeightKg: null, series });
+  const result = buildBulkPreview([source], draft({ ids: ["a"], sets: "3" }));
+  if (!result.ok) throw Error(result.error);
+  const remote = {
+    ...source,
+    note: "Remota",
+    series: series.map((t) => ({ ...t, targetWeightKg: t.targetWeightKg + 5 })),
+  };
+  const merged = effectivePrescription(remote, result.changes[0]);
+  expect(merged.series?.map((t) => t.targetWeightKg)).toEqual(["80", "75", "75"]);
+  expect(merged.note).toBe("Remota");
+  for (const sets of ["", "0", "11", "1.5"])
+    expect(buildBulkPreview([source], draft({ ids: ["a"], sets })).ok).toBe(false);
+});

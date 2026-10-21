@@ -61,6 +61,16 @@ it("migra sobre v2 solo después de confirmar v3, manteniendo valores y objetivo
   expect(migrated?.version).toBe(2);
   expect(migrated?.exercises).toEqual(old.exercises);
   expect(JSON.parse(store.getItem(draftKey("user", "session"))!).version).toBe(3);
+  expect(JSON.parse(store.getItem(previousDraftKey("user", "session"))!)).toEqual({
+    version: 2,
+    draft: old,
+  });
+  const changed = { ...migrated!, note: "Actualizado", updatedAt: "2026-10-21T10:01:00Z" };
+  expect(saveDraft(store, changed)).toBe(true);
+  expect(JSON.parse(store.getItem(previousDraftKey("user", "session"))!).draft.note).toBe(
+    "Actualizado",
+  );
+  clearDraft(store, "user", "session", old.workoutId);
   expect(store.getItem(previousDraftKey("user", "session"))).toBeNull();
 });
 it("guarda detalle y no elimina formatos futuros ni otra sesión al confirmar", () => {
@@ -113,4 +123,20 @@ it("no sobrescribe una copia futura ni interpreta series nuevas etiquetadas como
   store.setItem(legacyDraftKey("user", "session"), wrong);
   expect(loadDraft(store, "user", "session")).toBeNull();
   expect(store.getItem(legacyDraftKey("user", "session"))).toBe(wrong);
+});
+
+it("recupera cambios posteriores escritos por la interfaz v2 en la copia compatible", () => {
+  const store = storage(),
+    old = legacy();
+  store.setItem(previousDraftKey("user", "session"), JSON.stringify({ version: 2, draft: old }));
+  loadDraft(store, "user", "session");
+  const changed = { ...old, updatedAt: "2026-10-21T10:03:00Z", note: "Desde interfaz anterior" };
+  store.setItem(
+    previousDraftKey("user", "session"),
+    JSON.stringify({ version: 2, draft: changed }),
+  );
+  expect(loadDraft(store, "user", "session")?.note).toBe("Desde interfaz anterior");
+  expect(JSON.parse(store.getItem(draftKey("user", "session"))!).draft.note).toBe(
+    "Desde interfaz anterior",
+  );
 });

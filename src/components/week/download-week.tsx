@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { downloadWeekAction } from "@/app/(app)/week/download-actions";
-import { loadWeekPackage, saveWeekPackage } from "@/lib/offline/storage";
+import { loadWeekPackage, saveWeekPackage, OfflinePackageError } from "@/lib/offline/storage";
 import { isOfflineInterfaceReady, prepareOfflineInterface } from "@/lib/offline/interface";
 import { activeOfflineAccount } from "@/lib/offline/account";
 const dateFormat = new Intl.DateTimeFormat("es-CL", {
@@ -35,10 +35,12 @@ export function DownloadWeek({
           setReady(prepared);
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (active)
           setError(
-            "No se pudo leer la descarga del dispositivo. Vuelve a descargar para comprobar el almacenamiento.",
+            error instanceof OfflinePackageError
+              ? error.message
+              : "No se pudo leer la descarga del dispositivo. Vuelve a descargar para comprobar el almacenamiento.",
           );
       })
       .finally(() => {

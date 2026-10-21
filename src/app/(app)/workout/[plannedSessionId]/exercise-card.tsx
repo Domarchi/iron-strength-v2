@@ -15,11 +15,16 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatPrescription } from "@/domain/format";
+import { formatPrescription, formatReps, formatKg } from "@/domain/format";
 import { ExerciseComparison } from "./exercise-comparison";
 import type { ContextExercise } from "@/lib/data/workout-context";
 import type { DraftExercise } from "@/lib/workout/draft";
-import { exerciseProgress, isExerciseComplete, previousForSet } from "@/lib/workout/runner-state";
+import {
+  exerciseProgress,
+  isExerciseComplete,
+  previousForSet,
+  targetForSet,
+} from "@/lib/workout/runner-state";
 import { cn } from "@/lib/utils";
 import { DEFAULT_REST_SECONDS, formatClock } from "@/domain/rest-timer";
 import { ExerciseThumbnail } from "@/components/workout/exercise-thumbnail";
@@ -243,6 +248,8 @@ export function ExerciseCard({
         </div>
 
         {exercise.sets.map((set, setIdx) => {
+          const target = targetForSet(exercise, setIdx);
+          const targetId = `target-${set.id}`;
           const previous = previousForSet(last, exercise, setIdx);
           const previousText = previous
             ? `${String(previous.weightKg).replace(".", ",")}×${previous.reps}`
@@ -251,6 +258,15 @@ export function ExerciseCard({
           const showHint = hint?.setId === set.id;
           return (
             <div key={set.id} className="flex flex-col gap-1">
+              {exercise.prescribed.series ? (
+                <p id={targetId} className="px-1 text-xs font-medium text-primary">
+                  {set.isWarmup
+                    ? "Calentamiento · sin objetivo de trabajo"
+                    : target
+                      ? `Objetivo · ${formatReps(target.repsMin, target.repsMax)} reps${target.targetWeightKg === null ? " · Peso libre" : ` · ${formatKg(target.targetWeightKg)}`}`
+                      : "Serie adicional · sin objetivo prescrito"}
+                </p>
+              ) : null}
               <div
                 className={cn(
                   COLUMNS,
@@ -289,6 +305,7 @@ export function ExerciseCard({
                 )}
 
                 <Input
+                  aria-describedby={exercise.prescribed.series ? targetId : undefined}
                   data-set-id={set.id}
                   aria-label={`Peso de la serie ${n} de ${exercise.name} (kg)`}
                   inputMode="decimal"
@@ -307,6 +324,7 @@ export function ExerciseCard({
                   )}
                 />
                 <Input
+                  aria-describedby={exercise.prescribed.series ? targetId : undefined}
                   data-set-id={set.id}
                   ref={(node) => {
                     if (node) repInputs.current.set(set.id, node);
@@ -316,7 +334,11 @@ export function ExerciseCard({
                   inputMode="numeric"
                   enterKeyHint="next"
                   value={set.reps}
-                  placeholder={String(previous?.reps ?? exercise.prescribed.repsMin)}
+                  placeholder={String(
+                    (exercise.prescribed.series ? target?.repsMin : previous?.reps) ??
+                      target?.repsMin ??
+                      exercise.prescribed.repsMin,
+                  )}
                   onChange={(e) => onField(setIdx, "reps", e.target.value)}
                   onKeyDown={(event) => {
                     if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
@@ -421,7 +443,7 @@ export function ExerciseCard({
                   .filter((e) => e !== undefined)
                   .map((e) => (
                     <option key={e.exerciseId} value={e.exerciseId}>
-                      {e.name} · {e.prescribed.sets} × {e.prescribed.repsMin}–{e.prescribed.repsMax}
+                      {e.name} · {formatPrescription(e.prescribed)}
                     </option>
                   ))}
               </NativeSelect>

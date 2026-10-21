@@ -2,6 +2,15 @@ import { parseWeekPackage, type WeekPackage } from "./package";
 export const OFFLINE_DB = "iron-strength-offline";
 export const WORKOUT_QUEUE_DB = "iron-strength-workout-queue";
 const STORE = "weeks";
+export class OfflinePackageError extends Error {
+  constructor(reason: "format" | "newer" = "format") {
+    super(
+      reason === "format"
+        ? "No pudimos interpretar esta descarga. Actualiza la app para intentar recuperarla. La descarga anterior se conserva."
+        : "Hay una descarga más reciente. Actualiza esta pantalla antes de volver a descargar. La descarga anterior se conserva.",
+    );
+  }
+}
 export const weekPackageKey = (userId: string, programId: string, weekStart: string) => [
   userId,
   programId,
@@ -61,16 +70,19 @@ export async function offlineTransaction<T>(
     tx.onabort = () => {
       db.close();
       reject(
-        new Error(
-          (synchronousError instanceof DOMException ? synchronousError.name : tx.error?.name) ===
-            "QuotaExceededError"
-            ? storeName === "weeks"
-              ? "No hay espacio suficiente. Libera espacio y vuelve a descargar. La descarga anterior se conserva."
-              : "No hay espacio suficiente para guardar el entrenamiento en este dispositivo."
-            : storeName === "weeks"
-              ? "No se pudo guardar o leer la semana. La descarga anterior se conserva."
-              : "No se pudo acceder a los entrenamientos pendientes. Sus datos se conservan.",
-        ),
+        synchronousError instanceof OfflinePackageError
+          ? synchronousError
+          : new Error(
+              (synchronousError instanceof DOMException
+                ? synchronousError.name
+                : tx.error?.name) === "QuotaExceededError"
+                ? storeName === "weeks"
+                  ? "No hay espacio suficiente. Libera espacio y vuelve a descargar. La descarga anterior se conserva."
+                  : "No hay espacio suficiente para guardar el entrenamiento en este dispositivo."
+                : storeName === "weeks"
+                  ? "No se pudo guardar o leer la semana. La descarga anterior se conserva."
+                  : "No se pudo acceder a los entrenamientos pendientes. Sus datos se conservan.",
+            ),
       );
     };
     tx.onerror = () => {
@@ -106,7 +118,7 @@ export async function saveWeekPackage(value: unknown, userId: string): Promise<W
           previous.result !== undefined &&
           (!old || old.version > pack.version || old.downloadedAt > pack.downloadedAt)
         ) {
-          store.transaction.abort();
+          fail(new OfflinePackageError(!old || old.version > pack.version ? "format" : "newer"));
           return;
         }
         const put = store.put(pack);
@@ -132,13 +144,13 @@ export async function loadWeekPackage(
   programId: string,
   weekStart: string,
 ): Promise<WeekPackage | null> {
-  return offlineTransaction("readonly", (store, result) => {
+  return offlineTransaction("readonly", (store, result, fail) => {
     const request = store.get(weekPackageKey(userId, programId, weekStart));
     request.onsuccess = () => {
       if (request.result === undefined) return result(null);
       const pack = parseWeekPackage(request.result, userId);
       if (!pack || pack.program.id !== programId || pack.weekStart !== weekStart) {
-        store.transaction.abort();
+        fail(new OfflinePackageError());
         return;
       }
       result(pack);
@@ -146,12 +158,12 @@ export async function loadWeekPackage(
   });
 }
 export async function listWeekPackages(userId: string): Promise<WeekPackage[]> {
-  return offlineTransaction("readonly", (store, result) => {
+  return offlineTransaction("readonly", (store, result, fail) => {
     const request = store.index("userId").getAll(userId);
     request.onsuccess = () => {
       const packs = (request.result as unknown[]).map((p) => parseWeekPackage(p, userId));
       if (packs.some((p) => !p)) {
-        store.transaction.abort();
+        fail(new OfflinePackageError());
         return;
       }
       result((packs as WeekPackage[]).sort((a, b) => b.downloadedAt.localeCompare(a.downloadedAt)));

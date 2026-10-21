@@ -1,3 +1,4 @@
+import { isUniformPrescription, type SeriesTarget } from "./prescription-series";
 // Formato de números y prescripciones en español de Chile (coma decimal, punto de miles).
 const nf = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 2 });
 
@@ -14,7 +15,9 @@ export function formatPrescription(p: {
   repsMin: number;
   repsMax: number;
   targetWeightKg: number | null;
+  series?: SeriesTarget[] | null;
 }): string {
+  if (p.series && !isUniformPrescription(p)) return `${p.sets} series · Objetivos por serie`;
   const base = `${p.sets} × ${formatReps(p.repsMin, p.repsMax)}`;
   return p.targetWeightKg === null ? base : `${base} · ${formatKg(p.targetWeightKg)}`;
 }

@@ -1,4 +1,5 @@
 "use client";
+import { PrescriptionEditor } from "@/components/coach/prescription-editor";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,30 +84,12 @@ export function AlternativesEditor({
                 ) : null}
               </NativeSelect>
             </label>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {(
-                [
-                  ["sets", "Series"],
-                  ["repsMin", "Reps mín."],
-                  ["repsMax", "Reps máx."],
-                  ["targetWeightKg", "Peso (kg)"],
-                ] as const
-              ).map(([field, label]) => (
-                <label key={field} className="min-w-0 text-xs">
-                  {label}
-                  <Input
-                    aria-label={`${label} de alternativa ${index + 1} de ${name}`}
-                    inputMode={field === "targetWeightKg" ? "decimal" : "numeric"}
-                    value={row[field]}
-                    onChange={(e) =>
-                      onChange(
-                        rows.map((r, i) => (i === index ? { ...r, [field]: e.target.value } : r)),
-                      )
-                    }
-                    className="mt-1 h-11 min-w-0"
-                  />
-                </label>
-              ))}
+            <div className="mt-2">
+              <PrescriptionEditor
+                name={`alternativa ${index + 1} de ${name}`}
+                value={row}
+                onChange={(next) => onChange(rows.map((r, i) => (i === index ? next : r)))}
+              />
             </div>
             <Button
               variant="ghost"

@@ -1,3 +1,4 @@
+import { seriesTargetAt } from "../../domain/prescription-series";
 import type { WorkoutDraft } from "./draft";
 import { prefillWeight } from "../../domain/progression";
 
@@ -14,7 +15,6 @@ export function substituteExercise(
     (e) => e?.exerciseId === exerciseId,
   );
   if (!choice) return draft;
-  const weight = prefillWeight(choice.prescribed.targetWeightKg, choice.lastWeightKg);
   const next = {
     ...current,
     exerciseId: choice.exerciseId,
@@ -24,7 +24,12 @@ export function substituteExercise(
     skipped: false,
     sets: Array.from({ length: choice.prescribed.sets }, (_, i) => ({
       id: `${current.sessionExerciseId}-${i + 1}`,
-      weight: weight === null ? "" : String(weight).replace(".", ","),
+      weight: String(
+        prefillWeight(
+          seriesTargetAt(choice.prescribed, i)?.targetWeightKg ?? null,
+          choice.lastWeightKg,
+        ) ?? "",
+      ).replace(".", ","),
       reps: "",
       done: false,
       isWarmup: false,

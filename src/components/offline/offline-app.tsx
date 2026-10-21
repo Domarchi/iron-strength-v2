@@ -3,7 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { RunnerLoader } from "@/app/(app)/workout/[plannedSessionId]/runner-loader";
 import { SyncWorkouts } from "@/components/offline/sync-workouts";
 import { Button } from "@/components/ui/button";
-import { listWeekPackages } from "@/lib/offline/storage";
+import { listWeekPackages, OfflinePackageError } from "@/lib/offline/storage";
 import { canStartDownloadedSession, type WeekPackage } from "@/lib/offline/package";
 import { activeOfflineAccount, subscribeOfflineAccount } from "@/lib/offline/account";
 import { listDrafts, type WorkoutDraft } from "@/lib/workout/draft";
@@ -47,9 +47,13 @@ function AccountWeeks({ userId }: { userId: string }) {
           setError(null);
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (active)
-          setError("No se pudieron leer las semanas guardadas. Tus datos se conservan; reintenta.");
+          setError(
+            error instanceof OfflinePackageError
+              ? error.message
+              : "No se pudieron leer las semanas guardadas. Tus datos se conservan; reintenta.",
+          );
       });
     return () => {
       active = false;

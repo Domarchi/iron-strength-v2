@@ -1,4 +1,6 @@
 "use client";
+import { PrescriptionEditor } from "@/components/coach/prescription-editor";
+import { PrescriptionTargets } from "@/components/workout/prescription-targets";
 import { ExerciseThumbnail } from "@/components/workout/exercise-thumbnail";
 import { NativeSelect } from "@/components/ui/native-select";
 
@@ -602,11 +604,13 @@ function Editor({
     });
   }
   function change(draft: PrescriptionDraft, field: PrescriptionField, value: string) {
+    changeGoals({ ...draft, [field]: value }, [field]);
+  }
+  function changeGoals(draft: PrescriptionDraft, fields: PrescriptionField[]) {
     baseRevision.current ??= session.revision;
     const updated = {
       ...draft,
-      [field]: value,
-      ...(draft.fields ? { fields: [...new Set([...draft.fields, field])] } : {}),
+      ...(draft.fields ? { fields: [...new Set([...draft.fields, ...fields])] } : {}),
     };
     const next = { ...edits, [draft.id]: updated };
     const original = session.exercises.find((e) => e.id === draft.id);
@@ -708,6 +712,7 @@ function Editor({
     return (
       <div
         key={exercise.id}
+        data-detailed={!!draft.series}
         className={`coach-exercise-row rounded-md border p-3 ${modified ? "border-primary/40 bg-primary/5" : "bg-background"}`}
       >
         <div className="coach-row-identity flex flex-wrap items-start justify-between gap-2">
@@ -831,36 +836,15 @@ function Editor({
             alternativesDirty ||
             selected.length > 0
           }
-          className="coach-prescription mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
+          className="coach-prescription mt-3 min-w-0"
         >
-          {(
-            [
-              ["sets", "Series", "numeric", 1, 10],
-              ["repsMin", "Reps mín.", "numeric", 1, 100],
-              ["repsMax", "Reps máx.", "numeric", 1, 100],
-              ["targetWeightKg", "Peso (kg)", "decimal", undefined, undefined],
-            ] as const
-          ).map(([field, label, inputMode, min, max]) => (
-            <label
-              key={field}
-              className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground"
-            >
-              {label}
-              <Input
-                aria-label={`${label} de ${exercise.name}`}
-                aria-invalid={!!errors[exercise.id]}
-                aria-describedby={errors[exercise.id] ? errorId : undefined}
-                type={inputMode === "numeric" ? "number" : "text"}
-                inputMode={inputMode}
-                min={min}
-                max={max}
-                placeholder={field === "targetWeightKg" ? "Libre" : undefined}
-                value={draft[field]}
-                onChange={(e) => change(draft, field, e.target.value)}
-                className="h-11 min-w-0 bg-background text-base font-medium tabular-nums text-foreground"
-              />
-            </label>
-          ))}
+          <PrescriptionEditor
+            name={exercise.name}
+            value={draft}
+            invalid={!!errors[exercise.id]}
+            errorId={errorId}
+            onChange={changeGoals}
+          />
         </fieldset>
         <details className="coach-row-note mt-2" open={edits[exercise.id]?.note ? true : undefined}>
           <summary className="min-h-11 cursor-pointer py-3 text-xs text-muted-foreground">
@@ -1405,9 +1389,10 @@ function Editor({
                     </p>
                     <p>Versión actual: {review.exercises.length} ejercicios</p>
                     {review.exercises.map((e) => (
-                      <p key={e.id}>
+                      <div key={e.id}>
                         {e.name} · {e.sets} × {e.repsMin}–{e.repsMax} · {e.note ?? ""}
-                      </p>
+                        <PrescriptionTargets series={e.series} />
+                      </div>
                     ))}
                   </div>
                 ) : null}
@@ -1423,12 +1408,15 @@ function Editor({
                     {bulk.ids.map((id) => {
                       const row = review.exercises.find((e) => e.id === id);
                       return (
-                        <p key={id}>
-                          Actual:{" "}
-                          {row
-                            ? `${row.name} · ${row.sets} × ${row.repsMin}–${row.repsMax} · Descanso ${row.supersetId ? (row.supersetRestSeconds ?? "Libre") : (row.restSeconds ?? "Libre")} s`
-                            : "Ejercicio eliminado"}
-                        </p>
+                        <div key={id}>
+                          <p>
+                            Actual:{" "}
+                            {row
+                              ? `${row.name} · ${row.sets} × ${row.repsMin}–${row.repsMax} · Descanso ${row.supersetId ? (row.supersetRestSeconds ?? "Libre") : (row.restSeconds ?? "Libre")} s`
+                              : "Ejercicio eliminado"}
+                          </p>
+                          {row ? <PrescriptionTargets series={row.series} /> : null}
+                        </div>
                       );
                     })}
                     {bulk.ids.some((id) => !review.exercises.some((e) => e.id === id)) ? (
@@ -1462,12 +1450,14 @@ function Editor({
                         Tu borrador: {local.sets} × {local.repsMin}–{local.repsMax} ·{" "}
                         {local.targetWeightKg || "Libre"} kg · {local.note}
                       </p>
+                      <PrescriptionTargets series={local.series} />
                       <p>
                         Actual:{" "}
                         {remote
                           ? `${remote.sets} × ${remote.repsMin}–${remote.repsMax} · ${remote.targetWeightKg ?? "Libre"} kg · ${remote.note ?? ""}`
                           : "Ya no está en la rutina"}
                       </p>
+                      <PrescriptionTargets series={remote?.series} />
                       {row.fields?.includes("restSeconds") ||
                       row.fields?.includes("supersetRestSeconds") ? (
                         <p>
@@ -1502,12 +1492,18 @@ function Editor({
                         Alternativas de {remote?.name ?? "ejercicio eliminado"}
                       </p>
                       <p>Tu borrador: {describe(rows)}</p>
+                      {rows.map((r) => (
+                        <PrescriptionTargets key={r.exerciseId} series={r.series} />
+                      ))}
                       <p>
                         Actual:{" "}
                         {remote
                           ? describe((remote.alternatives ?? []).map(alternativeDraft))
                           : "Ya no está en la rutina"}
                       </p>
+                      {(remote?.alternatives ?? []).map((a) => (
+                        <PrescriptionTargets key={a.id} series={a.series} />
+                      ))}
                       {!remote ? (
                         <Button variant="outline" onClick={discardAlternatives}>
                           Descartar alternativas del ejercicio eliminado

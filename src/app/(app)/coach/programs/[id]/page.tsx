@@ -1,3 +1,4 @@
+import { PrescriptionTargets } from "@/components/workout/prescription-targets";
 import { WEEKDAYS } from "@/domain/session-schedule";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
@@ -269,6 +270,7 @@ export default async function ProgramEditorPage({
                               <p className="text-sm text-muted-foreground">
                                 {formatPrescription(exercise)}
                               </p>
+                              <PrescriptionTargets series={exercise.series} />
                               {exercise.supersetId ? (
                                 <p className="mt-1 text-xs font-medium text-primary">
                                   Superserie{" "}
@@ -296,6 +298,7 @@ export default async function ProgramEditorPage({
                                         {formatPrescription(alt)}
                                         {alt.archived ? " · Archivado" : ""}
                                       </p>
+                                      <PrescriptionTargets series={alt.series} />
                                     </li>
                                   ))}
                                 </ul>

@@ -1,5 +1,7 @@
 "use client";
 
+import { isUniformPrescription } from "@/domain/prescription-series";
+import { PrescriptionTargets } from "@/components/workout/prescription-targets";
 import { Button } from "@/components/ui/button";
 import { formatKg, formatPrescription } from "@/domain/format";
 import { progressionReason } from "@/domain/progression";
@@ -20,7 +22,7 @@ export function ExerciseComparison({
   onCopySuggestion: () => void;
 }) {
   const last = info?.last,
-    suggestion = info?.suggestion;
+    suggestion = isUniformPrescription(exercise.prescribed) ? info?.suggestion : null;
   const working = last?.sets.filter((set) => !set.isWarmup) ?? [];
   const canCopyLast = exercise.sets.some(
     (set, index) => !set.done && previousForSet(last ?? null, exercise, index),
@@ -42,7 +44,10 @@ export function ExerciseComparison({
         <dl className="flex flex-col gap-3 text-sm">
           <div>
             <dt className="text-xs text-muted-foreground">Prescripción</dt>
-            <dd className="mt-1 font-medium">{formatPrescription(exercise.prescribed)}</dd>
+            <dd className="mt-1 font-medium">
+              {formatPrescription(exercise.prescribed)}
+              <PrescriptionTargets series={exercise.prescribed.series} />
+            </dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">
@@ -73,6 +78,15 @@ export function ExerciseComparison({
               </Button>
             ) : null}
           </div>
+          {!isUniformPrescription(exercise.prescribed) ? (
+            <div>
+              <dt className="text-xs text-muted-foreground">Objetivos por serie</dt>
+              <dd className="text-xs text-muted-foreground">
+                Sigue los objetivos de cada serie. Las series diferentes no usan una sugerencia
+                uniforme.
+              </dd>
+            </div>
+          ) : null}
           {suggestion ? (
             <div>
               <dt className="text-xs text-muted-foreground">Sugerencia</dt>

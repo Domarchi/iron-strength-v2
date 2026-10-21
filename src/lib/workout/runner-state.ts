@@ -1,6 +1,7 @@
 // Lógica pura de la sesión en curso (RF-20 a RF-24, RF-26; DC-6, DC-9). Funciones inmutables sobre
 // el borrador: la interfaz solo las llama y persiste el resultado. Los números se guardan como
 // texto mientras el alumno escribe y se convierten (con los límites de la spec) al finalizar.
+import { seriesTargetAt, isUniformPrescription } from "../../domain/prescription-series";
 import { workoutSetSchema } from "../../domain/schemas.ts";
 import { prefillWeight, type LastSet } from "../../domain/progression.ts";
 import { setVolume } from "../../domain/volume.ts";
@@ -66,7 +67,9 @@ export function createDraft(input: {
       ...(e.supersetRestSeconds != null ? { supersetRestSeconds: e.supersetRestSeconds } : {}),
       sets: Array.from({ length: e.prescribed.sets }, (_, i) => ({
         id: `${e.sessionExerciseId}-${i + 1}`,
-        weight: asText(prefillWeight(e.prescribed.targetWeightKg, e.lastWeightKg)),
+        weight: asText(
+          prefillWeight(seriesTargetAt(e.prescribed, i)?.targetWeightKg ?? null, e.lastWeightKg),
+        ),
         reps: "",
         done: false,
         isWarmup: false,
@@ -174,6 +177,13 @@ export function toggleDone(draft: WorkoutDraft, exIdx: number, setIdx: number): 
   return mapSet(draft, exIdx, setIdx, (s) => ({ ...s, done: !s.done }));
 }
 
+export function targetForSet(exercise: DraftExercise, setIdx: number) {
+  const set = exercise.sets[setIdx];
+  if (!set || set.isWarmup) return null;
+  const index = exercise.sets.slice(0, setIdx).filter((s) => !s.isWarmup).length;
+  return seriesTargetAt(exercise.prescribed, index);
+}
+
 export type PreviousSet = { weightKg: number; reps: number };
 
 // "Anterior" de la fila (RF-53): la misma serie de la última vez. Una serie de trabajo se compara con
@@ -230,7 +240,12 @@ export function copySuggestedValues(
   exIdx: number,
   values: PreviousSet,
 ): WorkoutDraft {
-  if (!workoutSetSchema.safeParse({ ...values, isWarmup: false }).success) return draft;
+  if (
+    !draft.exercises[exIdx] ||
+    !isUniformPrescription(draft.exercises[exIdx].prescribed) ||
+    !workoutSetSchema.safeParse({ ...values, isWarmup: false }).success
+  )
+    return draft;
   return mapExercise(draft, exIdx, (e) => ({
     ...e,
     sets: e.sets.map((set) =>
@@ -258,10 +273,18 @@ export function completeSet(
     return { draft: toggleDone(draft, exIdx, setIdx), completed: false, wasWarmup: set.isWarmup };
   }
 
+  const target = targetForSet(exercise, setIdx);
   const filled = mapSet(draft, exIdx, setIdx, (s) => ({
     ...s,
     weight: s.weight.trim() === "" && previous ? asText(previous.weightKg) : s.weight,
-    reps: s.reps.trim() === "" ? String(previous?.reps ?? exercise.prescribed.repsMin) : s.reps,
+    reps:
+      s.reps.trim() === ""
+        ? String(
+            (exercise.prescribed.series ? target?.repsMin : previous?.reps) ??
+              target?.repsMin ??
+              exercise.prescribed.repsMin,
+          )
+        : s.reps,
   }));
   const next = toggleDone(filled, exIdx, setIdx);
   const completed = next.exercises[exIdx].sets[setIdx].done;

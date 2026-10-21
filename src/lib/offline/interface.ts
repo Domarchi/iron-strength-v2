@@ -1,6 +1,7 @@
+import { listDrafts } from "@/lib/workout/draft";
 import { hasLocalTraining } from "./local-account";
 const BUILD_ID = process.env.NEXT_PUBLIC_OFFLINE_BUILD_ID;
-function checkWorker(worker: ServiceWorker, prepare = false): Promise<boolean> {
+function checkWorker(worker: ServiceWorker, prepare = false, compatible = false): Promise<boolean> {
   return new Promise((resolve) => {
     const channel = new MessageChannel();
     const timer = setTimeout(
@@ -13,10 +14,25 @@ function checkWorker(worker: ServiceWorker, prepare = false): Promise<boolean> {
     channel.port1.onmessage = (event) => {
       clearTimeout(timer);
       channel.port1.close();
-      resolve(event.data?.ready === true && event.data?.buildId === BUILD_ID);
+      resolve(
+        event.data?.ready === true &&
+          (compatible
+            ? Array.isArray(event.data?.draftVersions) && event.data.draftVersions.includes(3)
+            : event.data?.buildId === BUILD_ID),
+      );
     };
     worker.postMessage({ type: prepare ? "OFFLINE_PREPARE" : "OFFLINE_READY" }, [channel.port2]);
   });
+}
+// Recuperar no cambia de interfaz. Un inicio nuevo exige que la copia offline instalada
+// pueda leer su borrador antes de que el corredor lo cree o empiece el cronómetro.
+export async function ensureWorkoutInterface(userId: string, sessionId: string): Promise<void> {
+  if (!("serviceWorker" in navigator)) return;
+  const registration = await navigator.serviceWorker.getRegistration("/");
+  if (!registration?.active) return;
+  if (listDrafts(localStorage, userId).some((d) => d.plannedSessionId === sessionId)) return;
+  if (await checkWorker(registration.active, false, true)) return;
+  await prepareOfflineInterface();
 }
 export async function isOfflineInterfaceReady(): Promise<boolean> {
   if (!("serviceWorker" in navigator)) return false;
@@ -44,6 +60,10 @@ export async function prepareOfflineInterface(): Promise<void> {
   });
   const worker = registration.installing ?? registration.waiting ?? registration.active;
   if (!worker) throw new Error("No se pudo preparar la app sin conexión. Reintenta.");
+  if (registration.waiting && registration.active !== registration.waiting)
+    throw new Error(
+      "Cierra todas las pestañas de Iron Strength y vuelve a abrir la app para activar la versión preparada. Tus datos se conservan.",
+    );
   if (worker.state !== "activated" && worker !== registration.waiting)
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -65,7 +85,7 @@ export async function prepareOfflineInterface(): Promise<void> {
           worker!.removeEventListener("statechange", change);
           reject(
             new Error(
-              "No se pudo activar la interfaz descargada. Conservamos tus datos; cierra las otras pestañas y reintenta.",
+              "Cierra todas las pestañas de Iron Strength y vuelve a abrir la app para activar la versión preparada. Tus datos se conservan.",
             ),
           );
         }
