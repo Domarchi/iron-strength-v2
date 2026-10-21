@@ -53,14 +53,19 @@ function RoutineCard({
     >
       {next ? (
         <>
-          <Image
-            src="/design/azul-atleta/hero-v1.png"
-            alt=""
-            fill
-            unoptimized
-            className="week-hero-image object-cover"
-            sizes="(max-width: 767px) 100vw, 600px"
-          />
+          <picture>
+            <source media="(min-width: 768px)" srcSet="/design/azul-atleta/hero-1536-v1.webp" />
+            <Image
+              src="/design/azul-atleta/hero-768-v1.webp"
+              alt=""
+              fill
+              unoptimized
+              loading="eager"
+              fetchPriority="high"
+              className="week-hero-image object-cover"
+              sizes="(max-width: 767px) 100vw, 600px"
+            />
+          </picture>
           <div className="routine-hero-content">
             <p className="routine-kicker">
               {planned || trainedToday ? "Siguiente sesión" : "Hoy toca"}

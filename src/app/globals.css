@@ -485,7 +485,7 @@
   font-size: 1rem;
 }
 .rest-adjust[data-slot="button"]:hover {
-  background: #0876ff;
+  background: #005fd9;
 }
 .coach-program-page > header h1 {
   font-size: 1.75rem;
@@ -779,4 +779,68 @@
 .week-overview > a,
 .week-overview > p {
   margin-top: 1rem;
+}
+
+/* Azul atleta: la misma jerarquía en todo el recorrido. */
+.week-page > .page-heading .page-eyebrow {
+  color: #c4d5eb;
+}
+.flow-page > header {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.15rem;
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--primary) 7%, var(--card)),
+    var(--card)
+  );
+  box-shadow: 0 6px 22px #153b6e0a;
+}
+.flow-page > header h1 {
+  font-size: clamp(1.45rem, 3vw, 1.85rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+.flow-page .flow-list,
+.flow-panel {
+  border-radius: 1rem;
+  box-shadow: 0 4px 18px #153b6e08;
+}
+.flow-list > li > a {
+  padding: 1rem;
+  transition: background-color 120ms;
+}
+.flow-list > li > a:hover {
+  background: color-mix(in srgb, var(--primary) 5%, var(--card));
+}
+.login-shell {
+  background:
+    radial-gradient(
+      ellipse at top right,
+      color-mix(in srgb, var(--primary) 16%, transparent),
+      transparent 65%
+    ),
+    var(--background);
+}
+.login-card {
+  position: relative;
+  box-shadow: 0 16px 60px #09274718;
+  overflow: hidden;
+}
+.login-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, #0068ec, #81bcff);
+}
+.workout-exercise-header .exercise-illustration {
+  height: 6rem;
+}
+.exercise-context-panel > section {
+  border: 0;
+  background: transparent;
+  margin: 0;
+  padding: 0;
 }

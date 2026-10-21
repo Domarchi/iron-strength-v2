@@ -50,7 +50,7 @@ async function ExerciseList() {
   return (
     <>
       <ConstancyStrip {...streak} />
-      <ul className="divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
+      <ul className="flow-list divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
         {list.map((e) => (
           <li key={e.exerciseId}>
             <Link
@@ -78,7 +78,7 @@ async function ExerciseList() {
 
 export default function ProgressPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flow-page flex flex-col gap-4">
       <PageHeading
         title="Progreso"
         eyebrow="Paso a paso"

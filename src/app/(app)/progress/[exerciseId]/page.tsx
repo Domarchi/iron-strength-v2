@@ -78,7 +78,7 @@ export default async function ExerciseProgressPage({
   const formatY = (y: number) => (metric === "reps" ? `${y} rep.` : formatKg(y));
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flow-page flex flex-col gap-4">
       <header>
         <h1 className="text-xl font-semibold">{summary.name}</h1>
         <p className="text-sm text-muted-foreground">

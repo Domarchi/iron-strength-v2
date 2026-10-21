@@ -35,7 +35,11 @@ export function ExerciseThumbnail({
     >
       {key === "sentadilla" || key === "sentadilla con barra" ? (
         <Image
-          src="/design/azul-atleta/squat-v1.png"
+          src={
+            featured
+              ? "/design/azul-atleta/squat-320-v1.webp"
+              : "/design/azul-atleta/squat-160-v1.webp"
+          }
           alt=""
           width={featured ? 160 : 48}
           height={featured ? 160 : 48}

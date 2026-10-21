@@ -57,7 +57,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flow-page flex flex-col gap-6">
       <header className="flex flex-col gap-1">
         <Link href="/coach/students" className="text-sm text-primary">
           ← Alumnos
@@ -94,7 +94,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         {programs.length === 0 ? (
           <p className="text-sm text-muted-foreground">Este alumno no tiene programas asignados.</p>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="flow-list divide-y rounded-lg border">
             {programs.map((p) => {
               const state =
                 p.startDate && p.endsOn
@@ -133,7 +133,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         {workouts.items.length === 0 ? (
           <p className="text-sm text-muted-foreground">Todavía no registra entrenamientos.</p>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="flow-list divide-y rounded-lg border">
             {workouts.items.map((w) => (
               <li key={w.id}>
                 <Link
@@ -182,7 +182,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         {records.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aún no hay marcas registradas.</p>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="flow-list divide-y rounded-lg border">
             {records.map((r) => (
               <li key={r.exerciseId}>
                 <Link

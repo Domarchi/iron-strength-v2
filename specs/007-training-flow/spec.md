@@ -12,7 +12,7 @@ Plan aprobado por Joaquin el 21 de octubre de 2026. Extiende specs 005 y 006 sin
 
 ## Diseño
 
-Conservar Azul atleta y sus contrastes. Aplicar jerarquía consistente a historial, progreso, ficha, cuenta y acceso. Selector Claro/Oscuro/Sistema (inicial Sistema) persistente en dispositivo, defensivo ante almacenamiento bloqueado; no mezcla datos personales. Reducir ilustración donde compite con las series. Variantes estáticas optimizadas, tamaños móviles y lista pública/offline cerrada; conservar recursos previos durante transición. Transferencia conjunta móvil de imágenes como máximo 30 % de los 3.306.767 bytes actuales.
+Conservar Azul atleta y sus contrastes. Aplicar jerarquía consistente a historial, progreso, ficha, cuenta, acceso, Cuerpo y resumen semanal. Selector Claro/Oscuro/Sistema (inicial Sistema) persistente en dispositivo, defensivo ante almacenamiento bloqueado; no mezcla datos personales. Reducir ilustración donde compite con las series. Variantes estáticas optimizadas, tamaños móviles y lista pública/offline cerrada; conservar recursos previos durante transición. Transferencia conjunta móvil de imágenes como máximo 30 % de los 3.306.767 bytes actuales.
 
 ## Coach
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isFocusRoute } from "./nav-items";
@@ -20,6 +21,9 @@ export function AppChrome({
 }) {
   const pathname = usePathname();
   const focus = isFocusRoute(pathname);
+  useEffect(() => {
+    window.dispatchEvent(new Event("iron-theme-route"));
+  }, [pathname]);
 
   return (
     <div

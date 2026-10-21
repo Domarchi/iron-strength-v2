@@ -37,7 +37,7 @@ async function WorkoutList({ cursor }: { cursor?: string }) {
 
   return (
     <>
-      <ul className="divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
+      <ul className="flow-list divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
         {items.map((w) => (
           <li key={w.id}>
             <Link
@@ -78,7 +78,7 @@ export default async function HistoryPage({
 }) {
   const { antes } = await searchParams;
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flow-page flex flex-col gap-4">
       <PageHeading
         title="Historial"
         eyebrow="Tu recorrido"

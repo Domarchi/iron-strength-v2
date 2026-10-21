@@ -95,7 +95,7 @@ async function SummaryContent() {
 
 export default function WeeklySummaryPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flow-page flex flex-col gap-6">
       <header className="flex flex-col gap-1">
         <Link href="/week" className="inline-flex min-h-11 items-center gap-1 text-sm text-primary">
           <ChevronLeft className="size-4" aria-hidden /> Mi semana

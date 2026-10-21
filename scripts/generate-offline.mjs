@@ -1,4 +1,4 @@
-import designAssets from "../src/lib/design/assets.json" with { type: "json" };
+import designAssets from "../src/lib/design/offline-assets.json" with { type: "json" };
 import { readdir, readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 const dist = process.env.NEXT_DIST_DIR || ".next";

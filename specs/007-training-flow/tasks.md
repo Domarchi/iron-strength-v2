@@ -4,7 +4,7 @@
 - [x] T171 · Inicio, recuperación prioritaria y consulta sin iniciar.
 - [x] T172 · Ejercicio activo, índice, superseries y contexto.
 - [x] T173 · Cierre y estados únicos de guardado/sincronización.
-- [ ] T174 · Diseño consistente, temas y recursos optimizados.
+- [x] T174 · Diseño consistente, temas y recursos optimizados.
 - [ ] T175 · Agregado múltiple atómico con revisión y recibo.
 - [ ] T176 · Sesión activa y editor limpio con borradores.
 - [ ] T177 · Adaptar base, contexto de alumno, copia múltiple y revisión de asignación.

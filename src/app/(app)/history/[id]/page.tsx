@@ -64,7 +64,7 @@ export default async function WorkoutDetailPage({
   const { summary } = workout;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flow-page flex flex-col gap-4">
       {nuevo && own ? (
         <Card role="status" className="border-primary/40 bg-primary/5">
           <CardContent className="flex items-center gap-3 pt-6">

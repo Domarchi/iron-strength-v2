@@ -142,19 +142,17 @@ export default async function BodyPage({ searchParams }: { searchParams: SearchP
   const readOnly = user.role === "coach" && Boolean(alumno);
 
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        {readOnly ? (
-          <Link href={`/coach/students/${alumno}`} className="text-sm text-primary">
-            ← Volver al alumno
-          </Link>
-        ) : null}
-        <PageHeading
-          title={readOnly ? "Medidas del alumno" : "Cuerpo"}
-          eyebrow="Más allá de las marcas"
-          description="Medidas y fotos de progreso."
-        />
-      </header>
+    <div className="flow-page flex flex-col gap-6">
+      {readOnly ? (
+        <Link href={`/coach/students/${alumno}`} className="text-sm text-primary">
+          ← Volver al alumno
+        </Link>
+      ) : null}
+      <PageHeading
+        title={readOnly ? "Medidas del alumno" : "Cuerpo"}
+        eyebrow="Más allá de las marcas"
+        description="Medidas y fotos de progreso."
+      />
 
       {readOnly ? null : (
         <section aria-labelledby="new-heading" className="flex flex-col gap-3">

@@ -196,20 +196,13 @@ export function ExerciseCard({
             <p className="text-sm font-semibold">
               Prescrito · {formatPrescription(exercise.prescribed)}
             </p>
-            <p className="mt-3 text-xs text-muted-foreground">Última vez</p>
+            <p className="mt-1 text-xs text-muted-foreground">Última vez</p>
             <p className="mt-1 text-sm font-medium">
               {lastWorking
                 ? `${String(lastWorking.weightKg).replace(".", ",")} kg × ${lastWorking.reps}`
                 : last
                   ? "Sin series de trabajo"
                   : "Tu primera sesión"}
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground">
-              {active ? "En curso · " : ""}
-              {done}/{total} hechas
-            </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {[info?.muscleGroup, info?.equipment].filter(Boolean).join(" · ")}
             </p>
           </div>
         </div>
@@ -401,6 +394,11 @@ export function ExerciseCard({
         aria-label={`Contexto de ${exercise.name}`}
         className="exercise-context-panel mt-2 rounded-xl border border-border/70 bg-card/30 p-3"
       >
+        {info?.muscleGroup || info?.equipment ? (
+          <p className="mb-2 text-xs text-muted-foreground">
+            {[info?.muscleGroup, info?.equipment].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
         {exercise.alternatives?.length ? (
           <details className="rounded-lg border p-3">
             <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">

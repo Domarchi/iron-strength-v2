@@ -1,4 +1,4 @@
-import designAssets from "../src/lib/design/assets.json";
+import designAssets from "../src/lib/design/offline-assets.json";
 import { test } from "./support/network";
 import { expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -67,7 +67,7 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
   await expect
     .poll(() =>
       offline
-        .locator('img[src="/design/azul-atleta/squat-v1.png"]')
+        .locator('img[src="/design/azul-atleta/squat-320-v1.webp"]')
         .first()
         .evaluate((image) => (image as HTMLImageElement).naturalWidth),
     )

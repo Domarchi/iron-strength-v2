@@ -1,3 +1,4 @@
+import { ThemeSelect } from "@/components/layout/theme-select";
 import { PageHeading } from "@/components/layout/page-heading";
 import { Download, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ export default async function AccountPage() {
   const user = await requireUser();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flow-page flex flex-col gap-6">
       <PageHeading
         title="Mi cuenta"
         eyebrow="Tu espacio"
@@ -32,6 +33,8 @@ export default async function AccountPage() {
           <dd className="font-medium">{ROLE_LABEL[user.role]}</dd>
         </dl>
       </section>
+
+      <ThemeSelect />
 
       <section aria-labelledby="export-heading" className="flex flex-col gap-2">
         <h2 id="export-heading" className="text-lg font-medium">
