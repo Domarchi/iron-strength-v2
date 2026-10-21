@@ -35,6 +35,14 @@ async function WeekContent() {
           {user.role === "coach"
             ? "Asígnate una plantilla desde Programas para empezar a entrenar."
             : "Habla con tu coach para que te asigne uno."}
+          <div className="mt-3">
+            <Button
+              variant="outline"
+              render={<Link href={user.role === "coach" ? "/coach/programs" : "/history"} />}
+            >
+              {user.role === "coach" ? "Elegir un programa" : "Ver mi historial"}
+            </Button>
+          </div>
         </EmptyState>
       );
 
@@ -46,6 +54,13 @@ async function WeekContent() {
             <p className="text-sm text-muted-foreground">
               Tu programa empieza el {fmt(view.program.startDate)}.
             </p>
+            <Button
+              className="mt-3 self-start"
+              variant="outline"
+              render={<Link href="/progress" />}
+            >
+              Ver mi progreso
+            </Button>
           </CardContent>
         </Card>
       );
@@ -58,6 +73,13 @@ async function WeekContent() {
             <p className="text-sm text-muted-foreground">
               Cuando tu coach te asigne el siguiente programa, aparecerá aquí.
             </p>
+            <Button
+              className="mt-3 self-start"
+              variant="outline"
+              render={<Link href="/week/summary" />}
+            >
+              Revisar mi semana
+            </Button>
           </CardContent>
         </Card>
       );
@@ -65,7 +87,7 @@ async function WeekContent() {
     case "active":
       return (
         <>
-          <WeekOverview view={view} today={today} streak={streak} />
+          <WeekOverview userId={user.id} view={view} today={today} streak={streak} />
           <DownloadWeek
             key={`${user.id}:${view.program.id}:${view.weekStart}`}
             userId={user.id}

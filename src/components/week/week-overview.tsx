@@ -1,4 +1,6 @@
 import { orderScheduledSessions, scheduleState, WEEKDAYS } from "@/domain/session-schedule";
+import { SessionStart } from "./session-start";
+import { RoutinePreview } from "./routine-preview";
 import { SessionDayPicker } from "./session-day-picker";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,11 +16,13 @@ const day = new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", t
 const fmt = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
 
 function RoutineCard({
+  userId,
   session,
   next,
   trainedToday,
   today,
 }: {
+  userId: string;
   session: WeekSession;
   next: boolean;
   trainedToday: boolean;
@@ -54,13 +58,8 @@ function RoutineCard({
             <p className="mt-1 truncate text-xs text-blue-100">
               {session.exerciseNames.slice(0, 3).join(" · ")}
             </p>
-            <Button
-              className="mt-5 w-full justify-between"
-              aria-label="Empezar"
-              render={<Link href={`/workout/${session.sessionId}`} />}
-            >
-              Empezar entrenamiento <ChevronRight className="size-5" aria-hidden />
-            </Button>
+            <SessionStart userId={userId} sessionId={session.sessionId} featured />
+            <RoutinePreview sessionId={session.sessionId} label={session.label} />
           </div>
         </>
       ) : (
@@ -84,18 +83,18 @@ function RoutineCard({
             >
               {done ? "Hecha" : planned ? "Prevista" : "Pendiente"}
             </span>
-            <Button
-              variant="ghost"
-              className="px-1"
-              render={
-                <Link
-                  href={done ? `/history/${session.workoutId}` : `/workout/${session.sessionId}`}
-                />
-              }
-            >
-              {done ? "Ver" : "Empezar"}
-              <ChevronRight className="size-4" aria-hidden />
-            </Button>
+            {done ? (
+              <Button
+                variant="ghost"
+                className="px-1"
+                render={<Link href={`/history/${session.workoutId}`} />}
+              >
+                Ver
+                <ChevronRight className="size-4" aria-hidden />
+              </Button>
+            ) : (
+              <SessionStart userId={userId} sessionId={session.sessionId} />
+            )}
           </div>
         </div>
       )}
@@ -130,10 +129,12 @@ function RoutineCard({
 }
 
 export function WeekOverview({
+  userId,
   view,
   today,
   streak,
 }: {
+  userId: string;
   view: Extract<WeekView, { kind: "active" }>;
   today: string;
   streak: { current: number; longest: number };
@@ -194,6 +195,7 @@ export function WeekOverview({
             {ordered.map((session) => (
               <li key={session.sessionId}>
                 <RoutineCard
+                  userId={userId}
                   session={session}
                   next={session === next}
                   trainedToday={view.trainedDates.includes(today)}

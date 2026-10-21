@@ -40,7 +40,7 @@ export function PendingWorkouts({ userId }: { userId: string }) {
     >
       <div className="mb-3 flex items-center gap-2 font-semibold">
         <CloudUpload className="size-5 text-primary" aria-hidden />
-        Tienes entrenamientos por retomar
+        Tus entrenamientos guardados en este dispositivo
       </div>
       <ul className="flex flex-col gap-3">
         {drafts.map((draft) => (

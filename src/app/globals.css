@@ -248,6 +248,11 @@
   min-height: 3rem;
   box-shadow: 0 6px 16px #00398455;
 }
+.routine-hero-content [data-routine-preview] {
+  background: transparent;
+  color: #dbeafe;
+  box-shadow: none;
+}
 .routine-compact {
   padding: 0.85rem 1rem 0.85rem 0.85rem;
   border: 1px solid var(--border);

@@ -1,7 +1,7 @@
 # Tareas — Flujo de entrenamiento y planificación
 
 - [x] T170 · Especificación, protocolo y referencias antes de cambios.
-- [ ] T171 · Inicio, recuperación prioritaria y consulta sin iniciar.
+- [x] T171 · Inicio, recuperación prioritaria y consulta sin iniciar.
 - [ ] T172 · Ejercicio activo, índice, superseries y contexto.
 - [ ] T173 · Cierre y estados únicos de guardado/sincronización.
 - [ ] T174 · Diseño consistente, temas y recursos optimizados.
