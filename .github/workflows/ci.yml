@@ -91,6 +91,8 @@ jobs:
           echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3100" >> "$GITHUB_ENV"
       - name: Instalar Chromium y WebKit
         run: npx playwright install --with-deps chromium webkit
+      - name: Regresión de sincronización offline en WebKit
+        run: npm run test:e2e -- e2e/sincronizacion-offline.spec.ts --project=webkit --grep "termina offline" --repeat-each=3 --max-failures=1
       - name: Pruebas E2E
         run: npm run test:e2e
       - name: Guardar el informe si algo falla

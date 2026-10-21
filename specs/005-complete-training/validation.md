@@ -182,3 +182,17 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 
 - El usuario autorizó reemplazar la versión del proyecto Vercel iron-strength por v2. Se volvió a verificar su ID/equipo, Next.js y Node 24, repositorio anterior y dominios. Enlace local preparado en .vercel/project.json (ignorado por Git); no se creó un proyecto nuevo ni se desplegó.
 - Tras el aviso de login, `supabase projects list` sigue respondiendo Access token not provided. No hay token en el entorno de comandos ni archivos de sesión habituales; se solicitó completar la autorización de la CLI en la terminal del proyecto. La sesión remota de Supabase todavía no se considera verificada.
+
+### CI remoto y corrección de sincronización
+
+- La rama main-54qpxa se subió a GitHub hasta be907a0. [CI 39501126245](https://github.com/Domarchi/iron-strength-v2/actions/runs/39501126245): código/build y base de datos aprobados (458 unitarias, 249 integración, pgTAP y tipos); E2E terminó con 140 aprobados, un caso CDP omitido y un fallo en WebKit, también en su reintento. No se considera CI completo en verde.
+- El fallo de sincronización perdió la respuesta y no observó el estado esperado dentro de diez segundos; otro intento agotó esa misma espera al finalizar offline. La petición admite veinte segundos antes de abortar. Se prepararon esperas de treinta segundos en esas transiciones, conservando los controles de payload congelado y un solo registro. Se añadió texto de diagnóstico de páginas del origen aislado y una repetición enfocada previa a la suite. Estos cambios aún requieren E2E para confirmar la causa y el resultado; no se modificó código del producto.
+- La descarga del artefacto desde el navegador fue rechazada por su política de archivos; no se volvió a intentar. Se utilizaron los logs textuales existentes.
+- En la configuración restringida anterior, formato/lint/tipos y 458 unitarias pasan; el build local falla al crear un puerto interno de Turbopack (Operation not permitted), y una comprobación mínima de escucha local confirma EPERM. El conector de GitHub también rechazó create_tree porque necesita aprobación y la política de la sesión es never. No se subió la corrección ni se desplegó. El diff está conservado localmente y en work/t166-ci-fix.patch.
+- El panel web del usuario confirma iron-strength, referencia udwhjcnlfqlggblnpchu y región us-east-2. Esto verifica la identidad visible; la autorización de la CLI aún debe comprobarse. No se escribieron cambios en Supabase remoto.
+
+### Reanudación de la validación y acceso remoto
+
+- Con los permisos de ejecución restaurados, `npm run check` completo en verde: formato, lint, tipos, 458 unitarias y build con recursos offline. La regresión de respuesta perdida pasó tres veces consecutivas en WebKit, sin reintentos.
+- La CLI autenticada confirmó el proyecto exclusivo `udwhjcnlfqlggblnpchu`, nombre iron-strength y región us-east-2. Se solicitó reactivar el proyecto pausado desde su panel, sin cambiar de plan. Enlace local correcto; las consultas de lectura funcionan. La plataforma todavía informa COMING_UP; respaldo e inspección final pendientes antes de migrar.
+- Las tres suites offline afectadas por el fixture terminaron con 14/14 E2E aprobados en Chromium y WebKit, sin reintentos. Logs locales privados: t166-resumed-check.log, t166-webkit-repeat.log y t166-offline-validation.log.

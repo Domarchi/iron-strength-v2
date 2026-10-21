@@ -60,3 +60,20 @@ export const test = base.extend<{ network: Network }>({
   },
   baseURL: async ({ network }, provide) => provide(network.url),
 });
+
+// Solo texto de la interfaz de prueba local; nunca cookies, cabeceras o credenciales.
+// Los logs permiten diagnosticar una página nueva aunque la página inicial ya esté cerrada.
+test.afterEach(async ({ context, network }, info) => {
+  if (info.status === info.expectedStatus) return;
+  for (const page of context.pages()) {
+    if (!page.url().startsWith(`${network.url}/`)) continue;
+    const text = await page
+      .locator("body")
+      .innerText({ timeout: 1000 })
+      .catch(() => "No se pudo leer la pantalla de prueba.");
+    console.log(
+      "Offline test screen:",
+      JSON.stringify({ path: new URL(page.url()).pathname, text: text.slice(0, 8000) }),
+    );
+  }
+});

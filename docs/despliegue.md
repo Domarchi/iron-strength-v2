@@ -6,8 +6,8 @@ La publicación sigue T165–T166 de `specs/005-complete-training/`. El código 
 
 | Recurso           | Destino previsto / evidencia                                                                | Estado                                                                                                     |
 | ----------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Código            | `Domarchi/iron-strength-v2`, rama `main-54qpxa`                                             | Implementación local; commits sin subir                                                                    |
-| Supabase          | `udwhjcnlfqlggblnpchu`, nombre esperado `iron-strength`                                     | Falta sesión CLI para verificar identidad, esquema y configuración remotos                                 |
+| Código            | `Domarchi/iron-strength-v2`, rama `main-54qpxa`                                             | Rama subida a GitHub hasta be907a0; corrección E2E posterior preparada localmente                          |
+| Supabase          | `udwhjcnlfqlggblnpchu`, nombre esperado `iron-strength`                                     | CLI autenticada e identidad verificada; reactivación en curso, respaldo e inspección pendientes            |
 | Vercel encontrado | `iron-strength`, `prj_efHmFcgn3IS5Bd4zzNShwGnewXPd`, equipo `team_NW0l4Vd8UMmxgFbZxPETPMph` | Usuario autorizó reemplazar esa versión por v2 en el mismo proyecto; último despliegue anterior conservado |
 | Teléfonos         | Android/Chrome e iPhone/Safari                                                              | Pendiente prueba física por HTTPS                                                                          |
 

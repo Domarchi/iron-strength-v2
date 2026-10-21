@@ -90,7 +90,7 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
   await finish(offline);
   await expect(
     offline.getByText("Entrenamiento pendiente de sincronizar", { exact: true }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30_000 });
   const frozen = (await queue(offline))[0];
   expect(
     await offline.evaluate(
@@ -127,14 +127,16 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
     name: "Sincronización de entrenamientos",
     exact: true,
   });
-  await expect(restoredPanel).toContainText("No hay conexión con el servidor");
+  await expect(restoredPanel).toContainText("No hay conexión con el servidor", {
+    timeout: 30_000,
+  });
   expect((await queue(restored))[0].payload).toEqual(frozen.payload);
   await restored.reload();
   await expect(
     restored
       .getByRole("region", { name: "Sincronización de entrenamientos", exact: true })
       .getByRole("status"),
-  ).toContainText("Entrenamiento sincronizado.");
+  ).toContainText("Entrenamiento sincronizado.", { timeout: 30_000 });
   expect(await queue(restored)).toHaveLength(0);
   const saved = (
     await admin()
