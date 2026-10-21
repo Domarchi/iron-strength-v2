@@ -9,7 +9,7 @@ export function accountStorageKeys(storage: DraftStorage, userId: string): strin
     const parts = key.split(":");
     if (
       parts[0] === "is" &&
-      ["draft", "coach-draft", "program-copy"].includes(parts[1]) &&
+      ["draft", "coach-draft", "program-copy", "workout-focus"].includes(parts[1]) &&
       parts[3] === userId
     )
       keys.push(key);
@@ -21,7 +21,9 @@ export function hasLocalTraining(storage: DraftStorage): boolean {
   return false;
 }
 export async function inspectLocalAccount(userId: string) {
-  const keys = accountStorageKeys(localStorage, userId);
+  const keys = accountStorageKeys(localStorage, userId).filter(
+    (key) => !key.startsWith("is:workout-focus:"),
+  );
   const queue = await listQueuedWorkouts(userId);
   return { keys: keys.length, queued: queue.length, pending: keys.length > 0 || queue.length > 0 };
 }

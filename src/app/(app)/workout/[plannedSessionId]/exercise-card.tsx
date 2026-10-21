@@ -45,6 +45,7 @@ type Props = {
   onHistory: () => void;
   onSubstitute: (exerciseId: string) => void;
   onRestChange: (seconds: number) => void;
+  focused?: boolean;
   active: boolean;
   onActivate: () => void;
   onCompleteAndAdvance: (setIdx: number) => void;
@@ -70,6 +71,7 @@ export function ExerciseCard({
   onSubstitute,
   onRestChange,
   active,
+  focused = true,
   onActivate,
   onCompleteAndAdvance,
 }: Props) {
@@ -81,7 +83,7 @@ export function ExerciseCard({
 
   const { done, total } = exerciseProgress(exercise);
   const complete = isExerciseComplete(exercise);
-  const collapsed = complete && !reopened;
+  const collapsed = complete && !reopened && !active;
   const last = info?.last ?? null;
   const lastWorking = last?.sets.find((set) => !set.isWarmup);
   const restSeconds =
@@ -130,6 +132,30 @@ export function ExerciseCard({
     );
   }
 
+  if (!focused)
+    return (
+      <section
+        aria-label={exercise.name}
+        data-exercise-id={exercise.sessionExerciseId}
+        className="rounded-xl border border-border/70 bg-card/40 p-3"
+      >
+        <h2>
+          <button
+            type="button"
+            className="flex min-h-11 w-full items-center justify-between gap-3 text-left"
+            aria-label={`Continuar ${exercise.name}`}
+            onClick={onActivate}
+          >
+            <span className="min-w-0 font-semibold">{exercise.name}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {done}/{total} series
+            </span>
+          </button>
+        </h2>
+        {groupLabel ? <p className="text-xs text-primary">{groupLabel}</p> : null}
+      </section>
+    );
+
   return (
     <section
       aria-label={exercise.name}
@@ -138,7 +164,7 @@ export function ExerciseCard({
       onFocusCapture={onActivate}
       onPointerDownCapture={onActivate}
       className={cn(
-        "workout-exercise scroll-mt-52 pb-2 text-foreground",
+        "workout-exercise scroll-mt-[calc(9rem+env(safe-area-inset-top))] pb-2 text-foreground",
         active && "border-primary/40",
       )}
     >
@@ -207,43 +233,6 @@ export function ExerciseCard({
 
       {exercise.original && exercise.original.exerciseId !== exercise.exerciseId ? (
         <p className="px-1 text-sm text-muted-foreground">En lugar de {exercise.original.name}</p>
-      ) : null}
-      {exercise.alternatives?.length ? (
-        <details className="rounded-lg border p-3">
-          <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">
-            Alternativas del coach
-          </summary>
-          <p className="mb-2 text-xs text-muted-foreground">
-            {done
-              ? "Ya registraste series. El ejercicio queda fijado."
-              : "La elección reemplaza los valores pendientes con la prescripción de esa alternativa."}
-          </p>
-          <label className="block text-sm">
-            Ejercicio a realizar
-            <NativeSelect
-              className="mt-1"
-              value={choice}
-              disabled={done > 0}
-              onChange={(e) => setChoice(e.target.value)}
-            >
-              {[exercise.original, ...exercise.alternatives]
-                .filter((e) => e !== undefined)
-                .map((e) => (
-                  <option key={e.exerciseId} value={e.exerciseId}>
-                    {e.name} · {e.prescribed.sets} × {e.prescribed.repsMin}–{e.prescribed.repsMax}
-                  </option>
-                ))}
-            </NativeSelect>
-          </label>
-          <Button
-            className="mt-2"
-            variant="outline"
-            disabled={done > 0 || choice === exercise.exerciseId}
-            onClick={() => onSubstitute(choice)}
-          >
-            Usar alternativa
-          </Button>
-        </details>
       ) : null}
       <div className="workout-set-table flex flex-col gap-1 py-2">
         <div
@@ -408,51 +397,93 @@ export function ExerciseCard({
           <Plus aria-hidden /> Agregar serie
         </Button>
       </div>
-      <ExerciseComparison
-        exercise={exercise}
-        info={info}
-        onCopyLast={onCopyLast}
-        onCopySuggestion={onCopySuggestion}
-      />
-      {info?.note ? (
-        <details className="my-1 rounded-lg bg-muted/40 px-3">
-          <summary className="min-h-11 cursor-pointer py-3 text-sm text-muted-foreground">
-            Indicaciones del coach
-          </summary>
-          <div className="flex flex-col gap-2 pb-3">
-            {info.note ? <p className="text-sm">{info.note}</p> : null}
-          </div>
-        </details>
-      ) : null}
+      <section
+        aria-label={`Contexto de ${exercise.name}`}
+        className="exercise-context-panel mt-2 rounded-xl border border-border/70 bg-card/30 p-3"
+      >
+        {exercise.alternatives?.length ? (
+          <details className="rounded-lg border p-3">
+            <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">
+              Alternativas del coach
+            </summary>
+            <p className="mb-2 text-xs text-muted-foreground">
+              {done
+                ? "Ya registraste series. El ejercicio queda fijado."
+                : "La elección reemplaza los valores pendientes con la prescripción de esa alternativa."}
+            </p>
+            <label className="block text-sm">
+              Ejercicio a realizar
+              <NativeSelect
+                className="mt-1"
+                value={choice}
+                disabled={done > 0}
+                onChange={(e) => setChoice(e.target.value)}
+              >
+                {[exercise.original, ...exercise.alternatives]
+                  .filter((e) => e !== undefined)
+                  .map((e) => (
+                    <option key={e.exerciseId} value={e.exerciseId}>
+                      {e.name} · {e.prescribed.sets} × {e.prescribed.repsMin}–{e.prescribed.repsMax}
+                    </option>
+                  ))}
+              </NativeSelect>
+            </label>
+            <Button
+              className="mt-2"
+              variant="outline"
+              disabled={done > 0 || choice === exercise.exerciseId}
+              onClick={() => onSubstitute(choice)}
+            >
+              Usar alternativa
+            </Button>
+          </details>
+        ) : null}
+        <ExerciseComparison
+          exercise={exercise}
+          info={info}
+          onCopyLast={onCopyLast}
+          onCopySuggestion={onCopySuggestion}
+        />
+        {info?.note ? (
+          <details className="my-1 rounded-lg bg-muted/40 px-3">
+            <summary className="min-h-11 cursor-pointer py-3 text-sm text-muted-foreground">
+              Indicaciones del coach
+            </summary>
+            <div className="flex flex-col gap-2 pb-3">
+              {info.note ? <p className="text-sm">{info.note}</p> : null}
+            </div>
+          </details>
+        ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-1">
-        <Button
-          variant="ghost"
-          onClick={onHistory}
-          aria-label={`Ver historial de ${exercise.name}`}
-        >
-          <History aria-hidden /> Historial
-        </Button>
-        <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
-          <Timer className="size-4" aria-hidden />
-          <span>{groupLabel ? "Entre rondas" : "Descanso"}</span>
-          <NativeSelect
-            aria-label={`Descanso automático de ${exercise.name}`}
-            value={restSeconds}
-            onChange={(event) => onRestChange(Number(event.target.value))}
-            className="w-auto min-w-24 font-medium"
+        <div className="flex flex-wrap items-center justify-between gap-1">
+          <Button
+            variant="ghost"
+            onClick={onHistory}
+            aria-label={`Ver historial de ${exercise.name}`}
           >
-            {REST_OPTIONS.map((seconds) => (
-              <option key={seconds} value={seconds}>
-                {seconds === 0 ? "Desactivado" : formatClock(seconds)}
-              </option>
-            ))}
-            {!REST_OPTIONS.includes(restSeconds) ? (
-              <option value={restSeconds}>{formatClock(restSeconds)}</option>
-            ) : null}
-          </NativeSelect>
-        </label>
-      </div>
+            <History aria-hidden /> Historial
+          </Button>
+          <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
+            <Timer className="size-4" aria-hidden />
+            <span>{groupLabel ? "Entre rondas" : "Descanso"}</span>
+            <NativeSelect
+              aria-label={`Descanso automático de ${exercise.name}`}
+              value={restSeconds}
+              onChange={(event) => onRestChange(Number(event.target.value))}
+              className="w-auto min-w-24 font-medium"
+            >
+              {REST_OPTIONS.map((seconds) => (
+                <option key={seconds} value={seconds}>
+                  {seconds === 0 ? "Desactivado" : formatClock(seconds)}
+                </option>
+              ))}
+              {!REST_OPTIONS.includes(restSeconds) ? (
+                <option value={restSeconds}>{formatClock(restSeconds)}</option>
+              ) : null}
+            </NativeSelect>
+          </label>
+        </div>
+      </section>
     </section>
   );
 }

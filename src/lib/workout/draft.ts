@@ -81,6 +81,9 @@ export type DraftSet = z.infer<typeof setSchema>;
 export type DraftExercise = z.infer<typeof exerciseSchema>;
 export type WorkoutDraft = z.infer<typeof draftSchema>;
 
+export const workoutFocusKey = (userId: string, workoutId: string) =>
+  `is:workout-focus:v1:${userId}:${workoutId}`;
+
 export const draftKey = (userId: string, plannedSessionId: string) =>
   `${PREFIX}${userId}:${plannedSessionId}`;
 export const legacyDraftKey = (userId: string, plannedSessionId: string) =>
@@ -179,7 +182,10 @@ export function clearDraft(
         !workoutId ||
         (belongs(value, userId, plannedSessionId) && value!.workoutId === workoutId)
       )
-        if (storage.getItem(key) === raw) storage.removeItem(key);
+        if (storage.getItem(key) === raw) {
+          storage.removeItem(key);
+          if (value) storage.removeItem(workoutFocusKey(userId, value.workoutId));
+        }
     }
   } catch {
     // La copia confirmada en servidor permite reintentar la limpieza.

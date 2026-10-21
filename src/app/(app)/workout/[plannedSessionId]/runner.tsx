@@ -42,6 +42,7 @@ import { ExerciseHistoryPanel } from "./exercise-history-panel";
 import { substituteExercise } from "@/lib/workout/substitution";
 import { ExerciseCard } from "./exercise-card";
 import { RestBar } from "./rest-bar";
+import { focusedExerciseIds, readWorkoutFocus, rememberWorkoutFocus } from "@/lib/workout/focus";
 
 function storage(): DraftStorage | undefined {
   try {
@@ -131,12 +132,6 @@ function Elapsed({ startedAt }: { startedAt: string }) {
   const mm = String(m).padStart(2, "0");
   const ss = String(s).padStart(2, "0");
   return <span>{h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`}</span>;
-}
-
-function resumeExercise(draft: WorkoutDraft) {
-  const first = nextPendingExercise(draft);
-  const target = first?.supersetId ? nextSupersetSet(draft.exercises, first.supersetId) : null;
-  return target ? draft.exercises[target.exerciseIndex] : first;
 }
 
 const HINT_TEXT = "Revisa el peso y las repeticiones para marcar la serie.";
@@ -272,9 +267,7 @@ function ActiveWorkoutRunner({
   const [queuedLocally, setQueuedLocally] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<{ setId: string; text: string } | null>(null);
-  const [activeId, setActiveId] = useState(
-    () => resumeExercise(initial)?.sessionExerciseId ?? null,
-  );
+  const [activeId, setActiveId] = useState(() => readWorkoutFocus(storage(), initial));
   const [undo, setUndo] = useState<{
     draft: WorkoutDraft;
     message: string;
@@ -322,6 +315,11 @@ function ActiveWorkoutRunner({
     setHint(null);
     commit(fn(draftRef.current));
   };
+
+  function activate(exerciseId: string | null) {
+    setActiveId(exerciseId);
+    rememberWorkoutFocus(storage(), draftRef.current, exerciseId);
+  }
 
   const previousOf = (exIdx: number, setIdx: number) => {
     const exercise = draftRef.current.exercises[exIdx];
@@ -373,15 +371,13 @@ function ActiveWorkoutRunner({
       if (target)
         focusField(next.exercises[target.exerciseIndex].sessionExerciseId, undefined, false);
       else if (isExerciseComplete(exercise))
-        setActiveId(
-          nextPendingExercise(next, exercise.sessionExerciseId)?.sessionExerciseId ?? null,
-        );
+        activate(nextPendingExercise(next, exercise.sessionExerciseId)?.sessionExerciseId ?? null);
     }
     return true;
   }
 
   function focusField(exerciseId: string, setId?: string, focusInput = true) {
-    setActiveId(exerciseId);
+    activate(exerciseId);
     requestAnimationFrame(() => {
       const section = [
         ...(containerRef.current?.querySelectorAll<HTMLElement>("[data-exercise-id]") ?? []),
@@ -390,8 +386,8 @@ function ActiveWorkoutRunner({
         ...(section?.querySelectorAll<HTMLInputElement>("input[data-set-id]") ?? []),
       ].find((node) => !setId || node.dataset.setId === setId);
       if (focusInput) input?.focus({ preventScroll: true });
-      section?.scrollIntoView?.({
-        block: "start",
+      (focusInput && input ? input : section)?.scrollIntoView?.({
+        block: focusInput && input ? "center" : "start",
         behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
           ? "instant"
           : "smooth",
@@ -492,6 +488,9 @@ function ActiveWorkoutRunner({
   const summary = summarize(draft);
   const volume = workoutVolume(draft);
   const nextExercise = activeId ? nextPendingExercise(draft, activeId) : null;
+  const visibleIds = focusedExerciseIds(draft, activeId);
+  const currentGroup = draft.exercises.find((e) => e.sessionExerciseId === activeId)?.supersetId;
+  const currentRound = currentGroup ? nextSupersetSet(draft.exercises, currentGroup) : null;
 
   function requestFinish() {
     if (summary.doneSets === 0) {
@@ -626,6 +625,8 @@ function ActiveWorkoutRunner({
             Terminar
           </Button>
         </div>
+      </header>
+      <section aria-label="Resumen en curso" className="-mx-4">
         <dl className="workout-metrics grid grid-cols-[1.5fr_1fr_1fr] items-center gap-3 px-4 py-3">
           <div>
             <dt className="text-[11px] text-muted-foreground">Duración</dt>
@@ -677,7 +678,35 @@ function ActiveWorkoutRunner({
         >
           <div className="h-full bg-primary transition-[width]" style={{ width: `${percent}%` }} />
         </div>
-      </header>
+      </section>
+      <nav
+        aria-label="Ejercicios del entrenamiento"
+        className="workout-index flex gap-2 overflow-x-auto pb-1"
+      >
+        {draft.exercises.map((exercise, index) => {
+          const progress = exercise.sets.filter((s) => s.done && !s.isWarmup).length;
+          const total = exercise.sets.filter((s) => !s.isWarmup).length;
+          return (
+            <Button
+              key={exercise.sessionExerciseId}
+              variant={activeId === exercise.sessionExerciseId ? "default" : "outline"}
+              className="h-auto min-h-14 shrink-0 flex-col items-start gap-0.5 text-left"
+              aria-label={`Ir a ${exercise.name}`}
+              aria-pressed={activeId === exercise.sessionExerciseId}
+              onClick={() => focusField(exercise.sessionExerciseId, undefined, false)}
+            >
+              <span>
+                {index + 1}. {exercise.name}
+              </span>
+              <span className="text-xs font-normal">
+                {exercise.skipped
+                  ? "Saltado"
+                  : `${progress}/${total} series${isExerciseComplete(exercise) ? " · Hecho" : ""}`}
+              </span>
+            </Button>
+          );
+        })}
+      </nav>
 
       {draft.exercises.some((e) => e.supersetId) ? (
         <p
@@ -685,9 +714,11 @@ function ActiveWorkoutRunner({
           className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm"
         >
           Alterna los ejercicios de cada superserie. Descansa al terminar la ronda.
-          {activeId
-            ? ` Ahora: ${draft.exercises.find((e) => e.sessionExerciseId === activeId)?.name ?? ""}.`
-            : ""}
+          {currentRound
+            ? ` Ronda ${currentRound.round + 1} · Ahora: ${draft.exercises[currentRound.exerciseIndex].name}.`
+            : activeId
+              ? ` Ahora: ${draft.exercises.find((e) => e.sessionExerciseId === activeId)?.name ?? ""}.`
+              : ""}
         </p>
       ) : null}
       {draft.exercises.map((exercise, exIdx) => {
@@ -726,8 +757,9 @@ function ActiveWorkoutRunner({
                 ? `Superserie ${[...new Set(draft.exercises.map((e) => e.supersetId).filter(Boolean))].indexOf(exercise.supersetId) + 1}`
                 : undefined
             }
+            focused={visibleIds.includes(exercise.sessionExerciseId)}
             active={activeId === exercise.sessionExerciseId}
-            onActivate={() => setActiveId(exercise.sessionExerciseId)}
+            onActivate={() => activate(exercise.sessionExerciseId)}
             onCompleteAndAdvance={(setIdx) => completeAndAdvance(exIdx, setIdx)}
             info={info}
             hint={hint}
@@ -811,7 +843,7 @@ function ActiveWorkoutRunner({
             onClick={() => {
               const previous = undo;
               commit(previous.draft);
-              setActiveId(previous.exerciseId);
+              activate(previous.exerciseId);
             }}
           >
             <Undo2 aria-hidden /> Deshacer

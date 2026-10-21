@@ -413,6 +413,17 @@
   color: white;
   border-color: #177cff;
 }
+.workout-index {
+  position: sticky;
+  top: calc(4rem + env(safe-area-inset-top));
+  z-index: 20;
+  background: #071627;
+}
+.workout-index button[aria-pressed="true"] {
+  background: #81bcff;
+  color: #061b32;
+  border-color: #81bcff;
+}
 .workout-metrics > div:first-child {
   display: flex;
   flex-direction: column-reverse;
