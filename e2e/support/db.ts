@@ -174,19 +174,26 @@ export async function seedWorkout(args: {
 }) {
   const db = args.db ?? admin();
   const { addDays, santiagoDate } = await import("../../src/domain/dates");
-  const startedAt = new Date(
-    `${addDays(santiagoDate(new Date()), -args.daysAgo)}T15:00:00Z`,
-  ).toISOString();
+  const now = Date.now();
+  // La hora fija sirve para días anteriores; hoy puede estar todavía en el futuro.
+  const startedMs = Math.min(
+    now,
+    Date.parse(`${addDays(santiagoDate(new Date(now)), -args.daysAgo)}T15:00:00Z`),
+  );
+  const finishedMs = Math.min(now, startedMs + 3_000_000);
+  const startedAt = new Date(startedMs).toISOString();
   const id = crypto.randomUUID();
-  await db.from("workouts").insert({
+  const { error: workoutError } = await db.from("workouts").insert({
     id,
     student_id: args.studentId,
     started_at: startedAt,
-    finished_at: new Date(Date.parse(startedAt) + 3_000_000).toISOString(),
-    duration_seconds: 3000,
+    finished_at: new Date(finishedMs).toISOString(),
+    duration_seconds: Math.floor((finishedMs - startedMs) / 1000),
     created_at: startedAt,
   });
-  await db.from("workout_sets").insert({
+  if (workoutError)
+    throw new Error(`No se pudo preparar el entrenamiento: ${workoutError.message}`);
+  const { error: setsError } = await db.from("workout_sets").insert({
     workout_id: id,
     student_id: args.studentId,
     exercise_id: args.exerciseId,
@@ -197,5 +204,6 @@ export async function seedWorkout(args: {
     reps: 10,
     is_warmup: false,
   });
+  if (setsError) throw new Error(`No se pudo preparar la serie: ${setsError.message}`);
   return id;
 }
