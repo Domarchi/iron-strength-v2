@@ -186,3 +186,34 @@ it("recupera el día pendiente y su solicitud sin perder títulos o prescripcion
   writer.persist(pending);
   expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([pending]);
 });
+
+it("recupera agregado v2 y conserva formatos desconocidos o peticiones en un sobre antiguo", () => {
+  const store = storage(),
+    writer = createEditorPersistence(() => store);
+  const request = {
+    id: crypto.randomUUID(),
+    revision: 2,
+    items: [{ id: crypto.randomUUID(), exerciseId: crypto.randomUUID() }],
+  };
+  const next: EditorDraft = {
+    ...draft,
+    version: 2,
+    additionSelection: request.items.map((i) => i.exerciseId),
+    additionRequest: request,
+  };
+  expect(writer.persist(next)).toBe(true);
+  expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([next]);
+  const key = store.key(0)!;
+  for (const version of [1, 99]) {
+    const raw = JSON.stringify({ ...next, version });
+    store.setItem(key, raw);
+    expect(listEditorDrafts(store, "coach", "program", "session")).toEqual([]);
+    expect(store.getItem(key)).toBe(raw);
+  }
+});
+it("solo confirma escritura local después de releer exactamente el contenido", () => {
+  const store = storage();
+  const writer = createEditorPersistence(() => ({ ...store, setItem: () => {} }));
+  expect(writer.persist({ ...draft, version: 2 })).toBe(false);
+  expect(writer.getSnapshot()).toBe("error");
+});

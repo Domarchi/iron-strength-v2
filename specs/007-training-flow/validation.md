@@ -33,3 +33,13 @@ Conversiones WebP del arte aprobado, originales preservados y listas públicas/o
 Check final: **472 unitarias**, formato, lint sin errores, tipos y build (t174-check-final.log). Pasada enfocada final: **24 E2E en Chromium/WebKit**, accesibilidad en ambos temas, 360 px, persistencia/cuota, apertura offline y composición visual (t174-focus-final.log). Una pasada anterior encontró contraste insuficiente de +15 en hover en WebKit claro; corregido a #005fd9 y verificado, sin omitir el caso. Huella de datos interactivos idéntica a T170; sin cambios de esquema ni producción.
 
 Regresión completa final: **163 E2E aprobadas y un skip CDP previsto en WebKit**, cero fallos y reintentos, 13,1 minutos (t174-e2e.log).
+
+## T175
+
+Pruebas primero: contrato ausente en t175-red.log, RPC inexistente en t175-db-red.log y acción anterior parcial en t175-action-red.log. `add_routine_exercises` es security invoker, con revisión, bloqueo programa/sesión, validación SQL del catálogo/capacidad y recibo en routine_mutations. Todas las filas o ninguna; reintento devuelve revisión confirmada sin insertar. No cambia el límite ni la edición de semanas activas.
+
+Selección e intento se guardan en contenido v2 del borrador del coach, conservando lectura v1. Versiones desconocidas o extensiones en un sobre antiguo se preservan. Escritura local exige relectura exacta; si no puede proteger el intento, no se envía. Un conflicto conserva la selección, muestra ejercicios y notas actuales y exige aceptar esa versión antes de iniciar otro intento. Herramientas estructurales bloqueadas mientras hay una petición incierta.
+
+Base aislada reseteada y migraciones aplicadas: **422 pgTAP** (t175-pgtap.log), **256 integración** (t175-integration.log), incluidas reversión en segunda fila, reintento estable, dos pestañas, límite, permiso y semana bloqueada. Tipos generados de la base aislada. Check final **478 unitarias**, formato, lint sin errores, tipos y build (t175-check-final.log). Datos interactivos conservados con la huella de T170. Sin cambios remotos.
+
+Pasada final de editor y accesibilidad: **51 E2E aprobadas y un skip CDP previsto en WebKit**, sin fallos ni reintentos, 6,5 minutos (t175-e2e.log). Los dos casos nuevos comprueban pérdida real de respuesta tras commit, recarga y confirmación sin duplicados; conflicto con selección conservada y nota remota intacta.

@@ -1,5 +1,7 @@
 "use server";
 
+import { addRoutineExercises } from "@/lib/data/routine-additions";
+import { additionRequestSchema } from "@/lib/coach/routine-additions";
 import { configureSessionLayout } from "@/lib/data/session-layout";
 import type { LayoutRequest } from "@/lib/coach/routine-layout";
 import { configureAlternatives } from "@/lib/data/routine-alternatives";
@@ -11,7 +13,6 @@ import { requireCoach } from "@/lib/auth/session";
 import {
   getProgramTree,
   saveSessionPrescriptions,
-  addSessionExercise,
   reorderSessionExercises,
   duplicateRoutineItem,
   type Failure,
@@ -107,36 +108,36 @@ export async function savePrescriptionsAction(fd: FormData): Promise<EditorResul
 
 export async function addExercisesAction(fd: FormData): Promise<EditorResult> {
   await requireCoach();
-  const parsed = z.array(z.uuid()).min(1).max(15).safeParse(readJson(fd, "exerciseIds"));
-  if (!parsed.success || new Set(parsed.data).size !== parsed.data.length)
-    return { error: messages.invalid, savedIds: [] };
+  const identity = mutationIdentity(fd);
+  if (!identity.success) return { error: messages.invalid, savedIds: [] };
+  const parsed = additionRequestSchema.safeParse({
+    id: identity.data.requestId,
+    revision: identity.data.expectedRevision,
+    items: readJson(fd, "items"),
+  });
+  if (!parsed.success) return { error: messages.invalid, savedIds: [] };
   const programId = String(fd.get("programId") ?? "");
-  const db = await createClient();
-  const tree = await getProgramTree(db, programId);
-  const session = tree?.sessions.find((s) => s.id === fd.get("sessionId"));
-  if (!session) return { error: messages.not_found, savedIds: [] };
-  if (session.exercises.length + parsed.data.length > 15)
-    return { error: messages.limit, savedIds: [] };
-  const savedIds: string[] = [];
-  let error: string | null = null;
   try {
-    for (const exerciseId of parsed.data) {
-      const result = await addSessionExercise({
-        db,
-        sessionId: session.id,
-        input: { exerciseId, sets: 3, repsMin: 8, repsMax: 12, targetWeightKg: null, note: null },
-      });
-      if (!result.ok) {
-        error = messages[result.reason];
-        break;
-      }
-      savedIds.push(exerciseId);
-    }
+    const db = await createClient();
+    const tree = await getProgramTree(db, programId);
+    const session = tree?.sessions.find((s) => s.id === fd.get("sessionId"));
+    if (!session) return { error: messages.not_found, savedIds: [], conflict: true };
+    const result = await addRoutineExercises(db, session.id, parsed.data);
+    if (!result.ok)
+      return {
+        error: messages[result.reason],
+        savedIds: [],
+        conflict: result.reason === "conflict",
+      };
+    refresh(programId);
+    return {
+      error: null,
+      savedIds: parsed.data.items.map((i) => i.exerciseId),
+      revision: result.revision,
+    };
   } catch {
-    error = temporaryError;
+    return { error: temporaryError, savedIds: [], uncertain: true };
   }
-  if (savedIds.length) refresh(programId);
-  return { savedIds, error };
 }
 
 export async function reorderExercisesAction(fd: FormData): Promise<EditorResult> {

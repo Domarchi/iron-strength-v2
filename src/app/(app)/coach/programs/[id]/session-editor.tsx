@@ -59,6 +59,7 @@ import {
   reorderExercisesAction,
   savePrescriptionsAction,
 } from "../editor-actions";
+import type { AdditionRequest } from "@/lib/coach/routine-additions";
 import { ExercisePicker } from "./exercise-picker";
 import { useRoutineGuard } from "./week-workspace";
 import { SortableExerciseList } from "./sortable-exercise-list";
@@ -134,6 +135,12 @@ function Editor({
     persistence.getSnapshot,
     () => "clean",
   );
+  const [additionRequest, setAdditionRequest] = useState<AdditionRequest | null>(
+    restored?.additionRequest ?? null,
+  );
+  const [additionSelection, setAdditionSelection] = useState<string[]>(
+    restored?.additionSelection ?? restored?.additionRequest?.items.map((i) => i.exerciseId) ?? [],
+  );
   const [review, setReview] = useState<SessionRow | null>(null);
   const session = review ?? serverSession;
   const router = useRouter();
@@ -155,7 +162,8 @@ function Editor({
       !restored.orderRequest &&
       !restored.copyRequest &&
       !restored.layoutRequest &&
-      !restored.alternativeRequest,
+      !restored.alternativeRequest &&
+      !restored.additionRequest,
   );
   const [weekday, setWeekday] = useState<number | undefined>(restored?.weekday);
   const [title, setTitle] = useState<string | undefined>(restored?.title);
@@ -210,6 +218,7 @@ function Editor({
     orderPending ||
     conflict ||
     !!saveRequest ||
+    !!additionRequest ||
     !!layoutRequest ||
     alternativesDirty ||
     guard.dirtyIds.some((id) => id !== orderKey && id !== dragKey);
@@ -237,6 +246,7 @@ function Editor({
     dragging ||
     conflict ||
     !!saveRequest ||
+    !!additionRequest ||
     !!layoutRequest ||
     alternativesDirty;
   const layoutDisabled =
@@ -246,6 +256,7 @@ function Editor({
     dragging ||
     conflict ||
     !!saveRequest ||
+    !!additionRequest ||
     !!copyRequest ||
     !!layoutRequest ||
     alternativesDirty ||
@@ -253,7 +264,7 @@ function Editor({
   const lastDraft = useRef<EditorDraft | null>(restored ? { ...restored, id: localId } : null);
   function persistLocal(overrides: Partial<EditorDraft> = {}) {
     const next: EditorDraft = {
-      version: 1,
+      version: 2,
       id: localId,
       userId,
       programId,
@@ -271,10 +282,14 @@ function Editor({
       layoutRequest,
       alternativeEdits,
       alternativeRequest,
+      additionRequest,
+      additionSelection,
       ...overrides,
     };
     lastDraft.current = next;
     if (
+      next.additionRequest ||
+      next.additionSelection?.length ||
       next.bulk ||
       next.title !== undefined ||
       next.weekday !== undefined ||
@@ -292,10 +307,13 @@ function Editor({
           persistence.remove(sourceDraft.current, true, true);
           sourceDraft.current = null;
         }
+        return true;
       }
+      return false;
     } else {
-      persistence.remove(next);
+      const removed = persistence.remove(next);
       remember("cleared");
+      return removed;
     }
   }
   function removeRecovered() {
@@ -312,6 +330,10 @@ function Editor({
         restored.weekday !== undefined ||
         Object.keys(restored.edits).length > 0 ||
         !!restored.saveRequest,
+    );
+    setGuardDirty(
+      `${serverSession.id}-picker`,
+      !!restored.additionRequest || !!restored.additionSelection?.length,
     );
     setGuardDirty(`${serverSession.id}-bulk`, !!restored.bulk);
     setGuardDirty(`${serverSession.id}-selection`, !!restored.bulk?.ids.length);
@@ -790,6 +812,7 @@ function Editor({
             dragging ||
             !!copyRequest ||
             !!saveRequest ||
+            !!additionRequest ||
             !!layoutRequest ||
             alternativesDirty ||
             selected.length > 0
@@ -839,6 +862,7 @@ function Editor({
               dragging ||
               !!copyRequest ||
               !!saveRequest ||
+              !!additionRequest ||
               !!layoutRequest ||
               alternativesDirty ||
               selected.length > 0
@@ -865,6 +889,7 @@ function Editor({
             orderPending ||
             dragging ||
             !!saveRequest ||
+            !!additionRequest ||
             !!copyRequest ||
             !!layoutRequest ||
             selected.length > 0 ||
@@ -931,6 +956,7 @@ function Editor({
               dragging ||
               conflict ||
               !!saveRequest ||
+              !!additionRequest ||
               !!copyRequest ||
               !!layoutRequest ||
               alternativesDirty ||
@@ -967,6 +993,7 @@ function Editor({
               dragging ||
               conflict ||
               !!saveRequest ||
+              !!additionRequest ||
               !!copyRequest ||
               !!layoutRequest ||
               alternativesDirty ||
@@ -1221,6 +1248,7 @@ function Editor({
                     orderPending ||
                     dragging ||
                     !!saveRequest ||
+                    !!additionRequest ||
                     !!layoutRequest ||
                     alternativesDirty ||
                     selected.length > 0
@@ -1350,6 +1378,23 @@ function Editor({
             </Button>
             {review ? (
               <div className="mt-3 space-y-3">
+                {additionRequest || additionSelection.length ? (
+                  <div className="rounded border p-2">
+                    <p className="font-medium">Agregado pendiente</p>
+                    <p>
+                      Tu selección:{" "}
+                      {additionSelection
+                        .map((id) => exercises.find((e) => e.id === id)?.name ?? id)
+                        .join(" · ")}
+                    </p>
+                    <p>Versión actual: {review.exercises.length} ejercicios</p>
+                    {review.exercises.map((e) => (
+                      <p key={e.id}>
+                        {e.name} · {e.sets} × {e.repsMin}–{e.repsMax} · {e.note ?? ""}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
                 {bulk ? (
                   <div className="rounded border p-2">
                     <p className="font-medium">Lote pendiente</p>
@@ -1487,7 +1532,12 @@ function Editor({
                     setError(null);
                     setSaveRequest(null);
                     setAlternativeError(null);
-                    persistLocal({ revision: review.revision, saveRequest: null });
+                    setAdditionRequest(null);
+                    persistLocal({
+                      revision: review.revision,
+                      saveRequest: null,
+                      additionRequest: null,
+                    });
                   }}
                 >
                   Aplicar mis cambios a esta versión
@@ -1511,6 +1561,24 @@ function Editor({
         visible={guard.activeWeek === undefined || guard.activeWeek === session.weekNumber}
         programId={programId}
         sessionId={session.id}
+        getRevision={() => baseRevision.current ?? session.revision}
+        request={additionRequest}
+        selected={additionSelection}
+        conflict={conflict}
+        onChange={(selection, request) => {
+          setAdditionSelection(selection);
+          setAdditionRequest(request);
+          guard.setDirty(`${session.id}-picker`, selection.length > 0 || !!request);
+          return persistLocal({ additionSelection: selection, additionRequest: request });
+        }}
+        onResult={(result) => {
+          if (result.conflict) setConflict(true);
+          if (!result.error) {
+            baseRevision.current = null;
+            setReview(null);
+            router.refresh();
+          }
+        }}
         exercises={exercises}
         count={session.exercises.length}
         disabled={

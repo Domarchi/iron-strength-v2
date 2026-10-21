@@ -937,3 +937,88 @@ test("día sugerido recupera borrador y el coach puede mover su entrenamiento si
   await page.getByRole("button", { name: "Empezar", exact: true }).click();
   await expect(page).toHaveURL(/\/workout\//);
 });
+
+test("agregar varios confirma una respuesta perdida después de recargar sin duplicar (T175)", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await page.getByRole("button", { name: "Agregar ejercicios", exact: true }).click();
+  await page.getByLabel("Buscar ejercicios", { exact: true }).fill("Peso muerto");
+  await page.getByRole("checkbox", { name: "Peso muerto Espalda · Barra", exact: true }).check();
+  let lost = false;
+  await page.route(page.url(), async (route) => {
+    if (!lost && route.request().method() === "POST" && route.request().headers()["next-action"]) {
+      lost = true;
+      await route.fetch();
+      await route.abort("internetdisconnected");
+    } else await route.continue();
+  });
+  await page.getByRole("button", { name: "Agregar seleccionados (1)", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Confirmar agregado", exact: true })).toBeVisible();
+  const read = async () => {
+    const { data, error } = await admin()
+      .from("program_sessions")
+      .select("revision,session_exercises(id,exercise_id,position)")
+      .eq("program_id", programId)
+      .single();
+    expect(error).toBeNull();
+    return data!;
+  };
+  const before = await read();
+  expect(before.session_exercises).toHaveLength(3);
+  page.on("dialog", (d) => d.accept());
+  await page.reload();
+  await expect(
+    page.getByText("Borrador recuperado de este dispositivo.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Confirmar agregado", exact: true }).click();
+  await expect(
+    page.getByText("1 ejercicios agregados a la sesión.", { exact: true }),
+  ).toBeVisible();
+  expect(await read()).toEqual(before);
+  expect(
+    await page.evaluate(() =>
+      Object.keys(localStorage).filter((k) => k.startsWith("is:coach-draft:")),
+    ),
+  ).toEqual([]);
+});
+
+test("agregado con revisión antigua conserva selección y requiere revisar antes de aplicar (T175)", async ({
+  page,
+}) => {
+  const programId = await routine(page);
+  await page.getByRole("button", { name: "Agregar ejercicios", exact: true }).click();
+  await page.getByLabel("Buscar ejercicios", { exact: true }).fill("Peso muerto");
+  await page.getByRole("checkbox", { name: "Peso muerto Espalda · Barra", exact: true }).check();
+  const s = await admin()
+    .from("program_sessions")
+    .select("id,session_exercises(id)")
+    .eq("program_id", programId)
+    .single();
+  await admin()
+    .from("session_exercises")
+    .update({ note: "Indicación remota" })
+    .eq("id", s.data!.session_exercises[0].id);
+  await page.getByRole("button", { name: "Agregar seleccionados (1)", exact: true }).click();
+  await expect(
+    page.getByText("La sesión cambió. Revisa los valores antes de aplicar tu borrador.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Deseleccionar Peso muerto", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Revisar versión actual", exact: true }).click();
+  await expect(page.getByText("Indicación remota", { exact: false })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Aplicar mis cambios a esta versión", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Agregar seleccionados (1)", exact: true }).click();
+  await expect(page.getByLabel("Series de Peso muerto", { exact: true })).toBeVisible();
+  const rows = await admin()
+    .from("session_exercises")
+    .select("id,note")
+    .eq("program_session_id", s.data!.id);
+  expect(rows.data).toHaveLength(3);
+  expect(rows.data!.find((r) => r.id === s.data!.session_exercises[0].id)!.note).toBe(
+    "Indicación remota",
+  );
+});

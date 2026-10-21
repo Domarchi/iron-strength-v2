@@ -7,8 +7,9 @@ import { ExerciseThumbnail } from "@/components/workout/exercise-thumbnail";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { searchExercises, type CatalogExercise } from "@/lib/coach/routine-editor";
+import type { AdditionRequest } from "@/lib/coach/routine-additions";
+import type { EditorResult } from "../editor-actions";
 import { addExercisesAction } from "../editor-actions";
-import { useRoutineGuard } from "./week-workspace";
 
 const libraryQuery = "(min-width: 1280px)";
 function subscribeLayout(changed: () => void) {
@@ -27,7 +28,19 @@ export function ExercisePicker({
   count,
   disabled,
   visible = true,
+  getRevision,
+  request,
+  selected,
+  conflict,
+  onChange,
+  onResult,
 }: {
+  getRevision: () => number;
+  request: AdditionRequest | null;
+  selected: string[];
+  conflict: boolean;
+  onChange: (selected: string[], request: AdditionRequest | null) => boolean;
+  onResult: (result: EditorResult) => void;
   programId: string;
   sessionId: string;
   exercises: CatalogExercise[];
@@ -37,49 +50,55 @@ export function ExercisePicker({
 }) {
   const [open, setOpen] = useState(false);
   const wide = useSyncExternalStore(subscribeLayout, wideLayout, serverLayout);
-  const shown = visible && (wide || open);
+  const shown = visible && (wide || open || !!request || selected.length > 0);
   const [search, setSearch] = useState("");
   const [muscle, setMuscle] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const guard = useRoutineGuard();
   const remaining = Math.max(0, 15 - count);
   const matches = searchExercises(exercises, search, muscle);
   const groups = [...new Set(exercises.map((e) => e.muscleGroup))].sort();
   function select(ids: string[]) {
-    setSelected(ids);
-    guard.setDirty(`${sessionId}-picker`, ids.length > 0);
+    onChange(ids, null);
     setError(null);
     setMessage(null);
   }
   function add() {
+    const next = request ?? {
+      id: crypto.randomUUID(),
+      revision: getRevision(),
+      items: selected.map((exerciseId) => ({ id: crypto.randomUUID(), exerciseId })),
+    };
+    if (!onChange(selected, next)) {
+      setError(
+        "No se pudo proteger el intento en este dispositivo. Libera espacio y confirma el agregado para continuar.",
+      );
+      return;
+    }
     const data = new FormData();
     data.set("programId", programId);
     data.set("sessionId", sessionId);
-    data.set("exerciseIds", JSON.stringify(selected));
+    data.set("requestId", next.id);
+    data.set("revision", String(next.revision));
+    data.set("items", JSON.stringify(next.items));
     setError(null);
     setMessage(null);
     startTransition(async () => {
       try {
         const result = await addExercisesAction(data);
-        const remainingIds = selected.filter((id) => !result.savedIds.includes(id));
-        select(remainingIds);
+        onResult(result);
         setError(result.error);
-        setMessage(
-          result.savedIds.length
-            ? `${result.savedIds.length} ejercicios agregados a la sesión.`
-            : null,
-        );
         if (!result.error) {
+          onChange([], null);
+          setMessage(`${next.items.length} ejercicios agregados a la sesión.`);
           setOpen(false);
           setSearch("");
           setMuscle("");
-        }
+        } else if (!result.uncertain && !result.conflict) onChange(selected, null);
       } catch {
         setError(
-          "No se pudo confirmar la operación. Recarga y revisa la sesión antes de volver a agregar para evitar duplicados.",
+          "No recibimos confirmación. El lote sigue guardado aquí; confirma el mismo agregado sin duplicarlo.",
         );
       }
     });
@@ -112,7 +131,10 @@ export function ExercisePicker({
                 3 series de 8–12 reps. Ajusta la prescripción después de agregar.
               </p>
             </div>
-            <fieldset disabled={pending || disabled} className="flex min-w-0 flex-col gap-3">
+            <fieldset
+              disabled={pending || disabled || !!request}
+              className="flex min-w-0 flex-col gap-3"
+            >
               <div className="picker-search flex flex-col gap-2 sm:flex-row">
                 <div className="relative flex-1">
                   <Search
@@ -201,9 +223,18 @@ export function ExercisePicker({
               </span>
               <Button
                 onClick={add}
-                disabled={pending || disabled || !selected.length || selected.length > remaining}
+                disabled={
+                  pending ||
+                  disabled ||
+                  conflict ||
+                  (!request && (!selected.length || selected.length > remaining))
+                }
               >
-                {pending ? "Agregando…" : `Agregar seleccionados (${selected.length})`}
+                {pending
+                  ? "Agregando…"
+                  : request
+                    ? "Confirmar agregado"
+                    : `Agregar seleccionados (${selected.length})`}
               </Button>
             </div>
           </div>

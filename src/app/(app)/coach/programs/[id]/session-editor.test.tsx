@@ -164,7 +164,7 @@ it("no envía valores inválidos y conserva datos si falla el guardado", async (
   ).toBe("9");
   expect(btn("Guardar sesión").disabled).toBe(false);
 });
-it("mantiene la selección al buscar y retira solo los ejercicios agregados en un fallo parcial", async () => {
+it("mantiene toda la selección al buscar si el lote falla", async () => {
   await act(() => btn("Agregar ejercicios").click());
   const boxes = [
     ...container.querySelectorAll<HTMLInputElement>(
@@ -181,11 +181,11 @@ it("mantiene la selección al buscar y retira solo los ejercicios agregados en u
       .click(),
   );
   expect(btn("Agregar seleccionados (2)")).toBeTruthy();
-  mocks.add.mockResolvedValueOnce({ savedIds: [catalog[0].id], error: "Fallo parcial" });
+  mocks.add.mockResolvedValueOnce({ savedIds: [], error: "Lote rechazado" });
   await act(() => btn("Agregar seleccionados").click());
-  expect(container.textContent).toContain("Fallo parcial");
-  expect(btn("Agregar seleccionados (1)")).toBeTruthy();
-  expect(container.querySelector('[aria-label="Deseleccionar Jalón"]')).toBeNull();
+  expect(container.textContent).toContain("Lote rechazado");
+  expect(btn("Agregar seleccionados (2)")).toBeTruthy();
+  expect(container.querySelector('[aria-label="Deseleccionar Jalón"]')).not.toBeNull();
   expect(container.querySelector('[aria-label="Deseleccionar Press"]')).not.toBeNull();
 });
 
@@ -268,4 +268,45 @@ it("no afirma protección local cuando falla la cuota y permite reintentar", asy
   fail.mockRestore();
   await act(() => btn("Reintentar guardado local").click());
   expect(container.textContent).toContain("Guardado en este dispositivo");
+});
+
+it("un agregado incierto conserva el mismo ID y todas las filas al confirmar", async () => {
+  await act(() => btn("Agregar ejercicios").click());
+  await act(() =>
+    container
+      .querySelector<HTMLInputElement>(
+        '[aria-label="Catálogo de ejercicios"] input[type="checkbox"]',
+      )!
+      .click(),
+  );
+  mocks.add.mockRejectedValueOnce(new Error("offline"));
+  await act(() => btn("Agregar seleccionados").click());
+  const first = mocks.add.mock.calls[0][0] as FormData;
+  expect(btn("Confirmar agregado").disabled).toBe(false);
+  expect(
+    container.querySelector<HTMLButtonElement>('[aria-label="Duplicar Sentadilla"]')!.disabled,
+  ).toBe(true);
+  mocks.add.mockResolvedValueOnce({ error: null, savedIds: [catalog[0].id], revision: 3 });
+  await act(() => btn("Confirmar agregado").click());
+  const second = mocks.add.mock.calls[1][0] as FormData;
+  expect(second.get("requestId")).toBe(first.get("requestId"));
+  expect(second.get("items")).toBe(first.get("items"));
+});
+
+it("no envía un agregado si no puede confirmar su copia local", async () => {
+  await act(() => btn("Agregar ejercicios").click());
+  await act(() =>
+    container
+      .querySelector<HTMLInputElement>(
+        '[aria-label="Catálogo de ejercicios"] input[type="checkbox"]',
+      )!
+      .click(),
+  );
+  const blocked = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new Error("quota");
+  });
+  await act(() => btn("Agregar seleccionados").click());
+  expect(mocks.add).not.toHaveBeenCalled();
+  expect(container.textContent).toContain("No se pudo proteger el intento");
+  blocked.mockRestore();
 });

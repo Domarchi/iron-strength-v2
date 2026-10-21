@@ -14,10 +14,11 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.refresh }));
 vi.mock("@/lib/data/programs", () => ({
   getProgramTree: mocks.tree,
   saveSessionPrescriptions: mocks.update,
-  addSessionExercise: mocks.add,
+  addSessionExercise: vi.fn(),
   reorderSessionExercises: mocks.reorder,
   duplicateRoutineItem: mocks.duplicate,
 }));
+vi.mock("@/lib/data/routine-additions", () => ({ addRoutineExercises: mocks.add }));
 import {
   savePrescriptionsAction,
   addExercisesAction,
@@ -95,16 +96,29 @@ it("expone el conflicto sin confirmar ni sobrescribir filas", async () => {
     conflict: true,
   });
 });
-it("comprueba capacidad y no agrega una selección vacía", async () => {
+it("el agregado valida identidad y confirma todo el lote con una llamada", async () => {
   const data = fd([]);
-  data.set("exerciseIds", JSON.stringify([]));
-  expect((await addExercisesAction(data)).error).toBeTruthy();
-  mocks.tree.mockResolvedValue({
-    sessions: [{ id: "s", exercises: Array.from({ length: 15 }, () => ({ id: "x" })) }],
+  data.set("items", JSON.stringify([{ id: exerciseId, exerciseId }]));
+  mocks.add.mockResolvedValueOnce({ ok: true, revision: 4 });
+  expect(await addExercisesAction(data)).toEqual({
+    error: null,
+    savedIds: [exerciseId],
+    revision: 4,
   });
-  data.set("exerciseIds", JSON.stringify([exerciseId]));
-  expect((await addExercisesAction(data)).error).toContain("15");
-  expect(mocks.add).not.toHaveBeenCalled();
+  expect(mocks.add).toHaveBeenCalledTimes(1);
+  data.delete("requestId");
+  expect((await addExercisesAction(data)).savedIds).toEqual([]);
+  expect(mocks.add).toHaveBeenCalledTimes(1);
+});
+it("un agregado incierto o rechazado nunca confirma una parte", async () => {
+  const data = fd([]);
+  data.set("items", JSON.stringify([{ id: exerciseId, exerciseId }]));
+  mocks.add.mockResolvedValueOnce({ ok: false, reason: "conflict" });
+  expect(await addExercisesAction(data)).toMatchObject({ savedIds: [], conflict: true });
+  mocks.add.mockRejectedValueOnce(new Error("private"));
+  const result = await addExercisesAction(data);
+  expect(result).toMatchObject({ savedIds: [], uncertain: true });
+  expect(result.error).not.toContain("private");
 });
 
 it("reordena únicamente una permutación completa de la sesión autenticada", async () => {

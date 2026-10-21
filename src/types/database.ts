@@ -473,7 +473,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "assign_program":
+            "add_routine_exercises":
+{ Args: { "p_expected_revision": number,"p_items": Json,"p_request_id": string,"p_session_id": string }; Returns: number
+                           },
+"assign_program":
 { Args: { "p_start_date": string,"p_student_id": string,"p_template_id": string }; Returns: string
                            },
 "auth_email_exists":

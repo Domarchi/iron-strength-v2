@@ -1,3 +1,4 @@
+import { additionRequestSchema } from "./routine-additions";
 import { z } from "zod";
 import { bulkDraftSchema } from "./bulk-editor";
 import { prescriptionFields } from "@/domain/schemas";
@@ -18,35 +19,43 @@ const row = z.object({
   fields: z.array(z.enum(prescriptionFields)).optional(),
 });
 const request = z.object({ id: text, revision: z.number().int().nonnegative() });
-const schema = z.object({
-  version: z.literal(1),
-  id: text,
-  userId: text,
-  programId: text,
-  sessionId: text,
-  revision: z.number().int().nonnegative(),
-  updatedAt: z.iso.datetime(),
-  bulk: bulkDraftSchema.nullable().optional(),
-  title: z.string().optional(),
-  weekday: z.number().int().min(-1).max(6).optional(),
-  edits: z.record(z.string(), row),
-  order: z.array(text).nullable(),
-  orderRequest: request.nullable(),
-  saveRequest: request
-    .extend({
-      rows: z.array(row),
-      title: z.string().optional(),
-      weekday: z.number().int().min(-1).max(6).optional(),
-    })
-    .nullable(),
-  layoutRequest: request
-    .extend({ layout: z.array(layoutRowSchema) })
-    .nullable()
-    .optional(),
-  alternativeEdits: z.record(z.string(), z.array(alternativeDraftSchema)).optional(),
-  alternativeRequest: alternativeRequestSchema.nullable().optional(),
-  copyRequest: z.object({ id: text, exerciseId: text.optional() }).nullable(),
-});
+const schema = z
+  .object({
+    version: z.union([z.literal(1), z.literal(2)]),
+    additionSelection: z.array(z.uuid()).max(15).optional(),
+    additionRequest: additionRequestSchema.nullable().optional(),
+    id: text,
+    userId: text,
+    programId: text,
+    sessionId: text,
+    revision: z.number().int().nonnegative(),
+    updatedAt: z.iso.datetime(),
+    bulk: bulkDraftSchema.nullable().optional(),
+    title: z.string().optional(),
+    weekday: z.number().int().min(-1).max(6).optional(),
+    edits: z.record(z.string(), row),
+    order: z.array(text).nullable(),
+    orderRequest: request.nullable(),
+    saveRequest: request
+      .extend({
+        rows: z.array(row),
+        title: z.string().optional(),
+        weekday: z.number().int().min(-1).max(6).optional(),
+      })
+      .nullable(),
+    layoutRequest: request
+      .extend({ layout: z.array(layoutRowSchema) })
+      .nullable()
+      .optional(),
+    alternativeEdits: z.record(z.string(), z.array(alternativeDraftSchema)).optional(),
+    alternativeRequest: alternativeRequestSchema.nullable().optional(),
+    copyRequest: z.object({ id: text, exerciseId: text.optional() }).nullable(),
+  })
+  .strict()
+  .refine(
+    (d) =>
+      d.version !== 1 || (d.additionSelection === undefined && d.additionRequest === undefined),
+  );
 export type EditorDraft = z.infer<typeof schema>;
 const prefix = (userId: string, programId: string, sessionId: string) =>
   `is:coach-draft:v1:${userId}:${programId}:${sessionId}:`;
@@ -120,7 +129,9 @@ export function createEditorPersistence(getStorage: () => DraftStorage | undefin
       try {
         const storage = getStorage();
         if (!storage) throw new Error("storage");
-        storage.setItem(key(draft), JSON.stringify(draft));
+        const raw = JSON.stringify(draft);
+        storage.setItem(key(draft), raw);
+        if (storage.getItem(key(draft)) !== raw) throw new Error("storage verification");
         report("saved");
         return true;
       } catch {
