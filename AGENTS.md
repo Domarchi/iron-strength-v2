@@ -10,6 +10,8 @@ Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitut
 
 La evolución aprobada para un coach y tres alumnos está en `specs/005-complete-training/`: editor fiable, superseries, alternativas, seguimiento y entrenamiento offline. Sus tareas pendientes no representan funciones ya disponibles.
 
+La referencia visual A (Azul atleta) aprobada está en `specs/006-azul-atleta/`; conserva los contratos de la spec 005 y adapta inicio/registro móvil y planificación web.
+
 ## Comandos
 
 - Desarrollo: `npm run dev` (datos de prueba: `npm run dev:seed`)
