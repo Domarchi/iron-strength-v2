@@ -87,7 +87,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <h2 id="programs-heading" className="text-lg font-medium">
             Programas
           </h2>
-          <Button variant="outline" render={<Link href="/coach/programs" />}>
+          <Button variant="outline" render={<Link href={`/coach/programs/adapt?alumno=${id}`} />}>
             Asignar un programa
           </Button>
         </div>

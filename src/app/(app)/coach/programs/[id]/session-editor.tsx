@@ -80,7 +80,7 @@ export function SessionEditor(props: Props) {
     () => true,
     () => false,
   );
-  return hydrated ? (
+  const editor = hydrated ? (
     <Editor
       key={restoreId ?? "current"}
       {...props}
@@ -91,6 +91,16 @@ export function SessionEditor(props: Props) {
     <Card>
       <CardContent className="p-4">Cargando editor…</CardContent>
     </Card>
+  );
+  const guard = useRoutineGuard();
+  return (
+    <fieldset
+      disabled={guard.dirtyIds.some((id) => id.startsWith("planning-"))}
+      aria-label={`Editor de sesión ${props.session.label}`}
+      className="min-w-0"
+    >
+      {editor}
+    </fieldset>
   );
 }
 function Editor({
@@ -1364,7 +1374,9 @@ function Editor({
                   onClick={() => onRestore(d.id)}
                 >
                   Recuperar{" "}
-                  {new Date(d.updatedAt).toLocaleString("es-CL", { timeZone: "America/Santiago" })}
+                  {new Date(d.updatedAt).toLocaleString("es-CL", {
+                    timeZone: "America/Santiago",
+                  })}
                 </Button>
               ))}
           </details>

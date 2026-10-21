@@ -9,6 +9,7 @@ it("la limpieza incluye formatos desconocidos propios y conserva otras cuentas",
     "is:draft:v99:a:u",
     "is:coach-draft:v1:a:p:s:e",
     "is:program-copy:v1:a:p:c",
+    "is:planning-request:v99:a:p:copy:c",
     "is:draft:v2:ab:s",
     "theme",
     "sb-token",
@@ -20,6 +21,7 @@ it("la limpieza incluye formatos desconocidos propios y conserva otras cuentas",
     "is:draft:v99:a:u",
     "is:coach-draft:v1:a:p:s:e",
     "is:program-copy:v1:a:p:c",
+    "is:planning-request:v99:a:p:copy:c",
   ]);
   expect(hasLocalTraining(localStorage)).toBe(true);
 });

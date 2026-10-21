@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { PageHeading } from "@/components/layout/page-heading";
 import { TemplateLibrary } from "./template-library";
 import { Suspense } from "react";
@@ -20,6 +22,7 @@ export default function ProgramsPage() {
         title="Programas"
         eyebrow="Planifica con intención"
         description="Plantillas de entrenamiento."
+        action={<Button render={<Link href="/coach/programs/adapt" />}>Adaptar una base</Button>}
       />
 
       <section aria-labelledby="new-heading" className="flex flex-col gap-3">

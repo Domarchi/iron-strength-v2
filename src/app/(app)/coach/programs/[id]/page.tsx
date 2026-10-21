@@ -18,7 +18,8 @@ import { createClient } from "@/lib/supabase/server";
 import { addSessionAction, deleteTemplateAction } from "../actions";
 import { ActionForm } from "../action-form";
 import { AssignForm } from "./assign-form";
-import { CopyWeekForm } from "./copy-week-form";
+import { CopyWeeksForm } from "./copy-weeks-form";
+import { z } from "zod";
 import { SessionWorkspace } from "./session-workspace";
 import { SessionEditor } from "./session-editor";
 import { DuplicateProgramForm } from "../duplicate-program-form";
@@ -33,12 +34,29 @@ const shortDate = new Intl.DateTimeFormat("es-CL", {
 });
 const formatDay = (date: string) => shortDate.format(new Date(`${date}T00:00:00Z`));
 
-export default async function ProgramEditorPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProgramEditorPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ alumno?: string }>;
+}) {
   const { id } = await params;
   const db = await createClient();
   const tree = await getProgramTree(db, id);
   if (!tree) notFound();
 
+  const query = await searchParams;
+  const candidate = z.uuid().safeParse(query.alumno);
+  const target = candidate.success
+    ? await db
+        .from("profiles")
+        .select("id,full_name,coach_id")
+        .eq("id", candidate.data)
+        .eq("is_active", true)
+        .maybeSingle()
+    : null;
+  const selectedStudent = target?.data?.coach_id === tree.coachId ? target.data : null;
   const today = santiagoDate(new Date());
   const isTemplate = tree.studentId === null;
   const range: ProgramRange | null =
@@ -94,7 +112,15 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
         <Button
           variant="ghost"
           className="w-fit -ml-3 text-muted-foreground"
-          render={<Link href="/coach/programs" />}
+          render={
+            <Link
+              href={
+                selectedStudent
+                  ? `/coach/programs/adapt?alumno=${selectedStudent.id}`
+                  : "/coach/programs"
+              }
+            />
+          }
         >
           <ArrowLeft aria-hidden /> Programas
         </Button>
@@ -102,6 +128,11 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
           {isTemplate ? "Plantilla" : `Programa de ${studentName}`}
         </p>
         <h1 className="text-xl font-semibold">{tree.name}</h1>
+        {isTemplate && selectedStudent ? (
+          <p className="text-sm font-medium text-primary">
+            Preparando para {selectedStudent.full_name}
+          </p>
+        ) : null}
         <p className="text-sm text-muted-foreground">
           {range
             ? `Del ${formatDay(range.startDate)} al ${formatDay(range.endsOn)} · ${state === "active" ? `semana ${currentWeek} de ${tree.weeksCount}` : state === "scheduled" ? "programado" : "terminado"}`
@@ -109,6 +140,7 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
         </p>
       </header>
       <WeekWorkspace
+        key={tree.id}
         initialWeek={currentWeek ?? 1}
         weeks={weekNumbers.map((week) => ({
           number: week,
@@ -121,25 +153,28 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
         }))}
         tools={
           <div className="space-y-3">
-            <DuplicateProgramForm
-              key={tree.id}
-              userId={tree.coachId}
-              programId={tree.id}
-              name={tree.name}
-            />
+            <CleanEditor>
+              <DuplicateProgramForm
+                key={tree.id}
+                userId={tree.coachId}
+                programId={tree.id}
+                name={tree.name}
+                targetStudentId={selectedStudent?.id}
+              />
+            </CleanEditor>
+            {tree.weeksCount > 1 ? (
+              <CopyWeeksForm key={tree.id} tree={tree} userId={tree.coachId} today={today} />
+            ) : null}
             {isTemplate ? (
-              <details className="rounded-lg border bg-card p-4">
-                <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">
-                  Asignar a un alumno
-                </summary>
-                <div className="pt-3">
-                  <AssignForm
-                    templateId={tree.id}
-                    targets={assignTargets}
-                    defaultStartDate={defaultStartDate(today)}
-                  />
-                </div>
-              </details>
+              <AssignForm
+                key={`${tree.id}:${selectedStudent?.id ?? "none"}`}
+                userId={tree.coachId}
+                tree={tree}
+                targets={assignTargets}
+                defaultStartDate={defaultStartDate(today)}
+                today={today}
+                selectedStudentId={selectedStudent?.id}
+              />
             ) : null}
           </div>
         }
@@ -190,23 +225,6 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
                     </p>
                   ) : null}
                 </div>
-                {editable && weekNumbers.length > 1 ? (
-                  <details className="rounded-md border px-3">
-                    <summary className="min-h-11 cursor-pointer py-3 text-xs font-medium">
-                      Copiar desde otra semana
-                    </summary>
-                    <div className="pb-3">
-                      <CleanEditor>
-                        <CopyWeekForm
-                          programId={tree.id}
-                          toWeek={week}
-                          otherWeeks={weekNumbers.filter((w) => w !== week)}
-                          destinationHasSessions={sessions.length > 0}
-                        />
-                      </CleanEditor>
-                    </div>
-                  </details>
-                ) : null}
               </div>
               {sessions.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-6">

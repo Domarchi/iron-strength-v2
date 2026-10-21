@@ -115,7 +115,8 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await coach.getByLabel("Alumno", { exact: true }).selectOption({ label: STUDENT.name });
   const today = santiagoDate(new Date());
   await coach.getByLabel("Inicio", { exact: true }).fill(mondayOf(today));
-  await coach.getByRole("button", { name: "Asignar" }).click();
+  await coach.getByRole("button", { name: "Revisar asignación", exact: true }).click();
+  await coach.getByRole("button", { name: "Confirmar asignación", exact: true }).click();
   await expect(coach.getByText(`Programa de ${STUDENT.name}`)).toBeVisible();
 
   // --- La alumna entrena su sesión ------------------------------------------------------------------------

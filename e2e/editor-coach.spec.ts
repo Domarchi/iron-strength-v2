@@ -42,11 +42,10 @@ test("copiar y reordenar una semana conserva prescripciones, es accesible y cabe
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /Semana 2/ }).click();
-  await page
-    .getByText("Copiar desde otra semana", { exact: true })
-    .filter({ visible: true })
-    .click();
-  await page.getByRole("button", { name: "Copiar aquí", exact: true }).click();
+  await page.getByText("Copiar semana a varias", { exact: true }).click();
+  await page.getByRole("checkbox", { name: "Semana 2", exact: true }).check();
+  await page.getByRole("button", { name: "Revisar copia", exact: true }).click();
+  await page.getByRole("button", { name: "Confirmar copia de semanas", exact: true }).click();
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("4");
   await expect(visibleField(page, "Peso (kg) de Sentadilla")).toHaveValue("62.5");
   await page.getByRole("button", { name: "Bajar Sentadilla", exact: true }).click();
@@ -682,7 +681,9 @@ test("alternativas exige revisar el conflicto y conserva la prescripción remota
   await other.close();
   await page.getByText("Asignar a un alumno", { exact: true }).click();
   await page.getByLabel("Inicio", { exact: true }).fill(mondayOf(santiagoDate(new Date())));
-  await page.getByRole("button", { name: "Asignar", exact: true }).click();
+  await page.getByLabel("Alumno", { exact: true }).selectOption({ label: `${COACH.name} (yo)` });
+  await page.getByRole("button", { name: "Revisar asignación", exact: true }).click();
+  await page.getByRole("button", { name: "Confirmar asignación", exact: true }).click();
   await expect(page.getByText(`Programa de ${COACH.name}`, { exact: true })).toBeVisible();
   await expect(page.getByText("Alternativa: Zancadas", { exact: true })).toBeVisible();
   await expect(
@@ -930,9 +931,11 @@ test("día sugerido recupera borrador y el coach puede mover su entrenamiento si
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   await page.getByText("Asignar a un alumno", { exact: true }).click();
   await page.getByLabel("Inicio", { exact: true }).fill(mondayOf(santiagoDate(new Date())));
-  await page.getByRole("button", { name: "Asignar", exact: true }).click();
+  await page.getByLabel("Alumno", { exact: true }).selectOption({ label: `${COACH.name} (yo)` });
+  await page.getByRole("button", { name: "Revisar asignación", exact: true }).click();
+  await page.getByRole("button", { name: "Confirmar asignación", exact: true }).click();
   await expect(page.getByText(`Programa de ${COACH.name}`, { exact: true })).toBeVisible();
-  const assignedId = page.url().split("/").at(-1)!;
+  const assignedId = new URL(page.url()).pathname.split("/").at(-1)!;
   await page.goto("/week");
   await expect(page.getByText("Llevas 0 de 1 sesiones", { exact: true })).toBeVisible();
   await page.getByLabel("Cambiar día de sesión A", { exact: true }).click();

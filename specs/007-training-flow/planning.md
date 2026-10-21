@@ -1,0 +1,11 @@
+# Adaptar una base — T177
+
+La entrada «Adaptar una base» permite buscar una plantilla o un programa ya creado y producir una plantilla independiente. Desde la ficha conserva el alumno por parámetro validado y lo vuelve a mostrar en la revisión de asignación. Duplicar nunca modifica el origen ni sus registros.
+
+La copia múltiple recibe semana origen, lista completa de sus sesiones/revisiones y destinos con revisión completa y permiso explícito de reemplazo. Una semana de descarga puede ser origen; solo los destinos deben ser editables. Comparar listas completas detecta también sesiones añadidas o eliminadas. Bloquear programa y sesiones antes de validar todos los destinos; después copiar dentro de una única transacción. Cualquier fallo revierte todos. El reintento con el mismo ID y contenido confirma el resultado anterior.
+
+La asignación revisa alumno, lunes efectivo, fin, sesiones y semanas vacías, y explica programas que se recortan o reemplazan. Sustituir un programa que ya tiene entrenamientos sigue prohibido. La petición lleva instantáneas del origen y de los programas afectados; si cambian, exige otra revisión. Se usa un envoltorio invoker de assign_program, sin ampliar claves administrativas, con bloqueo y recibo para evitar asignaciones repetidas tras perder la respuesta.
+
+Los recibos privados viven en planning_mutations, con RLS, coach, programa origen y alumno destino nullable mediante FK en cascada. Borrar una cuenta también retira los recibos que la mencionan. Las peticiones locales versionadas se separan por cuenta/programa/operación/ID; se releen antes de enviar y solo se retira el intento confirmado o rechazado de manera conocida. Se conservan formatos desconocidos y peticiones inciertas. Copiar/asignar no se habilita mientras haya ediciones del editor pendientes; la propia petición mantiene su reintento habilitado.
+
+La prueba de facilidad conserva el objetivo y conteo de baseline.md. Su base de cuatro semanas tiene las mismas prescripciones, notas y estructura en todas las semanas; así copiar la semana adaptada produce exactamente el mismo resultado que editar los 72 pesos individualmente. El resultado no se generaliza a bases con progresión intencional distinta entre semanas. Se cuentan también las selecciones de sesión, vistas previas y confirmaciones nuevas.

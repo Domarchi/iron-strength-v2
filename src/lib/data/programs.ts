@@ -99,13 +99,19 @@ export type TemplateSummary = ProgramSummary & {
   }[];
 };
 export async function listTemplates(db: Client): Promise<TemplateSummary[]> {
-  const { data, error } = await db
+  return readProgramBases(db, true);
+}
+export async function listProgramBases(db: Client): Promise<TemplateSummary[]> {
+  return readProgramBases(db, false);
+}
+async function readProgramBases(db: Client, templatesOnly: boolean): Promise<TemplateSummary[]> {
+  const query = db
     .from("programs")
     .select(
       "id,name,weeks_count,student_id,start_date,ends_on,program_sessions(title,label,week_number,session_exercises(sets,exercises(name)))",
-    )
-    .is("student_id", null)
-    .order("created_at", { ascending: false });
+    );
+  if (templatesOnly) query.is("student_id", null);
+  const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw new Error(`No se pudieron cargar las plantillas: ${error.message}`);
   return data.map((p) => {
     const sessions = p.program_sessions.map((s) => ({

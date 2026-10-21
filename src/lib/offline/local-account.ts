@@ -9,7 +9,9 @@ export function accountStorageKeys(storage: DraftStorage, userId: string): strin
     const parts = key.split(":");
     if (
       parts[0] === "is" &&
-      ["draft", "coach-draft", "program-copy", "workout-focus"].includes(parts[1]) &&
+      ["draft", "coach-draft", "program-copy", "planning-request", "workout-focus"].includes(
+        parts[1],
+      ) &&
       parts[3] === userId
     )
       keys.push(key);

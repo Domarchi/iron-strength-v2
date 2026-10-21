@@ -12,7 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { duplicateProgramAction } from "./actions";
 const subscribe = () => () => {};
-export function DuplicateProgramForm(props: { userId: string; programId: string; name: string }) {
+export function DuplicateProgramForm(props: {
+  userId: string;
+  programId: string;
+  name: string;
+  targetStudentId?: string;
+  initialOpen?: boolean;
+}) {
   const mounted = useSyncExternalStore(
     subscribe,
     () => true,
@@ -24,10 +30,14 @@ function CopyForm({
   userId,
   programId,
   name,
+  targetStudentId,
+  initialOpen = false,
 }: {
   userId: string;
   programId: string;
   name: string;
+  targetStudentId?: string;
+  initialOpen?: boolean;
 }) {
   const pointerKey = `is:program-copy-tab:${userId}:${programId}`;
   const [request, setRequest] = useState<ProgramCopyDraft | null>(() => {
@@ -78,7 +88,9 @@ function CopyForm({
           } catch {
             /* El recibo permite confirmar la misma copia. */
           }
-          router.push(`/coach/programs/${result.id}`);
+          router.push(
+            `/coach/programs/${result.id}${targetStudentId ? `?alumno=${targetStudentId}` : ""}`,
+          );
           router.refresh();
           return;
         }
@@ -99,7 +111,10 @@ function CopyForm({
     });
   }
   return (
-    <details className="rounded-lg border bg-card p-4" open={request !== null || error !== null}>
+    <details
+      className="rounded-lg border bg-card p-4"
+      open={initialOpen || request !== null || error !== null}
+    >
       <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">
         Duplicar programa
       </summary>

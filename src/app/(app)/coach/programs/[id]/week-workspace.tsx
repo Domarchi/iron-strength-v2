@@ -161,7 +161,7 @@ export function WeekWorkspace({
             {child}
           </div>
         ))}
-        {tools ? <CleanEditor>{tools}</CleanEditor> : null}
+        {tools ?? null}
         {footer ? <CleanEditor>{footer}</CleanEditor> : null}
       </div>
     </RoutineGuard>

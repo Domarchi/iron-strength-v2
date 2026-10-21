@@ -175,6 +175,38 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"planning_mutations": {
+                  Row: {
+                    "coach_id": string,"created_at": string,"id": string,"payload": NonNullable<Json>,"program_id": string,"result": NonNullable<Json>,"student_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "coach_id": string,"created_at"?: string,"id": string,"payload": NonNullable<Json>,"program_id": string,"result": NonNullable<Json>,"student_id"?: string | null
+                  }
+                  Update: {
+                    "coach_id"?: string,"created_at"?: string,"id"?: string,"payload"?: NonNullable<Json>,"program_id"?: string,"result"?: NonNullable<Json>,"student_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "planning_mutations_coach_id_fkey"
+      columns: ["coach_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "planning_mutations_program_id_fkey"
+      columns: ["program_id"]
+isOneToOne: false
+      referencedRelation: "programs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "planning_mutations_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "coach_id": string,"created_at": string,"full_name": string,"id": string,"is_active": boolean,"role": Database["public"]['Enums']["user_role"]
@@ -479,6 +511,9 @@ isOneToOne: false
 "assign_program":
 { Args: { "p_start_date": string,"p_student_id": string,"p_template_id": string }; Returns: string
                            },
+"assign_program_reviewed":
+{ Args: { "p_request": Json,"p_request_id": string,"p_template_id": string }; Returns: string
+                           },
 "auth_email_exists":
 { Args: { "p_email": string }; Returns: boolean
                            },
@@ -493,6 +528,9 @@ isOneToOne: false
                            },
 "copy_program_week":
 { Args: { "p_from": number,"p_program_id": string,"p_replace"?: boolean,"p_to": number }; Returns: number
+                           },
+"copy_program_weeks":
+{ Args: { "p_program_id": string,"p_request": Json,"p_request_id": string }; Returns: number
                            },
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -524,8 +562,17 @@ isOneToOne: false
 "mutate_routine_session":
 { Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string,"p_title"?: string,"p_weekday"?: number }; Returns: number
                            },
+"planning_assignment_snapshot":
+{ Args: { "p_end_date": string,"p_start_date": string,"p_student_id": string }; Returns: Json
+                           },
 "record_login_failure":
 { Args: { "p_email_hash": string }; Returns: undefined
+                           },
+"routine_program_snapshot":
+{ Args: { "p_program_id": string }; Returns: Json
+                           },
+"routine_week_snapshot":
+{ Args: { "p_program_id": string,"p_week": number }; Returns: Json
                            },
 "save_workout":
 { Args: { "p_workout": Json }; Returns: Json

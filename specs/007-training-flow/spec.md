@@ -21,6 +21,8 @@ Conservar Azul atleta y sus contrastes. Aplicar jerarquía consistente a histori
 - Adaptar desde plantilla o programa previo crea plantilla independiente. Mantener alumno de origen desde ficha hasta asignación. Copiar semana a varios destinos con vista previa del origen, destinos y reemplazos; todos editables y verificados dentro de una transacción con ID estable y revisiones. Cualquier conflicto/fallo no modifica ningún destino. Reemplazar exige acción explícita. Revisar alumno, lunes efectivo, fechas, sesiones y semanas vacías antes de asignar.
 - Plantillas completas editables. En programas activos, solo semanas posteriores a la actual. No modificación automática de cargas ni programas.
 
+Detalles de revisión y persistencia en planning.md; protocolo ejecutado de 40 acciones y sus límites en benchmark.md.
+
 ## Prescripción por serie
 
 Añadir extensión nullable de lista ordenada a ejercicios y alternativas; `prescribed.series` opcional. Cada serie de trabajo tiene repsMin, repsMax y targetWeightKg nullable. Ausente conserva modo simple y contratos históricos. Cantidad 1–10, reps 1–100, mínimo ≤ máximo, peso 0–500 con precisión actual; cantidad de lista coincide con sets. Descansos siguen por ejercicio/grupo. Calentamientos del alumno no consumen índices de trabajo prescritos.
