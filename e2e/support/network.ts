@@ -9,6 +9,7 @@ type Network = {
   offline: boolean;
   blocked: Set<string>;
   lostResponses: Set<string>;
+  stopAfterLoss: Set<string>;
   holds: Map<string, Promise<void>>;
 };
 export const test = base.extend<{ network: Network }>({
@@ -18,12 +19,18 @@ export const test = base.extend<{ network: Network }>({
       offline: false,
       blocked: new Set(),
       lostResponses: new Set(),
+      stopAfterLoss: new Set(),
       holds: new Map(),
     };
     const server = createServer(async (req, res) => {
       const path = new URL(req.url ?? "/", "http://localhost").pathname;
       if (network.offline || network.blocked.has(path)) {
-        req.socket.destroy();
+        // Una respuesta fallida cerrada evita que WebKit deje fetch pendiente al cerrar
+        // la última página. Nunca se reenvía a la API real durante el corte.
+        if (path.startsWith("/api/")) {
+          res.writeHead(503, { "Content-Type": "application/json", Connection: "close" });
+          res.end(JSON.stringify({ error: "Isolated network unavailable" }));
+        } else req.socket.destroy();
         return;
       }
       if (req.method === "POST") await network.holds.get(path);
@@ -39,7 +46,10 @@ export const test = base.extend<{ network: Network }>({
         (response) => {
           if (lose) {
             response.resume();
-            response.on("end", () => req.socket.destroy());
+            response.on("end", () => {
+              if (network.stopAfterLoss.delete(path)) network.blocked.add(path);
+              req.socket.destroy();
+            });
           } else {
             res.writeHead(response.statusCode ?? 502, response.headers);
             response.pipe(res);

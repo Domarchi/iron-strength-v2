@@ -120,6 +120,7 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
   await expect(panel).toContainText("Entrené sin conexión.");
   await pending.close();
   network.lostResponses.add("/api/workouts/sync");
+  network.stopAfterLoss.add("/api/workouts/sync");
   network.offline = false;
   const restored = await context.newPage();
   await restored.goto("/offline");
@@ -127,10 +128,17 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
     name: "Sincronización de entrenamientos",
     exact: true,
   });
+  await expect
+    .poll(() => network.blocked.has("/api/workouts/sync"), { timeout: 30_000 })
+    .toBe(true);
+  await expect(
+    restoredPanel.getByRole("button", { name: "Sincronizar ahora", exact: true }),
+  ).toBeEnabled({ timeout: 30_000 });
   await expect(restoredPanel).toContainText("No hay conexión con el servidor", {
     timeout: 30_000,
   });
   expect((await queue(restored))[0].payload).toEqual(frozen.payload);
+  expect(network.blocked.delete("/api/workouts/sync")).toBe(true);
   await restored.reload();
   await expect(
     restored
