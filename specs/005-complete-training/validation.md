@@ -225,3 +225,15 @@ Tests primero; check completo en verde (392 pruebas), 320 comprobaciones SQL y 2
 
 - Suite completa afectada por el fixture de red: 16/16 casos en Chromium y WebKit aprobados, sin reintentos (t166-all-offline-transport-validation.log). La reproducción previa aprobó los 26 casos restantes del archivo móvil y la variante WebKit de T156; T156 ahora vive en su archivo de transporte y está cubierto por las 12 repeticiones y la suite de 16. No se cambió código del producto.
 - Check final de la corrección del transporte completo en verde: formato, lint, tipos, 458 unitarias y build (t166-final-transport-check.log). No se modificaron migraciones ni archivos del producto.
+
+- CI 39536793610 de 70a2e41 vuelve a fallar en la repetición T161 de WebKit, antes de la suite completa: permanece Guardando al finalizar offline. Código/build y base/integración están verdes. No se promovió el build.
+- Reproducción local restringiendo Node/Next/WebKit a dos CPU: diez repeticiones T161, 10/10 aprobadas sin reintentos (t166-webkit-two-cpu.log). Los logs confirman Ubuntu 24.04 en ambos runners remotos; no se atribuye el fallo al aviso de futura migración a Ubuntu 26.
+- Se añaden diagnósticos de rutas/resultados de la API aislada y estados de apertura/transacción IndexedDB, visibilidad y worker. No registran payload, valores almacenados, cookies, cabeceras o credenciales. Sirven para distinguir almacenamiento pendiente de una petición de red que no termina.
+
+### Actualización del motor E2E
+
+- Playwright estaba fijado por lock a 1.63.0, con WebKit 26.6 r2359. Existe una regresión documentada de almacenamiento al reutilizar procesos de service worker ([Playwright #42694](https://github.com/microsoft/playwright/issues/42694), [WebKit #74082](https://github.com/WebKit/WebKit/pull/74082)). Su firma coincide con el bloqueo observado; se trata como hipótesis hasta comprobar el circuito remoto. No se desactiva el worker ni se omite el caso.
+- Actualización menor a Playwright 1.64.1, versión exacta y lockfile; Chromium 156.0.8078.4 y WebKit 27.2 r2370 arrancan localmente. Solo cambian los tres paquetes de Playwright. Bibliotecas auxiliares locales enlazadas al runtime descargado, sin instalación global. Check completo: formato/lint/tipos, 458 unitarias y build aprobados (t166-playwright-164-check.log). Regresión y suite completa pendientes con el motor nuevo.
+- npm audit --omit=dev: cero avisos. El audit completo informa nueve avisos de la cadena de herramientas de desarrollo que usa braces; son dependencias preexistentes y no se ejecuta la sugerencia de cambios mayores/downgrades de npm audit fix --force. La actualización de Playwright no modifica esa cadena.
+
+- Con Playwright 1.64.1: 12/12 repeticiones de respuestas perdidas en Chromium/WebKit aprobadas, sin reintentos (t166-playwright-164-regression.log). Se conserva la misma lógica de aplicación y las mismas comprobaciones. La suite completa local y CI se ejecutarán con este commit antes de promoverlo.
