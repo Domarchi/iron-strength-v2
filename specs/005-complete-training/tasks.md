@@ -25,5 +25,5 @@ Ejecutar en orden. Marcar solo con verificación registrada en validation.md.
 - [x] **T162 · Actualizaciones y cuentas**
 - [x] **T163 · Consistencia visual**
 - [x] **T164 · Validación completa**
-- [ ] **T165 · Preparación de publicación** — CI, documentación y restauración local verificados; falta verificar el proyecto Supabase remoto. El usuario aprobó reemplazar la versión existente en Vercel iron-strength.
-- [ ] **T166 · Publicación y prueba final** — pendiente de acceso/destino remoto y aceptación en teléfonos físicos.
+- [ ] **T165 · Preparación de publicación** — CI, documentación y restauración local verificados; respaldo e inspección remotos verificados; CI completo en verde; caducidad de recuperación pendiente. El usuario aprobó reemplazar la versión existente en Vercel iron-strength.
+- [ ] **T166 · Publicación y prueba final** — destinos y acceso Supabase confirmados; servicio saludable; primer build bloqueado por correo Git local, publicación y aceptación en teléfonos físicos pendientes.
