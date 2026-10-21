@@ -29,23 +29,33 @@ export function SessionStart({
     subscribe,
     () => {
       try {
-        return (
-          listDrafts(window.localStorage, userId).find((d) => d.plannedSessionId === sessionId)
-            ?.status ?? "new"
+        const found = listDrafts(window.localStorage, userId).find(
+          (d) => d.plannedSessionId === sessionId,
         );
+        return found ? `${found.status}:${found.workoutId}` : "new";
       } catch {
         return "new";
       }
     },
     () => "new",
   );
-  const label =
-    status === "in_progress" ? "Retomar" : status === "pending_save" ? "Recuperar" : "Empezar";
+  const [phase, workoutId] = status.split(":");
+  if (phase === "pending_save")
+    return (
+      <Button
+        variant="ghost"
+        className={featured ? "mt-4 w-full" : "px-1"}
+        render={<a href={`#pending-${workoutId}`} />}
+      >
+        Ver envío pendiente
+      </Button>
+    );
+  const label = phase === "in_progress" ? "Retomar" : "Empezar";
   return (
     <div className={featured ? "mt-4" : undefined}>
       {status !== "new" ? (
         <p className={`mb-2 text-xs ${featured ? "text-blue-100" : "text-muted-foreground"}`}>
-          {status === "in_progress"
+          {phase === "in_progress"
             ? "En curso · guardado en este dispositivo"
             : "Terminada · pendiente de enviar"}
         </p>

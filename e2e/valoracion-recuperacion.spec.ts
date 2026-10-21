@@ -64,7 +64,7 @@ test("esfuerzo y nota se recuperan y se guardan una sola vez tras perder la resp
   await expect(
     page
       .getByRole("region", { name: "Entrenamiento pendiente de guardar" })
-      .getByText("Entrenamiento pendiente de sincronizar", { exact: true }),
+      .getByText("Pendiente de enviar", { exact: true }),
   ).toBeVisible({ timeout: 30_000 });
   expect(network.lostResponses.has("/api/workouts/sync")).toBe(false);
   expect(network.blocked.delete("/api/workouts/sync")).toBe(true);

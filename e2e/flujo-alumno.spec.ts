@@ -171,3 +171,136 @@ test("el bloque de superserie conserva ronda, siguiente y descanso al recargar",
     "100",
   );
 });
+
+test("el cierre explica pendientes y solo confirma el envío después del servidor", async ({
+  page,
+}) => {
+  await resetAll();
+  const coachId = await seedCoach();
+  await seedProgram({ coachId, studentId: coachId });
+  await login(page, COACH.email, COACH.password);
+  await page.goto("/week");
+  await page.getByRole("button", { name: "Empezar", exact: true }).click();
+  await page.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("60");
+  await page
+    .getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Terminar entrenamiento", exact: true }).click();
+  const closing = page.getByRole("alertdialog", {
+    name: "Confirmar el fin del entrenamiento",
+    exact: true,
+  });
+  await expect(closing.getByRole("list", { name: "Series por ejercicio" })).toContainText(
+    "Sentadilla: 1 hecha · 2 pendientes",
+  );
+  await expect(closing).toContainText("Press de banca: 0 hechas · 3 pendientes");
+  await page.route("**/api/workouts/sync", (route) =>
+    route.fulfill({
+      status: 403,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: false, reason: "forbidden" }),
+    }),
+  );
+  await closing.getByRole("button", { name: "Sí, finalizar", exact: true }).click();
+  await expect(
+    page.getByRole("region", { name: "Entrenamiento pendiente de guardar", exact: true }),
+  ).toContainText("Pendiente de enviar");
+  await expect(page.getByText("Tu coach ya puede ver cómo te fue.")).toHaveCount(0);
+  await page.getByRole("button", { name: "Volver a Mi semana", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Sincronización de entrenamientos", exact: true });
+  await expect(panel).toContainText("Tu cuenta no tiene permiso");
+  await expect(page.locator("[data-pending-workout]")).toHaveCount(1);
+  await expect(
+    page.getByRole("region", { name: "Entrenamientos en este dispositivo", exact: true }),
+  ).toHaveCount(0);
+  await page.unroute("**/api/workouts/sync");
+  await expect(panel.getByRole("button", { name: "Sincronizar ahora", exact: true })).toBeEnabled();
+  await panel.getByRole("button", { name: "Sincronizar ahora", exact: true }).click();
+  await expect(panel.getByRole("status")).toContainText("Entrenamiento sincronizado.");
+  await expect(page.locator("[data-pending-workout]")).toHaveCount(0);
+  await panel.getByRole("link", { name: "Ver entrenamiento", exact: true }).click();
+  await expect(page.getByText("Tu coach ya puede ver cómo te fue.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Volver a mi semana", exact: true })).toBeVisible();
+  const saved = await admin().from("workouts").select("id").eq("student_id", coachId);
+  expect(saved.data).toHaveLength(1);
+});
+
+test("Retomar tiene prioridad aunque el borrador sea de otra sesión de la semana", async ({
+  page,
+}) => {
+  await resetAll();
+  const coachId = await seedCoach();
+  const seeded = await seedProgram({ coachId, studentId: coachId });
+  const session = await admin()
+    .from("program_sessions")
+    .insert({ program_id: seeded.programId, week_number: 1, label: "B", position: 1 })
+    .select("id")
+    .single();
+  expect(session.error).toBeNull();
+  expect(
+    (
+      await admin()
+        .from("session_exercises")
+        .insert({
+          program_session_id: session.data!.id,
+          exercise_id: seeded.exercises.get("Sentadilla")!,
+          position: 0,
+          sets: 2,
+          reps_min: 8,
+          reps_max: 12,
+        })
+    ).error,
+  ).toBeNull();
+  await login(page, COACH.email, COACH.password);
+  await page.goto(`/workout/${session.data!.id}`);
+  await page.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("55");
+  await page.getByRole("button", { name: /Volver a Mi semana/ }).click();
+  const hero = page.getByRole("region", { name: "Próxima sesión", exact: true });
+  await expect(hero).toContainText("Sesión B");
+  await expect(hero.getByRole("button", { name: "Retomar", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retomar", exact: true })).toHaveCount(1);
+});
+
+test("si IndexedDB falla el pendiente local sigue siendo revisable y se puede enviar con conexión", async ({
+  page,
+}) => {
+  await resetAll();
+  const coachId = await seedCoach();
+  const seeded = await seedProgram({ coachId, studentId: coachId });
+  await page.addInitScript(() => {
+    Object.defineProperty(IDBFactory.prototype, "open", {
+      configurable: true,
+      value() {
+        throw new DOMException("Almacenamiento no disponible", "InvalidStateError");
+      },
+    });
+  });
+  await login(page, COACH.email, COACH.password);
+  await page.goto(`/workout/${seeded.sessionId}`);
+  await page.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("60");
+  await page
+    .getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla", exact: true })
+    .click();
+  await page.route("**/api/workouts/sync", (route) =>
+    route.fulfill({
+      status: 403,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: false, reason: "forbidden" }),
+    }),
+  );
+  await page.getByRole("button", { name: "Terminar entrenamiento", exact: true }).click();
+  await page.getByRole("button", { name: "Sí, finalizar", exact: true }).click();
+  await expect(
+    page.getByRole("region", { name: "Entrenamiento pendiente de guardar", exact: true }),
+  ).toContainText("Pendiente de enviar");
+  await page.getByRole("button", { name: "Volver a Mi semana", exact: true }).click();
+  const pending = page.locator("[data-pending-workout]");
+  await expect(pending).toHaveCount(1);
+  await expect(pending).toContainText("guardado en este dispositivo");
+  await page.unroute("**/api/workouts/sync");
+  await pending.getByRole("button", { name: "Revisar envío", exact: true }).click();
+  await expect(page.getByText("¡Entrenamiento guardado!", { exact: true })).toBeVisible();
+  expect((await admin().from("workouts").select("id").eq("student_id", coachId)).data).toHaveLength(
+    1,
+  );
+});

@@ -25,13 +25,21 @@ function snapshot(userId: string): string {
   }
 }
 
-export function PendingWorkouts({ userId }: { userId: string }) {
+export function PendingWorkouts({
+  userId,
+  visibleSessionIds = [],
+}: {
+  userId: string;
+  visibleSessionIds?: string[];
+}) {
   const raw = useSyncExternalStore(
     subscribe,
     () => snapshot(userId),
     () => "[]",
   );
-  const drafts = JSON.parse(raw) as WorkoutDraft[];
+  const drafts = (JSON.parse(raw) as WorkoutDraft[])
+    .filter((d) => d.status === "in_progress" && !visibleSessionIds.includes(d.plannedSessionId))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   if (drafts.length === 0) return null;
   return (
     <section

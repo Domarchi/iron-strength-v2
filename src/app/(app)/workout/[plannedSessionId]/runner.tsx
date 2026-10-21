@@ -42,6 +42,7 @@ import { ExerciseHistoryPanel } from "./exercise-history-panel";
 import { substituteExercise } from "@/lib/workout/substitution";
 import { ExerciseCard } from "./exercise-card";
 import { RestBar } from "./rest-bar";
+import { finishExerciseOverview } from "@/lib/workout/local-summary";
 import { focusedExerciseIds, readWorkoutFocus, rememberWorkoutFocus } from "@/lib/workout/focus";
 
 function storage(): DraftStorage | undefined {
@@ -532,7 +533,7 @@ function ActiveWorkoutRunner({
         <Card role="region" aria-label="Entrenamiento pendiente de guardar">
           <CardHeader>
             <CardTitle className="text-lg">
-              {saving ? "Guardando entrenamiento…" : "Entrenamiento pendiente de sincronizar"}
+              {saving ? "Enviando entrenamiento…" : "Pendiente de enviar"}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
@@ -870,6 +871,21 @@ function ActiveWorkoutRunner({
           <p className="text-sm text-muted-foreground">
             Volumen de trabajo: {formatKg(volume.loadKg)}
           </p>
+          <ul aria-label="Series por ejercicio" className="divide-y rounded-xl border px-3">
+            {finishExerciseOverview(draft).map((row, index) => (
+              <li key={index} className="py-2 text-sm">
+                {row.name}:{" "}
+                {row.skipped
+                  ? "Saltado"
+                  : `${row.completed} ${row.completed === 1 ? "hecha" : "hechas"} · ${row.pending} ${row.pending === 1 ? "pendiente" : "pendientes"}`}
+              </li>
+            ))}
+          </ul>
+          {summary.doneSets < summary.totalSets ? (
+            <p className="text-sm text-muted-foreground">
+              Se guardan las series realizadas. Las pendientes no se registrarán como completadas.
+            </p>
+          ) : null}
           {draft.exercises
             .filter(
               (e) =>

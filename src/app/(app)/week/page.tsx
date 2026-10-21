@@ -28,75 +28,90 @@ async function WeekContent() {
     getStreakSummary(db, user.id, today),
   ]);
 
-  switch (view.kind) {
-    case "no_program":
-      return (
-        <EmptyState title="Todavía no tienes un programa asignado.">
-          {user.role === "coach"
-            ? "Asígnate una plantilla desde Programas para empezar a entrenar."
-            : "Habla con tu coach para que te asigne uno."}
-          <div className="mt-3">
-            <Button
-              variant="outline"
-              render={<Link href={user.role === "coach" ? "/coach/programs" : "/history"} />}
-            >
-              {user.role === "coach" ? "Elegir un programa" : "Ver mi historial"}
-            </Button>
-          </div>
-        </EmptyState>
-      );
+  const content = (() => {
+    switch (view.kind) {
+      case "no_program":
+        return (
+          <EmptyState title="Todavía no tienes un programa asignado.">
+            {user.role === "coach"
+              ? "Asígnate una plantilla desde Programas para empezar a entrenar."
+              : "Habla con tu coach para que te asigne uno."}
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                render={<Link href={user.role === "coach" ? "/coach/programs" : "/history"} />}
+              >
+                {user.role === "coach" ? "Elegir un programa" : "Ver mi historial"}
+              </Button>
+            </div>
+          </EmptyState>
+        );
 
-    case "scheduled":
-      return (
-        <Card>
-          <CardContent className="flex flex-col gap-1 pt-6">
-            <p className="font-medium">{view.program.name}</p>
-            <p className="text-sm text-muted-foreground">
-              Tu programa empieza el {fmt(view.program.startDate)}.
-            </p>
-            <Button
-              className="mt-3 self-start"
-              variant="outline"
-              render={<Link href="/progress" />}
-            >
-              Ver mi progreso
-            </Button>
-          </CardContent>
-        </Card>
-      );
+      case "scheduled":
+        return (
+          <Card>
+            <CardContent className="flex flex-col gap-1 pt-6">
+              <p className="font-medium">{view.program.name}</p>
+              <p className="text-sm text-muted-foreground">
+                Tu programa empieza el {fmt(view.program.startDate)}.
+              </p>
+              <Button
+                className="mt-3 self-start"
+                variant="outline"
+                render={<Link href="/progress" />}
+              >
+                Ver mi progreso
+              </Button>
+            </CardContent>
+          </Card>
+        );
 
-    case "finished":
-      return (
-        <Card>
-          <CardContent className="flex flex-col gap-1 pt-6">
-            <p className="font-medium">Terminaste “{view.program.name}”. ¡Buen trabajo!</p>
-            <p className="text-sm text-muted-foreground">
-              Cuando tu coach te asigne el siguiente programa, aparecerá aquí.
-            </p>
-            <Button
-              className="mt-3 self-start"
-              variant="outline"
-              render={<Link href="/week/summary" />}
-            >
-              Revisar mi semana
-            </Button>
-          </CardContent>
-        </Card>
-      );
+      case "finished":
+        return (
+          <Card>
+            <CardContent className="flex flex-col gap-1 pt-6">
+              <p className="font-medium">Terminaste “{view.program.name}”. ¡Buen trabajo!</p>
+              <p className="text-sm text-muted-foreground">
+                Cuando tu coach te asigne el siguiente programa, aparecerá aquí.
+              </p>
+              <Button
+                className="mt-3 self-start"
+                variant="outline"
+                render={<Link href="/week/summary" />}
+              >
+                Revisar mi semana
+              </Button>
+            </CardContent>
+          </Card>
+        );
 
-    case "active":
-      return (
-        <>
-          <WeekOverview userId={user.id} view={view} today={today} streak={streak} />
-          <DownloadWeek
-            key={`${user.id}:${view.program.id}:${view.weekStart}`}
-            userId={user.id}
-            programId={view.program.id}
-            weekStart={view.weekStart}
-          />
-        </>
-      );
-  }
+      case "active":
+        return (
+          <>
+            <WeekOverview userId={user.id} view={view} today={today} streak={streak} />
+            <DownloadWeek
+              key={`${user.id}:${view.program.id}:${view.weekStart}`}
+              userId={user.id}
+              programId={view.program.id}
+              weekStart={view.weekStart}
+            />
+          </>
+        );
+    }
+  })();
+  return (
+    <>
+      <PendingWorkouts
+        userId={user.id}
+        visibleSessionIds={
+          view.kind === "active"
+            ? view.sessions.filter((s) => s.status !== "done").map((s) => s.sessionId)
+            : []
+        }
+      />
+      {content}
+    </>
+  );
 }
 
 // El coach entrena como un alumno más (DC-22): desde aquí llega a su historial, progreso y medidas.
@@ -118,11 +133,6 @@ async function CoachTrainingLinks() {
   );
 }
 
-async function RecoveryLinks() {
-  const user = await requireUser();
-  return <PendingWorkouts userId={user.id} />;
-}
-
 export default function WeekPage() {
   return (
     <div className="week-page flex flex-col gap-4">
@@ -142,9 +152,6 @@ export default function WeekPage() {
           </Link>
         }
       />
-      <Suspense fallback={null}>
-        <RecoveryLinks />
-      </Suspense>
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <WeekContent />
       </Suspense>

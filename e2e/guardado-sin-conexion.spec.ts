@@ -101,7 +101,7 @@ test("sin conexión al finalizar: el entrenamiento queda a salvo y se guarda una
   await page.getByRole("button", { name: "Finalizar entrenamiento" }).click();
   await page.getByRole("button", { name: "Sí, finalizar" }).click();
 
-  await expect(page.getByText("Entrenamiento pendiente de sincronizar")).toBeVisible();
+  await expect(page.getByText("Pendiente de enviar")).toBeVisible();
   await expect(page.getByText(/No hay conexión con el servidor/)).toBeVisible();
   const { count: beforeRetry } = await admin()
     .from("workouts")

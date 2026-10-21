@@ -94,9 +94,7 @@ test("cerrar sesión exige resolver pendientes, sincroniza y limpia solo esa cue
   network.blocked.add("/api/workouts/sync");
   await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Sí, finalizar", exact: true }).click();
-  await expect(
-    page.getByText("Entrenamiento pendiente de sincronizar", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Pendiente de enviar", { exact: true })).toBeVisible();
   const other = crypto.randomUUID();
   await page.evaluate(async (other) => {
     localStorage.setItem(`is:draft:v99:${other}:session`, "Unknown future data");

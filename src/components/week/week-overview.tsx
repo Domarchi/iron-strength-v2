@@ -1,3 +1,7 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { listDrafts } from "@/lib/workout/draft";
 import { orderScheduledSessions, scheduleState, WEEKDAYS } from "@/domain/session-schedule";
 import { SessionStart } from "./session-start";
 import { RoutinePreview } from "./routine-preview";
@@ -11,6 +15,17 @@ import { WeekStrip } from "./week-strip";
 import { buildWeekStrip, nextPendingSession } from "@/domain/week-strip";
 import type { WeekSession, WeekView } from "@/lib/data/week";
 import { cn } from "@/lib/utils";
+
+function subscribeDrafts(notify: () => void) {
+  window.addEventListener("storage", notify);
+  window.addEventListener("focus", notify);
+  window.addEventListener("offline-queue", notify);
+  return () => {
+    window.removeEventListener("storage", notify);
+    window.removeEventListener("focus", notify);
+    window.removeEventListener("offline-queue", notify);
+  };
+}
 
 const day = new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", timeZone: "UTC" });
 const fmt = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
@@ -140,7 +155,28 @@ export function WeekOverview({
   streak: { current: number; longest: number };
 }) {
   const scheduled = orderScheduledSessions(view.sessions);
-  const next = nextPendingSession(scheduled);
+  const resumeId = useSyncExternalStore(
+    subscribeDrafts,
+    () => {
+      try {
+        return (
+          listDrafts(window.localStorage, userId)
+            .filter(
+              (d) =>
+                d.status === "in_progress" &&
+                view.sessions.some(
+                  (s) => s.status !== "done" && s.sessionId === d.plannedSessionId,
+                ),
+            )
+            .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.plannedSessionId ?? ""
+        );
+      } catch {
+        return "";
+      }
+    },
+    () => "",
+  );
+  const next = scheduled.find((s) => s.sessionId === resumeId) ?? nextPendingSession(scheduled);
   const percent =
     view.compliance.planned > 0
       ? Math.round((view.compliance.done / view.compliance.planned) * 100)

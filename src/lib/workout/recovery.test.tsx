@@ -85,7 +85,7 @@ describe("pantalla de recuperación sin iniciar una sesión antigua", () => {
     await act(() =>
       root.render(<WorkoutRunner userId="student-1" context={context} recoveryOnly />),
     );
-    expect(container.textContent).toContain("Entrenamiento pendiente de sincronizar");
+    expect(container.textContent).toContain("Pendiente de enviar");
     expect(sendWorkout).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem(draftKey("student-1", "session-1"))).not.toBeNull();
     const retry = [...container.querySelectorAll("button")].find(

@@ -174,6 +174,7 @@ export default async function WorkoutDetailPage({
       <CommentsSection workoutId={workout.id} comments={comments} viewerRole={user.role} />
 
       <div className="flex flex-wrap gap-2">
+        {nuevo && own ? <Button render={<Link href="/week" />}>Volver a mi semana</Button> : null}
         <Button variant="outline" render={<Link href={own ? "/history" : "/coach/students"} />}>
           Volver
         </Button>

@@ -88,9 +88,9 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
     .getByRole("button", { name: "Marcar como hecha la serie 1 de Prensa de piernas", exact: true })
     .click();
   await finish(offline);
-  await expect(
-    offline.getByText("Entrenamiento pendiente de sincronizar", { exact: true }),
-  ).toBeVisible({ timeout: 30_000 });
+  await expect(offline.getByText("Pendiente de enviar", { exact: true })).toBeVisible({
+    timeout: 30_000,
+  });
   const frozen = (await queue(offline))[0];
   expect(
     await offline.evaluate(
@@ -184,9 +184,7 @@ test("sesión expirada y rechazo conservan la cola; otra cuenta no puede enviarl
     .click();
   network.blocked.add("/api/workouts/sync");
   await finish(page);
-  await expect(
-    page.getByText("Entrenamiento pendiente de sincronizar", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Pendiente de enviar", { exact: true })).toBeVisible();
   const frozen = (await queue(page))[0];
   network.blocked.delete("/api/workouts/sync");
   await context.clearCookies();

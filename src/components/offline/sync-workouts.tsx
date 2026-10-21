@@ -6,6 +6,8 @@ import { formatKg } from "@/domain/format";
 import { Button } from "@/components/ui/button";
 import { listQueuedWorkouts } from "@/lib/offline/queue";
 import { ingestPendingDrafts, syncAllWorkouts } from "@/lib/offline/sync";
+import { listDrafts } from "@/lib/workout/draft";
+import { pendingWorkoutEntries } from "@/lib/workout/local-summary";
 import type { QueueEntry } from "@/lib/offline/queue-contract";
 export function SyncWorkouts({
   userId,
@@ -25,8 +27,21 @@ export function SyncWorkouts({
     mounted = useRef(false);
   const refresh = useCallback(async () => {
     try {
-      const values = await listQueuedWorkouts(userId);
-      if (mounted.current) setEntries(values);
+      let values: QueueEntry[] = [];
+      try {
+        values = await listQueuedWorkouts(userId);
+      } catch {
+        if (mounted.current)
+          setError("No se pudo leer la cola. Conservamos los borradores de este dispositivo.");
+      }
+      const merged = pendingWorkoutEntries(
+        userId,
+        values,
+        listDrafts(localStorage, userId),
+        [],
+        new Date(),
+      );
+      if (mounted.current) setEntries(merged);
     } catch {
       if (mounted.current)
         setError("No se pudieron leer los entrenamientos pendientes. Sus datos se conservan.");
@@ -63,18 +78,8 @@ export function SyncWorkouts({
     if (focus) return;
     mounted.current = true;
     const open = async () => {
-      try {
-        await ingestPendingDrafts(userId);
-        await refresh();
-        if (navigator.onLine) await synchronize();
-      } catch (e) {
-        if (mounted.current)
-          setError(
-            e instanceof Error
-              ? e.message
-              : "No se pudieron incorporar los registros pendientes. Sus borradores se conservan.",
-          );
-      }
+      await refresh();
+      if (navigator.onLine) await synchronize();
     };
     const retry = () => {
       void synchronize();
@@ -93,7 +98,8 @@ export function SyncWorkouts({
       window.removeEventListener("focus", changed);
     };
   }, [focus, synchronize, refresh, userId]);
-  if (focus || (!entries.length && !error && !completed.length)) return null;
+  const pendingEntries = entries.filter((entry) => !completed.includes(entry.workoutId));
+  if (focus || (!pendingEntries.length && !error && !completed.length)) return null;
   return (
     <section
       aria-label="Sincronización de entrenamientos"
@@ -116,22 +122,43 @@ export function SyncWorkouts({
               Ver entrenamiento{completed.length > 1 ? ` ${i + 1}` : ""}
             </a>
           ))}
+          <a
+            href="/week"
+            className="inline-flex min-h-11 items-center px-2 font-medium text-primary underline"
+          >
+            Volver a mi semana
+          </a>
         </div>
       )}
       {error && <StatusMessage error>{error}</StatusMessage>}
-      {entries.length > 0 && (
+      {pendingEntries.length > 0 && (
         <>
           <p className="text-sm text-muted-foreground">
-            {entries.length} pendientes. Se reintentan al abrir la app o recuperar conexión mientras
-            está abierta.
+            {pendingEntries.length} pendientes. Se reintentan al abrir la app o recuperar conexión
+            mientras está abierta.
           </p>
           <ul className="space-y-3">
-            {entries.map((entry) => (
-              <li key={entry.workoutId} className="border-t pt-3">
+            {pendingEntries.map((entry) => (
+              <li
+                key={entry.workoutId}
+                id={`pending-${entry.workoutId}`}
+                data-pending-workout={entry.workoutId}
+                className="scroll-mt-24 border-t pt-3"
+              >
+                <p className="mb-1 text-xs font-semibold text-primary">
+                  Pendiente de enviar · guardado en este dispositivo
+                </p>
                 <p className="font-medium">
                   Sesión {entry.payload.sessionLabel} · {entry.payload.sets.length} series
                 </p>
                 {entry.error && <p className="mt-1 text-sm text-destructive">{entry.error}</p>}
+                <Button
+                  variant="ghost"
+                  className="mt-1"
+                  render={<a href={`/workout/${entry.payload.programSessionId}`} />}
+                >
+                  Revisar envío
+                </Button>
                 <details className="mt-2 text-sm">
                   <summary className="min-h-11 cursor-pointer py-3 font-medium">
                     Ver registro pendiente
@@ -162,7 +189,7 @@ export function SyncWorkouts({
           </ul>
         </>
       )}
-      {(entries.length > 0 || error) && (
+      {(pendingEntries.length > 0 || error) && (
         <Button variant="outline" disabled={busy} onClick={() => void synchronize()}>
           {busy ? "Sincronizando…" : "Sincronizar ahora"}
         </Button>

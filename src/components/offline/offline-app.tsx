@@ -138,14 +138,24 @@ function AccountWeeks({ userId }: { userId: string }) {
                 <p className="text-sm text-muted-foreground">
                   {s.context.exercises.map((e) => e.name).join(" · ")}
                 </p>
-                <Button
-                  className="self-start"
-                  variant="outline"
-                  disabled={!available && !draft}
-                  onClick={() => start(s.context.session.id, p)}
-                >
-                  {draft ? "Retomar" : "Iniciar"} sesión {s.context.session.label}
-                </Button>
+                {draft?.status === "pending_save" ? (
+                  <Button
+                    className="self-start"
+                    variant="outline"
+                    render={<a href={`#pending-${draft.workoutId}`} />}
+                  >
+                    Ver envío pendiente
+                  </Button>
+                ) : (
+                  <Button
+                    className="self-start"
+                    variant="outline"
+                    disabled={!available && !draft}
+                    onClick={() => start(s.context.session.id, p)}
+                  >
+                    {draft ? "Retomar" : "Iniciar"} sesión {s.context.session.label}
+                  </Button>
+                )}
                 {!available && !draft && (
                   <p className="text-xs text-muted-foreground">
                     Solo se puede iniciar durante su semana vigente.
