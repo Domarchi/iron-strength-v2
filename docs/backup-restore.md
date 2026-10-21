@@ -13,6 +13,7 @@ umask 077
 mkdir -p ../backups/iron-strength-release
 npx supabase db dump --linked --role-only -f ../backups/iron-strength-release/roles.sql
 npx supabase db dump --linked -f ../backups/iron-strength-release/schema.sql
+npx supabase db dump --linked --schema auth,storage,extensions -f ../backups/iron-strength-release/managed-schema.sql
 npx supabase db dump --linked --data-only --use-copy -x storage.buckets_vectors,storage.vector_indexes -f ../backups/iron-strength-release/data.sql
 npx supabase db dump --linked --schema supabase_migrations -f ../backups/iron-strength-release/history-schema.sql
 npx supabase db dump --linked --schema supabase_migrations --data-only --use-copy -f ../backups/iron-strength-release/history-data.sql
@@ -43,3 +44,15 @@ Se usó únicamente la pila aislada de pruebas (puerto 55322). Un `pg_dump` comp
 Se compararon **57 tablas** de public/auth/storage/migraciones mediante hashes de todas sus filas, además de políticas y banderas RLS. Coinciden. Una consulta como alumno autenticado en la base restaurada devolvió cero entrenamientos ajenos. Los archivos y logs del ensayo quedan en la carpeta privada `work/t165-backup`, fuera de Git. Además, un objeto sintético de Storage se descargó a un archivo privado, se eliminó únicamente ese objeto de prueba y se volvió a subir a su misma ruta. Los hashes coinciden y la descarga anónima fue rechazada; el objeto del ensayo se limpió al terminar. Este ensayo no equivale a un respaldo ni restauración del proyecto remoto, cuyo acceso está pendiente.
 
 Referencias: [respaldo/restauración con CLI](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore), [alcance de las copias de base de datos](https://supabase.com/docs/guides/platform/backups), [descarga de objetos](https://supabase.com/docs/guides/storage/management/download-objects).
+
+## Ensayo del respaldo remoto T181
+
+El 21 de octubre de 2026 se respaldó exclusivamente `udwhjcnlfqlggblnpchu`, con 36 migraciones, en una carpeta privada nueva fuera de Git. Los seis volcados incluyen roles, esquema público, esquemas administrados, datos e historial. Se comprobaron sus hashes y permisos de archivos. El bucket privado no contenía objetos; no había fotos cuyos bytes copiar. Los datos reales de este respaldo nunca se usaron para sembrar cuentas de prueba ni se subieron a otro proyecto remoto.
+
+El respaldo se restauró en una base nueva `iron_restore_t181` del clúster aislado local, puerto 55322, sin cambiar la base interactiva ni el destino de la API de pruebas. Se prepararon los prerrequisitos locales `vault` y la publicación `supabase_realtime`. Los objetos de esquemas administrados que dependían de tablas públicas se aplicaron después de ellas. Cada fase detuvo la ejecución ante errores. No se aplicaron definiciones globales de roles sobre el clúster que ejecutaba las pruebas.
+
+Coinciden los hashes de **49 tablas y 513 filas**, las **51 políticas** y los propietarios y banderas de seguridad de **26 tablas públicas/Storage**. La comparación de expresiones de políticas usa el mismo `search_path` vacío para evitar diferencias de representación. La cuenta Auth existente y su hash se conservaron; no se inició sesión como el propietario, no se cambió su contraseña y no se envió correo. El ensayo comprueba la restauración de datos y permisos; el acceso real y las fotos en un teléfono siguen en su protocolo separado.
+
+Sobre esa copia restaurada se ensayaron, en orden, `20261021120000_atomic_routine_additions`, `20261021120001_reviewed_planning` y `20261021120002_prescription_series`. Las huellas de las **18 tablas públicas preexistentes** permanecen iguales al omitir únicamente las nuevas columnas nullable cuando son nulas. La copia de los datos remotos permanece aislada; este ensayo no aplica las migraciones a producción.
+
+Evidencia privada: `work/t181-remote-backup-native/manifest.json`, `restore-verification.json` y `migration-rehearsal.json`, en el directorio padre. Antes de aplicar en remoto, volver a verificar identidad, historial y cambios de datos posteriores al respaldo; si los hay, crear otro respaldo y verificarlo. No usar un respaldo anterior como si cubriera escrituras nuevas.

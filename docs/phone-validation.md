@@ -41,6 +41,19 @@ En el equipo de desarrollo, `scripts/prepare-four-local-accounts.ts` añade solo
 9. Intentar cerrar sesión con un entrenamiento o una edición pendiente. Volver debe conservarlo; sincronizar debe confirmar el registro antes de salir. Probar eliminación local solo con datos de prueba. Después de salir, ninguna otra pestaña debe seguir mostrando datos de esa cuenta.
 10. Descargar una versión nueva mientras existe un borrador iniciado. Debe conservar la versión anterior hasta terminar o descartar. Tras finalizar, actualizar la descarga y repetir la apertura sin Internet.
 
+## Comprobaciones de flujo de la spec 007
+
+Aplicar estos pasos después de publicar T181; el estado y artefacto preparados se registran en [release.md](../specs/007-training-flow/release.md). No dar por publicada una función porque su prueba local esté aprobada.
+
+1. Desde Inicio, abrir Ver rutina y volver: no debe existir un cronómetro ni un borrador nuevos. Empezar, cambiar de ejercicio con el índice y recargar: conservar valores, descanso y ejercicio pendiente. Una superserie mantiene juntos sus integrantes y señala la próxima ronda.
+2. Antes de cerrar, revisar series hechas y pendientes; cerrar no completa las que faltan. Sin red, encontrar un solo pendiente con su causa y reintento. Confirmado por el servidor, abrir Ver resultado y volver a Mi semana.
+3. En Cuenta, alternar Claro, Oscuro y Sistema y recargar. Revisar acceso, historial, progreso y ficha con texto ampliado. Durante el entrenamiento, comprobar que índice, teclado y descanso no se superponen.
+4. Coach en escritorio: entrar desde una ficha a Adaptar una base de otro alumno; conservar al destinatario original hasta revisar y asignar. Copiar una semana a varios destinos, revisar reemplazos y confirmar que la base original conserva sus valores. Abrir el programa desde la ficha y regresar conservando alumno y periodo.
+5. En una plantilla, cambiar Todas iguales a Por serie; indicar objetivos distintos y una alternativa con objetivos propios. Guardar y consultar la rutina. Al entrenar, verificar el peso de cada serie; un calentamiento no consume la primera serie prescrita. Copiar historial no debe modificar las series ya completadas.
+6. Con un registro abierto, instalar una versión nueva sin perderlo. Si la actualización espera, terminar o conservar el registro y cerrar todas las pestañas antes de reabrir. Probar una descarga anterior uniforme y otra actual con detalle por serie, manteniendo sus objetivos originales al recuperarlas.
+
+Registrar por separado el recorrido del coach en escritorio, Android y iPhone. Los conteos automatizados y la accesibilidad por emulación no reemplazan esta aceptación con teclado y pantalla físicos.
+
 ## Registrar incidencias
 
 Anotar cuenta/rol, dispositivo, fecha, pantalla, pasos y resultado esperado/obtenido. Evitar contraseñas, claves, fotos personales o cookies en capturas. La URL pública y la fecha de publicación se incorporan a la guía de despliegue al verificarse; `127.0.0.1` corresponde al computador y no sirve como URL del teléfono.

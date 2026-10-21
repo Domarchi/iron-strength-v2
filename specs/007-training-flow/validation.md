@@ -1,5 +1,21 @@
 # Validación — Spec 007
 
+## Cierre de validación T181; publicación pendiente
+
+Código funcional verificado: `be1ac09d576663396af2d39f8a541c28b1b5d9d7`. Se repitió el circuito completo sobre la pila aislada 55321/55322, después de resetear únicamente esa base: **459 pgTAP**, **270 integración**, tipos generados idénticos al repositorio y **191 E2E aprobadas en Chromium/WebKit**, sin fallos ni reintentos, 20,2 minutos. Un único skip previsto: gesto táctil continuo mediante CDP, exclusivo de Chromium. La suite conserva aislamiento de cuatro cuentas, adaptación, detalle por serie, cuota, respuestas perdidas, conflictos y apertura/sincronización offline. Logs privados t181-reset.log, pgtap, integration, database-types y e2e.log en work del directorio padre.
+
+Cobertura final del dominio: **506 unitarias**, 100 % líneas, 100 % funciones, 99,62 % sentencias y 96,75 % ramas (t181-coverage.log). Las revisiones físicas de Android/iPhone continúan pendientes; la guía incorpora los recorridos nuevos y no los declara aceptados por emulación.
+
+`npm run check` final completo en verde: formato, lint sin errores, tipos, 506 unitarias y build de producción con 64 recursos públicos (t181-check.log). La verificación de tipos de base generados también coincide byte a byte con src/types/database.ts. No hubo cambios de código funcional posteriores a la suite E2E completa.
+
+Vista previa interactiva recompilada y reiniciada únicamente en 127.0.0.1:3000 con .next-interactive, BUILD_ID c4fd5688da1f4547adcff0c361be6aee. Login, offline, manifiesto y worker devuelven 200; Mi semana sin sesión devuelve 307 a acceso. Se restauraron solo los archivos de tipos/configuración generados por ese build. La huella original de datos vuelve a coincidir después del reinicio. Esto no constituye acceso remoto ni promoción del dominio público.
+
+Respaldo remoto nuevo restaurado en `iron_restore_t181`, aislado del tráfico de las pruebas: 49 tablas/513 filas, 51 políticas y 26 propietarios/banderas de tablas coinciden. Las tres migraciones pendientes se ensayaron allí conservando las huellas de 18 tablas públicas previas. La base interactiva fue respaldada en formato custom, recibió solo esas tres migraciones y conserva la huella original `91f59c7cb0c45efd96eb0ce57a4e77c68d3c31e6879d8dbc7e6931137cecbf1a`; tiene 39 versiones y las columnas nuevas, con RLS. No se reseteó ni sembró. Producción conserva 36 migraciones, sin cambios de datos o cuentas.
+
+Vercel preparó dos builds READY del mismo código, sin asignar dominio. B, `dpl_7CyiznBLcQZuJWAYE8zKwRVZyX2Z`, BUILD_ID `1750c8e846e94210a27c010bb7720fad`, es el artefacto previsto para promoción; A queda como recuperación compatible. Login, offline, manifiesto, iconos y variantes móviles responden correctamente en B. Su worker enumera 64 recursos públicos permitidos, declara borradores v1/v2/v3 y no llama a skipWaiting. Una ruta privada sin sesión lleva a login y conserva no-store. No se inició sesión como el propietario ni se enviaron invitaciones.
+
+La publicación queda pendiente por el fallo de inicio del CI: runs 39664836047 y 39665790586 terminan en startup_failure con cero trabajos, antes de pruebas y sin logs. No se afirma que CI esté aprobado. El archivo no cambió desde la última versión publicada y el workflow real sigue activo; la causa no está confirmada. Se pidió al propietario el aviso de GitHub. [release.md](release.md) registra artefactos, límites, recuperación y secuencia restante. El dominio público conserva c45ee9d; T181 permanece sin marcar.
+
 Estado inicial: tareas pendientes. La implementación no se considera disponible hasta registrar controles y commit por tarea. El código publicado de partida aprobó CI 39611110162 (check, base/integración y E2E); no equivale a pruebas de estas funciones nuevas. Capturas y protocolo previos en baseline.md. Aceptación con teléfonos físicos pendiente.
 
 ## T170

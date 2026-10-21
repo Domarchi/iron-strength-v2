@@ -2,6 +2,8 @@
 
 La publicación sigue T165–T166 de `specs/005-complete-training/`. El código local está validado; estos pasos no acreditan un despliegue remoto. No trasladar usuarios, contraseñas, fotos ni entrenamientos de demostración a producción.
 
+La siguiente entrega T181 está preparada y aún no promovida: [estado, artefactos y pasos restantes de spec 007](../specs/007-training-flow/release.md). Ese registro distingue las pruebas locales del bloqueo de inicio del CI y de la versión que todavía recibe tráfico.
+
 ## Destino y estado comprobado
 
 | Recurso           | Destino previsto / evidencia                                                                | Estado                                                                                                                                                  |

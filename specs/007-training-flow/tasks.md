@@ -12,3 +12,5 @@
 - [x] T179 · Prescripción simple/detallada en editor, entrenamiento y copias.
 - [x] T180 · Continuidad de ficha, evidencia y contexto.
 - [ ] T181 · Validación completa y publicación del mismo artefacto.
+
+T181 mantiene la publicación pendiente: artefactos preparados, respaldo restaurado y bloqueo de inicio del CI documentados en [release.md](release.md). El dominio público todavía sirve la versión anterior.
