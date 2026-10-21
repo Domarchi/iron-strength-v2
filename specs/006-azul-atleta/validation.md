@@ -2,7 +2,7 @@
 
 T167: especificación escrita antes de código. `npm run check` en verde el 21 de octubre de 2026 (458 pruebas unitarias, tipos, lint, formato y build). No se modificaron pantallas ni base de datos.
 
-T168: pendiente. La aceptación en teléfonos físicos sigue separada de la emulación.
+T168: completada. La aceptación en teléfonos físicos sigue separada de la emulación.
 
 ## T168 — Implementación y revisión
 
@@ -26,4 +26,14 @@ Vista previa del puerto 3000 recompilada, con inicio y editor abiertos. La compa
 
 La emulación no acredita aceptación en teléfonos físicos. Esos controles y los pendientes de cuentas reales de T166 continúan documentados en spec 005.
 
-La vista previa final usa BUILD_ID `1633dbf416c14a95b9c0ae4662825a7e`. Azul de texto `#005fd9`: 5,77:1 sobre blanco y 4,97:1 sobre su fondo al 10%; acción destacada `#0068ec` con blanco: 5,01:1. La aprobación de T168 corresponde a implementación y prueba local; no se publicó esta revisión visual en Vercel.
+La vista previa final usa BUILD_ID `1633dbf416c14a95b9c0ae4662825a7e`. Azul de texto `#005fd9`: 5,77:1 sobre blanco y 4,97:1 sobre su fondo al 10%; acción destacada `#0068ec` con blanco: 5,01:1. La aprobación de T168 corresponde a implementación y prueba local; la publicación posterior se registra en T169.
+
+## T169 — Acceso remoto
+
+Publicado el 21 de octubre de 2026 en [Iron Strength](https://iron-strength-seven.vercel.app/week). Código `c45ee9d91ae7bc41538a3ccd0fd9c7dcb8dab9c2`, repositorio Domarchi/iron-strength-v2, rama main-54qpxa. Despliegue de producción `dpl_4iyYTpuRF2tp1att8QpsznFRSbuq`, BUILD_ID `5bf53d6932a14802b79959369c5fc8d8`. Se verificó el build Staged y se promovió ese mismo artefacto; el alias público confirma su ID. La promoción manual se conserva.
+
+Antes de promover se confirmó el proyecto y equipo Vercel autorizados, Supabase exclusivo `udwhjcnlfqlggblnpchu` ACTIVE_HEALTHY, 36/36 migraciones coincidentes y hashes de los cinco archivos del respaldo privado existente. Esta publicación no modifica esquema, datos, cuentas ni variables de entorno. Las pruebas de código son las de T168; CI adicional [39611110162](https://github.com/Domarchi/iron-strength-v2/actions/runs/39611110162) se inició al subir el commit y su estado se consulta por separado, sin presentarlo como aprobado antes de terminar.
+
+En Staged y dominio público: login y offline 200 con el mismo BUILD_ID; manifiesto, icono, dos PNG válidos y worker versionado 200. El worker incluye ambas imágenes dentro de sus 61 recursos públicos. Sin sesión, `/week` y `/coach` responden 307 a `/login`; el formulario final es privado/no-store. Comprobaciones de lectura HTTP en `work/t169-public-smoke.json`, fuera de Git. La entrada pública se abrió en el navegador y muestra el formulario de la app sin exigir una cuenta de Vercel. No se inició sesión como el propietario ni se copiaron rutinas sintéticas a producción; la ejecución autenticada conserva la validación aislada de T168 y la aceptación física pendiente.
+
+Despliegue anterior compatible para recuperación: `dpl_CSsK8f9Vw33veqLniQrRi8emft1V`, con configuración de servidor corregida. No usar `dpl_3yJM97giPeVYPxtWteBQkTEAphz3`, que conservaba una clave enmascarada. Los datos interactivos del puerto 3000 no se modifican para esta publicación.
