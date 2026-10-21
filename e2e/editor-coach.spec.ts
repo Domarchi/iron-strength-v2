@@ -80,7 +80,7 @@ test("copiar y reordenar una semana conserva prescripciones, es accesible y cabe
     );
     await expect(activeWeek).toHaveCSS(
       "background-color",
-      scheme === "dark" ? "rgb(104, 176, 255)" : "rgb(23, 106, 198)",
+      scheme === "dark" ? "rgb(129, 188, 255)" : "rgb(0, 95, 217)",
     );
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -912,7 +912,7 @@ test("día sugerido recupera borrador y el coach puede mover su entrenamiento si
   const assignedId = page.url().split("/").at(-1)!;
   await page.goto("/week");
   await expect(page.getByText("Llevas 0 de 1 sesiones", { exact: true })).toBeVisible();
-  await page.getByText("Cambiar día de sesión A", { exact: true }).click();
+  await page.getByLabel("Cambiar día de sesión A", { exact: true }).click();
   await page.getByLabel("Día de sesión A", { exact: true }).selectOption("0");
   await page.getByRole("button", { name: "Guardar día", exact: true }).click();
   await expect(page.getByText("Día guardado.", { exact: true })).toBeVisible();
@@ -930,7 +930,7 @@ test("día sugerido recupera borrador y el coach puede mover su entrenamiento si
     (await admin().from("program_sessions").select("weekday").eq("program_id", templateId).single())
       .data?.weekday,
   ).toBe(6);
-  await page.getByText("Cambiar día de sesión A", { exact: true }).click();
+  await page.getByLabel("Cambiar día de sesión A", { exact: true }).click();
   await page.getByLabel("Día de sesión A", { exact: true }).selectOption("coach");
   await page.getByRole("button", { name: "Guardar día", exact: true }).click();
   await expect(page.getByText("Día guardado.", { exact: true })).toBeVisible();

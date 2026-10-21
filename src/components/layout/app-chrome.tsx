@@ -11,17 +11,23 @@ export function AppChrome({
   header,
   nav,
   children,
+  coach = false,
 }: {
+  coach?: boolean;
   header: React.ReactNode;
   nav: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const focus = isFocusRoute(usePathname());
+  const pathname = usePathname();
+  const focus = isFocusRoute(pathname);
 
   return (
     <div
       className={cn(
-        "flex min-h-dvh flex-1 flex-col md:pb-0",
+        "app-frame flex min-h-dvh flex-1 flex-col md:pb-0",
+        coach && !focus && "coach-frame",
+        pathname === "/week" && "week-frame",
+        focus && "workout-frame",
         // Alto de la barra inferior (4rem) más el área segura del dispositivo.
         !focus && "pb-[calc(4rem+env(safe-area-inset-bottom))]",
       )}
@@ -33,7 +39,12 @@ export function AppChrome({
         Saltar al contenido
       </a>
       {focus ? null : header}
-      <div className={cn("mx-auto w-full flex-1 px-4", focus ? "max-w-2xl" : "max-w-5xl md:px-6")}>
+      <div
+        className={cn(
+          "app-content mx-auto w-full flex-1 px-4",
+          focus ? "max-w-2xl" : "max-w-5xl md:px-6",
+        )}
+      >
         {focus ? null : nav}
         <main id="main-content" className={cn("min-w-0", focus ? "py-0" : "py-5 md:py-6")}>
           {children}

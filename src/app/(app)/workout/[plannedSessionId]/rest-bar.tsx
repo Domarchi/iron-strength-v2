@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Minus, Plus, Timer } from "lucide-react";
+import { Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   REST_STEP_SECONDS,
@@ -59,7 +59,7 @@ export function RestBar({
     <div
       role="timer"
       aria-label="Descanso entre series"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgb(0_0_0/0.15)]"
+      className="rest-dock fixed inset-x-3 bottom-3 z-40 mx-auto max-w-xl overflow-hidden rounded-2xl border bg-card pb-[env(safe-area-inset-bottom)] shadow-xl"
     >
       <div className="h-1 bg-muted" aria-hidden>
         <div
@@ -67,14 +67,14 @@ export function RestBar({
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 py-2">
-        <Timer className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-        <div className="min-w-0 flex-1">
+      <div className="rest-dock-content mx-auto grid grid-cols-[3.5rem_minmax(0,1fr)_3.5rem] items-center gap-2 px-3 py-3">
+        <div className="rest-dock-clock col-start-2 row-start-1 min-w-0 text-center">
           <p className="text-xs text-muted-foreground">
+            <Timer className="mr-1 inline size-4" aria-hidden />
             {finished ? "Descanso terminado" : "Descanso"}
           </p>
           <p
-            className="text-2xl leading-none font-semibold tabular-nums"
+            className="mt-1 text-4xl leading-none font-semibold tabular-nums"
             aria-live="off"
             data-testid="rest-clock"
           >
@@ -85,22 +85,29 @@ export function RestBar({
           type="button"
           variant="outline"
           size="icon"
+          className="rest-adjust col-start-1 row-start-1"
           aria-label={`Restar ${REST_STEP_SECONDS} segundos al descanso`}
           onClick={() => onChange(adjustRest(rest, Date.now(), -REST_STEP_SECONDS))}
           disabled={finished}
         >
-          <Minus aria-hidden />
+          <span aria-hidden>−15</span>
         </Button>
         <Button
           type="button"
           variant="outline"
           size="icon"
+          className="rest-adjust col-start-3 row-start-1"
           aria-label={`Sumar ${REST_STEP_SECONDS} segundos al descanso`}
           onClick={() => onChange(adjustRest(rest, Date.now(), REST_STEP_SECONDS))}
         >
-          <Plus aria-hidden />
+          <span aria-hidden>+15</span>
         </Button>
-        <Button type="button" variant={finished ? "default" : "secondary"} onClick={onDismiss}>
+        <Button
+          type="button"
+          className="col-span-3 mx-auto h-11 bg-transparent text-muted-foreground"
+          variant={finished ? "default" : "secondary"}
+          onClick={onDismiss}
+        >
           {finished ? "Cerrar" : "Saltar"}
         </Button>
       </div>

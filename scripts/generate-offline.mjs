@@ -1,3 +1,4 @@
+import designAssets from "../src/lib/design/assets.json" with { type: "json" };
 import { readdir, readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 const dist = process.env.NEXT_DIST_DIR || ".next";
@@ -15,6 +16,7 @@ const assets = files
   )
   .sort();
 if (!assets.length) throw new Error("No public build assets found");
+assets.push(...designAssets);
 assets.push("/offline", "/manifest.webmanifest", "/icons/192", "/icons/512", "/icons/maskable");
 const source = await readFile("scripts/offline-worker.js", "utf8");
 await mkdir("public/offline-workers", { recursive: true });

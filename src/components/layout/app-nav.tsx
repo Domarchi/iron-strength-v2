@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarDays,
   ClipboardList,
   Dumbbell,
   History,
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { isActive, type NavItem } from "./nav-items";
 
 const ICONS: Record<NavItem["icon"], LucideIcon> = {
-  week: Dumbbell,
+  week: CalendarDays,
   history: History,
   progress: TrendingUp,
   body: Ruler,
@@ -31,7 +32,7 @@ export function AppNav({ items }: { items: NavItem[] }) {
   return (
     <nav
       aria-label="Principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background pb-[env(safe-area-inset-bottom)] md:static md:border-t-0 md:border-b md:pb-0"
+      className="app-nav fixed inset-x-0 bottom-0 z-40 border-t bg-background pb-[env(safe-area-inset-bottom)] md:static md:border-t-0 md:border-b md:pb-0"
     >
       <ul className="mx-auto flex max-w-5xl justify-around">
         {items.map((item) => {

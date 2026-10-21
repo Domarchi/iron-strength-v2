@@ -166,6 +166,10 @@ describe("getWeekView (RF-19, RF-25, DC-11)", () => {
       ["A", "pending", 2],
       ["B", "pending", 1],
     ]);
+    expect(view.sessions.map((session) => [session.label, session.setCount])).toEqual([
+      ["A", 6],
+      ["B", 3],
+    ]);
     expect(view.compliance).toMatchObject({ planned: 2, done: 0, complete: false });
     expect(view.allDone).toBe(false);
   });

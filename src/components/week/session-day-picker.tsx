@@ -1,6 +1,7 @@
 "use client";
 import { StatusMessage } from "@/components/ui/status-message";
 import { NativeSelect } from "@/components/ui/native-select";
+import { CalendarDays } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { WEEKDAYS } from "@/domain/session-schedule";
@@ -10,7 +11,9 @@ export function SessionDayPicker({
   label,
   prescribed,
   override,
+  compact = false,
 }: {
+  compact?: boolean;
   sessionId: string;
   label: string;
   prescribed: number | null;
@@ -20,9 +23,21 @@ export function SessionDayPicker({
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null);
   return (
-    <details className="mt-3 border-t pt-1">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">
-        Cambiar día de sesión {label}
+    <details
+      className={
+        compact
+          ? "session-day-picker session-day-picker-compact"
+          : "session-day-picker mt-3 border-t pt-1"
+      }
+    >
+      <summary
+        aria-label={`Cambiar día de sesión ${label}`}
+        className="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary"
+      >
+        {compact ? <CalendarDays className="size-5" aria-hidden /> : null}
+        <span className={compact ? "compact-day-label" : undefined}>
+          Cambiar día de sesión {label}
+        </span>
       </summary>
       <p className="mb-2 text-xs text-muted-foreground">
         Puedes entrenar cualquier día de esta semana.

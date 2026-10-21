@@ -592,9 +592,13 @@ function ActiveWorkoutRunner({
   return (
     <div
       ref={containerRef}
-      className={rest || undo ? "flex flex-col gap-4 pb-48" : "flex flex-col gap-4 pb-6"}
+      className={
+        rest || undo
+          ? "workout-surface flex flex-col gap-4 pb-56"
+          : "workout-surface flex flex-col gap-4 pb-6"
+      }
     >
-      <header className="sticky top-0 z-30 -mx-4 border-b bg-background pt-[env(safe-area-inset-top)]">
+      <header className="workout-heading sticky top-0 z-30 -mx-4 border-b bg-background pt-[env(safe-area-inset-top)]">
         <div className="flex items-center gap-2 px-2 py-2">
           <Button
             variant="ghost"
@@ -622,10 +626,10 @@ function ActiveWorkoutRunner({
             Terminar
           </Button>
         </div>
-        <dl className="grid grid-cols-3 gap-3 border-t px-4 py-3">
+        <dl className="workout-metrics grid grid-cols-[1.5fr_1fr_1fr] items-center gap-3 px-4 py-3">
           <div>
             <dt className="text-[11px] text-muted-foreground">Duración</dt>
-            <dd className="mt-1 text-sm font-semibold text-primary tabular-nums">
+            <dd className="workout-elapsed mt-1 text-4xl font-semibold tracking-tight tabular-nums">
               <Elapsed startedAt={draft.startedAt} />
             </dd>
           </div>
@@ -798,7 +802,7 @@ function ActiveWorkoutRunner({
       {undo ? (
         <div
           role="status"
-          className={`fixed inset-x-4 z-40 mx-auto flex max-w-lg items-center gap-3 rounded-xl border border-primary/30 bg-card p-3 shadow-lg ${rest ? "bottom-[calc(6.5rem+env(safe-area-inset-bottom))]" : "bottom-[calc(1rem+env(safe-area-inset-bottom))]"}`}
+          className={`fixed inset-x-4 z-40 mx-auto flex max-w-lg items-center gap-3 rounded-xl border border-primary/30 bg-card p-3 shadow-lg ${rest ? "bottom-[calc(11rem+env(safe-area-inset-bottom))]" : "bottom-[calc(1rem+env(safe-area-inset-bottom))]"}`}
         >
           <p className="flex-1 text-sm">{undo.message}</p>
           <Button

@@ -1,6 +1,7 @@
 import { orderScheduledSessions, scheduleState, WEEKDAYS } from "@/domain/session-schedule";
 import { SessionDayPicker } from "./session-day-picker";
 import Link from "next/link";
+import Image from "next/image";
 import { Check, ChevronRight, Clock, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StreakChip } from "@/components/streak/streak-chip";
@@ -25,85 +26,100 @@ function RoutineCard({
 }) {
   const done = session.status === "done";
   const planned = scheduleState(session.status, session.scheduledOn ?? null, today) === "planned";
-  const names = session.exerciseNames.slice(0, 4);
+  const counts = `${session.exerciseCount} ${session.exerciseCount === 1 ? "ejercicio" : "ejercicios"}${session.setCount === undefined ? "" : ` · ${session.setCount} series`}`;
   return (
     <section
       aria-label={next ? "Próxima sesión" : undefined}
-      className={cn(
-        "flex h-full flex-col rounded-lg border bg-card p-4",
-        next && "border-primary/60",
-      )}
+      className={cn("routine-card", next ? "routine-featured" : "routine-compact")}
     >
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-lg font-semibold">
-          Sesión {session.label}
-          {session.title ? ` · ${session.title}` : ""}
-        </h3>
-        {next ? (
-          <span className="rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-            {planned || trainedToday ? "Siguiente sesión" : "Hoy toca"}
-          </span>
-        ) : done ? (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
-            <Check className="size-4" aria-hidden />
-            Hecha
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">
-            {planned ? "Prevista" : "Pendiente"}
-          </span>
-        )}
-      </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        {session.exerciseCount} {session.exerciseCount === 1 ? "ejercicio" : "ejercicios"}
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {session.scheduledOn
-          ? `${planned ? "Prevista" : done ? "Programada" : "Pendiente"}: ${WEEKDAYS[session.overrideWeekday ?? session.weekday ?? 0]} ${fmt(session.scheduledOn)}`
-          : "Sin día sugerido"}
-      </p>
-      <ul className="my-4 flex flex-1 flex-col gap-2.5">
-        {names.map((name, i) => (
-          <li key={`${name}-${i}`} className="flex items-center gap-2.5 text-sm">
-            <span className="grid size-7 shrink-0 place-items-center rounded bg-muted">
-              <Dumbbell className="size-4 text-muted-foreground" aria-hidden />
-            </span>
-            <span className="min-w-0 truncate">{name}</span>
-          </li>
-        ))}
-        {session.exerciseCount > names.length ? (
-          <li className="pl-9 text-xs text-muted-foreground">
-            + {session.exerciseCount - names.length} más
-          </li>
-        ) : null}
-      </ul>
-      {done ? (
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            className="flex-1"
-            render={<Link href={`/history/${session.workoutId}`} />}
-          >
-            Ver
-          </Button>
-          <Link
-            href={`/workout/${session.sessionId}`}
-            className="inline-flex min-h-11 items-center text-sm font-medium text-primary"
-          >
-            Repetir (extra)
-          </Link>
-        </div>
+      {next ? (
+        <>
+          <Image
+            src="/design/azul-atleta/hero-v1.png"
+            alt=""
+            fill
+            unoptimized
+            className="week-hero-image object-cover"
+            sizes="(max-width: 767px) 100vw, 600px"
+          />
+          <div className="routine-hero-content">
+            <p className="routine-kicker">
+              {planned || trainedToday ? "Siguiente sesión" : "Hoy toca"}
+            </p>
+            <h3 className="mt-3 text-base font-medium">Sesión {session.label}</h3>
+            <p className="mt-1 text-3xl leading-tight font-bold tracking-tight">
+              {session.title || "Tu próximo entrenamiento"}
+            </p>
+            <p className="mt-2 text-sm text-blue-100">{counts}</p>
+            <p className="mt-1 truncate text-xs text-blue-100">
+              {session.exerciseNames.slice(0, 3).join(" · ")}
+            </p>
+            <Button
+              className="mt-5 w-full justify-between"
+              aria-label="Empezar"
+              render={<Link href={`/workout/${session.sessionId}`} />}
+            >
+              Empezar entrenamiento <ChevronRight className="size-5" aria-hidden />
+            </Button>
+          </div>
+        </>
       ) : (
-        <Button
-          className="w-full"
-          variant={next ? "default" : "secondary"}
-          render={<Link href={`/workout/${session.sessionId}`} />}
-        >
-          Empezar
-          <ChevronRight className="size-4" aria-hidden />
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className={cn("routine-status", done && "routine-done")} aria-hidden>
+            {done ? <Check className="size-5" /> : <Dumbbell className="size-5" />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-xs text-muted-foreground">Sesión {session.label}</h3>
+            <p className="text-base leading-tight font-semibold">
+              {session.title || session.exerciseNames.slice(0, 2).join(" + ") || "Entrenamiento"}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{counts}</p>
+          </div>
+          <div className="flex shrink-0 flex-col items-end">
+            <span
+              className={cn(
+                "text-xs font-semibold",
+                done ? "text-success" : "text-muted-foreground",
+              )}
+            >
+              {done ? "Hecha" : planned ? "Prevista" : "Pendiente"}
+            </span>
+            <Button
+              variant="ghost"
+              className="px-1"
+              render={
+                <Link
+                  href={done ? `/history/${session.workoutId}` : `/workout/${session.sessionId}`}
+                />
+              }
+            >
+              {done ? "Ver" : "Empezar"}
+              <ChevronRight className="size-4" aria-hidden />
+            </Button>
+          </div>
+        </div>
       )}
+      {session.scheduledOn || done ? (
+        <div className="routine-details">
+          {session.scheduledOn ? (
+            <p className="text-xs text-muted-foreground">
+              {session.scheduledOn
+                ? `${planned ? "Prevista" : done ? "Programada" : "Pendiente"}: ${WEEKDAYS[session.overrideWeekday ?? session.weekday ?? 0]} ${fmt(session.scheduledOn)}`
+                : ""}
+            </p>
+          ) : null}
+          {done ? (
+            <Link
+              href={`/workout/${session.sessionId}`}
+              className="inline-flex min-h-11 items-center text-sm font-medium text-primary"
+            >
+              Repetir (extra)
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
       <SessionDayPicker
+        compact
         sessionId={session.sessionId}
         label={session.label}
         prescribed={session.weekday ?? null}
@@ -130,8 +146,8 @@ export function WeekOverview({
       : 0;
   const ordered = next ? [next, ...scheduled.filter((session) => session !== next)] : scheduled;
   return (
-    <div className="flex flex-col gap-5">
-      <section aria-label="Tu semana de entrenamiento" className="border-b pb-4">
+    <div className="week-overview flex flex-col">
+      <section aria-label="Tu semana de entrenamiento" className="week-summary pb-4">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold">{view.program.name}</h2>
@@ -160,7 +176,7 @@ export function WeekOverview({
         ) : null}
       </section>
       {view.compliance.deload ? (
-        <section className="flex items-center gap-3 rounded-lg border p-4">
+        <section className="mt-4 flex items-center gap-3 rounded-lg border bg-card p-4">
           <Clock className="size-6 text-primary" aria-hidden />
           <div>
             <h2 className="font-semibold">Semana de descarga</h2>
@@ -170,14 +186,11 @@ export function WeekOverview({
           </div>
         </section>
       ) : (
-        <section aria-labelledby="week-sessions-heading">
-          <h2 id="week-sessions-heading" className="mb-3 text-lg font-semibold">
+        <section aria-labelledby="week-sessions-heading" className="week-routines">
+          <h2 id="week-sessions-heading" className="sr-only">
             Tus rutinas
           </h2>
-          <ul
-            aria-label="Sesiones de la semana"
-            className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
-          >
+          <ul aria-label="Sesiones de la semana" className="routine-list grid gap-3">
             {ordered.map((session) => (
               <li key={session.sessionId}>
                 <RoutineCard

@@ -83,6 +83,7 @@ export function ExerciseCard({
   const complete = isExerciseComplete(exercise);
   const collapsed = complete && !reopened;
   const last = info?.last ?? null;
+  const lastWorking = last?.sets.find((set) => !set.isWarmup);
   const restSeconds =
     (exercise.supersetId ? exercise.supersetRestSeconds : exercise.restSeconds) ??
     DEFAULT_REST_SECONDS;
@@ -136,50 +137,56 @@ export function ExerciseCard({
       data-active={active}
       onFocusCapture={onActivate}
       onPointerDownCapture={onActivate}
-      className={cn("scroll-mt-52 border-b pb-5 text-foreground", active && "border-primary/40")}
+      className={cn(
+        "workout-exercise scroll-mt-52 pb-2 text-foreground",
+        active && "border-primary/40",
+      )}
     >
-      <header
-        className={cn(
-          "flex items-center gap-3 py-3",
-          active && "-mx-2 rounded-xl bg-primary/5 px-2",
-        )}
-      >
-        <ExerciseThumbnail name={exercise.name} />
-        <div className="min-w-0 flex-1">
-          <p className="mb-1 text-xs text-muted-foreground">
-            {[info?.muscleGroup, info?.equipment].filter(Boolean).join(" · ") ||
-              "Entrenamiento de fuerza"}
-          </p>
-          {groupLabel ? (
-            <p className="mb-1 text-xs font-semibold text-primary">{groupLabel}</p>
-          ) : null}
-          <h2 className="text-lg leading-tight font-semibold text-primary">{exercise.name}</h2>
-          <p className="mt-1 text-sm font-medium">
-            Prescrito · {formatPrescription(exercise.prescribed)}
-          </p>
-          <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-            {active ? <span className="font-semibold text-primary">En curso</span> : null}
-            <span className="tabular-nums">
-              {done}/{total} hechas
-            </span>
-          </p>
+      <header className="workout-exercise-header">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xl leading-tight font-bold">{exercise.name}</h2>
+          <div className="flex shrink-0 items-center">
+            {complete ? (
+              <Button type="button" variant="ghost" onClick={() => setReopened(false)}>
+                Plegar
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Más opciones de ${exercise.name}`}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <MoreVertical aria-hidden />
+            </Button>
+          </div>
         </div>
-        {complete ? (
-          <Button type="button" variant="ghost" onClick={() => setReopened(false)}>
-            Plegar
-          </Button>
-        ) : null}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={`Más opciones de ${exercise.name}`}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((v) => !v)}
-          className="-mr-2"
-        >
-          <MoreVertical aria-hidden />
-        </Button>
+        {groupLabel ? <p className="text-xs font-semibold text-primary">{groupLabel}</p> : null}
+        <div className="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3">
+          <ExerciseThumbnail name={exercise.name} featured />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">
+              Prescrito · {formatPrescription(exercise.prescribed)}
+            </p>
+            <p className="mt-3 text-xs text-muted-foreground">Última vez</p>
+            <p className="mt-1 text-sm font-medium">
+              {lastWorking
+                ? `${String(lastWorking.weightKg).replace(".", ",")} kg × ${lastWorking.reps}`
+                : last
+                  ? "Sin series de trabajo"
+                  : "Tu primera sesión"}
+            </p>
+            <p className="mt-3 text-xs text-muted-foreground">
+              {active ? "En curso · " : ""}
+              {done}/{total} hechas
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {[info?.muscleGroup, info?.equipment].filter(Boolean).join(" · ")}
+            </p>
+          </div>
+        </div>
       </header>
 
       {menuOpen ? (
@@ -238,47 +245,7 @@ export function ExerciseCard({
           </Button>
         </details>
       ) : null}
-      <ExerciseComparison
-        exercise={exercise}
-        info={info}
-        onCopyLast={onCopyLast}
-        onCopySuggestion={onCopySuggestion}
-      />
-      {info?.note ? (
-        <details className="my-1 rounded-lg bg-muted/40 px-3">
-          <summary className="min-h-11 cursor-pointer py-3 text-sm text-muted-foreground">
-            Indicaciones del coach
-          </summary>
-          <div className="flex flex-col gap-2 pb-3">
-            {info.note ? <p className="text-sm">{info.note}</p> : null}
-          </div>
-        </details>
-      ) : null}
-
-      <Button variant="ghost" onClick={onHistory} aria-label={`Ver historial de ${exercise.name}`}>
-        <History aria-hidden /> Historial
-      </Button>
-      <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
-        <Timer className="size-4" aria-hidden />
-        <span>{groupLabel ? "Entre rondas" : "Descanso"}</span>
-        <NativeSelect
-          aria-label={`Descanso automático de ${exercise.name}`}
-          value={restSeconds}
-          onChange={(event) => onRestChange(Number(event.target.value))}
-          className="w-auto min-w-24 font-medium"
-        >
-          {REST_OPTIONS.map((seconds) => (
-            <option key={seconds} value={seconds}>
-              {seconds === 0 ? "Desactivado" : formatClock(seconds)}
-            </option>
-          ))}
-          {!REST_OPTIONS.includes(restSeconds) ? (
-            <option value={restSeconds}>{formatClock(restSeconds)}</option>
-          ) : null}
-        </NativeSelect>
-      </label>
-
-      <div className="flex flex-col gap-1 py-2">
+      <div className="workout-set-table flex flex-col gap-1 py-2">
         <div
           className={cn(
             COLUMNS,
@@ -305,7 +272,7 @@ export function ExerciseCard({
               <div
                 className={cn(
                   COLUMNS,
-                  "-mx-2 rounded px-2 py-1 transition-colors",
+                  "workout-set-row rounded-lg px-1 py-1 transition-colors",
                   set.done && "bg-success-muted",
                 )}
               >
@@ -440,6 +407,51 @@ export function ExerciseCard({
         >
           <Plus aria-hidden /> Agregar serie
         </Button>
+      </div>
+      <ExerciseComparison
+        exercise={exercise}
+        info={info}
+        onCopyLast={onCopyLast}
+        onCopySuggestion={onCopySuggestion}
+      />
+      {info?.note ? (
+        <details className="my-1 rounded-lg bg-muted/40 px-3">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm text-muted-foreground">
+            Indicaciones del coach
+          </summary>
+          <div className="flex flex-col gap-2 pb-3">
+            {info.note ? <p className="text-sm">{info.note}</p> : null}
+          </div>
+        </details>
+      ) : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <Button
+          variant="ghost"
+          onClick={onHistory}
+          aria-label={`Ver historial de ${exercise.name}`}
+        >
+          <History aria-hidden /> Historial
+        </Button>
+        <label className="flex min-h-11 w-fit items-center gap-2 text-sm text-primary">
+          <Timer className="size-4" aria-hidden />
+          <span>{groupLabel ? "Entre rondas" : "Descanso"}</span>
+          <NativeSelect
+            aria-label={`Descanso automático de ${exercise.name}`}
+            value={restSeconds}
+            onChange={(event) => onRestChange(Number(event.target.value))}
+            className="w-auto min-w-24 font-medium"
+          >
+            {REST_OPTIONS.map((seconds) => (
+              <option key={seconds} value={seconds}>
+                {seconds === 0 ? "Desactivado" : formatClock(seconds)}
+              </option>
+            ))}
+            {!REST_OPTIONS.includes(restSeconds) ? (
+              <option value={restSeconds}>{formatClock(restSeconds)}</option>
+            ) : null}
+          </NativeSelect>
+        </label>
       </div>
     </section>
   );

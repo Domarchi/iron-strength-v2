@@ -122,7 +122,7 @@ test("invitar → registrarse → asignar → entrenar → el coach ve el progre
   await student.goto("/week");
   await expect(student.getByText("Llevas 0 de 1 sesiones")).toBeVisible();
   // Base UI marca los enlaces con apariencia de botón con role="button".
-  await student.getByText("Empezar", { exact: true }).click();
+  await student.getByRole("button", { name: "Empezar", exact: true }).click();
   await expect(student.getByRole("heading", { name: /Sesión A/ })).toBeVisible();
   await expect(student.getByRole("heading", { level: 2 })).toHaveText([
     "Press de banca",

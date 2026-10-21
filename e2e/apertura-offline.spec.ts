@@ -1,3 +1,4 @@
+import designAssets from "../src/lib/design/assets.json";
 import { test } from "./support/network";
 import { expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -44,13 +45,15 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
     return urls;
   });
   expect(cached).toContain("/offline");
+  for (const asset of designAssets) expect(cached).toContain(asset);
   expect(
     cached.every(
       (p) =>
         p === "/offline" ||
         p.startsWith("/_next/static/") ||
         p.startsWith("/icons/") ||
-        p === "/manifest.webmanifest",
+        p === "/manifest.webmanifest" ||
+        designAssets.includes(p),
     ),
   ).toBe(true);
   expect(cached).not.toContain("/week");
@@ -61,6 +64,14 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
   await offline.goto("/week");
   await expect(offline.getByRole("heading", { name: "Tus semanas descargadas" })).toBeVisible();
   await offline.getByRole("button", { name: "Iniciar sesión A", exact: true }).click();
+  await expect
+    .poll(() =>
+      offline
+        .locator('img[src="/design/azul-atleta/squat-v1.png"]')
+        .first()
+        .evaluate((image) => (image as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
   await offline.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("70");
   await offline.getByLabel("Repeticiones de la serie 1 de Sentadilla").fill("8");
   await offline.getByRole("button", { name: "Marcar como hecha la serie 1 de Sentadilla" }).click();

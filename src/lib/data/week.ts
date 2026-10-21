@@ -30,6 +30,7 @@ export type WeekSession = SessionStatusEntry & {
   overrideWeekday?: number | null;
   scheduledOn?: string | null;
   exerciseCount: number;
+  setCount?: number;
   exerciseNames: string[];
 };
 
@@ -88,7 +89,7 @@ export async function getWeekView(
     db
       .from("program_sessions")
       .select(
-        "id, week_number, label, title, weekday, session_day_overrides(weekday), session_exercises(position, exercises(name))",
+        "id, week_number, label, title, weekday, session_day_overrides(weekday), session_exercises(position, sets, exercises(name))",
       )
       .eq("program_id", program.id),
     db
@@ -168,6 +169,10 @@ export async function getWeekView(
             ?.weekday ?? null,
         ),
         exerciseCount: names.length,
+        setCount:
+          sessionsResult.data
+            .find((row) => row.id === s.sessionId)
+            ?.session_exercises.reduce((sum, row) => sum + row.sets, 0) ?? 0,
         exerciseNames: names,
       };
     }),

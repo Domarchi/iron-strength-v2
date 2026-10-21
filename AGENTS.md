@@ -10,7 +10,7 @@ Se desarrolla con **Spec-Driven Development**. Fuente de verdad: `docs/constitut
 
 La evolución aprobada para un coach y tres alumnos está en `specs/005-complete-training/`: editor fiable, superseries, alternativas, seguimiento y entrenamiento offline. Sus tareas pendientes no representan funciones ya disponibles.
 
-La referencia visual A (Azul atleta) aprobada está en `specs/006-azul-atleta/`; conserva los contratos de la spec 005 y adapta inicio/registro móvil y planificación web.
+La referencia visual A (Azul atleta) aprobada está en `specs/006-azul-atleta/`: T167–T168 implementadas y verificadas localmente (462 unitarias, 14 integración y 145 E2E, un caso CDP omitido en WebKit). Conserva los contratos de spec 005. Recursos originales públicos en `public/design/azul-atleta/`, listados explícitamente en `src/lib/design/assets.json` para acceso y precaché. El catálogo del editor solo se renderiza en la semana visible; la selección y los borradores quedan en sus componentes montados. La revisión visual aún no se ha promovido a Vercel.
 
 ## Comandos
 

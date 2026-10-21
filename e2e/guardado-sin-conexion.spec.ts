@@ -90,7 +90,7 @@ test("sin conexión al finalizar: el entrenamiento queda a salvo y se guarda una
 
   await login(page, STUDENT.email, STUDENT.password);
   await page.goto("/week");
-  await page.getByText("Empezar", { exact: true }).click();
+  await page.getByRole("button", { name: "Empezar", exact: true }).click();
 
   await page.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("60");
   await page.getByLabel("Repeticiones de la serie 1 de Sentadilla").fill("10");

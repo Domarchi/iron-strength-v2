@@ -10,6 +10,8 @@ describe("rutas públicas", () => {
     "/icons/192",
     "/icons/maskable",
     "/apple-icon",
+    "/design/azul-atleta/hero-v1.png",
+    "/design/azul-atleta/squat-v1.png",
     "/offline",
     "/offline-workers/0123456789abcdef0123456789abcdef.js",
   ])("%s es pública", (path) => {
@@ -26,6 +28,8 @@ describe("rutas públicas", () => {
     "/iconsx/1",
     "/manifest.webmanifestx",
     "/offline/private",
+    "/design/azul-atleta/private",
+    "/design/azul-atleta/other.png",
     "/offline-workers/private.js",
     "/offline-workers/0123456789abcdef0123456789abcdef.js/private",
   ])("%s es protegida", (path) => {

@@ -103,7 +103,7 @@ async function RecoveryLinks() {
 
 export default function WeekPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="week-page flex flex-col gap-4">
       <PageHeading
         title="Mi semana"
         eyebrow="Tu entrenamiento"
@@ -123,11 +123,11 @@ export default function WeekPage() {
       <Suspense fallback={null}>
         <RecoveryLinks />
       </Suspense>
-      <Suspense fallback={null}>
-        <CoachTrainingLinks />
-      </Suspense>
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <WeekContent />
+      </Suspense>
+      <Suspense fallback={null}>
+        <CoachTrainingLinks />
       </Suspense>
     </div>
   );

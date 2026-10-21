@@ -53,22 +53,22 @@
 
 :root {
   color-scheme: light;
-  --background: #ffffff;
-  --foreground: #17191e;
+  --background: #f5f8fd;
+  --foreground: #10213a;
   --card: #ffffff;
-  --card-foreground: #17191e;
+  --card-foreground: #10213a;
   --popover: #ffffff;
   --popover-foreground: #17191e;
-  --primary: #176ac6;
+  --primary: #005fd9;
   --primary-foreground: #ffffff;
   --secondary: #eaf2fd;
   --secondary-foreground: #185ca9;
   --muted: #f1f3f6;
-  --muted-foreground: #606772;
+  --muted-foreground: #536982;
   --accent: #edf3fc;
   --accent-foreground: #185ca9;
   --destructive: #bf3434;
-  --border: #e0e3e8;
+  --border: #dce6f2;
   --input: #d5d9e0;
   --ring: #176ac6;
   --success: #177b42;
@@ -79,7 +79,7 @@
   --chart-3: #707987;
   --chart-4: #94a3b8;
   --chart-5: #bdc5d0;
-  --radius: 0.5rem;
+  --radius: 0.8rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #17191e;
   --sidebar-primary: #176ac6;
@@ -98,7 +98,7 @@
   --card-foreground: #f4f5f7;
   --popover: #202227;
   --popover-foreground: #f4f5f7;
-  --primary: #68b0ff;
+  --primary: #81bcff;
   --primary-foreground: #071a30;
   --secondary: #203249;
   --secondary-foreground: #91c4ff;
@@ -151,4 +151,616 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Azul atleta: surfaces shared by the live app and its downloaded runner. */
+.app-header {
+  background: linear-gradient(125deg, #06162b, #082b54);
+  color: #fff;
+  border-color: #193958;
+}
+.app-header .brand-icon {
+  color: #fff;
+}
+.app-header .text-muted-foreground {
+  color: #bfd0e4;
+}
+.app-header [data-slot="button"]:hover {
+  background: #173e66;
+  color: #fff;
+}
+.app-nav {
+  background: var(--card);
+  box-shadow: 0 -4px 24px #143b6310;
+}
+[data-slot="card"] {
+  box-shadow: 0 4px 20px #214c7410;
+}
+.week-frame {
+  background: var(--background);
+}
+.week-frame #main-content {
+  padding-top: 1rem;
+}
+.week-page > header,
+.week-summary {
+  color: #fff;
+}
+.week-page > header a {
+  color: #c5dfff;
+}
+.week-summary .text-muted-foreground {
+  color: #c4d5eb;
+}
+.week-summary .bg-muted {
+  background: #234d76;
+}
+.week-summary .bg-primary {
+  background: #2185ff;
+}
+.week-summary .week-strip {
+  margin-top: 0.5rem;
+}
+.week-strip [aria-current="date"] > span:last-child {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #0068ec;
+  border-color: #3992ff;
+  color: #fff;
+  box-shadow: 0 4px 14px #005deb66;
+}
+.routine-list {
+  padding: 1rem;
+  margin: 0 -1rem;
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: var(--background);
+}
+.routine-card {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+.routine-featured {
+  position: relative;
+  background: #092747;
+  color: #fff;
+  border: 1px solid #244e7c;
+  box-shadow: 0 10px 24px #0b32632b;
+}
+.week-hero-image {
+  opacity: 0.65;
+}
+.routine-hero-content {
+  position: relative;
+  padding: 1.1rem;
+  background: linear-gradient(90deg, #092747ee, #09274799 63%, #07316933);
+}
+.routine-kicker {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.routine-hero-content [data-slot="button"] {
+  background: #0068ec;
+  color: #fff;
+  min-height: 3rem;
+  box-shadow: 0 6px 16px #00398455;
+}
+.routine-compact {
+  padding: 0.85rem 1rem 0.85rem 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 4px 18px #193e690a;
+}
+.routine-status {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  border-radius: 50%;
+}
+.routine-done {
+  background: #008e6a;
+  color: white;
+  box-shadow: 0 3px 10px #00b58630;
+}
+.routine-details {
+  padding-top: 0.5rem;
+}
+.routine-featured .routine-details {
+  position: relative;
+  padding: 0.5rem 1rem 0;
+  background: var(--card);
+  color: var(--foreground);
+}
+.session-day-picker {
+  margin-top: 0.25rem;
+}
+.session-day-picker summary {
+  font-size: 0.75rem;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+@media (min-width: 768px) {
+  .routine-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .routine-list > li:first-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1024px) {
+  .coach-frame {
+    padding-left: 13rem;
+  }
+  .coach-frame .app-content {
+    max-width: 96rem;
+    padding: 0 2rem;
+  }
+  .coach-frame .app-header {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 13rem;
+    z-index: 35;
+    border: 0;
+  }
+  .coach-frame .app-header > div {
+    height: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.5rem 1rem;
+  }
+  .coach-frame .app-header > div > div {
+    margin-top: auto;
+    flex-wrap: wrap;
+  }
+  .coach-frame .app-header .brand-icon {
+    width: 2rem;
+  }
+  .coach-frame .app-header > div > a span span {
+    max-width: 7rem;
+    line-height: 1.15;
+    font-size: 1.1rem;
+  }
+  .coach-frame .app-header > div > div > span {
+    width: 100%;
+    display: block;
+    text-align: left;
+    padding: 0.5rem;
+  }
+  .coach-frame .app-nav {
+    position: fixed;
+    inset: 7rem auto auto 0;
+    width: 13rem;
+    z-index: 36;
+    padding: 0 0.65rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .coach-frame .app-nav ul {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .coach-frame .app-nav a {
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
+    border: 0;
+    border-radius: 0.65rem;
+    color: #c6d8ed;
+  }
+  .coach-frame .app-nav a[aria-current="page"] {
+    background: #0068ec;
+    color: #fff;
+    box-shadow: 0 5px 16px #00367460;
+  }
+  .coach-frame .app-nav a:hover {
+    color: #fff;
+    background: #174470;
+  }
+  .coach-frame .app-nav a[aria-current="page"]:hover {
+    background: #0068ec;
+  }
+}
+.workout-frame,
+.workout-surface {
+  color-scheme: dark;
+  --background: #071627;
+  --foreground: #f2f7ff;
+  --card: #132b40;
+  --card-foreground: #f2f7ff;
+  --popover: #17334d;
+  --popover-foreground: #f2f7ff;
+  --primary: #81bcff;
+  --primary-foreground: #061b32;
+  --muted: #173149;
+  --muted-foreground: #b6cbdf;
+  --secondary: #183b5c;
+  --secondary-foreground: #c4e1ff;
+  --accent: #183b5c;
+  --accent-foreground: #c4e1ff;
+  --border: #29465f;
+  --input: #67829b;
+  --ring: #81bcff;
+  --success: #36dfbf;
+  --success-foreground: #052c27;
+  --success-muted: #0e413e;
+  --destructive: #ffb1b1;
+  background: #071627;
+  color: #f2f7ff;
+}
+.workout-frame {
+  background: radial-gradient(ellipse at top right, #0c324e, #071627 55%);
+}
+.workout-heading {
+  background: #071627f5;
+  border-color: #26425b;
+}
+.workout-heading > div:first-child > [data-slot="button"]:last-child {
+  background: #0068ec;
+  color: white;
+  border-color: #177cff;
+}
+.workout-metrics > div:first-child {
+  display: flex;
+  flex-direction: column-reverse;
+}
+.workout-metrics > div:first-child dt {
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+}
+.workout-exercise-header {
+  padding: 0.7rem 1rem;
+  border: 1px solid #26455f;
+  border-radius: 1rem;
+  background: linear-gradient(125deg, #19364d, #10283d);
+  box-shadow: 0 8px 22px #00000014;
+}
+.exercise-illustration {
+  width: 100%;
+  height: 8.5rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.workout-set-table {
+  margin-top: 0.2rem;
+}
+.workout-set-table > div:first-child {
+  min-height: 2rem;
+  border-radius: 0.5rem;
+  background: #142d43;
+}
+.workout-set-row input {
+  border: 1px solid #627e97;
+  border-radius: 0.5rem;
+  background: #112b41;
+  height: 2.75rem;
+  font-size: 1rem;
+}
+.workout-set-row button[aria-pressed="true"] {
+  background: #05bc9d;
+  color: #052c27;
+  box-shadow: inset 0 1px 0 #6df5db;
+}
+.workout-set-row button[aria-pressed="false"] {
+  border: 1px solid #627e97;
+  background: #10253a;
+}
+.rest-dock {
+  background: linear-gradient(135deg, #18354d, #0c2337);
+  border-color: #2b4b65;
+}
+.rest-adjust[data-slot="button"] {
+  border-radius: 50%;
+  width: 3.5rem;
+  height: 3.5rem;
+  background: #0068ec;
+  color: white;
+  border-color: #1b88ff;
+  box-shadow: 0 5px 12px #00142660;
+  font-size: 1rem;
+}
+.rest-adjust[data-slot="button"]:hover {
+  background: #0876ff;
+}
+.coach-program-page > header h1 {
+  font-size: 1.75rem;
+  letter-spacing: -0.035em;
+  font-weight: 750;
+}
+.coach-session {
+  scroll-margin-top: 1rem;
+}
+.coach-exercise-row {
+  background: var(--card);
+  box-shadow: 0 2px 10px #214c7406;
+}
+.coach-exercise-row > .coach-row-identity .exercise-thumbnail {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.coach-save-bar {
+  border: 1px solid var(--border);
+}
+.coach-library {
+  background: var(--card);
+}
+@media (min-width: 1024px) {
+  .coach-week-ribbon {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    padding: 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: 0.7rem;
+    background: var(--card);
+  }
+  .coach-week-ribbon > button {
+    flex: 1;
+    min-width: 5rem;
+    min-height: 3.25rem;
+    padding: 0.5rem;
+    justify-content: center;
+    border: 0;
+    box-shadow: none;
+  }
+  .coach-week-ribbon > button > span > span:last-child {
+    display: none;
+  }
+  .coach-week-ribbon > button[aria-pressed="true"] {
+    color: var(--primary);
+    background: var(--secondary);
+  }
+}
+@media (min-width: 1280px) {
+  .coach-session {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17.5rem;
+    align-items: start;
+    gap: 1rem;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .coach-session > [data-slot="card-header"],
+  .coach-session-content {
+    grid-column: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.8rem;
+    padding: 1rem;
+  }
+  .coach-session > [data-slot="card-header"] {
+    grid-row: 1;
+  }
+  .coach-session-content {
+    grid-row: 2;
+    min-width: 0;
+  }
+  .coach-session > [data-slot="card-header"] > label {
+    display: inline-flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 0.3rem;
+  }
+  .coach-session .coach-library {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    position: sticky;
+    top: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.8rem;
+    padding: 0.8rem;
+  }
+  .coach-library .picker-panel {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .coach-library .picker-search {
+    flex-direction: column;
+  }
+  .coach-library .picker-search select {
+    width: 100%;
+  }
+  .coach-library .picker-catalog {
+    max-height: 28rem;
+    border: 0;
+  }
+  .coach-library .picker-catalog label {
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+  .coach-library .exercise-thumbnail {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .coach-library .picker-panel > div:first-child h4 {
+    display: none;
+  }
+  .coach-exercise-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 1fr);
+    gap: 0.4rem 0.75rem;
+    padding: 0.75rem;
+  }
+  .coach-row-identity {
+    display: contents;
+  }
+  .coach-row-identity > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .coach-row-identity > div:first-child p {
+    display: none;
+  }
+  .coach-row-identity h4 {
+    font-size: 0.8rem;
+  }
+  .coach-prescription {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 0;
+    gap: 0.3rem;
+  }
+  .coach-prescription label {
+    font-size: 0.65rem;
+  }
+  .coach-prescription input {
+    padding: 0.3rem;
+    text-align: center;
+  }
+  .coach-row-actions {
+    grid-column: 2;
+    grid-row: 2;
+    align-items: center;
+  }
+  .coach-row-selection {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 0;
+    gap: 0.3rem;
+  }
+  .coach-row-selection > label {
+    gap: 0.25rem;
+  }
+  .coach-row-selection > label input {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  .coach-row-selection select {
+    max-width: 9rem;
+    font-size: 0.75rem;
+  }
+  .coach-row-note {
+    grid-column: 1;
+    margin-top: 0;
+  }
+  .coach-exercise-row > details:not(.coach-row-note) {
+    grid-column: 2;
+  }
+  .coach-exercise-row > details {
+    min-width: 0;
+  }
+  .coach-save-bar {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 20;
+    background: var(--card);
+    box-shadow: 0 6px 24px #153b6e1a;
+  }
+}
+/* Keep the first viewport focused on the calendar and the working sets. */
+.week-summary > div:first-child {
+  margin-bottom: 0.5rem;
+}
+.week-summary .text-foreground {
+  color: white;
+}
+.routine-featured .routine-details {
+  padding-bottom: 0.6rem;
+}
+.routine-compact .routine-details {
+  padding-right: 3rem;
+  min-height: 2.75rem;
+}
+.session-day-picker-compact {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  z-index: 2;
+}
+.session-day-picker-compact > summary {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  place-items: center;
+  border-radius: 0.6rem;
+  background: var(--card);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  list-style: none;
+}
+.session-day-picker-compact > summary::-webkit-details-marker {
+  display: none;
+}
+.session-day-picker-compact:not([open]) .compact-day-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.routine-compact .session-day-picker-compact {
+  top: auto;
+  bottom: 0.2rem;
+}
+.session-day-picker-compact[open] {
+  position: relative;
+  inset: auto;
+  padding: 0.8rem;
+  background: var(--card);
+  color: var(--foreground);
+}
+.session-day-picker-compact[open] > summary {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+.workout-exercise > div > label select {
+  width: 6rem;
+  min-width: 6rem;
+  padding: 0 0.5rem;
+}
+@media (min-width: 1280px) {
+  .coach-session > [data-slot="card-header"] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  .coach-session > [data-slot="card-header"] > div:first-child,
+  .coach-session > [data-slot="card-header"] > p {
+    grid-column: 1 / -1;
+  }
+  .coach-row-selection > label {
+    white-space: nowrap;
+  }
+  .coach-row-selection > label + label {
+    white-space: nowrap;
+  }
+}
+
+.week-page > header {
+  background: #08294d;
+  margin: -1rem -1rem -1rem;
+  padding: 1rem;
+}
+.week-summary {
+  margin: 0 -1rem;
+  padding: 0 1rem 1.25rem;
+  background: #08294d;
+}
+.week-routines {
+  margin: 0 -1rem;
+  padding: 0 1rem;
+  background: #08294d;
+}
+.week-overview > a,
+.week-overview > p {
+  margin-top: 1rem;
 }

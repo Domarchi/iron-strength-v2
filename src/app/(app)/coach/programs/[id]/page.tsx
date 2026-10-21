@@ -88,7 +88,7 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
   const weekNumbers = Array.from({ length: tree.weeksCount }, (_, i) => i + 1);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="coach-program-page flex flex-col gap-5">
       <header className="flex flex-col gap-2">
         <Button
           variant="ghost"
@@ -218,6 +218,23 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
                   </p>
                 </div>
               ) : null}
+              {sessions.length > 1 ? (
+                <nav
+                  aria-label={`Sesiones de semana ${week}`}
+                  className="coach-session-tabs flex flex-wrap gap-2 border-b"
+                >
+                  {sessions.map((session) => (
+                    <a
+                      key={session.id}
+                      href={`#session-${session.id}`}
+                      className="inline-flex min-h-11 items-center border-b-2 border-primary px-3 text-sm font-semibold text-primary"
+                    >
+                      {session.label}
+                      {session.title ? ` · ${session.title}` : ""}
+                    </a>
+                  ))}
+                </nav>
+              ) : null}
               {sessions.map((session) =>
                 editable ? (
                   <SessionEditor
@@ -229,7 +246,7 @@ export default async function ProgramEditorPage({ params }: { params: Promise<{ 
                     canDuplicateSession={sessions.length < 7}
                   />
                 ) : (
-                  <Card key={session.id}>
+                  <Card key={session.id} id={`session-${session.id}`}>
                     <CardHeader>
                       <CardTitle className="text-base" role="heading" aria-level={3}>
                         Sesión {session.label}

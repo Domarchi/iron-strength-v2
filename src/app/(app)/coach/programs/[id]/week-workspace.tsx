@@ -4,7 +4,12 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type Guard = { dirtyIds: string[]; dirty: boolean; setDirty: (id: string, dirty: boolean) => void };
+type Guard = {
+  activeWeek?: number;
+  dirtyIds: string[];
+  dirty: boolean;
+  setDirty: (id: string, dirty: boolean) => void;
+};
 const RoutineGuard = createContext<Guard>({ dirtyIds: [], dirty: false, setDirty: () => {} });
 export const useRoutineGuard = () => useContext(RoutineGuard);
 
@@ -47,7 +52,7 @@ export function WeekWorkspace({
       ),
     [],
   );
-  const guard: Guard = { dirtyIds, dirty, setDirty };
+  const guard: Guard = { activeWeek: active, dirtyIds, dirty, setDirty };
   useEffect(() => {
     if (!dirty) return;
     const beforeUnload = (event: BeforeUnloadEvent) => {
@@ -104,7 +109,7 @@ export function WeekWorkspace({
       <div data-routine-editor className="flex flex-col gap-5">
         <nav
           aria-label="Semanas del programa"
-          className={`grid gap-2 ${weeks.length === 1 ? "grid-cols-1" : "grid-cols-2"} ${weeks.length === 3 ? "sm:grid-cols-3" : weeks.length >= 4 ? "sm:grid-cols-4" : ""}`}
+          className="coach-week-ribbon grid grid-cols-2 gap-2 sm:grid-cols-4"
         >
           {weeks.map((week) => (
             <Button
@@ -118,7 +123,7 @@ export function WeekWorkspace({
               {!week.editable ? <Lock className="size-4 shrink-0" aria-hidden /> : null}
               <span className="min-w-0">
                 <span className="block font-semibold">Semana {week.number}</span>
-                <span className="block text-xs font-normal opacity-90">
+                <span className="block text-xs font-normal">
                   {week.sessions} sesiones · {week.exercises} ejercicios
                 </span>
               </span>

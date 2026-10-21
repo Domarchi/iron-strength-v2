@@ -1,4 +1,5 @@
 "use client";
+import { ExerciseThumbnail } from "@/components/workout/exercise-thumbnail";
 import { NativeSelect } from "@/components/ui/native-select";
 
 import {
@@ -671,11 +672,12 @@ function Editor({
     return (
       <div
         key={exercise.id}
-        className={`rounded-md border p-3 ${modified ? "border-primary/40 bg-primary/5" : "bg-background"}`}
+        className={`coach-exercise-row rounded-md border p-3 ${modified ? "border-primary/40 bg-primary/5" : "bg-background"}`}
       >
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-1 items-start gap-1">
+        <div className="coach-row-identity flex flex-wrap items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             {handle}
+            <ExerciseThumbnail name={exercise.name} />
             <div className="min-w-0">
               <h4 className="text-sm font-semibold">
                 <span className="mr-2 text-muted-foreground">{index + 1}.</span>
@@ -688,7 +690,7 @@ function Editor({
               </p>
             </div>
           </div>
-          <div className="flex w-full shrink-0 justify-end gap-0.5 sm:w-auto">
+          <div className="coach-row-actions flex w-full shrink-0 justify-end gap-0.5 sm:w-auto">
             <Button
               size="icon"
               variant="ghost"
@@ -743,7 +745,7 @@ function Editor({
             />
           </div>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="coach-row-selection mt-2 flex flex-wrap items-center gap-2">
           <label className="flex min-h-11 items-center gap-2 text-xs">
             <input
               type="checkbox"
@@ -792,7 +794,7 @@ function Editor({
             alternativesDirty ||
             selected.length > 0
           }
-          className="mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
+          className="coach-prescription mt-3 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4"
         >
           {(
             [
@@ -823,7 +825,7 @@ function Editor({
             </label>
           ))}
         </fieldset>
-        <details className="mt-2" open={draft.note ? true : undefined}>
+        <details className="coach-row-note mt-2" open={draft.note ? true : undefined}>
           <summary className="min-h-11 cursor-pointer py-3 text-xs text-muted-foreground">
             Nota del ejercicio{draft.note ? "" : " (opcional)"}
           </summary>
@@ -884,7 +886,7 @@ function Editor({
     );
   }
   return (
-    <Card>
+    <Card className="coach-session" id={`session-${session.id}`}>
       <CardHeader className="border-b pb-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -999,7 +1001,7 @@ function Editor({
           El alumno puede moverlo dentro de su semana.
         </p>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="coach-session-content flex flex-col gap-4">
         {!session.exercises.length ? (
           <div className="rounded-md border border-dashed p-5 text-center">
             <p className="text-sm font-medium">Arma esta sesión</p>
@@ -1197,7 +1199,7 @@ function Editor({
           </p>
         ) : null}
         {session.exercises.length || dirty ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-muted/50 p-3">
+          <div className="coach-save-bar flex flex-wrap items-center justify-between gap-3 rounded-md bg-muted/50 p-3">
             <div className="text-xs">
               <p className="font-medium">
                 {dirty
@@ -1504,25 +1506,26 @@ function Editor({
             {error}
           </p>
         ) : null}
-        <ExercisePicker
-          programId={programId}
-          sessionId={session.id}
-          exercises={exercises}
-          count={session.exercises.length}
-          disabled={
-            dirty ||
-            pending ||
-            orderPending ||
-            dragging ||
-            !!copyRequest ||
-            !!saveRequest ||
-            conflict ||
-            !!layoutRequest ||
-            alternativesDirty ||
-            selected.length > 0
-          }
-        />
       </CardContent>
+      <ExercisePicker
+        visible={guard.activeWeek === undefined || guard.activeWeek === session.weekNumber}
+        programId={programId}
+        sessionId={session.id}
+        exercises={exercises}
+        count={session.exercises.length}
+        disabled={
+          dirty ||
+          pending ||
+          orderPending ||
+          dragging ||
+          !!copyRequest ||
+          !!saveRequest ||
+          conflict ||
+          !!layoutRequest ||
+          alternativesDirty ||
+          selected.length > 0
+        }
+      />
     </Card>
   );
 }

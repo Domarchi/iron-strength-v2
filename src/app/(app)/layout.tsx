@@ -25,8 +25,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <OfflineAccount userId={user.id} />
       <AccountBoundary userId={user.id}>
         <AppChrome
+          coach={user.role === "coach"}
           header={
-            <header className="border-b bg-card pt-[env(safe-area-inset-top)]">
+            <header className="app-header border-b bg-card pt-[env(safe-area-inset-top)]">
               <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2 md:px-6">
                 <Link
                   href={user.role === "coach" ? "/coach/students" : "/week"}

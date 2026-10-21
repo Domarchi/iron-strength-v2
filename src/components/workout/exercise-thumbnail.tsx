@@ -1,8 +1,16 @@
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 import { Dumbbell } from "lucide-react";
 
 // Ilustraciones propias de patrones de movimiento; son ayudas de identificación, no una guía
 // de técnica. Los ejercicios sin un patrón conocido conservan una miniatura genérica.
-export function ExerciseThumbnail({ name }: { name: string }) {
+export function ExerciseThumbnail({
+  name,
+  featured = false,
+}: {
+  name: string;
+  featured?: boolean;
+}) {
   const key = name.toLocaleLowerCase("es-CL");
   const pose = /sentadilla|zancada/.test(key)
     ? "squat"
@@ -19,13 +27,25 @@ export function ExerciseThumbnail({ name }: { name: string }) {
               : null;
   return (
     <span
-      className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl border bg-muted/60"
+      className={cn(
+        "exercise-thumbnail grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted/60",
+        featured && "exercise-illustration",
+      )}
       aria-hidden="true"
     >
-      {pose ? (
+      {key === "sentadilla" || key === "sentadilla con barra" ? (
+        <Image
+          src="/design/azul-atleta/squat-v1.png"
+          alt=""
+          width={featured ? 160 : 48}
+          height={featured ? 160 : 48}
+          unoptimized
+          className="size-full object-contain"
+        />
+      ) : pose ? (
         <svg
           viewBox="0 0 64 64"
-          className="size-14"
+          className="size-full p-1"
           fill="none"
           stroke="currentColor"
           strokeWidth="2.7"
