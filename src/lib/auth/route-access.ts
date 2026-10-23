@@ -1,4 +1,5 @@
 import designAssets from "@/lib/design/assets.json";
+import { isMobileEndpointPath } from "../mobile/paths";
 // Decisión de acceso del proxy. Es solo una comprobación optimista (¿hay sesión?): el rol, el
 // estado activo y los datos los protegen los layouts del servidor y la RLS (constitución 4).
 
@@ -18,6 +19,7 @@ export function isOfflineResource(pathname: string): boolean {
 }
 
 export function isPublicPath(pathname: string): boolean {
+  if (isMobileEndpointPath(pathname)) return true;
   if (isOfflineResource(pathname) || designAssets.includes(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) =>
     prefix.endsWith("/") ? pathname.startsWith(prefix) : pathname === prefix,

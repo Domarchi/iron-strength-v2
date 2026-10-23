@@ -1,7 +1,7 @@
 # Tareas — Primera entrega móvil
 
 - [x] T182 · Especificación, SDK compatible, límites y pruebas previas.
-- [ ] T183 · API móvil autenticada de acceso, semana y consulta.
+- [x] T183 · API móvil autenticada de acceso, semana y consulta.
 - [ ] T184 · Cliente Expo, sesión segura y tres pantallas de consulta.
 - [ ] T185 · Validación, documentación y build para probar en teléfono.
 

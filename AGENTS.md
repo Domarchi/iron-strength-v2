@@ -18,7 +18,7 @@ T181 publicada el 23 de octubre de 2026 por instrucción expresa del propietario
 
 Validación final local T181: check completo con 506 unitarias, 459 pgTAP, 270 integración, tipos generados idénticos y 191 E2E aprobadas sin fallos/reintentos (un skip CDP previsto en WebKit). Cobertura del dominio: 100 % líneas y funciones. Vista previa del puerto 3000 recompilada con .next-interactive; datos interactivos conservados. Aceptación física pendiente y separada de emulación.
 
-La app Android/iPhone está aprobada con React Native y Expo. Spec activa adicional: `specs/008-native-app/`, primera entrega de consulta (acceso con cuenta actual, Mi semana y rutina); coach planifica en web. T182 documentada. No confundir exportación JS con APK/IPA firmada, Expo web con aceptación física o scaffold con envío a tiendas.
+La app Android/iPhone está aprobada con React Native y Expo. Spec activa adicional: `specs/008-native-app/`, primera entrega de consulta (acceso con cuenta actual, Mi semana y rutina); coach planifica en web. T182–T183 completas: API versionada /api/mobile/v1, bearer verificado, clientes autenticados por petición y RLS, sin cookies. La excepción del proxy es una lista cerrada; no ampliar a cualquier ruta /api/mobile. Login reutiliza el control de intentos administrativo existente; lecturas no lo usan. 513 unitarias, 275 integración, cuatro E2E HTTP en ambos motores aprobadas. No confundir exportación JS con APK/IPA firmada, Expo web con aceptación física o scaffold con envío a tiendas.
 
 ## Comandos
 
