@@ -38,7 +38,8 @@
     "test": "node ../node_modules/vitest/vitest.mjs run -c vitest.config.ts",
     "check": "npm run lint && npm run typecheck && npm test",
     "bundle": "expo export --platform android --platform ios",
-    "test:ui": "node ../node_modules/@playwright/test/cli.js test -c playwright.config.ts"
+    "test:ui": "node ../node_modules/@playwright/test/cli.js test -c playwright.config.ts",
+    "login": "expo login --browser"
   },
   "private": true
 }

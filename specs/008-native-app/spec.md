@@ -1,6 +1,6 @@
 # Spec 008 — Primera entrega Android/iPhone
 
-Joaquin aprobó React Native con Expo el 23 de octubre de 2026 para acceso con la cuenta actual, Mi semana y consulta de rutina. El coach conserva la planificación web. SDK 57 explícito para la compatibilidad actual de Expo Go, Router para navegación y SecureStore para credenciales. No contratar servicios, crear cuentas o enviar a tiendas en este hito.
+Joaquin aprobó React Native con Expo el 23 de octubre de 2026 para acceso con la cuenta actual, Mi semana y consulta de rutina. El coach conserva la planificación web. SDK 57 explícito para la compatibilidad actual de Expo Go, Router para navegación y SecureStore para credenciales. No contratar servicios, crear cuentas por el usuario o enviar a tiendas en este hito. Expo Go SDK 57 en iPhone exige que el propietario autentique la misma cuenta Expo en CLI y teléfono; es un acceso de desarrollo pendiente, distinto de la cuenta Iron Strength. Un manifiesto HTTP disponible no acredita que Expo Go permita abrir la app sin ese acceso.
 
 La primera entrega es de consulta: no inicia cronómetro, borrador o entrenamiento. Incluye estados sin programa, futuro/terminado, sesiones con avance, prescripción uniforme/detallada, grupos, descanso e indicaciones/alternativas. Conserva Azul atleta y sigue el tema del sistema. El registro nativo completo y las descargas SQLite son entregas posteriores de la propuesta.
 

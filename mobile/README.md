@@ -22,7 +22,7 @@ No hay almacenamiento de rutinas offline en este hito. La salida elimina la sesi
 
 ## Probar en teléfono
 
-Usar Expo Go compatible con SDK 57 y abrir el enlace temporal emitido por Metro. Android permite escanear el QR desde Expo Go; en iPhone se puede abrir desde Cámara o el enlace de Expo. El acceso y las rutinas dependen de la cuenta real existente: esta entrega no crea usuarios o programas ficticios en producción. Sin programa, debe aparecer el estado correspondiente.
+Usar Expo Go compatible con SDK 57. Para iPhone, iniciar sesión en Expo Go y en la CLI con la misma cuenta Expo: desde la raíz ejecutar `npm run mobile:login`, completar el acceso en el navegador de este computador y reiniciar Metro. No pegar contraseñas ni códigos en el chat. Este acceso de desarrollo es distinto de la cuenta de Iron Strength dentro de la app. [Requisito oficial de Expo Go](https://expo.dev/changelog/expo-go-57-login). Después abrir el enlace temporal emitido por Metro. Android permite escanear el QR desde Expo Go; en iPhone se puede abrir desde Cámara o el enlace de Expo. El acceso y las rutinas dependen de la cuenta real existente: esta entrega no crea usuarios o programas ficticios en producción. Sin programa, debe aparecer el estado correspondiente.
 
 Comprobar con cuenta propia: entrar → Mi semana → Ver rutina → objetivos/indicaciones/alternativas → volver → salir. Cerrar y reabrir debe recuperar la sesión; desconectar al recuperar permite reintentar; cerrar sesión no debe cerrar la web. Registrar teclado, lector de pantalla, tamaño de texto, tema y retorno desde segundo plano por separado en specs/008-native-app/validation.md. Expo web no sustituye estos controles físicos.
 

@@ -126,3 +126,7 @@ jobs:
         working-directory: mobile
       - run: npm run bundle
         working-directory: mobile
+      - name: Instalar navegadores para la interfaz de consulta
+        run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:ui
+        working-directory: mobile
