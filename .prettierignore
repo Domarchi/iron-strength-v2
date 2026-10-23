@@ -6,3 +6,9 @@ src/types/database.ts
 
 public/offline-workers/
 .next-interactive/
+
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/package-lock.json
+mobile/expo-env.d.ts
