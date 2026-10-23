@@ -2,16 +2,16 @@
 
 La publicación sigue T165–T166 de `specs/005-complete-training/`. El código local está validado; estos pasos no acreditan un despliegue remoto. No trasladar usuarios, contraseñas, fotos ni entrenamientos de demostración a producción.
 
-T181 se publicó el 23 de octubre de 2026: [estado y artefacto de spec 007](../specs/007-training-flow/release.md). El dominio sirve `dpl_7CyiznBLcQZuJWAYE8zKwRVZyX2Z`, BUILD_ID `1750c8e846e94210a27c010bb7720fad`, código be1ac09. Supabase tiene 39 migraciones y conserva sus datos. El propietario instruyó publicar con la validación local completa; GitHub continúa en startup_failure antes de ejecutar CI, pendiente separado. Recuperación compatible: `dpl_7iF5fXeTQCmLhDX3nfcMLz1n6ybj`. No recompilar ni volver al frontend c45ee9d automáticamente.
+T181 y la API móvil se publicaron el 23 de octubre de 2026: [estado y artefacto actual](../specs/007-training-flow/release.md). Dominio en E dpl_4oP53eMvsERAkw3f9ec4B5BroYKs, BUILD_ID cefb52e61feb46d4944d84fc776f95cc, código cf38b90, Next 16.4.3. Recuperación compatible F dpl_3ffHvzqJvyZWMq9eDSegRhB7zmMz. Supabase tiene 39 migraciones y conserva sus datos. 514 unitarias, 275 integración, 459 pgTAP del esquema y 197 E2E con un skip previsto. El propietario autorizó publicar con controles locales; GitHub continúa en startup_failure antes de trabajos. No volver automáticamente a builds 16.4.0 ni c45ee9d. Expo de consulta está en mobile; prueba física, acceso Expo y firma siguen pendientes separados.
 
 ## Destino y estado comprobado
 
-| Recurso           | Destino previsto / evidencia                                                                | Estado                                                                                                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Código            | `Domarchi/iron-strength-v2`, rama `main-54qpxa`                                             | Rama subida a GitHub hasta 46bfb7f; 46bfb7f tuvo CI verde con un reintento; repetición 7229aea falló y la corrección de transporte se valida localmente |
-| Supabase          | `udwhjcnlfqlggblnpchu`, nombre esperado `iron-strength`                                     | ACTIVE_HEALTHY; respaldo y esquema verificados; 36 migraciones aplicadas                                                                                |
-| Vercel encontrado | `iron-strength`, `prj_efHmFcgn3IS5Bd4zzNShwGnewXPd`, equipo `team_NW0l4Vd8UMmxgFbZxPETPMph` | Usuario autorizó reemplazar esa versión por v2 en el mismo proyecto; último despliegue anterior conservado                                              |
-| Teléfonos         | Android/Chrome e iPhone/Safari                                                              | Pendiente prueba física por HTTPS                                                                                                                       |
+| Recurso           | Destino previsto / evidencia                                                                | Estado                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Código            | `Domarchi/iron-strength-v2`, rama `main-54qpxa`                                             | Código cf38b90 publicado; validación local completa, CI 39978567518 en startup_failure antes de trabajos   |
+| Supabase          | `udwhjcnlfqlggblnpchu`, nombre esperado `iron-strength`                                     | ACTIVE_HEALTHY; respaldo actualizado/restaurado y 39 migraciones verificadas                               |
+| Vercel encontrado | `iron-strength`, `prj_efHmFcgn3IS5Bd4zzNShwGnewXPd`, equipo `team_NW0l4Vd8UMmxgFbZxPETPMph` | Usuario autorizó reemplazar esa versión por v2 en el mismo proyecto; último despliegue anterior conservado |
+| Teléfonos         | Android/Chrome e iPhone/Safari                                                              | Pendiente prueba física por HTTPS                                                                          |
 
 No modificar RELEVO, relevo1 ni el proyecto Supabase `hmkgxhszamktvisrifxv`. El nombre parecido de un proyecto no basta para elegirlo. Antes de cada escritura remota comprobar referencia, equipo, repositorio, commit y entorno.
 
@@ -25,7 +25,7 @@ npx supabase migration list --linked
 npx supabase db push --linked --dry-run
 ```
 
-En este hito hay **36 migraciones**, desde `20261007120009_profiles.sql` hasta `20261020120099_offline_workout_sync.sql`. Comparar el listado real del repositorio y el historial remoto; no reparar el historial automáticamente si difiere. Inspeccionar el esquema remoto para confirmar que solo contiene esta app.
+Actualmente hay **39 migraciones**, desde `20261007120009_profiles.sql` hasta `20261021120002_prescription_series.sql`. Comparar el listado real del repositorio y el historial remoto; no reparar el historial automáticamente si difiere. Inspeccionar el esquema remoto para confirmar que solo contiene esta app.
 
 Antes de aplicar, completar [respaldo y restauración](backup-restore.md). Aplicar solo las migraciones pendientes, nunca un reset remoto:
 

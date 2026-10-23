@@ -1,28 +1,28 @@
-# T181 — Publicación
+# T181–T185 — Publicación de web y API móvil
 
-Estado del 23 de octubre de 2026: **T170–T181 publicadas** en https://iron-strength-seven.vercel.app. Se promovió el mismo artefacto B preparado y probado, sin recompilar. El propietario instruyó publicar después de conocer el bloqueo de inicio del CI; se usó la validación local completa y se conserva ese bloqueo como pendiente, sin declararlo aprobado.
+Estado del 23 de octubre de 2026: **T170–T181 y la API móvil de consulta están publicadas** en https://iron-strength-seven.vercel.app. Se promovió el mismo artefacto E protegido y verificado, sin recompilar. El propietario autorizó publicar con controles locales y el fallo de arranque de GitHub conocido; no se declara CI verde.
 
-Actualización de cierre: Next 16.4.3 ya está publicado. Artefacto C `dpl_Hx88KtxSP4uYhoE1Rv8tXBYmdzXi`, código `5d8bed6ac23abf64219d3a09edd3ef32800ee125`, BUILD_ID `c9fa2f8ce4e04beb98aa1224eb811093`. Se verificó protegido y se promovió ese mismo build sin recompilar; alias y 14 comprobaciones públicas confirmados. Recuperación parcheada D `dpl_9AwegyxqidGd94x8k98teRsawXQi`, https://iron-strength-7pef1bjsg-domarchis-projects.vercel.app, BUILD_ID `4a03d120c0e84643b8e770a29c7daa31`: READY/production, mismo código, acceso y worker de 64 recursos comprobados. Promoción automática del dominio desactivada otra vez tras promover. Auditoría de producción sin avisos, check en verde y regresión documentada en validation.md. Los artefactos A/B 16.4.0 quedan como historial, no como recuperación predeterminada. No hubo cambios adicionales de esquema o datos.
+## Destinos y artefactos actuales
 
-## Destinos y artefactos
+| Elemento                      | Identidad verificada                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| Aplicación pública            | https://iron-strength-seven.vercel.app                                                |
+| Vercel                        | iron-strength, prj_efHmFcgn3IS5Bd4zzNShwGnewXPd, equipo team_NW0l4Vd8UMmxgFbZxPETPMph |
+| Código publicado              | cf38b907a4477290f9d1088f744402b6b629f092, Domarchi/iron-strength-v2, main-54qpxa      |
+| Runtime                       | Next 16.4.3, Node 24, Sharp 0.35.5                                                    |
+| E publicado                   | dpl_4oP53eMvsERAkw3f9ec4B5BroYKs                                                      |
+| URL E protegida               | https://iron-strength-fuuvav8k1-domarchis-projects.vercel.app                         |
+| BUILD_ID E                    | cefb52e61feb46d4944d84fc776f95cc                                                      |
+| F preparado para recuperación | dpl_3ffHvzqJvyZWMq9eDSegRhB7zmMz, mismo código y contrato móvil                       |
+| URL F protegida               | https://iron-strength-k65l9r6t5-domarchis-projects.vercel.app                         |
+| BUILD_ID F                    | e8e079d4bef0489b98d37e9eebfa756d                                                      |
+| Supabase exclusivo            | udwhjcnlfqlggblnpchu, iron-strength, 39 migraciones                                   |
 
-| Elemento                                           | Identidad verificada                                                                        |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Aplicación pública                                 | https://iron-strength-seven.vercel.app                                                      |
-| Vercel                                             | `iron-strength`, `prj_efHmFcgn3IS5Bd4zzNShwGnewXPd`, equipo `team_NW0l4Vd8UMmxgFbZxPETPMph` |
-| Código de esta entrega                             | `be1ac09d576663396af2d39f8a541c28b1b5d9d7`, Domarchi/iron-strength-v2, main-54qpxa          |
-| Artefacto B publicado                              | `dpl_7CyiznBLcQZuJWAYE8zKwRVZyX2Z`                                                          |
-| URL B protegida                                    | https://iron-strength-58yf7j1nr-domarchis-projects.vercel.app                               |
-| BUILD_ID B                                         | `1750c8e846e94210a27c010bb7720fad`                                                          |
-| Artefacto A preparado para recuperación compatible | `dpl_7iF5fXeTQCmLhDX3nfcMLz1n6ybj`, mismo código y configuración                            |
-| URL A protegida                                    | https://iron-strength-384t07dm5-domarchis-projects.vercel.app                               |
-| BUILD_ID A                                         | `00ca6ed51c70477f8b5b404cc7ad20c4`                                                          |
-| Versión pública anterior hasta el 23 de octubre    | `dpl_4iyYTpuRF2tp1att8QpsznFRSbuq`, código `c45ee9d91ae7bc41538a3ccd0fd9c7dcb8dab9c2`       |
-| Supabase exclusivo                                 | `udwhjcnlfqlggblnpchu`, iron-strength                                                       |
+E y F están READY/production. Acceso, worker con 64 recursos, borradores v1/v2/v3 y ausencia de skipWaiting verificados antes de publicar. La API se comprobó usando la identidad CLI existente, sin desactivar protección: 401 JSON privado sin bearer y 400 ante login vacío; no se usaron credenciales del propietario. Alias público confirmado en E y asignación automática desactivada después de promover. Dieciséis comprobaciones públicas confirmaron BUILD_ID, recursos, hashes de las cuatro variantes, límites de acceso y respuestas móviles. Las dos imágenes móviles siguen sumando 46.920 bytes. No se inició sesión como el propietario ni se agregaron datos personales al caché.
 
-Ambos builds están READY, con destino production. El alias público apuntó inicialmente a B; ahora usa C y la recuperación preferida es D, ambos parcheados, según la actualización anterior. Se verificaron por HTTPS acceso e interfaz offline, BUILD_ID y worker: 64 recursos públicos dentro de la lista cerrada, lectura de borradores v1/v2/v3 y ninguna llamada a `skipWaiting`. Las cuatro variantes de ilustración coinciden por hash con el repositorio; las dos resoluciones móviles suman 46.920 bytes. No se desactivó la protección del despliegue para inspeccionarlo. No se inició sesión como el propietario.
+F es la primera recuperación compatible con la API móvil y el parche. C (dpl_Hx88KtxSP4uYhoE1Rv8tXBYmdzXi, BUILD_ID c9fa2f8ce4e04beb98aa1224eb811093) y D (dpl_9AwegyxqidGd94x8k98teRsawXQi, BUILD_ID 4a03d120c0e84643b8e770a29c7daa31) publicaron el parche 5d8bed6 anteriormente, pero no ofrecen la API nativa. A/B con Next 16.4.0 son solo historial y no la recuperación de seguridad predeterminada. El frontend c45ee9d no entiende todos los formatos nuevos; nunca volver automáticamente a él o borrar datos para hacer coincidir una interfaz antigua.
 
-La versión pública anterior no entiende todas las nuevas prescripciones y versiones locales. Después de habilitar esas funciones, usar D como primera opción de recuperación del frontend, conservando las migraciones aditivas. No volver automáticamente al código c45ee9d ni borrar datos para hacer coincidir una interfaz antigua.
+Verificación final local: check completo con **514 unitarias**, formato, tipos, lint sin errores (diez avisos existentes) y build. **275 integración**, más repetición final de los cinco casos móviles tras ajustar exclusivamente su guarda de aislamiento. **197 E2E aprobadas y un skip CDP previsto en WebKit**, sin fallos/reintentos, 32,1 minutos. Las 459 pgTAP del esquema siguen vigentes; esta API no añade SQL. Detalle de Expo y límites de distribución en [spec 008](../008-native-app/validation.md). Los commits posteriores al código publicado modifican comandos, pruebas, CI y documentación, sin cambiar el comportamiento web/API verificado de cf38b90.
 
 ## Bloqueo del CI
 
@@ -44,11 +44,13 @@ El [ensayo de restauración](../../docs/backup-restore.md) compara datos y permi
 
 1. Identidad remota y respaldo actualizados y verificados; cambios de Auth conservados.
 2. Aplicación de tres migraciones por `supabase db push --linked`, sin reset ni reparación del historial. Auditoría posterior: 39 versiones, RLS, bucket privado y datos conservados.
-3. B verificado y promovido sin recompilar. Alias público y BUILD_ID confirmados. Asignación automática del dominio desactivada después de promover.
+3. B inicial, parche C y API E verificados y promovidos sin recompilar sus respectivos artefactos. Alias público y BUILD_ID confirmados. Asignación automática del dominio desactivada después de promover.
 4. Comprobación pública de acceso, offline, manifiesto, iconos, variantes y worker; 200. Rutas privadas sin sesión redirigen 307 a login; su documento de acceso usa no-store. GET de la API de sincronización rechaza método con 405. Ningún dato personal se incorporó al caché.
-5. URL HTTPS solicitada en el panel de Codex; la apertura quedó queued y no se declara una prueba autenticada del propietario. D conserva la recuperación compatible y el parche de seguridad.
+5. URL HTTPS solicitada en el panel de Codex; la apertura quedó queued y no se declara una prueba autenticada del propietario. F conserva la recuperación compatible, el parche y la API móvil.
 
 El push del parche también terminó antes de trabajos: [39975322226](https://github.com/Domarchi/iron-strength-v2/actions/runs/39975322226), startup_failure; no hay un fallo de tests atribuido a ese run. Evidencia privada adicional: patch-public-verification.json.
+
+La ejecución del código móvil [39978567518](https://github.com/Domarchi/iron-strength-v2/actions/runs/39978567518) también terminó en startup_failure con cero trabajos. No se cambió el CI para ocultarlo. Evidencia adicional privada: native-final-check.log, native-web-e2e-full.log y native-public-verification.json.
 
 Pendientes separados: resolver startup_failure en GitHub y registrar aceptación física Android/iPhone. No se crearon alumnos reales ni se enviaron invitaciones por esta entrega. Evidencia privada en `work/t181-release-20261023/`, fuera de Git; ningún respaldo o secreto se publica.
 

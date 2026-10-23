@@ -1,5 +1,11 @@
 # Validación — Spec 007
 
+## Cierre posterior con API móvil — 23 de octubre de 2026
+
+La regresión completa posterior al parche y a la frontera móvil terminó en **197 E2E aprobadas y un skip CDP previsto**, Chromium/WebKit, sin fallos ni reintentos (32,1 minutos). Incluye la hidratación del selector y los casos de copiar/asignar. Check desde el estado limpio 6f76d06: **514 unitarias**, formato, tipos, lint sin errores (diez avisos previos) y build Next 16.4.3 con 64 recursos. Integración completa: **275**, y los cinco casos móviles volvieron a pasar tras ajustar solo la guarda de pruebas de CI. No hay SQL nuevo: permanecen las 459 pgTAP verificadas.
+
+Publicado E dpl_4oP53eMvsERAkw3f9ec4B5BroYKs, código cf38b90, BUILD_ID cefb52e61feb46d4944d84fc776f95cc, mismo artefacto probado y promovido; F es la recuperación compatible también con API. Dieciséis verificaciones públicas y huella interactiva conservada. Las pasadas fallidas históricas del parche descritas abajo quedan superadas por esta suite completa; no se borran como evidencia. CI sigue fallando antes de trabajos y las pruebas físicas continúan pendientes. Ver release.md y spec 008.
+
 ## Parche de seguridad y controles finales — 23 de octubre de 2026
 
 Después de publicar B, una repetición de check detectó SecurityFatalError. npm audit y el aviso oficial confirmaron Next 16.4.0 afectado. Actualizados únicamente Next, su configuración ESLint y sus dependencias internas de 16.4.0 a 16.4.3; Sharp se conserva en 0.35.5. Auditoría de producción: cero avisos. No se aplicaron cambios mayores ni audit fix con force; avisos de herramientas de desarrollo quedan separados.
