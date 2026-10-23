@@ -6,6 +6,10 @@ import { createMobileApi } from "./api";
 import { mobileSessionSchema, type MobileSession } from "./contracts";
 import { hashEmail } from "../auth/rate-limit";
 import { addDays, mondayOf, santiagoDate } from "../../domain/dates";
+import { isMobileTestBackend } from "../testing/mobile-backend";
+// Antes de crear cliente o registrar hooks: afterAll también corre si falla beforeAll.
+if (!isMobileTestBackend(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env))
+  throw Error("Solo pila aislada 55321 o runner efímero hospedado por GitHub");
 const admin = adminClient();
 const api = () => createMobileApi(mobileProductionDependencies());
 const post = (path: string, body: unknown, token?: string) =>
@@ -27,8 +31,6 @@ describe("cliente móvil con Auth y RLS reales", () => {
     bob: typeof coach;
   const programs = new Map<string, { id: string; session: string }>();
   beforeAll(async () => {
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL !== "http://127.0.0.1:55321")
-      throw Error("Solo pila aislada 55321");
     await resetUsers(admin);
     coach = await createProfileUser(admin, {
       role: "coach",

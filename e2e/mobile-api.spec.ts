@@ -3,12 +3,14 @@ import { admin, COACH, createUser, resetAll, seedCoach, seedProgram } from "./su
 import { login } from "./support/ui";
 import { mobileSessionSchema } from "../src/lib/mobile/contracts";
 
+import { isMobileTestBackend } from "../src/lib/testing/mobile-backend";
+
 let alice: string, bob: string, aliceSession: string, bobSession: string;
 const email = "mobile@iron-strength.e2e.test";
 const password = "Mobile-local-only-2026!";
 test.beforeAll(async () => {
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL !== "http://127.0.0.1:55321")
-    throw Error("Prueba móvil solo en la instancia aislada 55321");
+  if (!isMobileTestBackend(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env))
+    throw Error("Prueba móvil solo en 55321 o runner efímero hospedado por GitHub");
   await resetAll();
   const coach = await seedCoach();
   alice = await createUser(admin(), {
