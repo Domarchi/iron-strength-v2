@@ -2,7 +2,7 @@
 
 Estado del 23 de octubre de 2026: **T170–T181 publicadas** en https://iron-strength-seven.vercel.app. Se promovió el mismo artefacto B preparado y probado, sin recompilar. El propietario instruyó publicar después de conocer el bloqueo de inicio del CI; se usó la validación local completa y se conserva ese bloqueo como pendiente, sin declararlo aprobado.
 
-Actualización de cierre: se detectó un aviso real para Next 16.4.0 y se preparó el parche compatible 16.4.3, con auditoría de producción sin avisos, check en verde y regresión documentada en validation.md. Se prepara su artefacto antes de reemplazar B. Los artefactos 16.4.0 quedan como historial, no como recuperación de seguridad predeterminada.
+Actualización de cierre: Next 16.4.3 ya está publicado. Artefacto C `dpl_Hx88KtxSP4uYhoE1Rv8tXBYmdzXi`, código `5d8bed6ac23abf64219d3a09edd3ef32800ee125`, BUILD_ID `c9fa2f8ce4e04beb98aa1224eb811093`. Se verificó protegido y se promovió ese mismo build sin recompilar; alias y 14 comprobaciones públicas confirmados. Recuperación parcheada D `dpl_9AwegyxqidGd94x8k98teRsawXQi`, https://iron-strength-7pef1bjsg-domarchis-projects.vercel.app, BUILD_ID `4a03d120c0e84643b8e770a29c7daa31`: READY/production, mismo código, acceso y worker de 64 recursos comprobados. Promoción automática del dominio desactivada otra vez tras promover. Auditoría de producción sin avisos, check en verde y regresión documentada en validation.md. Los artefactos A/B 16.4.0 quedan como historial, no como recuperación predeterminada. No hubo cambios adicionales de esquema o datos.
 
 ## Destinos y artefactos
 
@@ -20,9 +20,9 @@ Actualización de cierre: se detectó un aviso real para Next 16.4.0 y se prepar
 | Versión pública anterior hasta el 23 de octubre    | `dpl_4iyYTpuRF2tp1att8QpsznFRSbuq`, código `c45ee9d91ae7bc41538a3ccd0fd9c7dcb8dab9c2`       |
 | Supabase exclusivo                                 | `udwhjcnlfqlggblnpchu`, iron-strength                                                       |
 
-Ambos builds están READY, con destino production. El alias público ahora apunta a B; A se conserva como recuperación compatible. Se verificaron por HTTPS acceso e interfaz offline, BUILD_ID y worker: 64 recursos públicos dentro de la lista cerrada, lectura de borradores v1/v2/v3 y ninguna llamada a `skipWaiting`. Las cuatro variantes de ilustración coinciden por hash con el repositorio; las dos resoluciones móviles suman 46.920 bytes. No se desactivó la protección del despliegue para inspeccionarlo. No se inició sesión como el propietario.
+Ambos builds están READY, con destino production. El alias público apuntó inicialmente a B; ahora usa C y la recuperación preferida es D, ambos parcheados, según la actualización anterior. Se verificaron por HTTPS acceso e interfaz offline, BUILD_ID y worker: 64 recursos públicos dentro de la lista cerrada, lectura de borradores v1/v2/v3 y ninguna llamada a `skipWaiting`. Las cuatro variantes de ilustración coinciden por hash con el repositorio; las dos resoluciones móviles suman 46.920 bytes. No se desactivó la protección del despliegue para inspeccionarlo. No se inició sesión como el propietario.
 
-La versión pública anterior no entiende todas las nuevas prescripciones y versiones locales. Después de habilitar esas funciones, usar A como primera opción de recuperación del frontend, conservando las migraciones aditivas. No volver automáticamente al código c45ee9d ni borrar datos para hacer coincidir una interfaz antigua.
+La versión pública anterior no entiende todas las nuevas prescripciones y versiones locales. Después de habilitar esas funciones, usar D como primera opción de recuperación del frontend, conservando las migraciones aditivas. No volver automáticamente al código c45ee9d ni borrar datos para hacer coincidir una interfaz antigua.
 
 ## Bloqueo del CI
 
@@ -46,7 +46,9 @@ El [ensayo de restauración](../../docs/backup-restore.md) compara datos y permi
 2. Aplicación de tres migraciones por `supabase db push --linked`, sin reset ni reparación del historial. Auditoría posterior: 39 versiones, RLS, bucket privado y datos conservados.
 3. B verificado y promovido sin recompilar. Alias público y BUILD_ID confirmados. Asignación automática del dominio desactivada después de promover.
 4. Comprobación pública de acceso, offline, manifiesto, iconos, variantes y worker; 200. Rutas privadas sin sesión redirigen 307 a login; su documento de acceso usa no-store. GET de la API de sincronización rechaza método con 405. Ningún dato personal se incorporó al caché.
-5. URL HTTPS solicitada en el panel de Codex; la apertura quedó queued y no se declara una prueba autenticada del propietario. A conserva la recuperación compatible.
+5. URL HTTPS solicitada en el panel de Codex; la apertura quedó queued y no se declara una prueba autenticada del propietario. D conserva la recuperación compatible y el parche de seguridad.
+
+El push del parche también terminó antes de trabajos: [39975322226](https://github.com/Domarchi/iron-strength-v2/actions/runs/39975322226), startup_failure; no hay un fallo de tests atribuido a ese run. Evidencia privada adicional: patch-public-verification.json.
 
 Pendientes separados: resolver startup_failure en GitHub y registrar aceptación física Android/iPhone. No se crearon alumnos reales ni se enviaron invitaciones por esta entrega. Evidencia privada en `work/t181-release-20261023/`, fuera de Git; ningún respaldo o secreto se publica.
 
