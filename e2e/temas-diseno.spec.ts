@@ -3,6 +3,35 @@ import { expect, test } from "@playwright/test";
 import { COACH, resetAll, seedCoach, seedProgram } from "./support/db";
 import { login } from "./support/ui";
 
+test("el selector espera la hidratación antes de aceptar una preferencia", async ({ page }) => {
+  await resetAll();
+  await seedCoach();
+  await login(page, COACH.email, COACH.password);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/_next/static/**/*.js", async (route) => {
+    await gate;
+    await route.continue();
+  });
+  try {
+    await page.goto("/account", { waitUntil: "commit" });
+    const theme = page.getByRole("combobox", { name: "Tema visual", exact: true });
+    await expect(theme).toBeDisabled();
+    release();
+    await expect(theme).toBeEnabled();
+    await theme.selectOption("dark");
+    await expect(page.locator("html")).toHaveAttribute("data-theme-preference", "dark");
+    await page.reload();
+    await expect(theme).toBeEnabled();
+    await expect(theme).toHaveValue("dark");
+  } finally {
+    release();
+    await page.unrouteAll({ behavior: "wait" });
+  }
+});
+
 test("tema manual persiste, Sistema vuelve a seguir el teléfono y las pantallas son legibles", async ({
   page,
 }) => {

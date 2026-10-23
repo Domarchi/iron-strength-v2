@@ -56,3 +56,11 @@ Coinciden los hashes de **49 tablas y 513 filas**, las **51 políticas** y los p
 Sobre esa copia restaurada se ensayaron, en orden, `20261021120000_atomic_routine_additions`, `20261021120001_reviewed_planning` y `20261021120002_prescription_series`. Las huellas de las **18 tablas públicas preexistentes** permanecen iguales al omitir únicamente las nuevas columnas nullable cuando son nulas. La copia de los datos remotos permanece aislada; este ensayo no aplica las migraciones a producción.
 
 Evidencia privada: `work/t181-remote-backup-native/manifest.json`, `restore-verification.json` y `migration-rehearsal.json`, en el directorio padre. Antes de aplicar en remoto, volver a verificar identidad, historial y cambios de datos posteriores al respaldo; si los hay, crear otro respaldo y verificarlo. No usar un respaldo anterior como si cubriera escrituras nuevas.
+
+## Actualización y aplicación T181 — 23 de octubre de 2026
+
+La comprobación previa encontró cambios de sesiones/tokens/usuario Auth respecto del día 21, por lo que se generó un respaldo nuevo de seis volcados. Sus hashes de las 49 tablas permanecieron estables durante la copia y se volvieron a comprobar justo antes de aplicar. El bucket seguía sin objetos y privado.
+
+Se restauró en una nueva base aislada `iron_restore_t181_20261023`: **49 tablas/514 filas, 51 políticas y 26 propietarios/banderas de tablas coincidentes**. El ensayo de las tres migraciones mantuvo las huellas de las 18 tablas públicas preexistentes. Se aplicaron después únicamente esas tres por la CLI al Supabase exclusivo udwhjcnlfqlggblnpchu: 39 versiones coincidentes, datos conservados, RLS activa y fotos privadas. No se ejecutaron reset ni semillas remotas, ni se inició sesión como el propietario.
+
+Los archivos nuevos están en `work/t181-release-20261023/backup/` y la auditoría de aplicación en `work/t181-release-20261023/database-verification.json`, privados fuera de Git. No sustituirlos por el respaldo anterior al recuperar actividad de Auth posterior al día 21. El despliegue A de la entrega permite recuperar el frontend conservando estas migraciones aditivas.

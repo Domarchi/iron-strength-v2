@@ -43,7 +43,7 @@ En el equipo de desarrollo, `scripts/prepare-four-local-accounts.ts` añade solo
 
 ## Comprobaciones de flujo de la spec 007
 
-Aplicar estos pasos después de publicar T181; el estado y artefacto preparados se registran en [release.md](../specs/007-training-flow/release.md). No dar por publicada una función porque su prueba local esté aprobada.
+T181 está publicada desde el 23 de octubre de 2026; el estado y artefacto se registran en [release.md](../specs/007-training-flow/release.md). Aplicar estos pasos en la URL HTTPS con cuentas propias. La publicación y las pruebas locales no acreditan la aceptación física.
 
 1. Desde Inicio, abrir Ver rutina y volver: no debe existir un cronómetro ni un borrador nuevos. Empezar, cambiar de ejercicio con el índice y recargar: conservar valores, descanso y ejercicio pendiente. Una superserie mantiene juntos sus integrantes y señala la próxima ronda.
 2. Antes de cerrar, revisar series hechas y pendientes; cerrar no completa las que faltan. Sin red, encontrar un solo pendiente con su causa y reintento. Confirmado por el servidor, abrir Ver resultado y volver a Mi semana.

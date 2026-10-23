@@ -40,3 +40,13 @@ Probar consultar sin iniciar, retomar, cambiar, ejecutar superserie y cerrar; pr
 Pruebas: check, E2E Chromium/WebKit y accesibilidad por pantalla; integración y pgTAP para esquema/RLS. Respuestas perdidas, dos pestañas, falta de red, almacenamiento lleno, sesión expirada, migración de borradores y paquetes antiguos, aislamiento de cuentas. Base destructiva exclusiva 55321; conservar interactiva 54321 y producción. Verificar proyecto remoto exclusivo, respaldo y migraciones antes de publicar; Staged y promoción del mismo artefacto, despliegue anterior recuperable. Aceptación física separada de emulación.
 
 Fuera: nutrición, pagos, social, IA, importar planillas, correo automático y progresión automática.
+
+## Cierre de publicación — parche de seguridad
+
+El 23 de octubre, después de promover B por instrucción del propietario, la repetición de check detectó SecurityFatalError y npm audit confirmó avisos para Next 16.4.0. Antes de cerrar T181, actualizar Next y su configuración ESLint al parche compatible 16.4.3, sin cambiar familia, lógica de negocio ni esquema. Mantener Sharp corregido, autenticación, RLS y recuperación offline. No desactivar controles ni ejecutar audit fix con force o cambios mayores. Evidencia previa en check.log y audit-npm.json del directorio privado de la publicación.
+
+Verificar check completo, auditoría de dependencias de producción y regresión E2E Chromium/WebKit. Preparar nuevos builds de producción sin dominio con el parche, verificar el artefacto y promover exactamente ese build. Conservar una recuperación que también incluya el parche. Registrar por separado los avisos residuales de herramientas de desarrollo y el startup_failure de GitHub. Referencia: https://nextjs.org/blog/nextjs-security-update-october-14-2026.
+
+La regresión debe conservar navegación a la copia y a la asignación después de confirmarlas. No emitir un refresh de la ruta anterior inmediatamente después de push a la nueva: las acciones ya revalidan programas. Conservar ID, contenido local y reintento ante respuesta incierta; comprobar benchmark y copias con respuesta perdida en ambos motores. El recorrido de 72 prescripciones dispone de 180 segundos globales, sin ampliar el límite de sus aserciones ni reducir sus comprobaciones de datos y acciones.
+
+El selector de apariencia debe esperar la hidratación antes de aceptar cambios. Con JavaScript retrasado se muestra desactivado; después conserva Claro/Oscuro/Sistema y su persistencia. No perder una elección por reemplazar el valor SSR durante la activación del control.

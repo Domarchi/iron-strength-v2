@@ -11,6 +11,6 @@
 - [x] T178 · Modelo y contratos compatibles por serie.
 - [x] T179 · Prescripción simple/detallada en editor, entrenamiento y copias.
 - [x] T180 · Continuidad de ficha, evidencia y contexto.
-- [ ] T181 · Validación completa y publicación del mismo artefacto.
+- [x] T181 · Validación completa y publicación del mismo artefacto.
 
-T181 mantiene la publicación pendiente: artefactos preparados, respaldo restaurado y bloqueo de inicio del CI documentados en [release.md](release.md). El dominio público todavía sirve la versión anterior.
+T181 publicada el 23 de octubre de 2026 por instrucción expresa del propietario, con validación local completa y CI todavía sin iniciar trabajos. El dominio sirve el mismo artefacto B probado y Supabase tiene 39 migraciones. Evidencia, recuperación y pendiente de CI en [release.md](release.md). La aceptación física sigue separada.

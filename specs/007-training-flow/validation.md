@@ -1,6 +1,26 @@
 # Validación — Spec 007
 
-## Cierre de validación T181; publicación pendiente
+## Parche de seguridad y controles finales — 23 de octubre de 2026
+
+Después de publicar B, una repetición de check detectó SecurityFatalError. npm audit y el aviso oficial confirmaron Next 16.4.0 afectado. Actualizados únicamente Next, su configuración ESLint y sus dependencias internas de 16.4.0 a 16.4.3; Sharp se conserva en 0.35.5. Auditoría de producción: cero avisos. No se aplicaron cambios mayores ni audit fix con force; avisos de herramientas de desarrollo quedan separados.
+
+Prueba previa en rojo y trazas privadas en check.log, audit-npm.json y security-red. La regresión detectó navegación competidora después de copiar/asignar: retirado refresh de la ruta anterior después de push, conservando revalidación del servidor e IDs. El escenario de 72 prescripciones tiene 180 segundos globales, con los mismos límites de cada aserción y las mismas comprobaciones SQL/acciones. Pasada enfocada: **14 E2E en ambos motores**, sin fallos ni reintentos (security-focused-fixed.log).
+
+La pasada extensa aprobó **188 casos y un skip CDP**, antes de detectar una selección de tema perdida por interacción anterior a hidratación en WebKit. Selector desactivado hasta montar mediante useSyncExternalStore; prueba explícita con los archivos JS retrasados. Pasada posterior: **8 E2E aprobadas en ambos motores**, incluidos tema persistente, Sistema, cuota, hidratación retrasada y los casos que no habían llegado a ejecutarse (security-theme.log). No se presenta aquella pasada fallida como una suite completa verde.
+
+Check posterior a las correcciones: **506 unitarias**, formato, lint sin errores, tipos y build con 64 recursos (check-release-final.log). Integración con el parche: **270 aprobadas** (security-integration.log). Las 459 pgTAP del esquema aplicado siguen registradas; el parche no modifica SQL. El nuevo artefacto de producción con 16.4.3 se registra en release.md al promoverlo; los builds A/B con 16.4.0 no serán la recuperación predeterminada.
+
+## Publicación T181 — 23 de octubre de 2026
+
+Por instrucción expresa del propietario se publicó el mismo build B probado, sin recompilar: `dpl_7CyiznBLcQZuJWAYE8zKwRVZyX2Z`, BUILD_ID `1750c8e846e94210a27c010bb7720fad`, código be1ac09, en https://iron-strength-seven.vercel.app. Alias verificado y promoción automática desactivada después de publicar. A (`dpl_7iF5fXeTQCmLhDX3nfcMLz1n6ybj`) conserva una recuperación compatible con los nuevos formatos.
+
+Se repitió el inicio del CI (39962550656): startup_failure antes de trabajos. El usuario ya conocía ese bloqueo cuando instruyó publicar. Se conservan separados el fallo de infraestructura pendiente y los controles locales completos aprobados del mismo código. No se declara CI verde.
+
+El respaldo se actualizó por cambios de Auth desde el día 21: seis volcados privados, hashes estables durante la copia y antes de migrar. Restaurado en una nueva base aislada iron_restore_t181_20261023: **49 tablas/514 filas, 51 políticas y 26 propietarios/banderas coincidentes**. Se volvieron a ensayar las tres migraciones conservando las 18 tablas públicas previas. Después se aplicaron por CLI oficial solo esas tres en el proyecto exclusivo udwhjcnlfqlggblnpchu. Auditoría remota: **39 versiones idénticas al repo**, datos de las 18 tablas previas sin cambios, ninguna tabla pública sin RLS, fotos privadas, dos columnas de detalle y tres RPC invoker con ejecución autenticada y rechazo anónimo. No hubo reset ni semillas en producción.
+
+Verificación pública: login y offline sirven el BUILD_ID esperado; manifiesto, iconos, cuatro variantes y worker devuelven 200. Variantes idénticas por hash al repositorio; presupuesto móvil 46.920 bytes. Worker con 64 recursos y borradores v1/v2/v3, sin skipWaiting. Mi semana/coach sin sesión redirigen 307 a login, cuyo documento es no-store. GET del endpoint de sincronización devuelve 405. La apertura del HTTPS en el panel quedó queued; no se declara acceso autenticado del propietario. No se enviaron invitaciones ni se crearon cuentas reales adicionales. Aceptación en teléfonos físicos pendiente. Evidencia privada en work/t181-release-20261023, fuera de Git.
+
+## Cierre de validación local T181 — 21 de octubre de 2026
 
 Código funcional verificado: `be1ac09d576663396af2d39f8a541c28b1b5d9d7`. Se repitió el circuito completo sobre la pila aislada 55321/55322, después de resetear únicamente esa base: **459 pgTAP**, **270 integración**, tipos generados idénticos al repositorio y **191 E2E aprobadas en Chromium/WebKit**, sin fallos ni reintentos, 20,2 minutos. Un único skip previsto: gesto táctil continuo mediante CDP, exclusivo de Chromium. La suite conserva aislamiento de cuatro cuentas, adaptación, detalle por serie, cuota, respuestas perdidas, conflictos y apertura/sincronización offline. Logs privados t181-reset.log, pgtap, integration, database-types y e2e.log en work del directorio padre.
 
@@ -14,7 +34,7 @@ Respaldo remoto nuevo restaurado en `iron_restore_t181`, aislado del tráfico de
 
 Vercel preparó dos builds READY del mismo código, sin asignar dominio. B, `dpl_7CyiznBLcQZuJWAYE8zKwRVZyX2Z`, BUILD_ID `1750c8e846e94210a27c010bb7720fad`, es el artefacto previsto para promoción; A queda como recuperación compatible. Login, offline, manifiesto, iconos y variantes móviles responden correctamente en B. Su worker enumera 64 recursos públicos permitidos, declara borradores v1/v2/v3 y no llama a skipWaiting. Una ruta privada sin sesión lleva a login y conserva no-store. No se inició sesión como el propietario ni se enviaron invitaciones.
 
-La publicación queda pendiente por el fallo de inicio del CI: runs 39664836047 y 39665790586 terminan en startup_failure con cero trabajos, antes de pruebas y sin logs. No se afirma que CI esté aprobado. El archivo no cambió desde la última versión publicada y el workflow real sigue activo; la causa no está confirmada. Se pidió al propietario el aviso de GitHub. [release.md](release.md) registra artefactos, límites, recuperación y secuencia restante. El dominio público conserva c45ee9d; T181 permanece sin marcar.
+Al cerrar la validación del 21 de octubre, la publicación quedó pendiente por startup_failure de los runs 39664836047 y 39665790586, con cero trabajos y sin logs. El archivo del workflow no había cambiado desde la versión publicada y seguía activo; la causa no estaba confirmada. Se pidió al propietario el aviso de GitHub y se conservó entonces c45ee9d en el dominio. La publicación posterior del 23 de octubre y el pendiente de CI se registran arriba y en [release.md](release.md).
 
 Estado inicial: tareas pendientes. La implementación no se considera disponible hasta registrar controles y commit por tarea. El código publicado de partida aprobó CI 39611110162 (check, base/integración y E2E); no equivale a pruebas de estas funciones nuevas. Capturas y protocolo previos en baseline.md. Aceptación con teléfonos físicos pendiente.
 

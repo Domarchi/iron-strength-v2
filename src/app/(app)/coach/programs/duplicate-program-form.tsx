@@ -97,7 +97,6 @@ function CopyForm({
             /* El recibo permite confirmar la misma copia. */
           }
           router.push(programHref(result.id, navigation, targetStudentId));
-          router.refresh();
           return;
         }
         setError(result.error);

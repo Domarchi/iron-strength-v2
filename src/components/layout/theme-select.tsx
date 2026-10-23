@@ -7,7 +7,13 @@ function subscribe(notify: () => void) {
   window.addEventListener("iron-theme-applied", notify);
   return () => window.removeEventListener("iron-theme-applied", notify);
 }
+const mountedSubscribe = () => () => {};
 export function ThemeSelect() {
+  const ready = useSyncExternalStore(
+    mountedSubscribe,
+    () => true,
+    () => false,
+  );
   const theme = useSyncExternalStore(
     subscribe,
     () => normalizeThemePreference(document.documentElement.dataset.themePreference),
@@ -32,6 +38,7 @@ export function ThemeSelect() {
         <NativeSelect
           aria-label="Tema visual"
           value={theme}
+          disabled={!ready}
           onChange={(event) => {
             const choice = normalizeThemePreference(event.target.value);
             let saved = false;

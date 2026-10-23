@@ -135,6 +135,8 @@ test("adaptar desde la ficha conserva alumno y crea una base independiente", asy
 test("adaptación de 72 pesos incluye revisión y reduce al menos 30 % las acciones (T170/T177)", async ({
   page,
 }) => {
+  // Incluye 72 prescripciones y varias escrituras completas; cada aserción conserva su límite.
+  test.setTimeout(180_000);
   const original = await snapshot();
   await open(page);
   let actions = 0;

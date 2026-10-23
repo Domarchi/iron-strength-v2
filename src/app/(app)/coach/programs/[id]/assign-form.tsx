@@ -109,7 +109,6 @@ function AssignEditor({
         }
         local.finish(draft);
         router.push(programHref(result.programId, navigation, studentId));
-        router.refresh();
       } catch {
         setError(
           "No recibimos confirmación. Confirma el mismo intento para recuperar la copia asignada.",

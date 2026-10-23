@@ -2,7 +2,7 @@
 
 La publicación sigue T165–T166 de `specs/005-complete-training/`. El código local está validado; estos pasos no acreditan un despliegue remoto. No trasladar usuarios, contraseñas, fotos ni entrenamientos de demostración a producción.
 
-La siguiente entrega T181 está preparada y aún no promovida: [estado, artefactos y pasos restantes de spec 007](../specs/007-training-flow/release.md). Ese registro distingue las pruebas locales del bloqueo de inicio del CI y de la versión que todavía recibe tráfico.
+T181 se publicó el 23 de octubre de 2026: [estado y artefacto de spec 007](../specs/007-training-flow/release.md). El dominio sirve `dpl_7CyiznBLcQZuJWAYE8zKwRVZyX2Z`, BUILD_ID `1750c8e846e94210a27c010bb7720fad`, código be1ac09. Supabase tiene 39 migraciones y conserva sus datos. El propietario instruyó publicar con la validación local completa; GitHub continúa en startup_failure antes de ejecutar CI, pendiente separado. Recuperación compatible: `dpl_7iF5fXeTQCmLhDX3nfcMLz1n6ybj`. No recompilar ni volver al frontend c45ee9d automáticamente.
 
 ## Destino y estado comprobado
 
