@@ -245,6 +245,7 @@ export class TrainingController {
     if (result.completed) {
       const group = exercise.supersetId;
       if (group && !result.wasWarmup) {
+        draft = { ...draft, rest: null };
         const next = nextSupersetSet(draft.exercises, group);
         if (next) activeIndex = next.exerciseIndex;
         if (finishedSupersetRound(previous.exercises, draft.exercises, group))

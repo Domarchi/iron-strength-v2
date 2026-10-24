@@ -167,3 +167,17 @@ it("recupera el inicio tras un fallo transitorio de lectura sin registro previo"
   expect(a.getSnapshot()).toMatchObject({ ready: true, blocked: false, error: null, active: null });
   await expect(a.start(DEMO_ROUTINES[0], "demo")).resolves.toBeUndefined();
 });
+it("al avanzar entre integrantes de una superserie corta el descanso anterior", async () => {
+  const x = fixture(),
+    a = x.create();
+  await a.restore();
+  await a.start(DEMO_ROUTINES[1], "demo");
+  a.edit((d) => updateSetField(d, 0, 0, "weight", "20"));
+  await a.complete(0, 0);
+  expect(a.getSnapshot().active?.draft.rest).not.toBeNull();
+  await a.focus(2);
+  a.edit((d) => updateSetField(d, 2, 0, "weight", "10"));
+  await a.complete(2, 0);
+  expect(a.getSnapshot().active?.activeIndex).toBe(3);
+  expect(a.getSnapshot().active?.draft.rest).toBeNull();
+});
