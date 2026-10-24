@@ -47,3 +47,23 @@ El propietario completó el alta y aprobó personalmente el acceso de Expo CLI. 
 Metro reiniciado con la sesión autenticada. Dos manifiestos por HTTPS y sus bundles Android/iOS devolvieron 200 con slug, owner, SDK 57 y projectId esperados. La API pública sin sesión sigue rechazando con 401/no-store. Evidencia privada native-preview-verification-20261024.json, con tamaños y SHA256; no equivale a ejecutar la app en un teléfono. QR generado desde el enlace exacto del túnel usando la misma biblioteca toqr de Expo CLI; enlace temporal dependiente del computador y Metro activos.
 
 mobile:check aprobado: lint, tipos y once pruebas. expo-doctor 21/21 aprobado. Solo cambió la vinculación pública del proyecto, sin cambios de pantallas, contratos o SQL; no se repitieron los tests destructivos o la suite web completa por estos metadatos. La aceptación física de Expo Go permanece pendiente y T185 conserva ese límite.
+
+## T186 · Incompatibilidad física SDK 58/57 — 24 de octubre de 2026
+
+El propietario comunicó que Expo Go se cerraba al cargar. La captura posterior aporta una causa verificable: el Expo Go instalado corresponde a SDK 58.0.0 y rechaza el proyecto SDK 57. No se atribuye a hardware, iOS o una incidencia externa sin diagnóstico del teléfono. La apertura física anterior queda fallida, aunque el manifiesto y los bundles HTTP habían respondido correctamente.
+
+Spec/tarea actualizadas antes de las dependencias. Las once pruebas del cliente pasaron antes del cambio. Actualización con expo install a Expo 58.0.19, Router 58.0.26, React 19.3.0, RN 0.88.0 y paquetes elegidos por el SDK. La instalación incremental falló al resolver peers de Router 57/58; se conservó la instalación previa fuera de Git y se reinstalaron las versiones compatibles desde cero, sin force ni legacy-peer-deps. expo install --fix confirmó alineación.
+
+Verificación posterior:
+
+- Check móvil: lint, tipos y once pruebas aprobadas.
+- expo-doctor: 20/20 comprobaciones aprobadas.
+- Exportación Hermes Android/iOS aprobada; no genera APK/IPA firmada.
+- Expo web: cuatro E2E Chromium/WebKit aprobadas sin reintentos, 16,1 s. La primera ejecución no pudo lanzar navegadores por faltar sus binarios en la caché predeterminada. Se usaron después los navegadores y bibliotecas locales preparados para el proyecto mediante PLAYWRIGHT_BROWSERS_PATH/LD_LIBRARY_PATH; no se ocultaron errores de la app.
+- Check raíz completo: formato, lint sin errores, tipos, 514 unitarias y build Next 16.4.3 con 64 recursos aprobados. No cambió código web/API ni SQL; no se repitieron integración destructiva/pgTAP o las 198 E2E de web por la actualización de dependencias del cliente móvil.
+- Metro reiniciado con caché limpia, sin CI/EXPO_OFFLINE y proveedor ngrok explícito, conservando el túnel. La implementación oficial omite anunciar sesiones de desarrollo cuando CI está activo; se corrigió la invocación de prueba y Expo aceptó el anuncio autenticado. No cambiar los jobs de CI por esta necesidad interactiva.
+- Dos manifiestos HTTPS declaran SDK 58, owner/proyecto esperados y bundles Android/iOS con respuesta 200. La página HTTPS de apertura devuelve 200 y su botón Expo Go redirige 307 al mismo host con esquema exps y parámetros __expo_ de SDK 58. La primera aserción de diagnóstico esperaba el enlace exp exacto de SDK 57; se ajustó a la nueva salida oficial, sin modificar el launcher ni eliminar sus parámetros. Evidencia privada native-sdk58-remote-verification-20261024.json.
+
+Auditoría actual de dependencias móviles de producción: cinco avisos altos y cero críticos; ya no aparecen los moderados de decode-uri-component. Persisten node-forge/tooling y un aviso de Zod <4.6.6, revisado el 23 de octubre. No se ejecutó audit fix --force (propone bajar Expo a SDK 54), alteró el backend publicado o declaró aprobada la distribución a tiendas. La revisión de dependencias compartidas y transitivas queda pendiente antes de esa distribución. [Aviso Zod](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5).
+
+Se conservan cuenta Expo, proyecto EAS, credenciales, API y base. No hubo seeds, migraciones, contratación de servicios, firma o builds remotos. El propietario debe repetir acceso → Mi semana → Ver rutina en su iPhone con SDK 58; hasta recibir ese resultado, T185/T186 siguen pendientes de aceptación física. Referencias: [SDK 58](https://expo.dev/changelog/sdk-58), [actualización oficial](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/).
