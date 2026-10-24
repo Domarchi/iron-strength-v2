@@ -7,6 +7,7 @@
     "expo": "^58.0.0",
     "expo-constants": "~58.0.13",
     "expo-crypto": "~58.0.7",
+    "expo-dev-client": "~58.0.15",
     "expo-font": "~58.0.10",
     "expo-image": "~58.0.17",
     "expo-linking": "~58.0.14",
@@ -32,9 +33,9 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start": "expo start --go",
+    "android": "expo start --go --android",
+    "ios": "expo start --go --ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
@@ -42,7 +43,8 @@
     "check": "npm run lint && npm run typecheck && npm test",
     "bundle": "expo export --platform android --platform ios",
     "test:ui": "node ../node_modules/@playwright/test/cli.js test -c playwright.config.ts",
-    "login": "expo login --browser"
+    "login": "expo login --browser",
+    "dev-client": "APP_VARIANT=development expo start --dev-client"
   },
   "private": true
 }
