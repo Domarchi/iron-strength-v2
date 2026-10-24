@@ -21,3 +21,7 @@ Router protege pantallas y el servidor sigue siendo la autoridad. Consultar ruti
 ## Verificación
 
 Primero pruebas de contratos, límites, identidad, cabeceras, renovación, almacenamiento y respuestas tardías. Integración local solo en Supabase aislado 55321; el CI existente crea Supabase 54321 dentro de una VM efímera de GitHub. Permitir esa segunda URL solo si CI y GITHUB_ACTIONS son true y RUNNER_ENVIRONMENT es github-hosted; nunca por CI=1 solo o en runners propios. Rechazar URLs remotas y la base interactiva local antes de limpiar. Pruebas: bloqueo de intentos, alumno propio/ajeno, perfil desactivado, consulta sin escrituras y coach entrenando. Tipos/lint/bundles Android e iOS; pruebas de pantallas según herramientas disponibles. Emulación, exportación JavaScript, APK/IPA firmada y aceptación física se registran como evidencias distintas. No se atribuye una prueba física a Expo web.
+
+## Conexión de desarrollo — 24 de octubre de 2026
+
+El propietario completó el alta y autorizó Expo CLI. Vincular únicamente el proyecto existente iron-strength-mobile del propietario EAS domarchis (usuario autorizado domarchi), ID 1374e5c4-2620-4034-b8b7-e32e479ff9c8, conservando el código actual. Comprobar identidad y configuración antes de reiniciar el túnel. No crear otro proyecto, lanzar builds en la nube, configurar firma o contratar servicios como parte de esta conexión. Guardar solo owner/projectId públicos en app.json; las credenciales de CLI quedan fuera del repositorio. El enlace temporal y los manifiestos no acreditan una prueba física.

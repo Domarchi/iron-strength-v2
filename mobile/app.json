@@ -33,6 +33,13 @@
     "scheme": "iron-strength",
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1374e5c4-2620-4034-b8b7-e32e479ff9c8"
+      }
+    },
+    "owner": "domarchis"
   }
 }
