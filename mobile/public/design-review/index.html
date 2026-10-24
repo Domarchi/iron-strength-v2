@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Iron Strength · referencia visual</title>
+    <style>
+      :root {
+        --bg: #09090b;
+        --card: #151517;
+        --raised: #202023;
+        --ink: #f5f5f7;
+        --muted: #aaaab3;
+        --blue: #8cbaff;
+        --button: #185fc4;
+        --border: #38383f;
+        --control: #73737c;
+        --tint: #142033;
+        --green: #81d9b1;
+        --shadow: 0 24px 80px #0005;
+        color-scheme: dark;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f7;
+        --card: #fff;
+        --raised: #ededf0;
+        --ink: #151518;
+        --muted: #5b5d65;
+        --blue: #1559be;
+        --button: #1559be;
+        --border: #d7d7dd;
+        --control: #7b7b85;
+        --tint: #eaf0fb;
+        --green: #146644;
+        --shadow: 0 24px 80px #0001;
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        color: inherit;
+      }
+      button,
+      input,
+      select {
+        min-height: 48px;
+        border-radius: 12px;
+      }
+      button {
+        border: 1px solid var(--border);
+        background: var(--card);
+        padding: 10px 14px;
+        font-weight: 600;
+      }
+      button:hover {
+        background: var(--raised);
+      }
+      button:active {
+        opacity: 0.8;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 3px solid var(--blue);
+        outline-offset: 3px;
+      }
+      input,
+      select {
+        min-width: 0;
+        width: 100%;
+        padding: 10px 12px;
+        color: var(--ink);
+        background: var(--bg);
+        border: 1px solid var(--control);
+      }
+      input[type="checkbox"] {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        margin: 0;
+        accent-color: var(--button);
+        cursor: pointer;
+      }
+      input::placeholder {
+        color: var(--muted);
+        opacity: 1;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 34px;
+        line-height: 1.12;
+        letter-spacing: -1.25px;
+        font-weight: 720;
+      }
+      h2 {
+        font-size: 20px;
+        line-height: 1.3;
+        letter-spacing: -0.5px;
+      }
+      h3 {
+        font-size: 17px;
+        letter-spacing: -0.25px;
+      }
+      svg {
+        flex-shrink: 0;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .blue {
+        color: var(--blue);
+      }
+      .green {
+        color: var(--green);
+      }
+      .small {
+        font-size: 13px;
+      }
+      .eyebrow {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+        letter-spacing: 1.3px;
+        text-transform: uppercase;
+      }
+      .number {
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -1px;
+        font-weight: 700;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .stack {
+        display: grid;
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px;
+      }
+      .primary {
+        background: var(--button);
+        color: #fff;
+        border-color: var(--button);
+      }
+      .primary:hover {
+        background: var(--button);
+        filter: brightness(1.08);
+      }
+      .full {
+        width: 100%;
+      }
+      .link {
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        padding: 8px 0;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--blue);
+        background: var(--tint);
+        border-radius: 8px;
+        padding: 5px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .divider {
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+      }
+      .metric {
+        font-size: 27px;
+        line-height: 1.2;
+      }
+      .metric small {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--muted);
+        letter-spacing: 0;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .metrics .small {
+        margin-top: 4px;
+      }
+      .icon {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: middle;
+      }
+      .mark {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        color: var(--blue);
+        background: var(--tint);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.1px;
+      }
+      .demo {
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 1px;
+        font-weight: 700;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 3px 6px;
+      }
+      .review {
+        max-width: 1240px;
+        margin: auto;
+        padding: 24px 24px 0;
+        display: grid;
+        gap: 16px;
+      }
+      .review h1 {
+        font-size: 21px;
+        letter-spacing: -0.5px;
+      }
+      .review-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .review button[aria-pressed="true"] {
+        color: var(--blue);
+        background: var(--tint);
+        border-color: var(--blue);
+      }
+      .theme-controls {
+        display: flex;
+        gap: 8px;
+        margin-left: auto;
+      }
+      .canvas {
+        padding: 28px 20px 40px;
+      }
+      .phone {
+        width: min(100%, 390px);
+        margin: auto;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      .status {
+        padding: 13px 23px 3px;
+        font-weight: 650;
+        font-size: 13px;
+      }
+      .appbar {
+        padding: 14px 20px 20px;
+      }
+      .content {
+        padding: 0 20px 24px;
+        display: grid;
+        gap: 22px;
+      }
+      .intro {
+        display: grid;
+        gap: 8px;
+      }
+      .avatar {
+        width: 48px;
+        height: 48px;
+        min-height: 48px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--raised);
+        font-size: 12px;
+        border: 1px solid var(--border);
+      }
+      .weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+      }
+      .weekday {
+        display: grid;
+        place-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--muted);
+        padding: 8px 0;
+        border-radius: 12px;
+      }
+      .weekday strong {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+        color: var(--ink);
+      }
+      .weekday.today {
+        background: var(--card);
+        border: 1px solid var(--border);
+      }
+      .weekday.done strong {
+        background: var(--tint);
+        color: var(--blue);
+        border-radius: 50%;
+      }
+      .workout-hero {
+        border-top: 2px solid var(--blue);
+      }
+      .workout-hero h2 {
+        font-size: 25px;
+        letter-spacing: -0.7px;
+      }
+      .workout-hero .primary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 5px;
+      }
+      .session-index {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: var(--raised);
+        border: 1px solid var(--border);
+        font-size: 20px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .inline-progress {
+        height: 5px;
+        border-radius: 5px;
+        overflow: hidden;
+        background: var(--raised);
+      }
+      .inline-progress span {
+        display: block;
+        height: 100%;
+        width: 34%;
+        background: var(--blue);
+      }
+      .exercise-list {
+        display: grid;
+        gap: 16px;
+      }
+      .exercise-preview {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .exercise-preview .muted {
+        font-size: 13px;
+      }
+      .exercise-symbol {
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        background: var(--raised);
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        color: var(--muted);
+      }
+      .bottom-nav {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        border-top: 1px solid var(--border);
+        background: var(--card);
+        padding: 8px 4px 10px;
+      }
+      .bottom-nav button {
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        padding: 5px 1px;
+        min-height: 52px;
+        display: grid;
+        place-items: center;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .bottom-nav button[aria-current="page"] {
+        color: var(--blue);
+        background: var(--tint);
+      }
+      .view {
+        display: block;
+      }
+      .workout-top {
+        padding: 4px 0 16px;
+      }
+      .exercise-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .exercise-tabs button {
+        font-size: 12px;
+        background: var(--card);
+        padding: 8px 3px;
+      }
+      .exercise-tabs button[aria-pressed="true"] {
+        color: var(--blue);
+        background: var(--tint);
+        border-color: var(--blue);
+      }
+      .exercise-title {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .exercise-title h1 {
+        font-size: 27px;
+        letter-spacing: -0.7px;
+      }
+      .set-head,
+      .set-row {
+        display: grid;
+        grid-template-columns: 28px 1fr 1fr 48px;
+        gap: 10px;
+        align-items: center;
+      }
+      .set-head {
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        font-weight: 700;
+        letter-spacing: 0.7px;
+      }
+      .set-row {
+        border-radius: 12px;
+        padding: 9px 0;
+      }
+      .set-row .set-label {
+        text-align: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .set-row input:not([type="checkbox"]) {
+        text-align: center;
+        padding: 8px 4px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 650;
+      }
+      .set-row.completed {
+        background: var(--tint);
+        margin: 0 -8px;
+        padding: 9px 8px;
+      }
+      .set-row.completed .set-label {
+        color: var(--blue);
+      }
+      .rest {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: var(--tint);
+        border: 1px solid var(--blue);
+        padding: 14px;
+        border-radius: 14px;
+      }
+      .rest .number {
+        color: var(--blue);
+        font-size: 27px;
+      }
+      .rest p {
+        font-size: 12px;
+      }
+      .subtle {
+        padding: 14px;
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+      }
+      .segments {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        padding: 4px;
+        gap: 4px;
+        background: var(--raised);
+        border-radius: 13px;
+      }
+      .segments button {
+        min-height: 48px;
+        border: 0;
+        padding: 7px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .segments button[aria-pressed="true"] {
+        background: var(--card);
+        color: var(--ink);
+        box-shadow: 0 1px 4px #0002;
+      }
+      .chart {
+        width: 100%;
+        height: 154px;
+        overflow: visible;
+        margin-top: 16px;
+        color: var(--blue);
+      }
+      .chart-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .chart-value {
+        font-size: 40px;
+        letter-spacing: -1.8px;
+      }
+      .improvement {
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .evidence-row {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .evidence-row:last-child {
+        border: 0;
+        padding-bottom: 0;
+      }
+      .period-note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(90vw, 480px);
+        padding: 14px 18px;
+        border: 1px solid var(--blue);
+        border-radius: 14px;
+        background: var(--card);
+        color: var(--ink);
+        box-shadow: var(--shadow);
+        z-index: 5;
+      }
+      .desktop {
+        max-width: 1240px;
+        margin: auto;
+        min-height: 800px;
+        display: grid;
+        grid-template-columns: 188px 1fr;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        background: var(--bg);
+        box-shadow: var(--shadow);
+      }
+      .sidebar {
+        border-right: 1px solid var(--border);
+        background: var(--card);
+        padding: 24px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+      .side-nav {
+        display: grid;
+        gap: 6px;
+      }
+      .side-nav button {
+        text-align: left;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .side-nav button.active {
+        background: var(--tint);
+        color: var(--blue);
+      }
+      .coach-main {
+        min-width: 0;
+        padding: 28px;
+        display: grid;
+        align-content: start;
+        gap: 24px;
+      }
+      .breadcrumbs {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .coach-title h1 {
+        font-size: 30px;
+      }
+      .coach-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .coach-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 240px;
+        gap: 20px;
+        align-items: start;
+      }
+      .week-tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .week-tabs button {
+        font-size: 13px;
+        min-height: 48px;
+      }
+      .week-tabs button[aria-pressed="true"] {
+        color: var(--blue);
+        border-color: var(--blue);
+        background: var(--tint);
+      }
+      .session-tabs {
+        display: flex;
+        gap: 8px;
+      }
+      .session-tabs button {
+        min-width: 70px;
+      }
+      .session-tabs button[aria-pressed="true"] {
+        color: var(--blue);
+        border-color: var(--blue);
+        background: var(--tint);
+      }
+      .editor-ex {
+        padding: 18px 0;
+        border-bottom: 1px solid var(--border);
+        display: grid;
+        gap: 14px;
+      }
+      .editor-ex:last-child {
+        border: 0;
+        padding-bottom: 0;
+      }
+      .rx-fields {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .rx-fields label {
+        display: grid;
+        gap: 5px;
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .rx-fields input {
+        padding: 8px;
+        min-height: 48px;
+        font-size: 14px;
+      }
+      .library-item {
+        padding: 13px 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .library-item button {
+        min-width: 48px;
+        padding: 8px;
+        color: var(--blue);
+      }
+      .coach-note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      dialog {
+        max-width: min(92vw, 440px);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        background: var(--card);
+        color: var(--ink);
+        box-shadow: var(--shadow);
+      }
+      dialog::backdrop {
+        background: #0009;
+      }
+      .review-only {
+        display: block;
+      }
+      html[data-capture="true"] .review {
+        display: none;
+      }
+      html[data-capture="true"] .canvas {
+        padding: 0;
+      }
+      html[data-capture="true"] .phone {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      html[data-capture="true"] .desktop {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 900px;
+      }
+      html[data-capture="true"] .phone .content {
+        min-height: 665px;
+      }
+      @media (min-width: 900px) {
+        .editor-ex {
+          grid-template-columns: minmax(180px, 1.2fr) minmax(0, 2fr);
+          align-items: center;
+          gap: 16px;
+          padding: 16px 0;
+        }
+        .editor-ex h3 {
+          font-size: 15px;
+        }
+        .editor-ex > .row {
+          gap: 6px;
+        }
+        .editor-ex > .row > .row {
+          gap: 6px;
+        }
+
+        html[data-capture="true"] .desktop {
+          max-width: none;
+        }
+      }
+      @media (max-width: 720px) {
+        .review {
+          padding: 16px 16px 0;
+        }
+        .theme-controls {
+          margin-left: 0;
+        }
+        .review-controls button {
+          font-size: 12px;
+          padding: 8px 10px;
+        }
+        .canvas {
+          padding: 20px 12px;
+        }
+        .desktop {
+          display: block;
+        }
+        .sidebar {
+          display: none;
+        }
+        .coach-main {
+          padding: 20px;
+        }
+        .coach-grid {
+          grid-template-columns: 1fr;
+        }
+        .coach-title {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .coach-title h1 {
+          font-size: 28px;
+        }
+        .rx-fields {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .coach-actions {
+          width: 100%;
+        }
+        .coach-actions button {
+          flex: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" aria-hidden="true" style="position: absolute">
+      <defs>
+        <symbol id="i-train" viewBox="0 0 24 24">
+          <path d="M8 5v14M4 8v8M16 5v14M20 8v8M8 12h8" />
+        </symbol>
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z" /></symbol>
+        <symbol id="i-history" viewBox="0 0 24 24">
+          <path d="M5 3h14v18H5ZM9 8h6M9 12h6M9 16h4" />
+        </symbol>
+        <symbol id="i-progress" viewBox="0 0 24 24">
+          <path d="M4 4v16h16M7 14l4-5 4 3 5-8" />
+        </symbol>
+        <symbol id="i-user" viewBox="0 0 24 24">
+          <circle cx="12" cy="7" r="4" />
+          <path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2" />
+        </symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5" /></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </symbol>
+      </defs>
+    </svg>
+    <header class="review">
+      <div class="row">
+        <div>
+          <h1>Referencia visual de Iron Strength</h1>
+          <p class="muted small">
+            Prototipo · datos ficticios · no modifica tu cuenta ni tus rutinas.
+          </p>
+        </div>
+      </div>
+      <nav class="review-controls" aria-label="Pantallas de referencia">
+        <button data-view="home">Inicio</button><button data-view="workout">Entrenamiento</button
+        ><button data-view="progress">Progreso</button
+        ><button data-view="coach">Editor del coach</button>
+        <div class="theme-controls">
+          <button data-theme-choice="light" aria-label="Tema claro">Claro</button
+          ><button data-theme-choice="dark" aria-label="Tema oscuro">Oscuro</button>
+        </div>
+      </nav>
+    </header>
+    <main class="canvas" id="canvas"></main>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <dialog id="assignment" aria-labelledby="assignment-title">
+      <div class="stack">
+        <span class="pill">DEMO</span>
+        <h2 id="assignment-title">Revisar antes de asignar</h2>
+        <p>Fuerza base · copia independiente para Ana Demo.</p>
+        <div class="card stack">
+          <p>Lunes 26 de octubre de 2026</p>
+          <p>4 semanas · 3 sesiones por semana</p>
+          <p>Sin semanas vacías en este ejemplo.</p>
+        </div>
+        <p class="muted small">No se asignará ningún programa real.</p>
+        <button id="close-assignment" class="primary">Volver al editor</button>
+      </div>
+    </dialog>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const views = ["home", "workout", "progress", "coach"];
+      let currentView = views.includes(params.get("view")) ? params.get("view") : "home";
+      let theme = params.get("theme") === "light" ? "light" : "dark";
+      const completed = [true, false, false];
+      let coachWeek = 1,
+        coachSession = "A",
+        period = "8";
+      const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+      const brand = () =>
+        `<div class="brand"><span class="mark">${icon("train")}</span>IRON STRENGTH</div>`;
+      const mark = `<span class="demo">DEMO</span>`;
+      const appHeader = () =>
+        `<div class="status row"><span>9:41</span><span aria-label="Datos de demostración">${mark}</span></div><div class="appbar row">${brand()}<button class="avatar" data-info="La cuenta de este prototipo es ficticia." aria-label="Cuenta de demostración">JD</button></div>`;
+      const nav = () =>
+        `<nav class="bottom-nav" aria-label="Navegación móvil">${[
+          ["home", "home", "Inicio"],
+          ["workout", "train", "Entrenar"],
+          ["history", "history", "Historial"],
+          ["progress", "progress", "Progreso"],
+          ["account", "user", "Cuenta"],
+        ]
+          .map(
+            ([view, symbol, label]) =>
+              `<button ${views.includes(view) ? `data-view="${view}"` : `data-info="${label} ya existe en la app. Este prototipo se centra en cuatro pantallas."`} ${view === currentView ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></button>`,
+          )
+          .join("")}</nav>`;
+      const phone = (content) =>
+        `<section class="phone" aria-label="Referencia móvil">${appHeader()}<div class="content">${content}</div>${nav()}</section>`;
+      const home = () =>
+        phone(`
+        <div class="intro"><p class="eyebrow">SÁBADO 24 DE OCTUBRE</p><h1>Tu momento<br>de hacerte fuerte.</h1></div>
+        <div class="weekdays" aria-label="Semana de demostración">${["L", "M", "M", "J", "V", "S", "D"].map((day, i) => `<div class="weekday ${i === 1 ? "done" : ""} ${i === 5 ? "today" : ""}"><span>${day}</span><strong>${i === 1 ? "✓" : 19 + i}</strong><span>${i === 1 ? "Hecha" : i === 5 ? "Hoy" : "·"}</span></div>`).join("")}</div>
+        <div class="card stack workout-hero"><div class="row"><span class="pill">EN CURSO</span><span class="small muted">Sesión A · semana 1</span></div><h2>Fuerza de cuerpo completo</h2><p class="muted small">4 ejercicios · 11 series · 7 realizadas</p><div class="inline-progress" role="progressbar" aria-valuemin="0" aria-valuemax="11" aria-valuenow="7" aria-label="Series de demostración"><span style="width:64%"></span></div><button class="primary full" data-view="workout">Continuar sesión ${icon("arrow")}</button><p class="small muted">Guardado en este dispositivo · ejemplo</p></div>
+        <div class="row"><h2>Tu semana</h2><span class="small blue">1 de 3 sesiones</span></div>
+        <div class="metrics"><div><p class="number metric">1<small> / 3</small></p><p class="small muted">sesiones</p></div><div><p class="number metric">42<small> min</small></p><p class="small muted">entrenados</p></div><div><p class="number metric">12</p><p class="small muted">series hechas</p></div></div>
+        <div class="divider row"><div><p class="eyebrow">DESPUÉS</p><h3>Espalda y hombros</h3><p class="small muted">Sesión B · 4 ejercicios</p></div><span class="session-index">B</span></div>
+      `);
+      const workout = () =>
+        phone(`
+        <div class="row workout-top"><div><p class="eyebrow">SESIÓN A · EN CURSO</p><p class="number" style="font-size:22px">18:42 <span class="muted small">· ${6 + completed.filter(Boolean).length}/11 series</span></p></div><button class="link" data-info="El cierre real incluye revisión, esfuerzo y nota. Aquí solo estás revisando el diseño.">Finalizar</button></div>
+        <div class="exercise-tabs" aria-label="Índice de ejercicios"><button data-info="Sentadilla completada en este ejemplo.">01 ✓</button><button data-info="Remo completado en este ejemplo.">02 ✓</button><button aria-pressed="true">03 · Press</button><button data-info="Dead bug es el siguiente ejercicio del ejemplo.">04</button></div>
+        <div class="exercise-title"><span class="exercise-symbol">${icon("train")}</span><div><p class="eyebrow">EJERCICIO 3 DE 4</p><h1>Press con<br>mancuernas</h1></div></div>
+        <div class="row small"><span class="muted">3 series · 8–12 reps</span><span class="blue">${icon("clock")} 90 s</span></div>
+        <p class="small muted">Objetivo del coach: 24 kg · última vez: 22 kg × 10</p>
+        <div><div class="set-head"><span>SERIE</span><span>KG</span><span>REPS</span><span>HECHA</span></div>${completed.map((done, i) => `<div class="set-row ${done ? "completed" : ""}"><span class="set-label">${i + 1}</span><input aria-label="Peso serie ${i + 1}" inputmode="decimal" value="24"/><input aria-label="Repeticiones serie ${i + 1}" inputmode="numeric" value="10"/><input type="checkbox" aria-label="Completar serie ${i + 1}" data-set="${i}" ${done ? "checked" : ""}/></div>`).join("")}<button class="link full" data-info="En la app puedes añadir series y abrir sus opciones. El prototipo no cambia la prescripción.">+ Añadir serie</button></div>
+        <div class="rest" id="rest-demo" ${completed.filter(Boolean).length < 2 ? "hidden" : ""}><span class="number">1:30</span><div><h3>Descanso de demostración</h3><p class="muted">En la app el tiempo sigue al bloquear.</p></div></div>
+        <div class="subtle"><p class="small"><span class="green">●</span> Guardado en este dispositivo</p><p class="small muted">Estado ilustrativo · no se envía al coach.</p></div>
+        <div class="row divider"><div><p class="eyebrow">SIGUIENTE EJERCICIO</p><h3>Dead bug</h3></div><span class="muted small">2 × 8–10</span></div>
+      `);
+      const progress = () =>
+        phone(`
+        <div class="intro"><p class="eyebrow">TU PROGRESO</p><h1>Cada semana,<br>más fuerte.</h1><p class="muted small">Tus registros cuentan una historia.</p></div>
+        <div class="segments" aria-label="Periodo de demostración">${["4", "8", "12"].map((n) => `<button data-period="${n}" aria-pressed="${period === n}">${n} semanas</button>`).join("")}</div>
+        <div class="card stack"><div class="row"><h2>Press con mancuernas</h2>${icon("train")}</div><p class="small muted">Mejor peso · por mancuerna</p><div class="row"><p class="number chart-value">24 <span class="muted" style="font-size:17px;letter-spacing:0">kg</span></p><span class="improvement">↗ +4 kg en 4 semanas</span></div><figure style="margin:0"><svg class="chart" viewBox="0 0 304 154" role="img" aria-label="Ejemplo de ocho semanas: 18, 18, 20, 20, 22, 22, 24 y 24 kilogramos"><path d="M0 20h304M0 70h304M0 120h304" stroke="var(--border)" stroke-dasharray="3 5"/><path d="M3 130 45 130 87 95 129 95 171 60 213 60 255 25 299 25V150H3Z" fill="var(--tint)"/><path d="M3 130 45 130 87 95 129 95 171 60 213 60 255 25 299 25" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="299" cy="25" r="5" fill="currentColor"/></svg><figcaption class="chart-labels"><span>01 sep</span><span>29 sep</span><span>20 oct</span></figcaption></figure><p class="period-note">Datos ficticios. El selector cambia la referencia de periodo, no consulta entrenamientos.</p></div>
+        <div class="row"><h2>Últimas sesiones</h2><span class="pill">DEMO</span></div><div class="card"><div class="row evidence-row"><div><h3>24 kg × 10 reps</h3><p class="small muted">20 oct · Sesión A</p></div><span class="green small">Mejor marca</span></div><div class="row evidence-row"><div><h3>22 kg × 10 reps</h3><p class="small muted">13 oct · Sesión A</p></div><button class="link" data-info="En la versión funcional este acceso abrirá el entrenamiento que produjo el resultado." aria-label="Ver resultado de demostración">${icon("arrow")}</button></div></div>
+      `);
+      const coach = () =>
+        `<section class="desktop" aria-label="Editor del coach de demostración"><aside class="sidebar">${brand()}<div class="side-nav" aria-label="Espacio del coach"><button data-info="El panel real del coach muestra señales y alumnos.">${icon("home")} Resumen</button><button class="active" aria-current="page">${icon("history")} Programas</button><button data-info="La lista de alumnos real está en la web.">${icon("user")} Alumnos</button><button data-info="El catálogo de ejercicios real se conserva.">${icon("train")} Ejercicios</button></div><p class="coach-note" style="margin-top:auto">Planifica en web.<br>Entrena en tu teléfono.</p>${mark}</aside><div class="coach-main"><p class="breadcrumbs">Programas / Plantillas / Fuerza base</p><div class="row coach-title"><div class="intro"><div class="row" style="justify-content:flex-start"><span class="pill">PLANTILLA EDITABLE</span>${mark}</div><h1>Fuerza base</h1><p class="muted small">4 semanas · 3 sesiones por semana · copia independiente</p></div><div class="coach-actions"><button data-info="La copia real crea un programa independiente. Esta referencia no escribe datos.">Duplicar</button><button class="primary" id="review-assignment">Revisar asignación</button></div></div><div class="coach-grid"><div class="stack"><div class="row"><h2>Plan de entrenamiento</h2><span class="small muted">Para Ana Demo</span></div><div class="week-tabs" aria-label="Semanas de la plantilla">${[1, 2, 3, 4].map((n) => `<button data-week="${n}" aria-pressed="${n === coachWeek}">Semana ${n}</button>`).join("")}</div><div class="card stack"><div class="row"><div><p class="eyebrow">SEMANA ${coachWeek}</p><h2>Sesión ${coachSession} · ${coachSession === "A" ? "Cuerpo completo" : coachSession === "B" ? "Espalda y hombros" : "Piernas y core"}</h2></div><span class="small muted">4 ejercicios · 11 series</span></div><div class="session-tabs" aria-label="Sesiones">${["A", "B", "C"].map((label) => `<button data-session="${label}" aria-pressed="${label === coachSession}">${label}</button>`).join("")}</div><div>${["Sentadilla goblet", "Press con mancuernas", "Remo con mancuerna", "Dead bug"].map((name, i) => `<article class="editor-ex"><div class="row"><div class="row" style="justify-content:flex-start"><span class="muted" aria-hidden="true">⠿</span><h3>${i + 1}. ${name}</h3></div><button class="link" data-info="Opciones reales: notas, alternativas, detalle por serie y duplicación." aria-label="Opciones de ${name}">•••</button></div><div class="rx-fields"><label>Series<input aria-label="Series de ${name}" inputmode="numeric" value="${i === 3 ? 2 : 3}"/></label><label>Repeticiones<input aria-label="Repeticiones de ${name}" value="8–12"/></label><label>Peso, kg<input aria-label="Peso de ${name}" inputmode="decimal" placeholder="Opcional"/></label><label>Descanso, s<input aria-label="Descanso de ${name}" inputmode="numeric" value="90"/></label></div></article>`).join("")}</div><div class="row divider"><p class="small muted">Cambios de demostración · sin envío</p><button class="primary" data-info="Vista previa local revisada. No se guardaron cambios en ningún programa real.">Guardar cambios</button></div></div></div><aside class="card stack" aria-label="Biblioteca vinculada"><div><p class="eyebrow">AÑADIR A SESIÓN ${coachSession}</p><h2>Biblioteca</h2></div><label class="small muted" for="search">Buscar ejercicio</label><input id="search" type="search" placeholder="Nombre del ejercicio"/><div id="library-items">${["Jalón al pecho", "Prensa de piernas", "Press de hombros", "Curl de bíceps"].map((name) => `<div class="library-item" data-exercise="${name.toLowerCase()}"><div><h3>${name}</h3><p class="small muted">Ejercicio de ejemplo</p></div><button data-info="La biblioteca real conserva selección y agrega el lote completo. Aquí solo revisas su presentación." aria-label="Añadir ${name}">+</button></div>`).join("")}</div><p class="coach-note">La biblioteca sigue la sesión que estás editando. La asignación se revisa al terminar.</p></aside></div></div></section>`;
+      const renderers = { home, workout, progress, coach };
+      function render() {
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.capture = params.get("capture") === "1";
+        document.getElementById("canvas").innerHTML = renderers[currentView]();
+        document
+          .querySelectorAll(".review [data-view]")
+          .forEach((button) =>
+            button.setAttribute("aria-pressed", String(button.dataset.view === currentView)),
+          );
+        document
+          .querySelectorAll("[data-theme-choice]")
+          .forEach((button) =>
+            button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme)),
+          );
+      }
+      let toastTimer;
+      function inform(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.hidden = true;
+        }, 6000);
+      }
+      document.addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        if (button.dataset.view) {
+          currentView = button.dataset.view;
+          render();
+          window.scrollTo(0, 0);
+        } else if (button.dataset.themeChoice) {
+          theme = button.dataset.themeChoice;
+          render();
+        } else if (button.dataset.week) {
+          coachWeek = Number(button.dataset.week);
+          render();
+          inform("Referencia de semana seleccionada. Los ejercicios son ilustrativos.");
+        } else if (button.dataset.session) {
+          coachSession = button.dataset.session;
+          render();
+          inform(
+            "Sesión de referencia seleccionada. Los ejercicios de esta vista son ilustrativos.",
+          );
+        } else if (button.dataset.period) {
+          period = button.dataset.period;
+          render();
+          inform(
+            "Periodo de referencia seleccionado; el gráfico sigue siendo un ejemplo de ocho semanas.",
+          );
+        } else if (button.dataset.info) inform(button.dataset.info);
+        else if (button.id === "review-assignment")
+          document.getElementById("assignment").showModal();
+        else if (button.id === "close-assignment") document.getElementById("assignment").close();
+      });
+      document.addEventListener("change", (event) => {
+        if (event.target.matches("[data-set]")) {
+          completed[Number(event.target.dataset.set)] = event.target.checked;
+          const row = event.target.closest(".set-row");
+          row.classList.toggle("completed", event.target.checked);
+          document.getElementById("rest-demo").hidden = completed.filter(Boolean).length < 2;
+        }
+      });
+      document.addEventListener("input", (event) => {
+        if (event.target.id === "search") {
+          const value = event.target.value.toLocaleLowerCase("es");
+          document.querySelectorAll("[data-exercise]").forEach((item) => {
+            item.hidden = !item.dataset.exercise.includes(value);
+          });
+        }
+      });
+      render();
+    </script>
+  </body>
+</html>
