@@ -45,6 +45,11 @@ test("recorre diseño, registra y revisa asignación sin enviar datos", async ({
     page.getByRole("checkbox", { name: "Completar serie 2", exact: true }),
   ).toBeChecked();
   await expect(page.getByText("Descanso de demostración", { exact: true })).toBeVisible();
+  await expect(page.locator("#workout-summary")).toHaveText("· 8/11 series");
+  await page.getByRole("button", { name: "Inicio", exact: true }).first().click();
+  await expect(
+    page.getByText("4 ejercicios · 11 series · 8 realizadas", { exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Progreso", exact: true }).first().click();
   await expect(page.getByRole("heading", { name: "Cada semana, más fuerte." })).toBeVisible();
   await page.getByRole("button", { name: "Editor del coach", exact: true }).click();

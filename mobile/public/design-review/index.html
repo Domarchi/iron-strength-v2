@@ -931,14 +931,14 @@
         phone(`
         <div class="intro"><p class="eyebrow">SÁBADO 24 DE OCTUBRE</p><h1>Tu momento<br>de hacerte fuerte.</h1></div>
         <div class="weekdays" aria-label="Semana de demostración">${["L", "M", "M", "J", "V", "S", "D"].map((day, i) => `<div class="weekday ${i === 1 ? "done" : ""} ${i === 5 ? "today" : ""}"><span>${day}</span><strong>${i === 1 ? "✓" : 19 + i}</strong><span>${i === 1 ? "Hecha" : i === 5 ? "Hoy" : "·"}</span></div>`).join("")}</div>
-        <div class="card stack workout-hero"><div class="row"><span class="pill">EN CURSO</span><span class="small muted">Sesión A · semana 1</span></div><h2>Fuerza de cuerpo completo</h2><p class="muted small">4 ejercicios · 11 series · 7 realizadas</p><div class="inline-progress" role="progressbar" aria-valuemin="0" aria-valuemax="11" aria-valuenow="7" aria-label="Series de demostración"><span style="width:64%"></span></div><button class="primary full" data-view="workout">Continuar sesión ${icon("arrow")}</button><p class="small muted">Guardado en este dispositivo · ejemplo</p></div>
+        <div class="card stack workout-hero"><div class="row"><span class="pill">EN CURSO</span><span class="small muted">Sesión A · semana 1</span></div><h2>Fuerza de cuerpo completo</h2><p class="muted small">4 ejercicios · 11 series · ${6 + completed.filter(Boolean).length} realizadas</p><div class="inline-progress" role="progressbar" aria-valuemin="0" aria-valuemax="11" aria-valuenow="${6 + completed.filter(Boolean).length}" aria-label="Series de demostración"><span style="width:${Math.round((100 * (6 + completed.filter(Boolean).length)) / 11)}%"></span></div><button class="primary full" data-view="workout">Continuar sesión ${icon("arrow")}</button><p class="small muted">Guardado en este dispositivo · ejemplo</p></div>
         <div class="row"><h2>Tu semana</h2><span class="small blue">1 de 3 sesiones</span></div>
         <div class="metrics"><div><p class="number metric">1<small> / 3</small></p><p class="small muted">sesiones</p></div><div><p class="number metric">42<small> min</small></p><p class="small muted">entrenados</p></div><div><p class="number metric">12</p><p class="small muted">series hechas</p></div></div>
         <div class="divider row"><div><p class="eyebrow">DESPUÉS</p><h3>Espalda y hombros</h3><p class="small muted">Sesión B · 4 ejercicios</p></div><span class="session-index">B</span></div>
       `);
       const workout = () =>
         phone(`
-        <div class="row workout-top"><div><p class="eyebrow">SESIÓN A · EN CURSO</p><p class="number" style="font-size:22px">18:42 <span class="muted small">· ${6 + completed.filter(Boolean).length}/11 series</span></p></div><button class="link" data-info="El cierre real incluye revisión, esfuerzo y nota. Aquí solo estás revisando el diseño.">Finalizar</button></div>
+        <div class="row workout-top"><div><p class="eyebrow">SESIÓN A · EN CURSO</p><p class="number" style="font-size:22px">18:42 <span class="muted small" id="workout-summary">· ${6 + completed.filter(Boolean).length}/11 series</span></p></div><button class="link" data-info="El cierre real incluye revisión, esfuerzo y nota. Aquí solo estás revisando el diseño.">Finalizar</button></div>
         <div class="exercise-tabs" aria-label="Índice de ejercicios"><button data-info="Sentadilla completada en este ejemplo.">01 ✓</button><button data-info="Remo completado en este ejemplo.">02 ✓</button><button aria-pressed="true">03 · Press</button><button data-info="Dead bug es el siguiente ejercicio del ejemplo.">04</button></div>
         <div class="exercise-title"><span class="exercise-symbol">${icon("train")}</span><div><p class="eyebrow">EJERCICIO 3 DE 4</p><h1>Press con<br>mancuernas</h1></div></div>
         <div class="row small"><span class="muted">3 series · 8–12 reps</span><span class="blue">${icon("clock")} 90 s</span></div>
@@ -1019,6 +1019,8 @@
           completed[Number(event.target.dataset.set)] = event.target.checked;
           const row = event.target.closest(".set-row");
           row.classList.toggle("completed", event.target.checked);
+          document.getElementById("workout-summary").textContent =
+            `· ${6 + completed.filter(Boolean).length}/11 series`;
           document.getElementById("rest-demo").hidden = completed.filter(Boolean).length < 2;
         }
       });

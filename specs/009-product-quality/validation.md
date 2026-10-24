@@ -25,3 +25,9 @@ Cuatro pruebas previas cubren identidad/variantes, rechazo de valor desconocido 
 Auditoría del árbol móvil registra cinco avisos altos previos y dos moderados en @expo/ngrok/uuid; no hay críticos. Se documentan como revisión pendiente antes de distribución, sin forzar el downgrade incompatible que propone npm audit. Esta preparación no declara aprobada la distribución a tiendas. Evidencia privada product-t191-audit.json.
 
 No se ejecutaron operaciones de Supabase/Vercel, pruebas destructivas, migraciones, registro de aplicaciones, certificados, builds de pago ni contratación de servicios. T191 solo prepara; T201/T202 y aceptación visual continúan pendientes. Evidencia privada product-t191-before.log, product-t191-version-before.log, product-t191-mobile-release.log, product-t191-root-check.log, product-t191-ui.log, product-t191-config-verification.json, product-t191-doctor.log y product-t191-bundle.log.
+
+## Cierre de la referencia y conexión de desarrollo
+
+Después de preparar variantes, el túnel se reinició explícitamente en Expo Go, sin CI ni APP_VARIANT heredada. Manifiestos SDK 58 con el nombre original y bundles iOS/Android responden 200; huellas iguales a T188 y sin referencia a secreto administrativo. El HTML del prototipo responde 200 en el mismo túnel. Evidencia privada product-t191-tunnel-verification.json; no se atribuye prueba física a la descarga.
+
+La revisión del prototipo detectó que marcar una serie actualizaba el control pero dejaba estático el contador. Se añadió la aserción al recorrido existente (rojo), se sincronizó el resumen y la tarjeta de Inicio con el estado en memoria y se verificó en ambos motores (dos E2E aprobadas, 11 s). Sin escrituras, API o persistencia añadidas. Las capturas iniciales conservan el mismo aspecto. Check raíz repetido para el cierre; evidencia product-t190-count-before.log, product-t190-count-final.log y product-t190-count-check.log.
