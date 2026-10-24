@@ -1,7 +1,18 @@
 import { useCallback } from "react";
 import { router } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
-import { Action, Brand, Notice, Page, day, s, usePalette } from "../../../components/ui";
+import {
+  Action,
+  Brand,
+  Metric,
+  Notice,
+  Page,
+  ScreenIntro,
+  SessionMark,
+  day,
+  s,
+  usePalette,
+} from "../../../components/ui";
 import { useSession } from "../../../lib/session";
 import { TrainingCard } from "../../../components/training-card";
 import { useQuery } from "../../../lib/use-query";
@@ -25,43 +36,62 @@ export default function Week() {
         <Brand />
         <Action secondary label="Mi cuenta" onPress={() => router.navigate("/account")} />
       </View>
-      <View style={{ gap: 6 }}>
-        <Text style={[s.heading, { color: p.ink }]}>
-          Hola, {person.fullName.trim().split(" ")[0]}
-        </Text>
-        <Text style={[s.body, { color: p.muted }]}>Tu siguiente paso, aquí.</Text>
-      </View>
+      <ScreenIntro
+        eyebrow="TU ESPACIO"
+        title={`Hola, ${person.fullName.trim().split(" ")[0]}`}
+        description="Un día más. Una serie mejor."
+      />
       <TrainingCard />
-      <Action label="Explorar rutinas y entrenar" onPress={() => router.navigate("/train")} />
+
       {query.error ? <Notice message={query.error} retry={query.retry} /> : null}
       {query.loading ? (
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando tu semana" />
       ) : null}
       {view?.kind === "active" ? (
         <>
-          <View style={[s.card, { backgroundColor: p.button, borderColor: p.button }]}>
-            <Text style={[s.caption, { color: "#e5efff" }]}>
-              SEMANA {view.weekNumber} DE {view.program.weeksCount}
-            </Text>
-            <Text style={[s.heading, { color: "#fff", fontSize: 26, lineHeight: 33 }]}>
+          <View style={[s.card, { backgroundColor: p.card, borderColor: p.border, gap: 18 }]}>
+            <View style={s.row}>
+              <Text style={[s.caption, { color: p.blue, letterSpacing: 1.1 }]}>TU PLAN ACTUAL</Text>
+              <Text style={[s.caption, { color: p.muted }]}>
+                {day(view.weekStart)} — {day(view.weekEnd)}
+              </Text>
+            </View>
+            <Text style={[s.subheading, { color: p.ink, fontSize: 24, lineHeight: 30 }]}>
               {view.program.name}
             </Text>
-            <Text style={[s.body, { color: "#fff" }]}>
-              {day(view.weekStart)} — {day(view.weekEnd)}
-            </Text>
-            <View
-              style={{ height: 7, borderRadius: 4, backgroundColor: "#4188e1", overflow: "hidden" }}
-            >
-              <View
-                style={{
-                  height: 7,
-                  borderRadius: 4,
-                  backgroundColor: "#fff",
-                  width: `${view.sessions.length ? (100 * view.sessions.filter((x) => x.status === "done").length) / view.sessions.length : 0}%`,
-                }}
+            <View style={{ flexDirection: "row", gap: 20 }}>
+              <Metric
+                value={`${view.weekNumber} / ${view.program.weeksCount}`}
+                label="semana del plan"
+              />
+              <Metric
+                value={`${view.sessions.filter((x) => x.status === "done").length} / ${view.sessions.length}`}
+                label="sesiones hechas"
               />
             </View>
-            <Text style={[s.body, { color: "#fff" }]}>
+            <View
+              accessibilityRole="progressbar"
+              accessibilityLabel="Avance semanal"
+              accessibilityValue={{
+                min: 0,
+                max: view.sessions.length,
+                now: view.sessions.filter((x) => x.status === "done").length,
+              }}
+              style={{ flexDirection: "row", gap: 5 }}
+            >
+              {view.sessions.map((session) => (
+                <View
+                  key={session.sessionId}
+                  style={{
+                    flex: 1,
+                    height: 5,
+                    borderRadius: 3,
+                    backgroundColor: session.status === "done" ? p.blue : p.raised,
+                  }}
+                />
+              ))}
+            </View>
+            <Text style={[s.caption, { color: p.muted }]}>
               {view.sessions.filter((x) => x.status === "done").length} de {view.sessions.length}{" "}
               sesiones completadas
             </Text>
@@ -73,6 +103,7 @@ export default function Week() {
               style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}
             >
               <View style={s.row}>
+                <SessionMark label={session.label} />
                 <View style={{ flex: 1, gap: 5 }}>
                   <Text style={[s.caption, { color: p.blue }]}>
                     SESIÓN {session.label}
@@ -97,7 +128,8 @@ export default function Week() {
               </Text>
               <Action
                 label={`Ver rutina ${session.label}`}
-                secondary
+                secondary={session.status === "done"}
+                icon="arrow"
                 onPress={() =>
                   router.push({ pathname: "/routine/[id]", params: { id: session.sessionId } })
                 }
@@ -132,6 +164,12 @@ export default function Week() {
           </Text>
         </View>
       ) : null}
+      <Action
+        label="Explorar rutinas y entrenar"
+        icon="train"
+        secondary={view?.kind === "active"}
+        onPress={() => router.navigate("/train")}
+      />
       <Action label="Actualizar semana" secondary disabled={query.loading} onPress={query.retry} />
     </Page>
   );

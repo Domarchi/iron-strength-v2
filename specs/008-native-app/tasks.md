@@ -8,3 +8,5 @@
 - [x] T187 · Navegación, biblioteca demo, entrenamiento persistente, guardado real, historial y progreso implementados. API publicada y túnel Expo actualizado; pruebas y controles públicos aprobados. Aceptación física del registro nuevo pendiente en T185/guía de prueba.
 
 La publicación en tiendas, firma y cuentas del propietario quedan después de la validación de esta primera entrega. No son tareas completadas por crear el proyecto.
+
+- [x] T188 · Rediseño nativo negro/claro, acceso sin fotografía, navegación SVG y apariencia persistente. Controles locales y túnel actualizados; aceptación física del rediseño pendiente y separada de la emulación.

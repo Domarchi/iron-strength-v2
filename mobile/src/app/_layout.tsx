@@ -3,10 +3,12 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider, useSession } from "../lib/session";
 import { Action, Brand, Loading, Notice, Page, usePalette } from "../components/ui";
+import { AppearanceProvider, useAppearance } from "../lib/appearance-context";
 function Routes() {
   const { client, state } = useSession(),
-    p = usePalette();
-  if (state.status === "booting") return <Loading />;
+    p = usePalette(),
+    { ready } = useAppearance();
+  if (state.status === "booting" || !ready) return <Loading />;
   if (state.status === "blocked")
     return (
       <Page>
@@ -43,9 +45,11 @@ function Routes() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <SessionProvider>
-        <Routes />
-      </SessionProvider>
+      <AppearanceProvider>
+        <SessionProvider>
+          <Routes />
+        </SessionProvider>
+      </AppearanceProvider>
     </SafeAreaProvider>
   );
 }

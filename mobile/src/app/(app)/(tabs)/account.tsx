@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { Linking, Text, View } from "react-native";
-import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/ui";
+import { Action, Brand, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
+import { AppearanceSelect } from "../../../components/appearance-select";
 import { useSession } from "../../../lib/session";
 import { useTraining } from "../../../lib/training-context";
 import { TrainingCard } from "../../../components/training-card";
@@ -31,7 +32,7 @@ export default function Account() {
   return (
     <Page>
       <Brand />
-      <Text style={[s.heading, { color: p.ink }]}>Tu cuenta</Text>
+      <ScreenIntro eyebrow="A TU MANERA" title="Tu cuenta" />
       <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
         <Text style={[s.subheading, { color: p.ink }]}>{person.fullName}</Text>
         <Text style={[s.body, { color: p.muted }]}>{person.email}</Text>
@@ -39,6 +40,7 @@ export default function Account() {
           {person.role === "coach" ? "COACH · TAMBIÉN PUEDES ENTRENAR" : "ALUMNO"}
         </Text>
       </View>
+      <AppearanceSelect />
       <TrainingCard />
       {error ? <Notice message={error} /> : null}
       {training.error ? <Notice message={training.error} /> : null}
@@ -74,8 +76,8 @@ export default function Account() {
       <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
         <Text style={[s.subheading, { color: p.ink }]}>En tu teléfono</Text>
         <Text style={[s.body, { color: p.muted }]}>
-          El tema sigue el ajuste claro u oscuro del sistema. Tus sesiones iniciadas se recuperan en
-          este dispositivo. Las demos se guardan aparte y no se envían al coach.
+          Tus sesiones iniciadas se recuperan en este dispositivo. Las demos se guardan aparte y no
+          se envían al coach.
         </Text>
       </View>
       {training.active ? (

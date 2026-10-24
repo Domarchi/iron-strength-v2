@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 const id = "11111111-1111-4111-8111-111111111111";
 const exercise = "22222222-2222-4222-8222-222222222222";
@@ -108,6 +109,13 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
   await enter(page);
   await expect(page.getByText("Hola, Ana")).toBeVisible();
   await expect(page.getByText("0 de 1 sesiones completadas")).toBeVisible();
+  for (const tab of await page.getByRole("tab").all()) {
+    const box = await tab.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+  }
+  await page.screenshot({ path: test.info().outputPath("home-light.png") });
   await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
   await expect(page.getByText("SUPERSERIE · 90 s al terminar la ronda")).toBeVisible();
   await expect(page.getByText("1. 6 reps · 50 kg", { exact: true })).toBeVisible();
@@ -388,4 +396,147 @@ test("fallo de almacenamiento bloquea inicio silencioso y permite recuperar el g
       Object.keys(localStorage).filter((k) => k.startsWith("is:native-training:")),
     ),
   ).toEqual([]);
+});
+
+test("apariencia clara y negra persiste sin tocar el entrenamiento; sistema responde al dispositivo", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+  await emptyAccount(page);
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
+  expect(
+    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+      .violations,
+  ).toEqual([]);
+  await page.screenshot({ path: test.info().outputPath("login-new.png") });
+  await enter(page);
+  await page.getByRole("button", { name: "Mi cuenta", exact: true }).click();
+  await expect(page.getByRole("radio", { name: "Sistema", exact: true })).toBeChecked();
+  await page.getByRole("radio", { name: "Oscuro", exact: true }).click();
+  await expect(
+    page.getByText("Tema oscuro · Guardado en este dispositivo", { exact: true }),
+  ).toBeVisible();
+  expect(
+    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+      .violations,
+  ).toEqual([]);
+  await page.screenshot({ path: test.info().outputPath("account-dark.png") });
+  await page.getByRole("button", { name: "Ver rutinas de ejemplo", exact: true }).click();
+  await page.screenshot({ path: test.info().outputPath("train-dark.png") });
+  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
+  await page.getByLabel("Peso serie 1", { exact: true }).fill("25");
+  expect(
+    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+      .violations,
+  ).toEqual([]);
+  await page.screenshot({ path: test.info().outputPath("workout-dark.png") });
+  await page.getByRole("button", { name: "Volver a Inicio", exact: true }).click();
+  const draft = await page.evaluate(() =>
+    localStorage.getItem(
+      Object.keys(localStorage).find((k) => k.startsWith("is:native-training:"))!,
+    ),
+  );
+  await page.getByRole("button", { name: "Mi cuenta", exact: true }).click();
+  await page.getByRole("radio", { name: "Claro", exact: true }).click();
+  await expect(
+    page
+      .getByRole("radiogroup", { name: "Tema de la app" })
+      .locator("..")
+      .getByText("Tema claro · Guardado en este dispositivo", { exact: true }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem(
+        Object.keys(localStorage).find((k) => k.startsWith("is:native-training:"))!,
+      ),
+    ),
+  ).toBe(draft);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Entrenamiento Iron Strength" })).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("is:native-appearance:v1")!).preference,
+    ),
+  ).toBe("light");
+  await page.screenshot({ path: test.info().outputPath("login-light.png") });
+  await enter(page);
+  await page.getByRole("button", { name: "Mi cuenta", exact: true }).click();
+  await expect(page.getByRole("radio", { name: "Claro", exact: true })).toBeChecked();
+  await page.getByRole("radio", { name: "Sistema", exact: true }).click();
+  await expect(
+    page.getByText("Según tu teléfono · Guardado en este dispositivo", { exact: true }),
+  ).toBeVisible();
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(
+    page
+      .getByTestId("app-page")
+      .filter({ has: page.getByRole("radiogroup", { name: "Tema de la app" }) }),
+  ).toHaveCSS("background-color", "rgb(9, 9, 11)");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});
+
+test("apariencia avisa si el dispositivo no puede guardar, sin confirmar el cambio", async ({
+  page,
+}) => {
+  await emptyAccount(page);
+  await enter(page);
+  await page.getByRole("button", { name: "Mi cuenta", exact: true }).click();
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key === "is:native-appearance:v1") throw new Error("Sin espacio");
+      original.call(this, key, value);
+    };
+  });
+  await page.getByRole("radio", { name: "Oscuro", exact: true }).click();
+  await expect(
+    page.getByText("No pudimos guardar el tema. Se mantiene tu ajuste anterior.", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Sistema", exact: true })).toBeChecked();
+  expect(await page.evaluate(() => localStorage.getItem("is:native-appearance:v1"))).toBeNull();
+});
+
+test("opciones de serie compactas conservan calentamientos y registro directo", async ({
+  page,
+}) => {
+  await emptyAccount(page);
+  await enter(page);
+  await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
+  await page.getByRole("button", { name: "Ver demo B", exact: true }).click();
+  await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
+  await page.getByRole("button", { name: "Ir a Curl de bíceps", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Usar como calentamiento serie 1", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Opciones de serie 1", exact: true }).click();
+  await page.getByRole("button", { name: "Usar como calentamiento serie 1", exact: true }).click();
+  await page.getByLabel("Peso serie 1", { exact: true }).fill("10");
+  await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
+  await expect(page.getByLabel("Repeticiones serie 1", { exact: true })).toHaveValue("10");
+  await expect(
+    page.getByRole("button", { name: "Ir a Curl de bíceps", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Opciones de serie 1", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Usar como trabajo serie 1", exact: true }),
+  ).toHaveCount(0);
+});
+
+test("salir conserva apariencia oscura y la apertura siguiente la recupera", async ({ page }) => {
+  await emptyAccount(page);
+  await enter(page);
+  await page.getByRole("button", { name: "Mi cuenta", exact: true }).click();
+  await page.getByRole("radio", { name: "Oscuro", exact: true }).click();
+  await expect(page.getByRole("radio", { name: "Oscuro", exact: true })).toBeChecked();
+  await page.getByRole("button", { name: "Salir", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
+  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(9, 9, 11)");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
+  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(9, 9, 11)");
+  await page.screenshot({ path: test.info().outputPath("login-dark.png") });
 });

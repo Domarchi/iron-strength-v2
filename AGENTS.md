@@ -116,3 +116,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+T188 (24 de octubre de 2026): rediseño del cliente Expo con negro/grafito y claro neutro, acceso sin fotografía, navegación SVG compatible SDK 58, métricas reales y controles de serie secundarios desplegables. Cuenta ofrece Claro/Oscuro/Sistema (inicial) con preferencia local versionada is:native-appearance:v1, escritura/relectura y errores visibles; persiste al salir y no modifica borradores/credenciales. El tema no cambia claves de proveedores ni reinicia sesión/descanso. Ver spec 008: 519 unitarias raíz/build, 27 móviles, 20 E2E Expo y cuatro finales enfocadas, doctor 20/20 y bundles Android/iOS. Túnel actualizado; aceptación física del nuevo diseño pendiente, sin publicación en tiendas. Web/API/Supabase conservados.

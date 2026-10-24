@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { Text, View } from "react-native";
+import { Icon } from "./icon";
 import { Action, Notice, s, usePalette } from "./ui";
 import { useTraining } from "../lib/training-context";
 export function TrainingCard() {
@@ -17,7 +18,12 @@ export function TrainingCard() {
       />
     ) : null;
   return (
-    <View style={[s.card, { backgroundColor: p.tint, borderColor: p.blue }]}>
+    <View style={[s.card, { backgroundColor: p.card, borderColor: p.blue, borderLeftWidth: 3 }]}>
+      <Icon
+        name={a.draft.status === "pending_save" ? "history" : "clock"}
+        color={p.blue}
+        size={24}
+      />
       <Text style={[s.caption, { color: p.blue }]}>
         {a.mode === "demo" ? "DEMO · " : ""}
         {a.draft.status === "pending_save" ? "PENDIENTE DE ENVIAR" : "ENTRENAMIENTO EN CURSO"}
@@ -30,6 +36,7 @@ export function TrainingCard() {
         {training.dirty ? "Cambios pendientes" : "Guardado en este dispositivo"}
       </Text>
       <Action
+        icon="arrow"
         label={a.draft.status === "pending_save" ? "Revisar envío" : "Retomar entrenamiento"}
         onPress={() =>
           router.push({ pathname: "/workout/[id]", params: { id: a.draft.workoutId } })

@@ -2,7 +2,16 @@ import { santiagoDate } from "../../../../../src/domain/dates";
 import { useCallback, useState } from "react";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
-import { Action, Brand, Notice, Page, day, s, usePalette } from "../../../components/ui";
+import {
+  Action,
+  Brand,
+  Notice,
+  Page,
+  ScreenIntro,
+  day,
+  s,
+  usePalette,
+} from "../../../components/ui";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 import { useTraining } from "../../../lib/training-context";
@@ -37,10 +46,11 @@ export default function History() {
   return (
     <Page>
       <Brand />
-      <Text style={[s.heading, { color: p.ink }]}>Tu historial</Text>
-      <Text style={[s.body, { color: p.muted }]}>
-        Cada sesión cuenta. Revisa tus series, esfuerzo y notas.
-      </Text>
+      <ScreenIntro
+        eyebrow="TU RECORRIDO"
+        title="Tu historial"
+        description="Cada sesión cuenta. Revisa tus series, esfuerzo y notas."
+      />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
       {error ? <Notice message={error} /> : null}
       {q.loading ? (

@@ -1,6 +1,16 @@
 import { useCallback, useState } from "react";
 import { Text, TextInput, View } from "react-native";
-import { Action, Brand, Notice, Page, day, s, usePalette } from "../../../components/ui";
+import {
+  Action,
+  Brand,
+  Metric,
+  Notice,
+  Page,
+  ScreenIntro,
+  day,
+  s,
+  usePalette,
+} from "../../../components/ui";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 export default function Progress() {
@@ -16,26 +26,31 @@ export default function Progress() {
   return (
     <Page>
       <Brand />
-      <Text style={[s.heading, { color: p.ink }]}>Tu progreso</Text>
-      <Text style={[s.body, { color: p.muted }]}>
-        Tus mejores marcas con series de trabajo. Los calentamientos y las demos quedan fuera.
-      </Text>
+      <ScreenIntro
+        eyebrow="FUERZA EN NÚMEROS"
+        title="Tu progreso"
+        description="Tus mejores marcas de trabajo. Sin calentamientos ni demos."
+      />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
       {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando marcas…</Text> : null}
       {q.value?.exercises.length ? (
         <>
-          <View style={[s.card, { backgroundColor: p.button, borderColor: p.button }]}>
-            <Text style={[s.caption, { color: "#fff" }]}>CONSTANCIA QUE SE VE</Text>
-            <Text style={[s.heading, { color: "#fff" }]}>{q.value.exercises.length}</Text>
-            <Text style={[s.body, { color: "#fff" }]}>ejercicios con registros reales</Text>
+          <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
+            <Text style={[s.caption, { color: p.blue }]}>CONSTANCIA QUE SE VE</Text>
+            <Metric
+              value={String(q.value.exercises.length)}
+              label="ejercicios con registros reales"
+            />
           </View>
           <TextInput
+            keyboardAppearance={p.dark ? "dark" : "light"}
+            selectionColor={p.blue}
             accessibilityLabel="Buscar ejercicio en progreso"
             placeholder="Buscar ejercicio"
             placeholderTextColor={p.muted}
             value={search}
             onChangeText={setSearch}
-            style={[s.input, { color: p.ink, borderColor: p.border, backgroundColor: p.card }]}
+            style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.card }]}
           />
         </>
       ) : null}

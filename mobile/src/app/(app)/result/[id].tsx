@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
+import { Icon } from "../../../components/icon";
 import { Action, Brand, Notice, Page, day, s, usePalette } from "../../../components/ui";
 import { useTraining } from "../../../lib/training-context";
 import { useSession } from "../../../lib/session";
@@ -67,12 +68,24 @@ export default function Result() {
       {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text> : null}
       {w ? (
         <>
-          <View style={[s.card, { backgroundColor: p.button, borderColor: p.button }]}>
-            <Text style={[s.caption, { color: "#fff" }]}>
+          <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
+            <View
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: p.tint,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon name="check" color={p.success} size={26} />
+            </View>
+            <Text style={[s.caption, { color: p.success }]}>
               {demo === "1" ? "DEMO GUARDADA EN ESTE DISPOSITIVO" : "ENTRENAMIENTO CONFIRMADO"}
             </Text>
-            <Text style={[s.heading, { color: "#fff" }]}>¡Sesión registrada!</Text>
-            <Text style={[s.body, { color: "#fff" }]}>
+            <Text style={[s.heading, { color: p.ink }]}>¡Sesión registrada!</Text>
+            <Text style={[s.body, { color: p.muted }]}>
               {demo === "1"
                 ? "Esta prueba no se envió al coach y no cuenta en tus marcas reales."
                 : "Tu entrenamiento está guardado en tu cuenta y tu coach puede revisarlo."}

@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Icon } from "../../../components/icon";
 import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/ui";
 import { useTraining } from "../../../lib/training-context";
 import {
@@ -44,7 +45,8 @@ export default function Workout() {
     now = useClock();
   const [error, setError] = useState<string | null>(null),
     [closing, setClosing] = useState(false),
-    [discard, setDiscard] = useState(false);
+    [discard, setDiscard] = useState(false),
+    [setOptions, showSetOptions] = useState<string | null>(null);
   const a = training.active,
     d = a?.draft,
     effort = a?.review?.effort ?? "",
@@ -113,7 +115,14 @@ export default function Workout() {
       <Page>
         <View style={s.row}>
           <Brand />
-          <Action label="Volver a Inicio" secondary disabled={training.busy} onPress={back} />
+          <Action
+            label="Inicio"
+            accessibilityLabel="Volver a Inicio"
+            icon="home"
+            secondary
+            disabled={training.busy}
+            onPress={back}
+          />
         </View>
         <View style={{ gap: 6 }}>
           <Text style={[s.caption, { color: p.blue }]}>
@@ -213,9 +222,7 @@ export default function Workout() {
                 </View>
               </View>
             ) : null}
-            <Text style={[s.caption, { color: p.muted }]}>
-              ÍNDICE · CAMBIA SIN PERDER TUS SERIES
-            </Text>
+            <Text style={[s.caption, { color: p.muted }]}>EJERCICIOS</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator
@@ -228,6 +235,7 @@ export default function Workout() {
                   accessibilityRole="button"
                   accessibilityLabel={`Ir a ${ex.name}`}
                   accessibilityState={{ selected: i === index }}
+                  aria-pressed={i === index}
                   onPress={() => {
                     void act(() => controller.focus(i));
                   }}
@@ -255,7 +263,7 @@ export default function Workout() {
                 </Pressable>
               ))}
             </ScrollView>
-            <View style={[s.card, { backgroundColor: p.card, borderColor: p.blue }]}>
+            <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
               {exercise.supersetId ? (
                 <Text style={[s.caption, { color: p.blue }]}>
                   SUPERSERIE ·{" "}
@@ -280,23 +288,55 @@ export default function Workout() {
                     key={set.id}
                     style={{
                       gap: 7,
-                      paddingVertical: 12,
+                      padding: 10,
+                      borderRadius: 12,
+                      backgroundColor: set.done ? p.tint : "transparent",
                       borderBottomWidth: 1,
                       borderBottomColor: p.border,
                     }}
                   >
-                    <Text style={[s.caption, { color: p.muted }]}>
-                      SERIE {si + 1}
-                      {set.isWarmup
-                        ? " · CALENTAMIENTO"
-                        : target
-                          ? ` · Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${target.targetWeightKg} kg` : ""}`
-                          : ""}
-                    </Text>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                      }}
+                    >
+                      <Text style={[s.caption, { color: p.muted, flex: 1 }]}>
+                        SERIE {si + 1}
+                        {set.isWarmup
+                          ? " · CALENTAMIENTO"
+                          : target
+                            ? ` · Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${target.targetWeightKg} kg` : ""}`
+                            : ""}
+                      </Text>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Opciones de serie ${si + 1}`}
+                        accessibilityState={{ expanded: setOptions === set.id }}
+                        aria-expanded={setOptions === set.id}
+                        onPress={() =>
+                          showSetOptions((current) => (current === set.id ? null : set.id))
+                        }
+                        style={({ pressed }) => ({
+                          minWidth: 44,
+                          minHeight: 44,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: 10,
+                          backgroundColor: pressed ? p.raised : "transparent",
+                        })}
+                      >
+                        <Icon name="more" color={p.muted} />
+                      </Pressable>
+                    </View>
                     <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
                       <View style={{ flex: 1, gap: 4 }}>
                         <Text style={[s.caption, { color: p.muted }]}>KG</Text>
                         <TextInput
+                          keyboardAppearance={p.dark ? "dark" : "light"}
+                          selectionColor={p.blue}
                           accessibilityLabel={`Peso serie ${si + 1}`}
                           value={set.weight}
                           keyboardType="decimal-pad"
@@ -310,13 +350,15 @@ export default function Workout() {
                           }
                           style={[
                             s.input,
-                            { color: p.ink, borderColor: p.border, backgroundColor: p.bg },
+                            { color: p.ink, borderColor: p.control, backgroundColor: p.bg },
                           ]}
                         />
                       </View>
                       <View style={{ flex: 1, gap: 4 }}>
                         <Text style={[s.caption, { color: p.muted }]}>REPS</Text>
                         <TextInput
+                          keyboardAppearance={p.dark ? "dark" : "light"}
+                          selectionColor={p.blue}
                           accessibilityLabel={`Repeticiones serie ${si + 1}`}
                           value={set.reps}
                           keyboardType="number-pad"
@@ -328,7 +370,7 @@ export default function Workout() {
                           }
                           style={[
                             s.input,
-                            { color: p.ink, borderColor: p.border, backgroundColor: p.bg },
+                            { color: p.ink, borderColor: p.control, backgroundColor: p.bg },
                           ]}
                         />
                       </View>
@@ -352,33 +394,27 @@ export default function Workout() {
                           backgroundColor: set.done ? p.button : p.tint,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: 22,
-                            fontWeight: "800",
-                            color: set.done ? "#fff" : p.blue,
-                          }}
-                        >
-                          {set.done ? "✓" : "○"}
-                        </Text>
+                        <Icon name="check" color={set.done ? "#fff" : p.blue} size={24} />
                       </Pressable>
                     </View>
-                    <View style={s.row}>
-                      <Action
-                        label={set.isWarmup ? "Usar como trabajo" : "Calentamiento"}
-                        accessibilityLabel={`${set.isWarmup ? "Usar como trabajo" : "Usar como calentamiento"} serie ${si + 1}`}
-                        secondary
-                        onPress={() => controller.edit((draft) => toggleWarmup(draft, index, si))}
-                      />
-                      {!set.done && exercise.sets.length > 1 ? (
+                    {setOptions === set.id ? (
+                      <View style={s.row}>
                         <Action
-                          label="Quitar"
-                          accessibilityLabel={`Quitar serie ${si + 1}`}
+                          label={set.isWarmup ? "Usar como trabajo" : "Calentamiento"}
+                          accessibilityLabel={`${set.isWarmup ? "Usar como trabajo" : "Usar como calentamiento"} serie ${si + 1}`}
                           secondary
-                          onPress={() => controller.edit((draft) => removeSet(draft, index, si))}
+                          onPress={() => controller.edit((draft) => toggleWarmup(draft, index, si))}
                         />
-                      ) : null}
-                    </View>
+                        {!set.done && exercise.sets.length > 1 ? (
+                          <Action
+                            label="Quitar"
+                            accessibilityLabel={`Quitar serie ${si + 1}`}
+                            secondary
+                            onPress={() => controller.edit((draft) => removeSet(draft, index, si))}
+                          />
+                        ) : null}
+                      </View>
+                    ) : null}
                   </View>
                 );
               })}
@@ -431,6 +467,8 @@ export default function Workout() {
                 </Text>
                 <Text style={[s.label, { color: p.ink }]}>Esfuerzo de 1 a 10 · opcional</Text>
                 <TextInput
+                  keyboardAppearance={p.dark ? "dark" : "light"}
+                  selectionColor={p.blue}
                   accessibilityLabel="Esfuerzo percibido"
                   keyboardType="number-pad"
                   value={effort}
@@ -440,6 +478,8 @@ export default function Workout() {
                 />
                 <Text style={[s.label, { color: p.ink }]}>¿Cómo te fue? · opcional</Text>
                 <TextInput
+                  keyboardAppearance={p.dark ? "dark" : "light"}
+                  selectionColor={p.blue}
                   accessibilityLabel="Nota del entrenamiento"
                   multiline
                   maxLength={500}
