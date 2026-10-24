@@ -4,6 +4,8 @@ import { ActivityIndicator, Text, View } from "react-native";
 import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/ui";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
+import { demoRoutine } from "../../../lib/demo";
+import { useTraining } from "../../../lib/training-context";
 import type { MobileRoutine } from "../../../lib/client";
 type Exercise = MobileRoutine["exercises"][number];
 function Targets({ prescribed }: { prescribed: Exercise["prescribed"] }) {
@@ -90,8 +92,31 @@ function ExerciseCard({
 export default function Routine() {
   const p = usePalette(),
     { client } = useSession(),
+    { controller, training } = useTraining(),
     { id } = useLocalSearchParams<{ id: string }>();
-  const request = useCallback(() => client.routine(typeof id === "string" ? id : ""), [client, id]);
+  const demo = demoRoutine(typeof id === "string" ? id : "");
+  const request = useCallback(
+    () => (demo ? Promise.resolve(demo) : client.routine(typeof id === "string" ? id : "")),
+    [client, id, demo],
+  );
+  const [starting, setStarting] = useState(false),
+    [startError, setStartError] = useState<string | null>(null);
+  async function start() {
+    if (!query.value || starting) return;
+    setStarting(true);
+    setStartError(null);
+    try {
+      const current = demo ?? (await client.routine(query.value.session.id));
+      await controller.start(current, demo ? "demo" : "real");
+      const active = controller.getSnapshot().active;
+      if (active)
+        router.push({ pathname: "/workout/[id]", params: { id: active.draft.workoutId } });
+    } catch (e) {
+      setStartError(e instanceof Error ? e.message : "No pudimos iniciar.");
+    } finally {
+      setStarting(false);
+    }
+  }
   const query = useQuery(request),
     view = query.value;
   return (
@@ -111,8 +136,31 @@ export default function Routine() {
       {query.loading ? (
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando rutina" />
       ) : null}
+      {startError ? <Notice message={startError} /> : null}
+      {training.blocked ? (
+        <Notice
+          message={training.error ?? "No pudimos recuperar el registro local."}
+          retry={() => {
+            void controller.restore();
+          }}
+        />
+      ) : null}
       {view ? (
         <>
+          {demo ? (
+            <Notice message="DEMO · Rutina de ejemplo. Sus resultados quedan solo en este dispositivo y no se envían al coach." />
+          ) : null}
+          {training.active ? (
+            <Action
+              label="Retomar entrenamiento pendiente"
+              onPress={() =>
+                router.push({
+                  pathname: "/workout/[id]",
+                  params: { id: training.active!.draft.workoutId },
+                })
+              }
+            />
+          ) : null}
           <View style={{ gap: 7 }}>
             <Text style={[s.caption, { color: p.blue }]}>
               SESIÓN {view.session.label} · SEMANA {view.session.weekNumber}
@@ -125,6 +173,19 @@ export default function Routine() {
               {view.exercises.reduce((n, e) => n + e.prescribed.sets, 0)} series
             </Text>
           </View>
+          <Action
+            label={demo ? "Probar entrenamiento demo" : "Empezar entrenamiento"}
+            disabled={
+              !training.ready ||
+              training.blocked ||
+              !!training.active ||
+              view.exercises.length === 0
+            }
+            busy={starting}
+            onPress={() => {
+              void start();
+            }}
+          />
           {view.exercises.map((exercise, index) => (
             <ExerciseCard
               key={exercise.sessionExerciseId}

@@ -69,6 +69,7 @@ const choice = z.object({
   name: z.string(),
   isBodyweight: z.boolean(),
   prescribed,
+  lastWeightKg: z.number().min(0).max(500).nullable().optional(),
 });
 export const mobileRoutineSchema = z.object({
   version: z.literal(1),
@@ -95,6 +96,88 @@ export const mobileRoutineSchema = z.object({
     .max(15),
 });
 export type MobileRoutine = z.infer<typeof mobileRoutineSchema>;
+const summary = z.object({
+  workingSets: z.number().int().nonnegative(),
+  volumeKg: z.number().nonnegative(),
+  bodyweightReps: z.number().int().nonnegative(),
+  exerciseCount: z.number().int().nonnegative(),
+});
+const historyItem = summary.extend({
+  id: z.uuid(),
+  sessionLabel: z.string().nullable(),
+  startedAt: z.string(),
+  performedOn: z.string(),
+  durationSeconds: z.number().nonnegative(),
+  perceivedEffort: z.number().nullable(),
+  note: z.string().nullable(),
+});
+export const mobileHistorySchema = z.object({
+  version: z.literal(1),
+  items: z.array(historyItem).max(20),
+  nextCursor: z.string().nullable(),
+});
+export const mobileWorkoutSchema = z.object({
+  version: z.literal(1),
+  workout: z.object({
+    id: z.uuid(),
+    programName: z.string().nullable(),
+    sessionLabel: z.string().nullable(),
+    startedAt: z.string(),
+    performedOn: z.string(),
+    durationSeconds: z.number().nonnegative(),
+    perceivedEffort: z.number().nullable(),
+    note: z.string().nullable(),
+    summary,
+    exercises: z
+      .array(
+        z.object({
+          position: z.number().int(),
+          exerciseId: z.uuid(),
+          name: z.string(),
+          prescribedExerciseId: z.string().nullish(),
+          prescribedExerciseName: z.string().nullish(),
+          sets: z
+            .array(
+              z.object({
+                id: z.uuid(),
+                setNumber: z.number().int(),
+                weightKg: z.number(),
+                reps: z.number().int(),
+                isWarmup: z.boolean(),
+              }),
+            )
+            .max(100),
+        }),
+      )
+      .max(101),
+  }),
+});
+export const mobileProgressSchema = z.object({
+  version: z.literal(1),
+  exercises: z
+    .array(
+      z.object({
+        exerciseId: z.uuid(),
+        name: z.string(),
+        bestWeightKg: z.number(),
+        bestEstimated1RM: z.number(),
+        bestReps: z.number(),
+        isBodyweight: z.boolean(),
+        lastDate: z.string(),
+        workoutCount: z.number().int(),
+      }),
+    )
+    .max(1000),
+});
+export const mobileSaveSchema = z.object({
+  version: z.literal(1),
+  ok: z.literal(true),
+  status: z.enum(["created", "duplicate"]),
+  workoutId: z.uuid(),
+});
+export type MobileHistory = z.infer<typeof mobileHistorySchema>;
+export type MobileWorkout = z.infer<typeof mobileWorkoutSchema>;
+export type MobileProgress = z.infer<typeof mobileProgressSchema>;
 export const mobileErrorSchema = z.object({
   version: z.literal(1),
   error: z.object({

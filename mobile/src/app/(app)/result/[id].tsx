@@ -1,0 +1,127 @@
+import { useCallback } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { Text, View } from "react-native";
+import { Action, Brand, Notice, Page, day, s, usePalette } from "../../../components/ui";
+import { useTraining } from "../../../lib/training-context";
+import { useSession } from "../../../lib/session";
+import { useQuery } from "../../../lib/use-query";
+import type { MobileWorkout } from "../../../../../src/lib/mobile/contracts";
+import { santiagoDate } from "../../../../../src/domain/dates";
+import { setVolume } from "../../../../../src/domain/volume";
+export default function Result() {
+  const p = usePalette(),
+    { id, demo } = useLocalSearchParams<{ id: string; demo?: string }>(),
+    { client } = useSession(),
+    { training } = useTraining();
+  const sample = demo === "1" ? training.demos.find((x) => x.id === id) : null;
+  const request = useCallback(async (): Promise<MobileWorkout> => {
+    if (demo !== "1") return client.workout(id);
+    if (!sample) throw Error("El resultado demo no está disponible en este dispositivo.");
+    const payload = sample.payload,
+      volume = setVolume(payload.sets),
+      group = new Map<number, MobileWorkout["workout"]["exercises"][number]>();
+    payload.sets.forEach((set, i) => {
+      const ex = group.get(set.position) ?? {
+        position: set.position,
+        exerciseId: set.exerciseId,
+        name: set.exerciseName,
+        prescribedExerciseId: set.prescribedExerciseId,
+        sets: [],
+      };
+      ex.sets.push({
+        id: `${i}`,
+        setNumber: set.setNumber,
+        weightKg: set.weightKg,
+        reps: set.reps,
+        isWarmup: set.isWarmup,
+      });
+      group.set(set.position, ex);
+    });
+    return {
+      version: 1,
+      workout: {
+        id: payload.id,
+        programName: sample.title,
+        sessionLabel: payload.sessionLabel,
+        startedAt: payload.startedAt,
+        performedOn: santiagoDate(new Date(payload.startedAt)),
+        durationSeconds: payload.durationSeconds,
+        perceivedEffort: payload.perceivedEffort ?? null,
+        note: payload.note ?? null,
+        summary: {
+          workingSets: payload.sets.filter((s) => !s.isWarmup).length,
+          volumeKg: volume.loadKg,
+          bodyweightReps: volume.bodyweightReps,
+          exerciseCount: group.size,
+        },
+        exercises: [...group.values()],
+      },
+    };
+  }, [client, id, demo, sample]);
+  const q = useQuery(request),
+    w = q.value?.workout;
+  return (
+    <Page>
+      <Brand />
+      {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
+      {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text> : null}
+      {w ? (
+        <>
+          <View style={[s.card, { backgroundColor: p.button, borderColor: p.button }]}>
+            <Text style={[s.caption, { color: "#fff" }]}>
+              {demo === "1" ? "DEMO GUARDADA EN ESTE DISPOSITIVO" : "ENTRENAMIENTO CONFIRMADO"}
+            </Text>
+            <Text style={[s.heading, { color: "#fff" }]}>¡Sesión registrada!</Text>
+            <Text style={[s.body, { color: "#fff" }]}>
+              {demo === "1"
+                ? "Esta prueba no se envió al coach y no cuenta en tus marcas reales."
+                : "Tu entrenamiento está guardado en tu cuenta y tu coach puede revisarlo."}
+            </Text>
+          </View>
+          <Text style={[s.subheading, { color: p.ink }]}>
+            {w.programName ?? "Tu entrenamiento"} · {day(w.performedOn)}
+          </Text>
+          <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
+            <Text style={[s.subheading, { color: p.ink }]}>
+              {w.summary.workingSets} series · {w.summary.exerciseCount} ejercicios
+            </Text>
+            <Text style={[s.body, { color: p.muted }]}>
+              {w.summary.volumeKg.toLocaleString("es-CL")} kg de volumen ·{" "}
+              {Math.max(1, Math.round(w.durationSeconds / 60))} min
+            </Text>
+            {w.perceivedEffort ? (
+              <Text style={[s.body, { color: p.ink }]}>Esfuerzo: {w.perceivedEffort}/10</Text>
+            ) : null}
+            {w.note ? <Text style={[s.body, { color: p.ink }]}>{w.note}</Text> : null}
+          </View>
+          {w.exercises.map((e) => (
+            <View
+              key={e.position}
+              style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}
+            >
+              <Text style={[s.subheading, { color: p.ink }]}>{e.name}</Text>
+              {e.prescribedExerciseName && e.prescribedExerciseId !== e.exerciseId ? (
+                <Text style={[s.caption, { color: p.blue }]}>
+                  Alternativa a {e.prescribedExerciseName}
+                </Text>
+              ) : null}
+              {e.sets.map((set, i) => (
+                <View key={set.id} style={s.row}>
+                  <Text style={[s.body, { color: p.muted }]}>
+                    {set.isWarmup ? "Calentamiento" : `Serie ${i + 1}`}
+                  </Text>
+                  <Text style={[s.label, { color: p.ink }]}>
+                    {set.weightKg.toLocaleString("es-CL")} kg × {set.reps} reps
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </>
+      ) : null}
+      <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
+      <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
+      <Action label="Explorar otra rutina" secondary onPress={() => router.navigate("/train")} />
+    </Page>
+  );
+}

@@ -71,16 +71,21 @@ function summarize(
   };
 }
 
-export async function getWorkoutDetail(db: Client, id: string): Promise<WorkoutDetail | null> {
-  const { data, error } = await db
+export async function getWorkoutDetail(
+  db: Client,
+  id: string,
+  ownerId?: string,
+): Promise<WorkoutDetail | null> {
+  let query = db
     .from("workouts")
     .select(
       `id, student_id, program_id, session_label, started_at, duration_seconds, performed_on, perceived_effort, note,
        programs ( name ),
        workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
     )
-    .eq("id", id)
-    .maybeSingle();
+    .eq("id", id);
+  if (ownerId) query = query.eq("student_id", ownerId);
+  const { data, error } = await query.maybeSingle();
   if (error) throw new Error(`No se pudo cargar el entrenamiento: ${error.message}`);
   if (!data) return null;
 

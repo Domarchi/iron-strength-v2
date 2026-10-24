@@ -53,6 +53,7 @@ export const s = StyleSheet.create({
     gap: 12,
   },
   button: {
+    maxWidth: "100%",
     minHeight: 52,
     borderRadius: 15,
     paddingVertical: 13,
@@ -76,12 +77,14 @@ export const s = StyleSheet.create({
 });
 export function Action({
   label,
+  accessibilityLabel,
   onPress,
   disabled = false,
   secondary = false,
   busy = false,
 }: {
   label: string;
+  accessibilityLabel?: string;
   onPress: () => void;
   disabled?: boolean;
   secondary?: boolean;
@@ -91,7 +94,7 @@ export function Action({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: disabled || busy, busy }}
       disabled={disabled || busy}
       onPress={onPress}

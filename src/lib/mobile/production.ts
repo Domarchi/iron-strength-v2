@@ -1,4 +1,9 @@
 import "server-only";
+import { listWorkouts, getWorkoutDetail } from "../data/workouts";
+import { listExerciseProgress } from "../data/progress";
+import { saveWorkout } from "../data/save-workout";
+import { syncAchievements } from "../data/achievements";
+import { mobileHistorySchema, mobileWorkoutSchema, mobileProgressSchema } from "./contracts";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { attemptLogin } from "../auth/login";
 import { createLoginGuard, supabaseStore } from "../auth/rate-limit";
@@ -98,6 +103,32 @@ export function mobileProductionDependencies(): MobileApiDependencies {
         async week() {
           const view = await getWeekView(db, person.id, santiagoDate(new Date()));
           return mobileWeekSchema.parse({ ...view, version: 1 });
+        },
+        async history(cursor) {
+          return mobileHistorySchema.parse({
+            version: 1,
+            ...(await listWorkouts(db, person.id, { limit: 20, cursor })),
+          });
+        },
+        async workout(id) {
+          const value = await getWorkoutDetail(db, id, person.id);
+          return value?.studentId === person.id
+            ? mobileWorkoutSchema.parse({ version: 1, workout: value })
+            : null;
+        },
+        async progress() {
+          return mobileProgressSchema.parse({
+            version: 1,
+            exercises: await listExerciseProgress(db, person.id),
+          });
+        },
+        async save(payload) {
+          const result = await saveWorkout({ db, payload });
+          if (result.ok)
+            await syncAchievements({ db, studentId: person.id, workoutId: payload.id }).catch(
+              () => [],
+            );
+          return result;
         },
         async routine(id) {
           const result = await getWorkoutContext(db, person.id, id);

@@ -1,9 +1,10 @@
 import { useCallback } from "react";
 import { router } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
-import { Action, Brand, Notice, Page, day, s, usePalette } from "../../components/ui";
-import { useSession } from "../../lib/session";
-import { useQuery } from "../../lib/use-query";
+import { Action, Brand, Notice, Page, day, s, usePalette } from "../../../components/ui";
+import { useSession } from "../../../lib/session";
+import { TrainingCard } from "../../../components/training-card";
+import { useQuery } from "../../../lib/use-query";
 const statuses = {
   done: "Completada",
   pending: "Pendiente",
@@ -22,13 +23,7 @@ export default function Week() {
     <Page>
       <View style={s.row}>
         <Brand />
-        <Action
-          secondary
-          label="Salir"
-          onPress={() => {
-            void client.logout().catch(() => {});
-          }}
-        />
+        <Action secondary label="Mi cuenta" onPress={() => router.navigate("/account")} />
       </View>
       <View style={{ gap: 6 }}>
         <Text style={[s.heading, { color: p.ink }]}>
@@ -36,6 +31,8 @@ export default function Week() {
         </Text>
         <Text style={[s.body, { color: p.muted }]}>Tu siguiente paso, aquí.</Text>
       </View>
+      <TrainingCard />
+      <Action label="Explorar rutinas y entrenar" onPress={() => router.navigate("/train")} />
       {query.error ? <Notice message={query.error} retry={query.retry} /> : null}
       {query.loading ? (
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando tu semana" />

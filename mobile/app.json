@@ -28,7 +28,8 @@
           "configureAndroidBackup": true
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-sqlite"
     ],
     "scheme": "iron-strength",
     "experiments": {

@@ -1,0 +1,41 @@
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type PropsWithChildren,
+} from "react";
+import { randomUUID } from "expo-crypto";
+import { TrainingController } from "./training";
+import { trainingStorage } from "./training-storage";
+import { useSession } from "./session";
+const Context = createContext<TrainingController | null>(null);
+export function TrainingProvider({ userId, children }: PropsWithChildren<{ userId: string }>) {
+  const { client } = useSession();
+  const [controller] = useState(
+    () =>
+      new TrainingController(
+        userId,
+        trainingStorage,
+        (p) => client.saveWorkout(p),
+        () => new Date(),
+        randomUUID,
+      ),
+  );
+  useEffect(() => {
+    void controller.restore();
+    return () => controller.dispose();
+  }, [controller]);
+  return <Context.Provider value={controller}>{children}</Context.Provider>;
+}
+export function useTraining() {
+  const controller = useContext(Context);
+  if (!controller) throw Error("Falta el registro de entrenamiento");
+  const training = useSyncExternalStore(
+    controller.subscribe,
+    controller.getSnapshot,
+    controller.getSnapshot,
+  );
+  return { controller, training };
+}

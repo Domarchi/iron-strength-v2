@@ -81,3 +81,94 @@ test("el móvil consulta solo su semana/rutina y salir revoca su refresh sin cre
   });
   expect(restored.status()).toBe(401);
 });
+
+test("el registro móvil se guarda una vez y solo su cuenta puede consultar historial y progreso", async ({
+  request,
+}) => {
+  for (const path of ["workouts", "progress", "workouts/11111111-1111-4111-8111-111111111111"]) {
+    const r = await request.get("/api/mobile/v1/" + path, { maxRedirects: 0 });
+    expect(r.status()).toBe(401);
+    expect(r.headers()["cache-control"]).toContain("no-store");
+  }
+  const auth = mobileSessionSchema.parse(
+      await (await request.post("/api/mobile/v1/auth/login", { data: { email, password } })).json(),
+    ),
+    headers = { Authorization: `Bearer ${auth.accessToken}` };
+  const routine = await (
+      await request.get(`/api/mobile/v1/sessions/${aliceSession}`, { headers })
+    ).json(),
+    exercise = routine.exercises[0],
+    id = crypto.randomUUID();
+  const payload = {
+    id,
+    programId: routine.session.programId,
+    programSessionId: aliceSession,
+    sessionLabel: routine.session.label,
+    startedAt: new Date().toISOString(),
+    finishedAt: new Date().toISOString(),
+    durationSeconds: 0,
+    perceivedEffort: 6,
+    note: "Entrenamiento desde móvil",
+    sets: [
+      {
+        sessionExerciseId: exercise.sessionExerciseId,
+        prescribedExerciseId: exercise.exerciseId,
+        exerciseId: exercise.exerciseId,
+        exerciseName: exercise.name,
+        position: 0,
+        setNumber: 1,
+        weightKg: 30,
+        reps: 10,
+        isWarmup: false,
+      },
+    ],
+  };
+  try {
+    const big = await request.post("/api/mobile/v1/workouts", {
+      headers,
+      data: { version: 1, payload: { ...payload, note: "x".repeat(270000) } },
+    });
+    expect(big.status()).toBe(413);
+    const first = await request.post("/api/mobile/v1/workouts", {
+      headers,
+      data: { version: 1, payload },
+    });
+    expect(first.status()).toBe(200);
+    expect(await first.json()).toMatchObject({ ok: true, status: "created", workoutId: id });
+    expect(first.headers()["set-cookie"]).toBeUndefined();
+    const duplicate = await request.post("/api/mobile/v1/workouts", {
+      headers,
+      data: { version: 1, payload },
+    });
+    expect((await duplicate.json()).status).toBe("duplicate");
+    const history = await request.get("/api/mobile/v1/workouts?studentId=" + bob, { headers });
+    expect((await history.json()).items.map((w: { id: string }) => w.id)).toContain(id);
+    const detail = await request.get(`/api/mobile/v1/workouts/${id}`, { headers });
+    expect(detail.status()).toBe(200);
+    expect(await detail.json()).toMatchObject({
+      workout: { note: "Entrenamiento desde móvil", summary: { volumeKg: 300, workingSets: 1 } },
+    });
+    const progress = await request.get("/api/mobile/v1/progress", { headers });
+    expect((await progress.json()).exercises[0].bestWeightKg).toBe(30);
+    const bobAuth = mobileSessionSchema.parse(
+      await (
+        await request.post("/api/mobile/v1/auth/login", {
+          data: { email: "mobile-bob@iron-strength.e2e.test", password },
+        })
+      ).json(),
+    );
+    expect(
+      (
+        await request.get(`/api/mobile/v1/workouts/${id}`, {
+          headers: { Authorization: `Bearer ${bobAuth.accessToken}` },
+        })
+      ).status(),
+    ).toBe(404);
+    expect(
+      (await admin().from("workouts").select("id", { count: "exact", head: true }).eq("id", id))
+        .count,
+    ).toBe(1);
+  } finally {
+    await admin().from("workouts").delete().eq("id", id);
+  }
+});

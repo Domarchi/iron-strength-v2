@@ -96,6 +96,8 @@ const draftSchema = z
 export type DraftSet = z.infer<typeof setSchema>;
 export type DraftExercise = z.infer<typeof exerciseSchema>;
 export type WorkoutDraft = z.infer<typeof draftSchema>;
+// El cliente nativo comparte la validación del contenido, con su propio sobre y almacén.
+export const workoutDraftSchema = draftSchema;
 
 export const workoutFocusKey = (userId: string, workoutId: string) =>
   `is:workout-focus:v1:${userId}:${workoutId}`;

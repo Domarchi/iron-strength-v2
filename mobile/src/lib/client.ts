@@ -4,8 +4,13 @@ import {
   mobileRoutineSchema,
   mobileSessionSchema,
   mobileWeekSchema,
+  mobileHistorySchema,
+  mobileWorkoutSchema,
+  mobileProgressSchema,
+  mobileSaveSchema,
   type MobileSession,
 } from "../../../src/lib/mobile/contracts";
+import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
 export type { MobileWeek, MobileRoutine, MobileProfile } from "../../../src/lib/mobile/contracts";
 export type Transport = (url: string, init: RequestInit) => Promise<Response>;
 export interface CredentialStore {
@@ -263,7 +268,7 @@ export class MobileClient {
       if (this.renewal === operation) this.renewal = null;
     }
   }
-  private async read(path: string): Promise<unknown> {
+  private async read(path: string, body?: unknown): Promise<unknown> {
     const gen = this.generation;
     if (this.state.status !== "authenticated")
       throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
@@ -276,7 +281,7 @@ export class MobileClient {
       }
       let data: unknown;
       try {
-        data = await this.http(path, undefined, session.accessToken);
+        data = await this.http(path, body, session.accessToken);
       } catch (error) {
         if (!(error instanceof MobileError) || error.status !== 401 || refreshed) throw error;
         this.current(gen);
@@ -285,7 +290,7 @@ export class MobileClient {
           current.status === "authenticated" && current.session.accessToken !== session.accessToken
             ? current.session
             : await this.renew(session, gen);
-        data = await this.http(path, undefined, session.accessToken);
+        data = await this.http(path, body, session.accessToken);
       }
       this.current(gen);
       return data;
@@ -321,5 +326,30 @@ export class MobileClient {
     if (result.session.id !== id)
       throw new MobileError("identity", "La rutina recibida no coincide. Reintenta.");
     return result;
+  }
+  async history(cursor?: string) {
+    return mobileHistorySchema.parse(
+      await this.read("workouts" + (cursor ? "?cursor=" + encodeURIComponent(cursor) : "")),
+    );
+  }
+  async workout(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese entrenamiento no está disponible.", 404);
+    const value = mobileWorkoutSchema.parse(await this.read("workouts/" + id));
+    if (value.workout.id !== id)
+      throw new MobileError("identity", "El entrenamiento recibido no coincide.");
+    return value;
+  }
+  async progress() {
+    return mobileProgressSchema.parse(await this.read("progress"));
+  }
+  async saveWorkout(payload: WorkoutPayload) {
+    const value = mobileSaveSchema.parse(await this.read("workouts", { version: 1, payload }));
+    if (value.workoutId !== payload.id)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este entrenamiento. Conservamos el registro.",
+      );
+    return value;
   }
 }
