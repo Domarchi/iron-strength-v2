@@ -207,3 +207,55 @@ test("coach conserva gestión y no ofrece borrar; formato desconocido de recibo 
   );
   expect(calls.filter((c) => c.endsWith("account/delete"))).toHaveLength(0);
 });
+
+test("política y soporte públicos se abren por acción explícita, sin identidad", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    (window as unknown as { publicInfoOpened: string[] }).publicInfoOpened = [];
+    window.open = (url) => {
+      (window as unknown as { publicInfoOpened: string[] }).publicInfoOpened.push(String(url));
+      return null;
+    };
+  });
+  const privateCalls: string[] = [];
+  await page.route(origin + "/api/mobile/v1/**", async (route) => {
+    privateCalls.push(route.request().url());
+    await route.abort();
+  });
+  await page.goto("/privacy");
+  await expect(page.getByText("joaquindomarchi@gmail.com", { exact: true })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { publicInfoOpened: string[] }).publicInfoOpened,
+    ),
+  ).toEqual([]);
+  for (const label of [
+    "Leer política completa en la web",
+    "Ayuda y contacto en la web",
+    "Solicitar eliminación en la web",
+  ]) {
+    await page.getByRole("button", { name: label, exact: true }).click();
+  }
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { publicInfoOpened: string[] }).publicInfoOpened,
+    ),
+  ).toEqual([origin + "/privacy", origin + "/support", origin + "/delete-account"]);
+  expect(privateCalls).toEqual([]);
+  await expect(page.getByText("Privacidad y ayuda", { exact: true })).toBeVisible();
+  await page.evaluate(() => {
+    window.open = () => {
+      throw new Error("Navegador no disponible");
+    };
+  });
+  await page.getByRole("button", { name: "Ayuda y contacto en la web", exact: true }).click();
+  await expect(
+    page.getByText("No pudimos abrir el navegador. Puedes escribir a joaquindomarchi@gmail.com.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Volver a iniciar sesión", exact: true }),
+  ).toBeVisible();
+});

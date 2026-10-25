@@ -12,7 +12,7 @@ Mantener la primera validación del producto con el coach y sus tres alumnos. Re
 
 ## Artefacto y ficha
 
-Los textos propuestos están en metadata.es-CL.json: nombre, subtítulo, descripción breve y completa. Los campos de contacto/URLs quedan nulos hasta confirmar valores reales. Texto revisado con límites actuales de nombre 30, subtítulo Apple 30, breve Google 80 y descripción Google 4000. [Ficha Google](https://support.google.com/googleplay/android-developer/answer/9859152?hl=en-EN), [página de producto Apple](https://developer.apple.com/app-store/product-page/).
+Los textos propuestos están en metadata.es-CL.json: nombre, subtítulo, descripción breve y completa. Responsable y contacto fueron autorizados el 25-oct-2026; privacyUrl, supportUrl y accountDeletionUrl apuntan a las páginas públicas verificadas de M. No son formularios de tienda enviados. Texto revisado con límites actuales de nombre 30, subtítulo Apple 30, breve Google 80 y descripción Google 4000. [Ficha Google](https://support.google.com/googleplay/android-developer/answer/9859152?hl=en-EN), [página de producto Apple](https://developer.apple.com/app-store/product-page/).
 
 Seleccionar capturas funcionales, legibles y sin datos personales. Android se captura del APK; iPhone de la app iOS o simulador válido. No presentar capturas Android rotuladas como iPhone, pantallas del prototipo como funciones publicadas, ni indicadores ficticios como resultados de alumnos. Mantener el estilo negro/claro aceptado. Tamaños/formatos y cuestionarios se contrastan de nuevo con la consola del propietario al preparar el envío.
 
@@ -28,6 +28,6 @@ Preparar una cuenta de revisión dedicada y sin acceso a alumnos reales. Su prog
 - Cuenta de revisión y pasos concretos comprobados; ninguna contraseña o clave en archivos públicos.
 - Propietario revisa ficha, capturas, acceso y artefacto antes del envío final. Registrar publicación por plataforma; un envío, TestFlight o APK no equivalen a disponibilidad pública en ambas tiendas.
 
-Pendientes: cuenta Apple/Google, participantes y periodo que exija la consola, contacto público, retención/respaldo, iOS, teléfonos, resto del circuito T202 y permisos para el envío concreto. El código web/API publicado continúa siendo el artefacto L compatible.
+Pendientes: cuentas Apple/Google, participantes y periodo que exija la consola, formularios de privacidad y retención técnica, primera copia semanal programada, iOS, teléfonos, resto del circuito T202 y permisos para el envío concreto. Contacto público autorizado y política/soporte/eliminación publicados en M; respaldo local cifrado y objetivo de 30 días con excepciones documentados. No equivalen a beta o envío de tiendas.
 
 El recorrido operativo de T204 y el registro del candidato están en launch.md y candidate.template.json. El preview .preview y el paquete de simulador no son los artefactos de producción. La gradualidad de la primera versión se realiza en beta; la promoción conserva el AAB/build de dispositivo probado y respeta los límites de primera publicación de ambas tiendas.

@@ -1,6 +1,6 @@
 # Privacidad, soporte y eliminación — borrador T203
 
-Estado: material de preparación de formularios de tiendas. El propietario autorizó el 25-oct-2026 joaquindomarchi@gmail.com como correo público; responsable Joaquín Domarchi, nombre proporcionado previamente. Las páginas /privacy, /support y /delete-account están implementadas y pendientes de verificación/publicación. Este inventario no sustituye la política que se sirve desde esas páginas ni los formularios reales de las consolas.
+Estado: material de preparación de formularios de tiendas. El propietario autorizó el 25-oct-2026 joaquindomarchi@gmail.com como correo público; responsable Joaquín Domarchi, nombre proporcionado previamente. Las páginas /privacy, /support y /delete-account están publicadas en https://iron-strength-seven.vercel.app y verificadas sin sesión sobre M (25-oct-2026). Este inventario no sustituye la política que se sirve desde esas páginas ni los formularios reales de las consolas.
 
 ## Información del servicio
 

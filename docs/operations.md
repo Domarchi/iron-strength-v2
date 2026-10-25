@@ -7,10 +7,10 @@ Estado: controles manuales disponibles, sin monitor continuo o avisos externos c
 Desde la raíz, con Node compatible y sin cargar archivos de entorno:
 
 ```sh
-npm run ops:check -- 0465f35e9b004c0393da6d391e7ed433
+npm run ops:check -- e19735d1127b4e6fa077b00c754dd716
 ```
 
-El argumento es el BUILD_ID del artefacto promovido, no el commit ni un dominio. El valor del ejemplo corresponde a L, publicado el 25 de octubre de 2026. Contrastar siempre con la evidencia de publicación vigente en specs/009-product-quality/validation.md. El comando solo hace cuatro GET al dominio exclusivo; no acepta otro origen, redirecciones o identidad. Cada petición tiene diez segundos y 128 KiB máximos. Informa rutas, estados, duración y códigos cerrados; no publica respuestas, cookies, tokens o excepciones. Salida 0 significa que estos cuatro controles pasaron; 1 indica un fallo y 2 un argumento inválido.
+El argumento es el BUILD_ID del artefacto promovido, no el commit ni un dominio. El valor del ejemplo corresponde a M, publicado el 25 de octubre de 2026. Contrastar siempre con la evidencia de publicación vigente en specs/009-product-quality/validation.md. El comando solo hace cuatro GET al dominio exclusivo; no acepta otro origen, redirecciones o identidad. Cada petición tiene diez segundos y 128 KiB máximos. Informa rutas, estados, duración y códigos cerrados; no publica respuestas, cookies, tokens o excepciones. Salida 0 significa que estos cuatro controles pasaron; 1 indica un fallo y 2 un argumento inválido.
 
 Ejecutar al verificar una promoción y al investigar un aviso de un participante. No reemplaza entrar y completar el recorrido con una cuenta de QA aislada; no verifica una escritura real ni una conexión directa a la base. No afirma que un pendiente local ya llegó al coach.
 
@@ -47,7 +47,7 @@ Registrar commit, BUILD_ID, EAS build, paquete, versión, certificado y API. And
 
 Conservar compatibilidad con los formatos anteriores de sesión, descarga, borradores y cola. No reemplazar el snapshot de un entrenamiento iniciado ni retirar un formato desconocido. Publicar primero la API compatible; comprobar el mismo artefacto preparado y promoverlo manualmente. Las versiones móviles instaladas seguirán usando la API: recuperar web no permite retirar endpoints o revertir migraciones a ciegas.
 
-Ante una regresión web, L puede recuperar K según la evidencia vigente, conservando la base y las migraciones aditivas. Verificar identificador, permisos y compatibilidad antes de promover; repetir ops:check con el BUILD_ID de K y el recorrido autenticado apropiado. Una recuperación móvil exige un build corregido con versión superior y misma firma, no desinstalar para perder pendientes. No hay actualizaciones OTA configuradas ni un mecanismo para retirar binarios ya instalados.
+Ante una regresión web, M puede recuperar L según la evidencia vigente, conservando la base y las migraciones aditivas. Verificar identificador, permisos y compatibilidad antes de promover; repetir ops:check con el BUILD_ID de K y el recorrido autenticado apropiado. Una recuperación móvil exige un build corregido con versión superior y misma firma, no desinstalar para perder pendientes. No hay actualizaciones OTA configuradas ni un mecanismo para retirar binarios ya instalados.
 
 ## Respaldo y mantenimiento
 

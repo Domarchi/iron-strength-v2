@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { router } from "expo-router";
-import { Text, View } from "react-native";
-import { Action, Brand, Page, ScreenIntro, s, usePalette } from "../components/ui";
+import { Linking, Text, View } from "react-native";
+import { Action, Brand, Notice, Page, ScreenIntro, s, usePalette } from "../components/ui";
 import { useSession } from "../lib/session";
 const sections = [
   [
@@ -30,7 +31,16 @@ const sections = [
 ];
 export default function Privacy() {
   const p = usePalette(),
-    { state } = useSession();
+    { state, client } = useSession();
+  const [error, setError] = useState<string | null>(null);
+  async function openPublicInfo(path: "/privacy" | "/support" | "/delete-account") {
+    setError(null);
+    try {
+      await Linking.openURL(client.origin + path);
+    } catch {
+      setError("No pudimos abrir el navegador. Puedes escribir a joaquindomarchi@gmail.com.");
+    }
+  }
   return (
     <Page>
       <Brand />
@@ -39,6 +49,39 @@ export default function Privacy() {
         title="Privacidad y ayuda"
         description="Cómo funciona tu cuenta en esta versión."
       />
+      <View style={[s.divider, { borderColor: p.border }]}>
+        <Text style={[s.subheading, { color: p.ink }]}>Contacto y política completa</Text>
+        <Text style={[s.body, { color: p.muted }]}>Responsable: Joaquín Domarchi.</Text>
+        <Text selectable style={[s.body, { color: p.ink }]}>
+          joaquindomarchi@gmail.com
+        </Text>
+        <Text style={[s.body, { color: p.muted }]}>
+          Estos enlaces abren el navegador y requieren conexión. El resumen de esta pantalla sigue
+          disponible sin Internet.
+        </Text>
+        <Action
+          label="Leer política completa en la web"
+          quiet
+          onPress={() => {
+            void openPublicInfo("/privacy");
+          }}
+        />
+        <Action
+          label="Ayuda y contacto en la web"
+          quiet
+          onPress={() => {
+            void openPublicInfo("/support");
+          }}
+        />
+        <Action
+          label="Solicitar eliminación en la web"
+          quiet
+          onPress={() => {
+            void openPublicInfo("/delete-account");
+          }}
+        />
+        {error ? <Notice message={error} /> : null}
+      </View>
       {sections.map(([title, text]) => (
         <View key={title} style={[s.divider, { borderColor: p.border }]}>
           <Text style={[s.subheading, { color: p.ink }]}>{title}</Text>
