@@ -6,11 +6,13 @@ import { Icon, type IconName } from "./icon";
 export { usePalette } from "../lib/appearance-context";
 export type { Palette } from "../lib/appearance";
 export const s = StyleSheet.create({
-  body: { fontSize: 15, lineHeight: 23 },
-  caption: { fontSize: 12, lineHeight: 18, fontWeight: "600", letterSpacing: 0.4 },
+  body: { fontSize: 16, lineHeight: 24 },
+  caption: { fontSize: 13, lineHeight: 19, fontWeight: "500", letterSpacing: 0.2 },
   heading: { fontSize: 34, lineHeight: 40, fontWeight: "700", letterSpacing: -1.1 },
   subheading: { fontSize: 20, lineHeight: 27, fontWeight: "700", letterSpacing: -0.4 },
   card: { borderRadius: 18, padding: 18, borderWidth: 1, gap: 12 },
+  number: { fontVariant: ["tabular-nums"], fontWeight: "600" },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 18, gap: 12 },
   row: {
     flexWrap: "wrap",
     flexDirection: "row",
@@ -47,6 +49,7 @@ export function Action({
   onPress,
   disabled = false,
   secondary = false,
+  quiet = false,
   busy = false,
   icon,
 }: {
@@ -55,6 +58,7 @@ export function Action({
   onPress: () => void;
   disabled?: boolean;
   secondary?: boolean;
+  quiet?: boolean;
   busy?: boolean;
   icon?: IconName;
 }) {
@@ -69,8 +73,16 @@ export function Action({
       style={({ pressed }) => [
         s.button,
         {
-          backgroundColor: secondary ? (pressed ? p.raised : p.card) : p.button,
-          borderColor: secondary ? p.border : p.button,
+          backgroundColor: quiet
+            ? pressed
+              ? p.raised
+              : "transparent"
+            : secondary
+              ? pressed
+                ? p.raised
+                : p.card
+              : p.button,
+          borderColor: quiet ? "transparent" : secondary ? p.border : p.button,
           opacity: disabled ? 0.5 : pressed ? 0.86 : 1,
           flexDirection: "row",
           gap: 9,
@@ -78,14 +90,20 @@ export function Action({
       ]}
     >
       {busy ? (
-        <ActivityIndicator color={secondary ? p.blue : "#fff"} />
+        <ActivityIndicator color={secondary || quiet ? p.blue : "#fff"} />
       ) : (
         <>
-          {icon ? <Icon name={icon} size={19} color={secondary ? p.ink : "#fff"} /> : null}
+          {icon ? (
+            <Icon name={icon} size={19} color={quiet ? p.blue : secondary ? p.ink : "#fff"} />
+          ) : null}
           <Text
             style={[
               s.buttonText,
-              { color: secondary ? p.ink : "#fff", textAlign: "center", flexShrink: 1 },
+              {
+                color: quiet ? p.blue : secondary ? p.ink : "#fff",
+                textAlign: "center",
+                flexShrink: 1,
+              },
             ]}
           >
             {label}
@@ -108,6 +126,9 @@ export function Page({ children }: PropsWithChildren) {
         paddingBottom: insets.bottom + 28,
         gap: 20,
         flexGrow: 1,
+        width: "100%",
+        maxWidth: 560,
+        alignSelf: "center",
       }}
       keyboardShouldPersistTaps="handled"
     >
@@ -221,5 +242,39 @@ export function SessionMark({ label }: { label: string }) {
     >
       <Text style={{ color: p.ink, fontSize: 22, fontWeight: "700" }}>{label}</Text>
     </View>
+  );
+}
+
+export function IconAction({
+  label,
+  icon,
+  onPress,
+  disabled = false,
+}: {
+  label: string;
+  icon: IconName;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
+  const p = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        width: 48,
+        minHeight: 48,
+        borderRadius: 24,
+        backgroundColor: pressed ? p.raised : "transparent",
+        alignItems: "center",
+        justifyContent: "center",
+        opacity: disabled ? 0.5 : 1,
+      })}
+    >
+      <Icon name={icon} color={p.ink} size={22} />
+    </Pressable>
   );
 }

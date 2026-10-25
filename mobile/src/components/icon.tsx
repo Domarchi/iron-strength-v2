@@ -12,6 +12,8 @@ const paths = {
   moon: "M20.5 14A9 9 0 0 1 10 3a9 9 0 1 0 10.5 11Z",
   system: "M3 4h18v13H3ZM8 21h8M12 17v4",
   more: "M5 11h.01v2H5ZM12 11h.01v2H12ZM19 11h.01v2H19Z",
+  plus: "M5 12h14M12 5v14",
+  minus: "M5 12h14",
   clock: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM12 7v5l3 2",
 } as const;
 export type IconName = keyof typeof paths;

@@ -27,16 +27,16 @@ export default function Progress() {
     <Page>
       <Brand />
       <ScreenIntro
-        eyebrow="FUERZA EN NÚMEROS"
+        eyebrow="PROGRESO"
         title="Tu progreso"
-        description="Tus mejores marcas de trabajo. Sin calentamientos ni demos."
+        description="Tus mejores series de trabajo, confirmadas en tu cuenta."
       />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
       {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando marcas…</Text> : null}
       {q.value?.exercises.length ? (
         <>
           <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-            <Text style={[s.caption, { color: p.blue }]}>CONSTANCIA QUE SE VE</Text>
+            <Text style={[s.caption, { color: p.blue }]}>REGISTROS CONFIRMADOS</Text>
             <Metric
               value={String(q.value.exercises.length)}
               label="ejercicios con registros reales"
@@ -58,13 +58,15 @@ export default function Progress() {
         <Notice message="Tus marcas aparecerán después de guardar tu primer entrenamiento real. Mientras tanto, puedes recorrer las rutinas demo." />
       ) : null}
       {rows.map((e) => (
-        <View
-          key={e.exerciseId}
-          style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}
-        >
-          <Text style={[s.subheading, { color: p.ink }]}>{e.name}</Text>
+        <View key={e.exerciseId} style={[s.divider, { borderColor: p.border, paddingBottom: 6 }]}>
+          <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
+            {e.name}
+          </Text>
+          <Text style={[s.caption, { color: p.blue }]}>
+            {e.isBodyweight ? "MEJOR SERIE SIN CARGA" : "MEJOR PESO REGISTRADO"}
+          </Text>
           <View style={s.row}>
-            <Text style={[s.heading, { color: p.blue }]}>
+            <Text style={[s.heading, s.number, { color: p.ink, fontSize: 38, lineHeight: 46 }]}>
               {e.isBodyweight
                 ? `${e.bestReps} reps`
                 : `${e.bestWeightKg.toLocaleString("es-CL")} kg`}
@@ -84,7 +86,7 @@ export default function Progress() {
       {search && !rows.length && q.value?.exercises.length ? (
         <Notice message="No encontramos ejercicios con ese nombre." />
       ) : null}
-      <Action label="Actualizar progreso" secondary disabled={q.loading} onPress={q.retry} />
+      <Action label="Actualizar progreso" quiet disabled={q.loading} onPress={q.retry} />
     </Page>
   );
 }

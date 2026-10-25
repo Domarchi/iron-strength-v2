@@ -7,7 +7,7 @@ La primera versión debe permitir que un alumno entre, entienda su semana, entre
 | Etapa                     | Tareas    | Entrega y condición de salida                                                                                                                                        |
 | ------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Producto               | T189      | Inventario, alcance, recorridos y definición de v1 revisables.                                                                                                       |
-| 2. Referencia visual      | T190      | Sistema visual y cuatro pantallas navegables en claro/oscuro, revisadas desde 360 px; referencia pendiente de aceptación del propietario.                            |
+| 2. Referencia visual      | T190      | Sistema visual y cuatro pantallas navegables en claro/oscuro, revisadas desde 360 px; referencia aceptada por el propietario, con ajuste de check circular.          |
 | 3. Preparación instalable | T191      | Perfiles locales, identificadores propuestos y guía de requisitos de compilación, sin consumir builds o crear firma.                                                 |
 | 4. Acceso completo        | T192–T193 | Invitación y recuperación dentro del recorrido móvil; enlaces seguros y vencidos, renovación y cuenta/eliminación con confirmación.                                  |
 | 5. Diseño funcional       | T194      | Extender la referencia aceptada a las pantallas reales, con estados, accesibilidad y adaptación de teclado; conservar registro y recuperación.                       |
@@ -20,6 +20,8 @@ La primera versión debe permitir que un alumno entre, entienda su semana, entre
 | 12. Operación             | T205      | Fallos sin datos personales, alertas útiles, respaldo/restauración ensayados, compatibilidad y procedimiento de actualización/recuperación.                          |
 
 T191 puede prepararse después de la referencia y antes de ampliar funciones. No depende de contratar cuentas. T201 sí depende de acceso del propietario y requisitos de firma; su calendario no se promete mientras eso no esté verificado. La beta requiere datos reales solo de sus propietarios; las demos permanecen identificadas y separadas.
+
+El propietario aprobó T190 y pidió avanzar con su implementación visual: se adelanta T194, independiente de las ampliaciones de acceso T192–T193. Estas siguen pendientes y conservan su alcance. El diseño funcional de esta entrega se aplica al cliente nativo; la referencia del coach se traslada a web durante T200.
 
 ## Cómo se gestiona cada tarea
 

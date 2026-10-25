@@ -40,11 +40,12 @@ function ExerciseCard({
   return (
     <View
       style={[
-        s.card,
+        s.divider,
         {
-          backgroundColor: p.card,
           borderColor: p.border,
-          ...(exercise.supersetId ? { borderLeftWidth: 4, borderLeftColor: p.blue } : {}),
+          ...(exercise.supersetId
+            ? { borderLeftWidth: 2, borderLeftColor: p.blue, paddingLeft: 16 }
+            : {}),
         },
       ]}
     >

@@ -37,3 +37,7 @@ Conservar app.json como base y añadir app.config.js con variantes development/p
 Perfiles EAS: development con dev-client compatible SDK 58; preview release/internal APK y ad hoc iOS; preview-simulator solo simulador; production release/store AAB/iOS. Versionado local, sin autoenvío, autoactualizaciones, certificados o cambios remotos. Origen HTTPS actual explícito en los perfiles. Preview es aislamiento de instalación, no una base de datos de pruebas: los recorridos destructivos siguen usando únicamente la pila aislada. Herramientas no consumen builds remotos en esta tarea.
 
 Validar configuración resuelta de cada variante, identidad EAS conservada, nombres/esquemas/IDs distintos, dev-client solo en perfil de desarrollo y rechazo de variantes desconocidas. Check móvil, doctor, exportaciones y regresión Expo web. Documentar que el simulador iOS no produce un instalador para iPhone y que registro de dispositivo/firma/cuenta se resuelven antes de T201.
+
+## Extensión visual aprobada · T194
+
+Después de revisar T190, el propietario aprobó llevar la referencia a las pantallas funcionales y pidió un check de serie pequeño y circular. Se adelanta T194 de forma independiente de acceso/cuenta: la implementación nativa conserva datos, navegación, contratos y recuperación; sus criterios están en design.md. El editor web queda en T200. La referencia de estilo está aprobada, mientras que la aceptación en dispositivos físicos continúa separada.

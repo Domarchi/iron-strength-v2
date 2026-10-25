@@ -17,9 +17,9 @@ export default function Train() {
     <Page>
       <Brand />
       <ScreenIntro
-        eyebrow="A TU RITMO"
-        title="Vamos a entrenar"
-        description="Tu próxima sesión empieza aquí."
+        eyebrow="ENTRENAR"
+        title="Elige tu sesión"
+        description="Revisa tu semana o explora el registro con una rutina de ejemplo."
       />
       <TrainingCard />
       <View

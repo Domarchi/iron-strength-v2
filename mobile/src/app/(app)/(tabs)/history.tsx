@@ -47,9 +47,9 @@ export default function History() {
     <Page>
       <Brand />
       <ScreenIntro
-        eyebrow="TU RECORRIDO"
+        eyebrow="HISTORIAL"
         title="Tu historial"
-        description="Cada sesión cuenta. Revisa tus series, esfuerzo y notas."
+        description="Entrenamientos guardados, series y notas de cada sesión."
       />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
       {error ? <Notice message={error} /> : null}
@@ -60,7 +60,7 @@ export default function History() {
         <Notice message="Aún no tienes entrenamientos guardados en tu cuenta. Puedes probar una demo desde Entrenar." />
       ) : null}
       {rows.map((w) => (
-        <View key={w.id} style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
+        <View key={w.id} style={[s.divider, { borderColor: p.border }]}>
           <View style={s.row}>
             <Text style={[s.caption, { color: p.blue }]}>
               {day(w.performedOn)} · SESIÓN {w.sessionLabel ?? "LIBRE"}
@@ -100,7 +100,7 @@ export default function History() {
       ) : null}
       <Action
         label="Actualizar historial"
-        secondary
+        quiet
         disabled={q.loading}
         onPress={() => {
           setMore([]);

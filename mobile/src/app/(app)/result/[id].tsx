@@ -84,7 +84,7 @@ export default function Result() {
             <Text style={[s.caption, { color: p.success }]}>
               {demo === "1" ? "DEMO GUARDADA EN ESTE DISPOSITIVO" : "ENTRENAMIENTO CONFIRMADO"}
             </Text>
-            <Text style={[s.heading, { color: p.ink }]}>¡Sesión registrada!</Text>
+            <Text style={[s.heading, { color: p.ink }]}>Sesión registrada</Text>
             <Text style={[s.body, { color: p.muted }]}>
               {demo === "1"
                 ? "Esta prueba no se envió al coach y no cuenta en tus marcas reales."

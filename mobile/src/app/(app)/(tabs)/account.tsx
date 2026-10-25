@@ -32,7 +32,7 @@ export default function Account() {
   return (
     <Page>
       <Brand />
-      <ScreenIntro eyebrow="A TU MANERA" title="Tu cuenta" />
+      <ScreenIntro eyebrow="CUENTA" title="Tu cuenta" />
       <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
         <Text style={[s.subheading, { color: p.ink }]}>{person.fullName}</Text>
         <Text style={[s.body, { color: p.muted }]}>{person.email}</Text>

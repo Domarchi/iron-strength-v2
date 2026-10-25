@@ -5,7 +5,7 @@
 - [x] T191 · Perfiles locales de distribución y requisitos verificables de la versión instalable. Sin builds, registro de identificadores o firma remota.
 - [ ] T192 · Invitación y recuperación móvil.
 - [ ] T193 · Gestión de cuenta, privacidad y eliminación nativa.
-- [ ] T194 · Extender referencia visual aceptada a las pantallas funcionales.
+- [x] T194 · Extender referencia visual aceptada al cliente nativo existente; check circular en app y prototipo. Aceptación física separada; editor web en T200.
 - [ ] T195 · Comentarios nativos y seguimiento con contexto.
 - [ ] T196 · Progreso por periodos y evidencia; especificar recorrido de medidas/fotos.
 - [ ] T197 · Descarga de semana nativa.

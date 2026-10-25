@@ -1,6 +1,5 @@
 import { router } from "expo-router";
 import { Text, View } from "react-native";
-import { Icon } from "./icon";
 import { Action, Notice, s, usePalette } from "./ui";
 import { useTraining } from "../lib/training-context";
 export function TrainingCard() {
@@ -18,17 +17,22 @@ export function TrainingCard() {
       />
     ) : null;
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.blue, borderLeftWidth: 3 }]}>
-      <Icon
-        name={a.draft.status === "pending_save" ? "history" : "clock"}
-        color={p.blue}
-        size={24}
-      />
+    <View
+      style={[
+        s.card,
+        {
+          backgroundColor: p.card,
+          borderColor: p.border,
+          borderTopWidth: 2,
+          borderTopColor: p.blue,
+        },
+      ]}
+    >
       <Text style={[s.caption, { color: p.blue }]}>
         {a.mode === "demo" ? "DEMO · " : ""}
         {a.draft.status === "pending_save" ? "PENDIENTE DE ENVIAR" : "ENTRENAMIENTO EN CURSO"}
       </Text>
-      <Text style={[s.subheading, { color: p.ink }]}>
+      <Text style={[s.heading, { color: p.ink, fontSize: 28, lineHeight: 34 }]}>
         {a.routine.session.title ?? `Sesión ${a.routine.session.label}`}
       </Text>
       <Text style={[s.body, { color: p.muted }]}>

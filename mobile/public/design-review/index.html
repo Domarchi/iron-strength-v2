@@ -95,13 +95,54 @@
         background: var(--bg);
         border: 1px solid var(--control);
       }
-      input[type="checkbox"] {
+      .set-check {
+        position: relative;
+        display: grid;
+        place-items: center;
         width: 48px;
         height: 48px;
-        padding: 0;
-        margin: 0;
-        accent-color: var(--button);
         cursor: pointer;
+        border-radius: 24px;
+      }
+      .set-check input[type="checkbox"] {
+        position: absolute;
+        inset: 0;
+        width: 48px;
+        height: 48px;
+        min-height: 48px;
+        margin: 0;
+        padding: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .set-check-mark {
+        display: grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border: 1.5px solid var(--control);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      .set-check-mark .icon {
+        width: 16px;
+        height: 16px;
+        opacity: 0;
+      }
+      .set-check input:checked + .set-check-mark {
+        background: var(--button);
+        border-color: var(--button);
+        color: #fff;
+      }
+      .set-check input:checked + .set-check-mark .icon {
+        opacity: 1;
+      }
+      .set-check input:focus-visible + .set-check-mark {
+        outline: 3px solid var(--blue);
+        outline-offset: 4px;
+      }
+      .set-check:active {
+        background: var(--raised);
       }
       input::placeholder {
         color: var(--muted);
@@ -943,7 +984,7 @@
         <div class="exercise-title"><span class="exercise-symbol">${icon("train")}</span><div><p class="eyebrow">EJERCICIO 3 DE 4</p><h1>Press con<br>mancuernas</h1></div></div>
         <div class="row small"><span class="muted">3 series · 8–12 reps</span><span class="blue">${icon("clock")} 90 s</span></div>
         <p class="small muted">Objetivo del coach: 24 kg · última vez: 22 kg × 10</p>
-        <div><div class="set-head"><span>SERIE</span><span>KG</span><span>REPS</span><span>HECHA</span></div>${completed.map((done, i) => `<div class="set-row ${done ? "completed" : ""}"><span class="set-label">${i + 1}</span><input aria-label="Peso serie ${i + 1}" inputmode="decimal" value="24"/><input aria-label="Repeticiones serie ${i + 1}" inputmode="numeric" value="10"/><input type="checkbox" aria-label="Completar serie ${i + 1}" data-set="${i}" ${done ? "checked" : ""}/></div>`).join("")}<button class="link full" data-info="En la app puedes añadir series y abrir sus opciones. El prototipo no cambia la prescripción.">+ Añadir serie</button></div>
+        <div><div class="set-head"><span>SERIE</span><span>KG</span><span>REPS</span><span>HECHA</span></div>${completed.map((done, i) => `<div class="set-row ${done ? "completed" : ""}"><span class="set-label">${i + 1}</span><input aria-label="Peso serie ${i + 1}" inputmode="decimal" value="24"/><input aria-label="Repeticiones serie ${i + 1}" inputmode="numeric" value="10"/><label class="set-check"><input type="checkbox" aria-label="Completar serie ${i + 1}" data-set="${i}" ${done ? "checked" : ""}/><span class="set-check-mark" aria-hidden="true">${icon("check")}</span></label></div>`).join("")}<button class="link full" data-info="En la app puedes añadir series y abrir sus opciones. El prototipo no cambia la prescripción.">+ Añadir serie</button></div>
         <div class="rest" id="rest-demo" ${completed.filter(Boolean).length < 2 ? "hidden" : ""}><span class="number">1:30</span><div><h3>Descanso de demostración</h3><p class="muted">En la app el tiempo sigue al bloquear.</p></div></div>
         <div class="subtle"><p class="small"><span class="green">●</span> Guardado en este dispositivo</p><p class="small muted">Estado ilustrativo · no se envía al coach.</p></div>
         <div class="row divider"><div><p class="eyebrow">SIGUIENTE EJERCICIO</p><h3>Dead bug</h3></div><span class="muted small">2 × 8–10</span></div>

@@ -11,17 +11,10 @@ import {
   View,
 } from "react-native";
 import { Icon } from "../../../components/icon";
-import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/ui";
+import { Action, Brand, IconAction, Notice, Page, s, usePalette } from "../../../components/ui";
+import { WorkoutSets } from "../../../components/workout-sets";
 import { useTraining } from "../../../lib/training-context";
-import {
-  addSet,
-  removeSet,
-  summarize,
-  targetForSet,
-  toggleWarmup,
-  updateSetField,
-  workoutVolume,
-} from "../../../../../src/lib/workout/runner-state";
+import { summarize, workoutVolume } from "../../../../../src/lib/workout/runner-state";
 import { substituteExercise } from "../../../../../src/lib/workout/substitution";
 import { adjustRest, formatClock, remainingSeconds } from "../../../../../src/domain/rest-timer";
 import { nextSupersetSet } from "../../../../../src/domain/superset-rounds";
@@ -46,7 +39,7 @@ export default function Workout() {
   const [error, setError] = useState<string | null>(null),
     [closing, setClosing] = useState(false),
     [discard, setDiscard] = useState(false),
-    [setOptions, showSetOptions] = useState<string | null>(null);
+    [details, showDetails] = useState<string | null>(null);
   const a = training.active,
     d = a?.draft,
     effort = a?.review?.effort ?? "",
@@ -113,41 +106,34 @@ export default function Workout() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <Page>
-        <View style={s.row}>
-          <Brand />
-          <Action
-            label="Inicio"
-            accessibilityLabel="Volver a Inicio"
-            icon="home"
-            secondary
-            disabled={training.busy}
-            onPress={back}
-          />
-        </View>
-        <View style={{ gap: 6 }}>
-          <Text style={[s.caption, { color: p.blue }]}>
-            {a.mode === "demo" ? "DEMO · " : ""}
-            {a.routine.session.title ?? `Sesión ${d.sessionLabel}`}
-          </Text>
-          <View style={s.row}>
-            <Text style={[s.subheading, { color: p.ink }]}>
-              {formatClock(elapsed)} · {summary.doneSets}/{summary.totalSets} series
+        <View style={[s.row, { alignItems: "flex-start" }]}>
+          <View style={{ flex: 1, gap: 6 }}>
+            <Text style={[s.caption, { color: p.blue }]}>
+              {a.mode === "demo" ? "DEMO · " : ""}SESIÓN {d.sessionLabel} ·{" "}
+              {pending ? "PENDIENTE DE ENVIAR" : "EN CURSO"}
             </Text>
-            <Text style={[s.caption, { color: p.muted }]}>
-              {volume.loadKg.toLocaleString("es-CL")} kg
+            <Text style={[s.label, { color: p.ink }]}>
+              {a.routine.session.title ?? `Sesión ${d.sessionLabel}`}
+            </Text>
+            <Text style={[s.number, { color: p.ink, fontSize: 23, lineHeight: 30 }]}>
+              {formatClock(elapsed)}{" "}
+              <Text style={[s.caption, { color: p.muted }]}>
+                · {summary.doneSets}/{summary.totalSets} series
+              </Text>
             </Text>
           </View>
-          <Text
-            accessibilityLiveRegion="polite"
-            style={[s.caption, { color: training.error ? p.danger : p.muted }]}
-          >
-            {training.dirty
-              ? "Cambios pendientes de guardar en este dispositivo"
-              : pending
-                ? "Guardado en este dispositivo · pendiente de enviar"
-                : "Guardado en este dispositivo"}
-          </Text>
+          <IconAction label="Volver a Inicio" icon="home" disabled={training.busy} onPress={back} />
         </View>
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[s.caption, { color: training.error ? p.danger : p.muted }]}
+        >
+          {training.dirty
+            ? "Cambios pendientes de guardar en este dispositivo"
+            : pending
+              ? "Guardado en este dispositivo · pendiente de enviar"
+              : "Guardado en este dispositivo"}
+        </Text>
         {a.mode === "demo" ? (
           <Text style={[s.caption, { color: p.blue }]}>PRUEBA LOCAL · No se envía al coach</Text>
         ) : null}
@@ -179,6 +165,136 @@ export default function Workout() {
           </View>
         ) : (
           <>
+            <Text style={[s.caption, { color: p.muted }]}>EJERCICIOS</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator
+              contentContainerStyle={{ gap: 8 }}
+              style={{ flexGrow: 0 }}
+            >
+              {d.exercises.map((ex, i) => (
+                <Pressable
+                  key={ex.sessionExerciseId}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ir a ${ex.name}`}
+                  accessibilityState={{ selected: i === index }}
+                  aria-pressed={i === index}
+                  onPress={() => {
+                    void act(() => controller.focus(i));
+                  }}
+                  style={{
+                    minHeight: 52,
+                    width: 144,
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: i === index ? p.blue : p.border,
+                    backgroundColor: i === index ? p.tint : p.card,
+                    padding: 8,
+                    flexDirection: "row",
+                    gap: 8,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={[s.caption, { color: p.blue }]}>{i + 1}</Text>
+                  <Text numberOfLines={2} style={[s.label, { color: p.ink, flex: 1 }]}>
+                    {ex.name}
+                    {ex.supersetId ? " · Superserie" : ""}
+                  </Text>
+                  <Text style={[s.caption, { color: p.muted }]}>
+                    {ex.sets.filter((x) => x.done).length}/{ex.sets.length}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <View style={{ gap: 16 }}>
+              {exercise.supersetId ? (
+                <Text style={[s.caption, { color: p.blue }]}>
+                  SUPERSERIE ·{" "}
+                  {next
+                    ? `Ronda ${next.round + 1} · sigue ${d.exercises[next.exerciseIndex].name}`
+                    : "Todas las rondas completadas"}
+                </Text>
+              ) : null}
+              <Text style={[s.heading, { fontSize: 25, lineHeight: 32, color: p.ink }]}>
+                {exercise.name}
+              </Text>
+              <Text style={[s.caption, { color: p.muted }]}>
+                {exercise.supersetId
+                  ? `Descanso al terminar la ronda: ${exercise.supersetRestSeconds ?? 90} s`
+                  : `Descanso entre series: ${exercise.restSeconds ?? 90} s`}
+              </Text>
+              <WorkoutSets
+                index={index}
+                onComplete={(si) => {
+                  void act(() => controller.complete(index, si));
+                }}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Indicaciones y alternativas"
+                accessibilityState={{ expanded: details === exercise.sessionExerciseId }}
+                aria-expanded={details === exercise.sessionExerciseId}
+                onPress={() =>
+                  showDetails((current) =>
+                    current === exercise.sessionExerciseId ? null : exercise.sessionExerciseId,
+                  )
+                }
+                style={({ pressed }) => ({
+                  minHeight: 48,
+                  paddingVertical: 12,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  borderTopWidth: 1,
+                  borderTopColor: p.border,
+                  backgroundColor: pressed ? p.raised : "transparent",
+                })}
+              >
+                <Text style={[s.label, { color: p.blue, flex: 1 }]}>
+                  Indicaciones y alternativas
+                </Text>
+                <Icon
+                  name={details === exercise.sessionExerciseId ? "minus" : "plus"}
+                  color={p.blue}
+                  size={18}
+                />
+              </Pressable>
+              {details === exercise.sessionExerciseId ? (
+                <View style={{ gap: 12 }}>
+                  {rx.note ? (
+                    <Text style={[s.body, { color: p.muted }]}>{rx.note}</Text>
+                  ) : (
+                    <Text style={[s.caption, { color: p.muted }]}>
+                      Sin indicaciones adicionales del coach.
+                    </Text>
+                  )}
+                  {exercise.alternatives?.length ? (
+                    <>
+                      <Text style={[s.label, { color: p.ink }]}>Alternativas autorizadas</Text>
+                      <Text style={[s.body, { color: p.muted }]}>
+                        Elige antes de completar series de este ejercicio.
+                      </Text>
+                      {[exercise.original, ...exercise.alternatives]
+                        .filter((c) => c && c.exerciseId !== exercise.exerciseId)
+                        .map((choice) => (
+                          <Action
+                            key={choice!.exerciseId}
+                            label={`Cambiar a ${choice!.name}`}
+                            secondary
+                            disabled={exercise.sets.some((x) => x.done)}
+                            onPress={() =>
+                              controller.edit((draft) =>
+                                substituteExercise(draft, index, choice!.exerciseId),
+                              )
+                            }
+                          />
+                        ))}
+                    </>
+                  ) : null}
+                </View>
+              ) : null}
+            </View>
             {rest > 0 ? (
               <View style={[s.card, { backgroundColor: p.tint, borderColor: p.blue }]}>
                 <View style={s.row}>
@@ -222,233 +338,6 @@ export default function Workout() {
                 </View>
               </View>
             ) : null}
-            <Text style={[s.caption, { color: p.muted }]}>EJERCICIOS</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator
-              contentContainerStyle={{ gap: 8 }}
-              style={{ flexGrow: 0 }}
-            >
-              {d.exercises.map((ex, i) => (
-                <Pressable
-                  key={ex.sessionExerciseId}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ir a ${ex.name}`}
-                  accessibilityState={{ selected: i === index }}
-                  aria-pressed={i === index}
-                  onPress={() => {
-                    void act(() => controller.focus(i));
-                  }}
-                  style={{
-                    minHeight: 64,
-                    width: 168,
-                    borderRadius: 14,
-                    borderWidth: 1,
-                    borderColor: i === index ? p.blue : p.border,
-                    backgroundColor: i === index ? p.tint : p.card,
-                    padding: 12,
-                    flexDirection: "row",
-                    gap: 8,
-                    alignItems: "center",
-                  }}
-                >
-                  <Text style={[s.caption, { color: p.blue }]}>{i + 1}</Text>
-                  <Text numberOfLines={2} style={[s.label, { color: p.ink, flex: 1 }]}>
-                    {ex.name}
-                    {ex.supersetId ? " · Superserie" : ""}
-                  </Text>
-                  <Text style={[s.caption, { color: p.muted }]}>
-                    {ex.sets.filter((x) => x.done).length}/{ex.sets.length}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-            <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-              {exercise.supersetId ? (
-                <Text style={[s.caption, { color: p.blue }]}>
-                  SUPERSERIE ·{" "}
-                  {next
-                    ? `Ronda ${next.round + 1} · sigue ${d.exercises[next.exerciseIndex].name}`
-                    : "Todas las rondas completadas"}
-                </Text>
-              ) : null}
-              <Text style={[s.heading, { fontSize: 25, lineHeight: 32, color: p.ink }]}>
-                {exercise.name}
-              </Text>
-              {rx.note ? <Text style={[s.body, { color: p.muted }]}>{rx.note}</Text> : null}
-              <Text style={[s.caption, { color: p.muted }]}>
-                {exercise.supersetId
-                  ? `Descanso al terminar la ronda: ${exercise.supersetRestSeconds ?? 90} s`
-                  : `Descanso entre series: ${exercise.restSeconds ?? 90} s`}
-              </Text>
-              {exercise.sets.map((set, si) => {
-                const target = targetForSet(exercise, si);
-                return (
-                  <View
-                    key={set.id}
-                    style={{
-                      gap: 7,
-                      padding: 10,
-                      borderRadius: 12,
-                      backgroundColor: set.done ? p.tint : "transparent",
-                      borderBottomWidth: 1,
-                      borderBottomColor: p.border,
-                    }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 8,
-                      }}
-                    >
-                      <Text style={[s.caption, { color: p.muted, flex: 1 }]}>
-                        SERIE {si + 1}
-                        {set.isWarmup
-                          ? " · CALENTAMIENTO"
-                          : target
-                            ? ` · Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${target.targetWeightKg} kg` : ""}`
-                            : ""}
-                      </Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Opciones de serie ${si + 1}`}
-                        accessibilityState={{ expanded: setOptions === set.id }}
-                        aria-expanded={setOptions === set.id}
-                        onPress={() =>
-                          showSetOptions((current) => (current === set.id ? null : set.id))
-                        }
-                        style={({ pressed }) => ({
-                          minWidth: 44,
-                          minHeight: 44,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: 10,
-                          backgroundColor: pressed ? p.raised : "transparent",
-                        })}
-                      >
-                        <Icon name="more" color={p.muted} />
-                      </Pressable>
-                    </View>
-                    <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                      <View style={{ flex: 1, gap: 4 }}>
-                        <Text style={[s.caption, { color: p.muted }]}>KG</Text>
-                        <TextInput
-                          keyboardAppearance={p.dark ? "dark" : "light"}
-                          selectionColor={p.blue}
-                          accessibilityLabel={`Peso serie ${si + 1}`}
-                          value={set.weight}
-                          keyboardType="decimal-pad"
-                          maxLength={7}
-                          placeholder={exercise.isBodyweight ? "0" : "kg"}
-                          placeholderTextColor={p.muted}
-                          onChangeText={(v) =>
-                            controller.edit((draft) =>
-                              updateSetField(draft, index, si, "weight", v),
-                            )
-                          }
-                          style={[
-                            s.input,
-                            { color: p.ink, borderColor: p.control, backgroundColor: p.bg },
-                          ]}
-                        />
-                      </View>
-                      <View style={{ flex: 1, gap: 4 }}>
-                        <Text style={[s.caption, { color: p.muted }]}>REPS</Text>
-                        <TextInput
-                          keyboardAppearance={p.dark ? "dark" : "light"}
-                          selectionColor={p.blue}
-                          accessibilityLabel={`Repeticiones serie ${si + 1}`}
-                          value={set.reps}
-                          keyboardType="number-pad"
-                          maxLength={3}
-                          placeholder={target ? String(target.repsMin) : "reps"}
-                          placeholderTextColor={p.muted}
-                          onChangeText={(v) =>
-                            controller.edit((draft) => updateSetField(draft, index, si, "reps", v))
-                          }
-                          style={[
-                            s.input,
-                            { color: p.ink, borderColor: p.control, backgroundColor: p.bg },
-                          ]}
-                        />
-                      </View>
-                      <Pressable
-                        accessibilityRole="checkbox"
-                        aria-checked={set.done}
-                        accessibilityLabel={`Completar serie ${si + 1}`}
-                        accessibilityState={{ checked: set.done }}
-                        onPress={() => {
-                          void act(() => controller.complete(index, si));
-                        }}
-                        style={{
-                          height: 52,
-                          minWidth: 52,
-                          marginTop: 22,
-                          borderRadius: 14,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderWidth: 1,
-                          borderColor: p.blue,
-                          backgroundColor: set.done ? p.button : p.tint,
-                        }}
-                      >
-                        <Icon name="check" color={set.done ? "#fff" : p.blue} size={24} />
-                      </Pressable>
-                    </View>
-                    {setOptions === set.id ? (
-                      <View style={s.row}>
-                        <Action
-                          label={set.isWarmup ? "Usar como trabajo" : "Calentamiento"}
-                          accessibilityLabel={`${set.isWarmup ? "Usar como trabajo" : "Usar como calentamiento"} serie ${si + 1}`}
-                          secondary
-                          onPress={() => controller.edit((draft) => toggleWarmup(draft, index, si))}
-                        />
-                        {!set.done && exercise.sets.length > 1 ? (
-                          <Action
-                            label="Quitar"
-                            accessibilityLabel={`Quitar serie ${si + 1}`}
-                            secondary
-                            onPress={() => controller.edit((draft) => removeSet(draft, index, si))}
-                          />
-                        ) : null}
-                      </View>
-                    ) : null}
-                  </View>
-                );
-              })}
-              {exercise.sets.length < 20 ? (
-                <Action
-                  label="Añadir serie"
-                  secondary
-                  onPress={() => controller.edit((draft) => addSet(draft, index))}
-                />
-              ) : null}
-              {exercise.alternatives?.length ? (
-                <>
-                  <Text style={[s.label, { color: p.ink }]}>Alternativas autorizadas</Text>
-                  <Text style={[s.body, { color: p.muted }]}>
-                    Elige antes de completar series de este ejercicio.
-                  </Text>
-                  {[exercise.original, ...exercise.alternatives]
-                    .filter((c) => c && c.exerciseId !== exercise.exerciseId)
-                    .map((choice) => (
-                      <Action
-                        key={choice!.exerciseId}
-                        label={`Cambiar a ${choice!.name}`}
-                        secondary
-                        disabled={exercise.sets.some((x) => x.done)}
-                        onPress={() =>
-                          controller.edit((draft) =>
-                            substituteExercise(draft, index, choice!.exerciseId),
-                          )
-                        }
-                      />
-                    ))}
-                </>
-              ) : null}
-            </View>
             {index < d.exercises.length - 1 ? (
               <Action
                 label="Siguiente ejercicio"
@@ -461,6 +350,9 @@ export default function Workout() {
             {closing ? (
               <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
                 <Text style={[s.subheading, { color: p.ink }]}>Revisa antes de terminar</Text>
+                <Text style={[s.caption, { color: p.muted }]}>
+                  {volume.loadKg.toLocaleString("es-CL")} kg de volumen registrado
+                </Text>
                 <Text style={[s.body, { color: p.muted }]}>
                   {summary.doneSets} series realizadas · {summary.totalSets - summary.doneSets}{" "}
                   pendientes. Se guardarán solo las series completadas.
@@ -533,7 +425,7 @@ export default function Workout() {
         ) : (
           <Action
             label="Descartar registro local"
-            secondary
+            quiet
             disabled={training.busy}
             onPress={() => setDiscard(true)}
           />

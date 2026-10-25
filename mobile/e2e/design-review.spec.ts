@@ -11,6 +11,20 @@ for (const theme of ["dark", "light"] as const) {
       await page.goto(`/design-review/index.html?view=${view}&theme=${theme}&capture=1`);
       await expect(page.getByText("DEMO", { exact: true }).first()).toBeVisible();
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+      if (view === "workout") {
+        const check = page.getByRole("checkbox", { name: "Completar serie 2", exact: true });
+        const target = await check.boundingBox();
+        expect(target!.width).toBeGreaterThanOrEqual(48);
+        expect(target!.height).toBeGreaterThanOrEqual(48);
+        const mark = page.locator(".set-check-mark").nth(1);
+        await expect(mark).toHaveCSS("border-radius", "50%");
+        expect((await mark.boundingBox())!.width).toBeLessThanOrEqual(28);
+        await check.focus();
+        await page.keyboard.press("Space");
+        await expect(check).toBeChecked();
+        await page.keyboard.press("Space");
+        await expect(check).not.toBeChecked();
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         page.viewportSize()!.width,
       );

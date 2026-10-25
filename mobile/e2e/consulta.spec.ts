@@ -108,6 +108,7 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
   });
   await enter(page);
   await expect(page.getByText("Hola, Ana")).toBeVisible();
+  await expect(page.getByText("SIGUIENTE SESIÓN", { exact: true })).toBeVisible();
   await expect(page.getByText("0 de 1 sesiones completadas")).toBeVisible();
   for (const tab of await page.getByRole("tab").all()) {
     const box = await tab.boundingBox();
@@ -243,6 +244,7 @@ test("superserie demo avanza por ronda y bloquea sustitución después de comple
   await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
   await page.getByRole("button", { name: "Ver demo B", exact: true }).click();
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
+  await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
   await page.getByRole("button", { name: "Cambiar a Remo en polea", exact: true }).click();
   await expect(page.getByRole("button", { name: "Ir a Remo en polea", exact: true })).toBeVisible();
   await page.getByLabel("Peso serie 1", { exact: true }).fill("20");
@@ -540,3 +542,170 @@ test("salir conserva apariencia oscura y la apertura siguiente la recupera", asy
   await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(9, 9, 11)");
   await page.screenshot({ path: test.info().outputPath("login-dark.png") });
 });
+
+for (const theme of ["light", "dark"] as const) {
+  test(`pantallas funcionales ${theme}: semana y marcas con datos confirmados, sin métricas ficticias`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+    const writes: string[] = [];
+    await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (route.request().method() === "POST") writes.push(path);
+      const data = path.endsWith("auth/login")
+        ? session
+        : path.endsWith("week")
+          ? {
+              version: 1,
+              kind: "active",
+              program,
+              weekNumber: 1,
+              weekStart: "2026-10-19",
+              weekEnd: "2026-10-25",
+              sessions: [
+                {
+                  sessionId: id,
+                  label: "A",
+                  title: "Tren inferior",
+                  status: "pending",
+                  exerciseCount: 2,
+                  setCount: 4,
+                  exerciseNames: ["Sentadilla", "Peso muerto rumano"],
+                },
+              ],
+            }
+          : path.endsWith("progress")
+            ? {
+                version: 1,
+                exercises: [
+                  {
+                    exerciseId: id,
+                    name: "Sentadilla",
+                    bestWeightKg: 52.5,
+                    bestEstimated1RM: 63,
+                    bestReps: 6,
+                    isBodyweight: false,
+                    lastDate: "2026-10-23",
+                    workoutCount: 3,
+                  },
+                  {
+                    exerciseId: exercise,
+                    name: "Dominadas",
+                    bestWeightKg: 0,
+                    bestEstimated1RM: 0,
+                    bestReps: 12,
+                    isBodyweight: true,
+                    lastDate: "2026-10-22",
+                    workoutCount: 2,
+                  },
+                ],
+              }
+            : {
+                version: 1,
+                items: [
+                  {
+                    id,
+                    sessionLabel: "A",
+                    startedAt: "2026-10-23T12:00:00Z",
+                    performedOn: "2026-10-23",
+                    durationSeconds: 1800,
+                    perceivedEffort: 7,
+                    note: "Carga controlada en la última serie",
+                    workingSets: 6,
+                    volumeKg: 1200,
+                    bodyweightReps: 0,
+                    exerciseCount: 2,
+                  },
+                ],
+                nextCursor: null,
+              };
+      await route.fulfill({ json: data, headers: { "Access-Control-Allow-Origin": "*" } });
+    });
+    await enter(page);
+    await expect(page.getByText("SIGUIENTE SESIÓN", { exact: true })).toBeVisible();
+    await page.screenshot({
+      path: test.info().outputPath(`functional-home-${theme}.png`),
+      fullPage: true,
+    });
+    for (const name of ["Inicio", "Progreso", "Historial", "Cuenta"]) {
+      await page.getByRole("tab", { name, exact: true }).click();
+      if (name === "Progreso") {
+        await expect(page.getByText("52,5 kg", { exact: true })).toBeVisible();
+        await expect(page.getByText("12 reps", { exact: true })).toBeVisible();
+        await expect(page.getByRole("button", { name: "8 semanas", exact: true })).toHaveCount(0);
+      }
+      if (name === "Historial")
+        await expect(
+          page.getByText("Carga controlada en la última serie", { exact: true }),
+        ).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        360,
+      );
+      expect(
+        (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+          .violations,
+      ).toEqual([]);
+      await page.screenshot({
+        path: test.info().outputPath(`functional-${name}-${theme}.png`),
+        fullPage: true,
+      });
+    }
+    expect(writes).toEqual(["/api/mobile/v1/auth/login"]);
+    expect(
+      await page.evaluate(() =>
+        Object.keys(localStorage).filter((key) => key.startsWith("is:native-training:")),
+      ),
+    ).toEqual([]);
+  });
+
+  test(`registro funcional ${theme}: check discreto, tabla compacta y detalle sin perder valores`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+    await emptyAccount(page);
+    await enter(page);
+    await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
+    await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+    await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
+    const check = page.getByRole("checkbox", { name: "Completar serie 1", exact: true });
+    const mark = page.getByTestId("set-check-mark-1");
+    const target = await check.boundingBox();
+    expect(target!.width).toBeGreaterThanOrEqual(48);
+    expect(target!.height).toBeGreaterThanOrEqual(48);
+    await expect(mark).toBeVisible();
+    expect((await mark.boundingBox())!.width).toBeLessThanOrEqual(28);
+    await expect(mark).toHaveCSS("border-radius", "13px");
+    const weight = page.getByRole("textbox", { name: "Peso serie 1", exact: true });
+    const reps = page.getByRole("textbox", { name: "Repeticiones serie 1", exact: true });
+    const rowBoxes = await Promise.all([
+      weight.boundingBox(),
+      reps.boundingBox(),
+      check.boundingBox(),
+    ]);
+    expect(new Set(rowBoxes.map((box) => Math.round(box!.y))).size).toBe(1);
+    await weight.fill("23");
+    await reps.fill("8");
+    await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
+    await expect(weight).toHaveValue("23");
+    await check.click();
+    await expect(check).toBeChecked();
+    await expect(page.getByLabel("Tiempo de descanso restante")).toBeVisible();
+    await page.getByRole("button", { name: "Volver a Inicio", exact: true }).click();
+    await page.getByRole("button", { name: "Retomar entrenamiento", exact: true }).click();
+    await expect(weight).toHaveValue("23");
+    await expect(check).toBeChecked();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      360,
+    );
+    expect(
+      (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+        .violations,
+    ).toEqual([]);
+    await page.screenshot({
+      path: test.info().outputPath(`functional-workout-${theme}.png`),
+      fullPage: true,
+    });
+  });
+}
