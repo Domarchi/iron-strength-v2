@@ -4,6 +4,14 @@ import { registerWithInvitation } from "../invitations/register";
 import { hashToken } from "../invitations/token";
 import { deleteOwnAccount } from "../data/account";
 import { createMobileAccountApi } from "./account-api";
+import { createMobileCommentsApi } from "./comments-api";
+import {
+  listOwnComments,
+  publishOwnComment,
+  removeOwnComment,
+  ownsMobileWorkout,
+} from "../data/mobile-comments";
+import { listUnread, markCommentsRead } from "../data/unread";
 import { listWorkouts, getWorkoutDetail } from "../data/workouts";
 import { listExerciseProgress } from "../data/progress";
 import { saveWorkout } from "../data/save-workout";
@@ -195,5 +203,32 @@ export function mobileAccountApi() {
   return createMobileAccountApi({
     authorize: mobileProductionDependencies().authorize,
     remove: (token) => deleteOwnAccount(client(token)),
+  });
+}
+export function mobileCommentsApi() {
+  return createMobileCommentsApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token),
+        id = identity.profile.id;
+      return {
+        unread: async () =>
+          (await listUnread(db))
+            .filter((row) => row.studentId === id)
+            .map((row) => ({
+              workoutId: row.workoutId,
+              count: row.count,
+              lastCommentAt: row.lastCommentAt,
+            })),
+        list: (workoutId, cursor) => listOwnComments(db, id, workoutId, cursor),
+        publish: (workoutId, input) => publishOwnComment(db, id, workoutId, input),
+        remove: (workoutId, commentId) => removeOwnComment(db, id, workoutId, commentId),
+        markRead: async (workoutId) =>
+          (await ownsMobileWorkout(db, id, workoutId))
+            ? (await markCommentsRead(db, workoutId)).ok
+            : null,
+      };
+    },
   });
 }

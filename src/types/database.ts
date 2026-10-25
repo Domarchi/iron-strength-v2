@@ -175,6 +175,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"mobile_comment_receipts": {
+                  Row: {
+                    "author_id": string,"body_hash": string,"comment_id": string,"created_at": string,"workout_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_id": string,"body_hash": string,"comment_id": string,"created_at"?: string,"workout_id": string
+                  }
+                  Update: {
+                    "author_id"?: string,"body_hash"?: string,"comment_id"?: string,"created_at"?: string,"workout_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mobile_comment_receipts_author_id_fkey"
+      columns: ["author_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mobile_comment_receipts_workout_id_fkey"
+      columns: ["workout_id"]
+isOneToOne: false
+      referencedRelation: "workouts"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"planning_mutations": {
                   Row: {
                     "coach_id": string,"created_at": string,"id": string,"payload": NonNullable<Json>,"program_id": string,"result": NonNullable<Json>,"student_id": string | null
@@ -567,6 +593,9 @@ isOneToOne: false
                            },
 "planning_assignment_snapshot":
 { Args: { "p_end_date": string,"p_start_date": string,"p_student_id": string }; Returns: Json
+                           },
+"publish_mobile_comment":
+{ Args: { "p_body": string,"p_comment_id": string,"p_workout_id": string }; Returns: string
                            },
 "record_login_failure":
 { Args: { "p_email_hash": string }; Returns: undefined

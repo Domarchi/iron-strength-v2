@@ -14,6 +14,10 @@ it("solo los endpoints móviles exactos llegan a su guarda JWT; las pantallas si
     "/api/mobile/v1/auth/refresh",
     "/api/mobile/v1/auth/logout",
     "/api/mobile/v1/account/delete",
+    "/api/mobile/v1/comments/unread",
+    "/api/mobile/v1/workouts/11111111-1111-4111-8111-111111111111/comments",
+    "/api/mobile/v1/workouts/11111111-1111-4111-8111-111111111111/comments/read",
+    "/api/mobile/v1/workouts/11111111-1111-4111-8111-111111111111/comments/delete",
     "/api/mobile/v1/sessions/11111111-1111-4111-8111-111111111111",
   ]) {
     expect(isMobileEndpointPath(path)).toBe(true);
@@ -24,6 +28,9 @@ it("solo los endpoints móviles exactos llegan a su guarda JWT; las pantallas si
     "/coach",
     "/api/mobile/v1/anything",
     "/api/mobile/v1/account/delete/other",
+    "/api/mobile/v1/comments/unread/other",
+    "/api/mobile/v1/workouts/11111111-1111-4111-8111-111111111111/comments/other",
+    "/api/mobile/v1/workouts/not-uuid/comments",
     "/api/mobile/v1/auth/register/extra",
     "/api/mobile/v1/workouts/not-uuid",
     "/api/mobile/v1/workouts/other/extra",

@@ -39,6 +39,43 @@ function setup(fetcher: Transport) {
   };
 }
 describe("sesión móvil segura", () => {
+  it("comentarios conservan ID/entrenamiento en respuesta y nunca aceptan confirmación de otro intento", async () => {
+    const id = "33333333-3333-4333-8333-333333333333";
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(
+        Response.json({
+          version: 1,
+          workoutId: profile.id,
+          items: [],
+          nextCursor: null,
+          unreadCount: 1,
+        }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          version: 1,
+          workoutId: profile.id,
+          id: profile.id,
+          ok: true,
+          status: "created",
+        }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ version: 1, workoutId: profile.id, id, ok: true, status: "duplicate" }),
+      );
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    expect((await x.client.commentsPage(profile.id)).unreadCount).toBe(1);
+    await expect(x.client.publishComment(profile.id, id, "Mensaje")).rejects.toMatchObject({
+      code: "identity",
+    });
+    await x.client.publishComment(profile.id, id, "Mensaje");
+    expect(JSON.parse(String(fetcher.mock.calls[3][1].body))).toEqual({ id, body: "Mensaje" });
+    expect(fetcher.mock.calls[3][0]).toContain(`/workouts/${profile.id}/comments`);
+    expect(x.client.getSnapshot().status).toBe("authenticated");
+  });
   it("borrar cuenta exige respuesta de la misma identidad; confirmar no limpia la sesión prematuramente", async () => {
     const fetcher = vi
       .fn<Transport>()

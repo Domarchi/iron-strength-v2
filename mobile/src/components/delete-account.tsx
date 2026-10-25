@@ -5,11 +5,13 @@ import { Action, Notice, s, usePalette } from "./ui";
 import { useSession } from "../lib/session";
 import { useTraining } from "../lib/training-context";
 import { useAccountRemoval } from "../lib/account-removal-context";
+import { useCommentDraft } from "../lib/comment-context";
 export function DeleteAccount() {
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
-    { controller: removalController } = useAccountRemoval();
+    { controller: removalController } = useAccountRemoval(),
+    { controller: comments, draft } = useCommentDraft();
   const [open, setOpen] = useState(false),
     [confirmation, setConfirmation] = useState(""),
     [busy, setBusy] = useState(false),
@@ -24,12 +26,13 @@ export function DeleteAccount() {
     );
   const userId = state.session.profile.id;
   async function submit() {
-    if (!isDeleteConfirmation(confirmation) || busy || training.busy) return;
+    if (!isDeleteConfirmation(confirmation) || busy || training.busy || draft.busy) return;
     setBusy(true);
     setError(null);
     try {
       // Flush valid drafts before unmounting the training provider. Unknown formats stay until explicit deletion.
       if (!training.blocked) await controller.flush();
+      if (!draft.blocked) await comments.flush();
       await removalController.request(userId, () => client.deleteAccount(confirmation));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos completar la eliminación.");
@@ -42,9 +45,9 @@ export function DeleteAccount() {
       <Text style={[s.subheading, { color: p.ink }]}>Borrar mi cuenta</Text>
       <Text style={[s.body, { color: p.muted }]}>
         Se borran para siempre tu cuenta, planes asignados, entrenamientos, medidas, fotos, logros y
-        comentarios de tus entrenamientos. También se descartan los registros pendientes y demos de
-        esta cuenta en este dispositivo. No se puede deshacer. Antes puedes exportar tu historial
-        desde Cuenta en la web.
+        comentarios de tus entrenamientos. También se descartan los registros, mensajes pendientes y
+        demos de esta cuenta en este dispositivo. No se puede deshacer. Antes puedes exportar tu
+        historial desde Cuenta en la web.
       </Text>
       {error ? <Notice message={error} /> : null}
       {open ? (
@@ -62,7 +65,13 @@ export function DeleteAccount() {
           />
           <Action
             label="Borrar mi cuenta para siempre"
-            disabled={!isDeleteConfirmation(confirmation) || !training.ready || training.busy}
+            disabled={
+              !isDeleteConfirmation(confirmation) ||
+              !training.ready ||
+              training.busy ||
+              !draft.ready ||
+              draft.busy
+            }
             busy={busy}
             onPress={() => {
               void submit();
@@ -83,7 +92,7 @@ export function DeleteAccount() {
         <Action
           label="Quiero borrar mi cuenta"
           secondary
-          disabled={training.busy}
+          disabled={training.busy || draft.busy || !draft.ready}
           onPress={() => setOpen(true)}
         />
       )}

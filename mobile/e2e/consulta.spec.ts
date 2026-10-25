@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
+import { fulfillEmptyCommentReads } from "./support/comment-fixture";
 const id = "11111111-1111-4111-8111-111111111111";
 const exercise = "22222222-2222-4222-8222-222222222222";
 const group = "33333333-3333-4333-8333-333333333333";
@@ -78,6 +79,7 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     seen.push(route.request().method() + " " + path);
+    if (await fulfillEmptyCommentReads(route)) return;
     const data = path.endsWith("auth/login")
       ? session
       : path.endsWith("auth/logout")
@@ -174,6 +176,7 @@ async function emptyAccount(page: Page, seen: string[] = []) {
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     seen.push(route.request().method() + " " + path);
+    if (await fulfillEmptyCommentReads(route)) return;
     const data = path.endsWith("auth/login")
       ? session
       : path.endsWith("workouts")
@@ -294,6 +297,7 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
     const request = route.request(),
       path = new URL(request.url()).pathname;
+    if (await fulfillEmptyCommentReads(route)) return;
     if (path.endsWith("workouts") && request.method() === "POST") {
       const body = request.postDataJSON();
       sent.push(body);
@@ -681,6 +685,7 @@ for (const theme of ["light", "dark"] as const) {
     const writes: string[] = [];
     await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
       const path = new URL(route.request().url()).pathname;
+      if (await fulfillEmptyCommentReads(route)) return;
       if (route.request().method() === "POST") writes.push(path);
       const data = path.endsWith("auth/login")
         ? session

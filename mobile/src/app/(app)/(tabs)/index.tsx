@@ -19,6 +19,8 @@ import { useSession } from "../../../lib/session";
 import { useTraining } from "../../../lib/training-context";
 import { TrainingCard } from "../../../components/training-card";
 import { useQuery } from "../../../lib/use-query";
+import { UnreadComments } from "../../../components/unread-comments";
+import { CommentDraftCard } from "../../../components/comment-draft-card";
 const statuses = {
   done: "Completada",
   pending: "Pendiente",
@@ -59,6 +61,8 @@ export default function Week() {
         }
       />
       <TrainingCard />
+      <CommentDraftCard />
+      <UnreadComments />
       {query.error ? <Notice message={query.error} retry={query.retry} /> : null}
       {query.loading ? (
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando tu semana" />

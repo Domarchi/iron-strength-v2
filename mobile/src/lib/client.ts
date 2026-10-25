@@ -12,6 +12,11 @@ import {
   mobileRegisteredSchema,
   mobilePasswordResetSchema,
   mobileAccountDeletedSchema,
+  mobileCommentsSchema,
+  mobileUnreadCommentsSchema,
+  mobileCommentSentSchema,
+  mobileCommentRemovedSchema,
+  mobileCommentsReadSchema,
   type MobileSession,
 } from "../../../src/lib/mobile/contracts";
 import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
@@ -362,6 +367,55 @@ export class MobileClient {
   }
   async week() {
     return mobileWeekSchema.parse(await this.read("week"));
+  }
+  private commentPath(workoutId: string) {
+    if (!z.uuid().safeParse(workoutId).success)
+      throw new MobileError("not_found", "Ese entrenamiento no está disponible.", 404);
+    return "workouts/" + workoutId + "/comments";
+  }
+  private confirmedComment(workoutId: string, actual: string, id?: string, actualId?: string) {
+    if (workoutId !== actual || (id !== undefined && id !== actualId))
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este comentario. Conservamos el intento.",
+      );
+  }
+  async unreadComments() {
+    return mobileUnreadCommentsSchema.parse(await this.read("comments/unread"));
+  }
+  async commentsPage(workoutId: string, cursor?: string) {
+    const result = mobileCommentsSchema.parse(
+      await this.read(
+        this.commentPath(workoutId) + (cursor ? "?cursor=" + encodeURIComponent(cursor) : ""),
+      ),
+    );
+    this.confirmedComment(workoutId, result.workoutId);
+    return result;
+  }
+  async publishComment(workoutId: string, id: string, body: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("invalid_input", "El intento de comentario no es válido.");
+    const result = mobileCommentSentSchema.parse(
+      await this.read(this.commentPath(workoutId), { id, body }),
+    );
+    this.confirmedComment(workoutId, result.workoutId, id, result.id);
+    return result;
+  }
+  async removeComment(workoutId: string, id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("invalid_input", "El comentario no es válido.");
+    const result = mobileCommentRemovedSchema.parse(
+      await this.read(this.commentPath(workoutId) + "/delete", { id }),
+    );
+    this.confirmedComment(workoutId, result.workoutId, id, result.id);
+    return result;
+  }
+  async readComments(workoutId: string) {
+    const result = mobileCommentsReadSchema.parse(
+      await this.read(this.commentPath(workoutId) + "/read", {}),
+    );
+    this.confirmedComment(workoutId, result.workoutId);
+    return result;
   }
   async routine(id: string) {
     if (!z.uuid().safeParse(id).success)

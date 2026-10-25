@@ -16,6 +16,8 @@ import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 import { useTraining } from "../../../lib/training-context";
 import type { MobileHistory } from "../../../../../src/lib/mobile/contracts";
+import { UnreadComments } from "../../../components/unread-comments";
+import { CommentDraftCard } from "../../../components/comment-draft-card";
 export default function History() {
   const p = usePalette(),
     { client } = useSession(),
@@ -52,6 +54,8 @@ export default function History() {
         description="Entrenamientos guardados, series y notas de cada sesión."
       />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
+      <CommentDraftCard />
+      <UnreadComments all />
       {error ? <Notice message={error} /> : null}
       {q.loading ? (
         <Text style={[s.body, { color: p.muted }]}>Cargando entrenamientos…</Text>

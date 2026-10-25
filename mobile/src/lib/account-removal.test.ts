@@ -37,6 +37,8 @@ describe("eliminación recuperable del dispositivo", () => {
     const x = setup();
     x.values.set(`is:native-training:v1:${id}`, "registro");
     x.values.set(`is:native-training:v1:${other}`, "otro");
+    x.values.set(`is:native-comment:v1:${id}`, "mensaje pendiente");
+    x.values.set(`is:native-comment:v1:${other}`, "otro mensaje");
     x.values.set("is:native-appearance:v1", "dark");
     await x.controller.restore();
     const remove = vi.fn(async () => {
@@ -46,6 +48,8 @@ describe("eliminación recuperable del dispositivo", () => {
     expect(remove).toHaveBeenCalledOnce();
     expect(x.values.get(`is:native-training:v1:${id}`)).toBeUndefined();
     expect(x.values.get(`is:native-training:v1:${other}`)).toBe("otro");
+    expect(x.values.has(`is:native-comment:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:native-comment:v1:${other}`)).toBe("otro mensaje");
     expect(x.values.get("is:native-appearance:v1")).toBe("dark");
     expect(x.controller.getSnapshot().completion).toBe("server_deleted");
   });

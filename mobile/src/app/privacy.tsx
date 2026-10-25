@@ -4,6 +4,10 @@ import { Action, Brand, Page, ScreenIntro, s, usePalette } from "../components/u
 import { useSession } from "../lib/session";
 const sections = [
   [
+    "Mensajes y reintentos",
+    "Al borrar un comentario, su texto sale de la conversación. Conservamos una referencia del envío para evitar duplicados y que un reintento lo vuelva a publicar. Esa referencia se elimina al borrar la cuenta o el entrenamiento.",
+  ],
+  [
     "Tus datos y tu coach",
     "Tu nombre, correo, planificación, entrenamientos y comentarios se guardan en el servicio de Iron Strength en Supabase. Tus medidas y fotos registradas en web son privadas; tu coach puede revisar tus datos de seguimiento. Los demás alumnos no pueden verlos.",
   ],

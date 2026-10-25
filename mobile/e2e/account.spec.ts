@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { fulfillEmptyCommentReads } from "./support/comment-fixture";
 const origin = "https://iron-strength-seven.vercel.app",
   id = "11111111-1111-4111-8111-111111111111",
   other = "22222222-2222-4222-8222-222222222222";
@@ -10,6 +11,7 @@ async function enter(page: Page, role: "student" | "coach" = "student", removeSt
   await page.route(origin + "/api/mobile/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     calls.push(path);
+    if (await fulfillEmptyCommentReads(route)) return;
     const json = path.endsWith("auth/login")
       ? {
           version: 1,

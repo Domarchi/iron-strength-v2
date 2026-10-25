@@ -208,3 +208,47 @@ export const mobileAccountDeletedSchema = z.object({
   ok: z.literal(true),
   userId: z.uuid(),
 });
+export const mobileCommentSchema = z.object({
+  id: z.uuid(),
+  body: z.string().min(1).max(500),
+  createdAt: z.iso.datetime({ offset: true }),
+  authorKind: z.enum(["student", "coach"]),
+  mine: z.boolean(),
+});
+export const mobileCommentsSchema = z.object({
+  version: z.literal(1),
+  workoutId: z.uuid(),
+  items: z.array(mobileCommentSchema).max(50),
+  nextCursor: z.string().max(100).nullable(),
+  unreadCount: z.number().int().nonnegative(),
+});
+export const mobileUnreadCommentsSchema = z.object({
+  version: z.literal(1),
+  items: z.array(
+    z.object({
+      workoutId: z.uuid(),
+      count: z.number().int().positive(),
+      lastCommentAt: z.iso.datetime({ offset: true }),
+    }),
+  ),
+});
+export const mobileCommentSentSchema = z.object({
+  version: z.literal(1),
+  ok: z.literal(true),
+  workoutId: z.uuid(),
+  id: z.uuid(),
+  status: z.enum(["created", "duplicate"]),
+});
+export const mobileCommentRemovedSchema = z.object({
+  version: z.literal(1),
+  ok: z.literal(true),
+  workoutId: z.uuid(),
+  id: z.uuid(),
+  status: z.enum(["deleted", "absent"]),
+});
+export const mobileCommentsReadSchema = z.object({
+  version: z.literal(1),
+  ok: z.literal(true),
+  workoutId: z.uuid(),
+});
+export type MobileComments = z.infer<typeof mobileCommentsSchema>;

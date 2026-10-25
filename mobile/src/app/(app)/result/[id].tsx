@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
-import { Text, View } from "react-native";
+import { Text, View, KeyboardAvoidingView, Platform } from "react-native";
+import { WorkoutComments } from "../../../components/workout-comments";
 import { Icon } from "../../../components/icon";
 import { Action, Brand, Notice, Page, day, s, usePalette } from "../../../components/ui";
 import { useTraining } from "../../../lib/training-context";
@@ -62,79 +63,85 @@ export default function Result() {
   const q = useQuery(request),
     w = q.value?.workout;
   return (
-    <Page>
-      <Brand />
-      {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
-      {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text> : null}
-      {w ? (
-        <>
-          <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-            <View
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                backgroundColor: p.tint,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Icon name="check" color={p.success} size={26} />
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: p.bg }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <Page>
+        <Brand />
+        {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
+        {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text> : null}
+        {w ? (
+          <>
+            <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: p.tint,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon name="check" color={p.success} size={26} />
+              </View>
+              <Text style={[s.caption, { color: p.success }]}>
+                {demo === "1" ? "DEMO GUARDADA EN ESTE DISPOSITIVO" : "ENTRENAMIENTO CONFIRMADO"}
+              </Text>
+              <Text style={[s.heading, { color: p.ink }]}>Sesión registrada</Text>
+              <Text style={[s.body, { color: p.muted }]}>
+                {demo === "1"
+                  ? "Esta prueba no se envió al coach y no cuenta en tus marcas reales."
+                  : "Tu entrenamiento está guardado en tu cuenta y tu coach puede revisarlo."}
+              </Text>
             </View>
-            <Text style={[s.caption, { color: p.success }]}>
-              {demo === "1" ? "DEMO GUARDADA EN ESTE DISPOSITIVO" : "ENTRENAMIENTO CONFIRMADO"}
-            </Text>
-            <Text style={[s.heading, { color: p.ink }]}>Sesión registrada</Text>
-            <Text style={[s.body, { color: p.muted }]}>
-              {demo === "1"
-                ? "Esta prueba no se envió al coach y no cuenta en tus marcas reales."
-                : "Tu entrenamiento está guardado en tu cuenta y tu coach puede revisarlo."}
-            </Text>
-          </View>
-          <Text style={[s.subheading, { color: p.ink }]}>
-            {w.programName ?? "Tu entrenamiento"} · {day(w.performedOn)}
-          </Text>
-          <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
             <Text style={[s.subheading, { color: p.ink }]}>
-              {w.summary.workingSets} series · {w.summary.exerciseCount} ejercicios
+              {w.programName ?? "Tu entrenamiento"} · {day(w.performedOn)}
             </Text>
-            <Text style={[s.body, { color: p.muted }]}>
-              {w.summary.volumeKg.toLocaleString("es-CL")} kg de volumen ·{" "}
-              {Math.max(1, Math.round(w.durationSeconds / 60))} min
-            </Text>
-            {w.perceivedEffort ? (
-              <Text style={[s.body, { color: p.ink }]}>Esfuerzo: {w.perceivedEffort}/10</Text>
-            ) : null}
-            {w.note ? <Text style={[s.body, { color: p.ink }]}>{w.note}</Text> : null}
-          </View>
-          {w.exercises.map((e) => (
-            <View
-              key={e.position}
-              style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}
-            >
-              <Text style={[s.subheading, { color: p.ink }]}>{e.name}</Text>
-              {e.prescribedExerciseName && e.prescribedExerciseId !== e.exerciseId ? (
-                <Text style={[s.caption, { color: p.blue }]}>
-                  Alternativa a {e.prescribedExerciseName}
-                </Text>
+            <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
+              <Text style={[s.subheading, { color: p.ink }]}>
+                {w.summary.workingSets} series · {w.summary.exerciseCount} ejercicios
+              </Text>
+              <Text style={[s.body, { color: p.muted }]}>
+                {w.summary.volumeKg.toLocaleString("es-CL")} kg de volumen ·{" "}
+                {Math.max(1, Math.round(w.durationSeconds / 60))} min
+              </Text>
+              {w.perceivedEffort ? (
+                <Text style={[s.body, { color: p.ink }]}>Esfuerzo: {w.perceivedEffort}/10</Text>
               ) : null}
-              {e.sets.map((set, i) => (
-                <View key={set.id} style={s.row}>
-                  <Text style={[s.body, { color: p.muted }]}>
-                    {set.isWarmup ? "Calentamiento" : `Serie ${i + 1}`}
-                  </Text>
-                  <Text style={[s.label, { color: p.ink }]}>
-                    {set.weightKg.toLocaleString("es-CL")} kg × {set.reps} reps
-                  </Text>
-                </View>
-              ))}
+              {w.note ? <Text style={[s.body, { color: p.ink }]}>{w.note}</Text> : null}
             </View>
-          ))}
-        </>
-      ) : null}
-      <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
-      <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
-      <Action label="Explorar otra rutina" secondary onPress={() => router.navigate("/train")} />
-    </Page>
+            {w.exercises.map((e) => (
+              <View
+                key={e.position}
+                style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}
+              >
+                <Text style={[s.subheading, { color: p.ink }]}>{e.name}</Text>
+                {e.prescribedExerciseName && e.prescribedExerciseId !== e.exerciseId ? (
+                  <Text style={[s.caption, { color: p.blue }]}>
+                    Alternativa a {e.prescribedExerciseName}
+                  </Text>
+                ) : null}
+                {e.sets.map((set, i) => (
+                  <View key={set.id} style={s.row}>
+                    <Text style={[s.body, { color: p.muted }]}>
+                      {set.isWarmup ? "Calentamiento" : `Serie ${i + 1}`}
+                    </Text>
+                    <Text style={[s.label, { color: p.ink }]}>
+                      {set.weightKg.toLocaleString("es-CL")} kg × {set.reps} reps
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+            {demo !== "1" ? <WorkoutComments key={w.id} workoutId={w.id} /> : null}
+          </>
+        ) : null}
+        <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
+        <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
+        <Action label="Explorar otra rutina" secondary onPress={() => router.navigate("/train")} />
+      </Page>
+    </KeyboardAvoidingView>
   );
 }

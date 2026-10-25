@@ -7,10 +7,13 @@ import { useSession } from "../../../lib/session";
 import { useTraining } from "../../../lib/training-context";
 import { TrainingCard } from "../../../components/training-card";
 import { DeleteAccount } from "../../../components/delete-account";
+import { CommentDraftCard } from "../../../components/comment-draft-card";
+import { useCommentDraft } from "../../../lib/comment-context";
 export default function Account() {
   const p = usePalette(),
     { client, state } = useSession(),
-    { controller, training } = useTraining();
+    { controller, training } = useTraining(),
+    { controller: comments, draft } = useCommentDraft();
   const [error, setError] = useState<string | null>(null),
     [confirm, setConfirm] = useState(false);
   if (state.status !== "authenticated") return null;
@@ -24,6 +27,7 @@ export default function Account() {
   }
   async function logout() {
     try {
+      await comments.clearForLogout();
       await controller.clearForLogout();
       await client.logout();
     } catch (e) {
@@ -44,6 +48,7 @@ export default function Account() {
       <AppearanceSelect />
       <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
       <TrainingCard />
+      <CommentDraftCard allowDiscard />
       {error ? <Notice message={error} /> : null}
       {training.error ? <Notice message={training.error} /> : null}
       {person.role === "coach" ? (
@@ -114,7 +119,17 @@ export default function Account() {
       <Action
         label="Salir"
         secondary
-        disabled={!training.ready || training.blocked || !!training.active || training.busy}
+        disabled={
+          !training.ready ||
+          training.blocked ||
+          !!training.active ||
+          training.busy ||
+          !draft.ready ||
+          draft.blocked ||
+          !!draft.record ||
+          draft.dirty ||
+          draft.busy
+        }
         onPress={() => {
           void logout();
         }}
