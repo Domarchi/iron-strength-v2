@@ -2,6 +2,8 @@
 
 Continuación autorizada el 25-oct-2026: desarrollar y verificar sin exigir ahora cuentas de tiendas, resolución del bloqueo de GitHub o aceptación en teléfonos. Esos puntos y los envíos finales quedan aplazados; no se marcan aprobados ni impiden cerrar las comprobaciones locales independientes.
 
+La diferencia de acceso entre CLI y panel Supabase también queda aplazada por decisión del propietario («Revisarlo más adelante», 25-oct-2026). Plan/ajustes siguen sin verificar; no hay que repetir solicitudes de acceso o autenticaciones hasta que retome ese punto.
+
 - [x] T189 · Alcance, inventario web/nativo, recorridos, hoja de ruta y criterios de salida.
 - [x] T190 · Sistema visual y prototipo navegable de cuatro pantallas en claro/oscuro; revisión de accesibilidad y capturas. Aceptación visual del propietario separada de la implementación del prototipo.
 - [x] T191 · Perfiles locales de distribución y requisitos verificables de la versión instalable. Sin builds, registro de identificadores o firma remota.
