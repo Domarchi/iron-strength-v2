@@ -26,6 +26,8 @@ Si todas las copias válidas vencieron, no elimina la última disponible y devue
 
 ## Antes de migraciones y límites
 
+Primera ejecución recibida del seguimiento caducidad-de-respaldos-de-iron-strength: **25 de octubre de 2026, 09:27:29 America/Santiago**. El comando configurado terminó con salida 0, ok=true y listas eligible/deleted/errors vacías; skipped=0. No se eliminó ningún archivo. Esta evidencia corresponde a la revisión de caducidad, no al respaldo semanal: la primera copia generada por su seguimiento sigue pendiente. Se conserva la hora real observada, sin ajustarla artificialmente al horario solicitado de 09:30.
+
 Antes de cada migración remota, generar una copia nueva con este procedimiento y restaurarla en una base aislada nueva; contrastar datos y permisos antes de permitir la migración. Una copia semanal reciente no reemplaza ese paso. No aplicar SQL remoto automáticamente desde los seguimientos. El protocolo se exige al operador; no es un hook que intercepte cualquier comando de terminal.
 
 Revisar los primeros resultados del seguimiento y registrar la primera ejecución programada efectiva. El equipo encendido, Codex abierto, acceso de red, CLI autenticada y herramientas locales son requisitos. La creación de un horario no prueba una ejecución futura ni una restauración automática. [Documentación oficial de tareas programadas](https://learn.chatgpt.com/docs/automations?surface=app), consultada el 25 de octubre de 2026.
