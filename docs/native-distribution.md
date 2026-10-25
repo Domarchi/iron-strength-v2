@@ -1,6 +1,6 @@
 # Preparar e instalar las versiones móviles
 
-La configuración local prepara desarrollo, preview y producción conservando el proyecto EAS del propietario. T201 generó un APK Android preview code 2, firmado y sin los permisos heredados. T202 encontró un cierre al confirmar comentarios por un rol de accesibilidad no admitido; no distribuir ese binario anterior. El reemplazo code 3 está en preparación. El code 1 se conserva únicamente como diagnóstico. Todavía no hay IPA ni una versión enviada a tiendas. Las cuentas, firma, dispositivos y cuotas se verifican antes de construir en T201.
+Android preview vigente: **0.1.0/code 4**, EAS 91d38132-87fe-4aca-aae4-368f0076dae8, fuente d34366d. Corrige comentarios, teclado, área segura y selector de tema con texto ampliado. Firma, permisos mínimos, bundle y arranque en frío offline comprobados en emuladores Android de 4 y 16 KB; aceptación física pendiente. Code 1 es diagnóstico y code 2 conserva un cierre conocido; no distribuirlos. Code 3 quedó anterior al acabado del selector. iOS para simulador compiló correctamente (cf066780-0f66-4f6b-bde1-6454071513a1); todavía no hay un instalador firmado para iPhone o envío a tiendas.
 
 ## Variantes
 
@@ -52,3 +52,17 @@ T201 bloquea en preview/producción los permisos heredados de almacenamiento ext
 ## Android preview anterior
 
 [Estado del build anterior en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/7372df00-928f-4dc6-a714-4760fd192147): versión 0.1.0/code 2, paquete com.domarchis.ironstrength.preview, compilación de 5077116. Firma y manifiesto comprobados; actualizado en emulador Android 16 y abierto en frío en modo avión. Es un APK Android, no una instalación para iPhone ni un envío a Google Play. No usar este instalador para una nueva beta: el cierre de confirmación se corrigió en el código T202 y el reemplazo code 3 debe verificarse antes de distribuir. El cliente usa la API real al entrar con tu cuenta. La prueba completa del registro/offline y los teléfonos reales se documentan por separado. iPhone necesita la membresía/perfil de dispositivo del propietario antes de construir.
+
+## Android preview vigente · 25 de octubre de 2026
+
+[Build 4 en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/91d38132-87fe-4aca-aae4-368f0076dae8). APK de 111167087 bytes, SHA-256 66d70d4505a64b5cb5674238112a2b5edf0247b74bbd5bf0cf724bece6d5056f. Paquete com.domarchis.ironstrength.preview y mismo certificado EAS anterior. Siete permisos efectivos; almacenamiento externo y superposición ausentes. Bibliotecas de 64 bits con LOAD y empaquetado alineados a 16 KB.
+
+Instalado sin desinstalar en AVD propios: de code 2 a 4 en 16 KB y de 3 a 4 en 4 KB. Acceso visible en arranque COLD, modo avión y proceso vivo sin fatal nuevo. El AVD de 4 KB mostró antes un bloqueo de System UI; se eligió Wait y se repitió el arranque, sin atribuirlo a la app. El circuito con cuatro cuentas ficticias se ejecutó en quality aislado, con las mismas fuentes móviles y otro origen; no se sembró o entrenó en producción para obtener esta evidencia.
+
+Este APK es para Android y usa la cuenta real existente. La versión preview mantiene una instalación separada de Expo Go, quality y la futura versión de tienda; sus datos locales no se trasladan automáticamente. Consultar docs/native-quality.md antes de las pruebas y conservar cualquier pendiente al actualizar. iPhone necesita su propio binario y provisión; no intentar instalar este APK allí.
+
+## iOS para simulador
+
+[Build de simulador en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/cf066780-0f66-4f6b-bde1-6454071513a1): 0.1.0/build 1, fuente d34366d, paquete .app universal arm64/x86_64, SDK iphonesimulator27.1 y mínimo iOS 16.4. Info.plist, plataforma Mach-O y bundle Hermes/API verificados. Archivo de 27972086 bytes/SHA-256 b7d8fbf66455352832b524cfb45890f58e3ff120db88f81829044c0172d1d00b. No hay provisión de dispositivo.
+
+Se puede usar con un simulador compatible en macOS; no se ejecutó en este host Linux. El binario para iPhone necesita Apple Developer, registro/provisión apropiados o TestFlight y su propia comprobación. No se solicitó una contraseña Apple, UDID o compra para obtener esta compilación.

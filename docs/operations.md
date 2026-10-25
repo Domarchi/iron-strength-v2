@@ -43,7 +43,7 @@ GitHub Actions sigue bloqueado por facturación/límite de gasto del propietario
 
 ## Actualización compatible
 
-Registrar commit, BUILD_ID, EAS build, paquete, versión, certificado y API. Android preview code 2 tiene un cierre conocido en confirmación de comentarios; no distribuirlo a nuevos participantes. Verificar el reemplazo antes de recomendarlo. Un APK quality usa otra base/paquete y nunca se distribuye como preview.
+Registrar commit, BUILD_ID, EAS build, paquete, versión, certificado y API. Android preview code 2 tiene un cierre conocido en confirmación de comentarios; no distribuirlo a nuevos participantes. El reemplazo vigente es code 4, comprobado en emuladores de 4 y 16 KB; ver docs/native-distribution.md antes de recomendar un artefacto. Un APK quality usa otra base/paquete y nunca se distribuye como preview.
 
 Conservar compatibilidad con los formatos anteriores de sesión, descarga, borradores y cola. No reemplazar el snapshot de un entrenamiento iniciado ni retirar un formato desconocido. Publicar primero la API compatible; comprobar el mismo artefacto preparado y promoverlo manualmente. Las versiones móviles instaladas seguirán usando la API: recuperar web no permite retirar endpoints o revertir migraciones a ciegas.
 
