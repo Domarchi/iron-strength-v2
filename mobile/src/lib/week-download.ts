@@ -82,8 +82,9 @@ export class NativeWeekController {
       throw Error("Espera o comprueba la descarga guardada antes de continuar.");
   }
   async restore() {
-    if (this.state.busy || this.disposed) return;
-    const epoch = this.epoch;
+    if (this.state.busy && !this.disposed) return;
+    this.disposed = false;
+    const epoch = ++this.epoch;
     this.publish({ busy: true, verified: false, error: null });
     try {
       const raw = await this.storage.get(this.key);

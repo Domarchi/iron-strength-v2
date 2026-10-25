@@ -91,6 +91,8 @@ export class MobileClient {
   private generation = 0;
   private storageTail: Promise<void> = Promise.resolve();
   private renewal: Promise<MobileSession> | null = null;
+  private dataRevision = 0;
+  getDataRevision = () => this.dataRevision;
   constructor(
     origin: string,
     private readonly store: CredentialStore,
@@ -110,6 +112,14 @@ export class MobileClient {
   private publish(state: SessionState) {
     this.state = state;
     for (const fn of this.listeners) fn();
+  }
+  connectionLost() {
+    if (this.state.status !== "authenticated" || this.state.mode === "offline") return;
+    this.publish({
+      ...this.state,
+      mode: "offline",
+      session: { ...this.state.session, accessToken: null, expiresAt: null },
+    });
   }
   private current(generation: number) {
     if (generation !== this.generation) throw cancelled();
@@ -411,11 +421,7 @@ export class MobileClient {
         error instanceof MobileError &&
         (error.code === "network" || (renewing && transientConnection(error)))
       )
-        this.publish({
-          ...this.state,
-          mode: "offline",
-          session: { ...this.state.session, accessToken: null, expiresAt: null },
-        });
+        this.connectionLost();
       throw error;
     }
   }
@@ -577,6 +583,8 @@ export class MobileClient {
         "identity",
         "El servidor no confirmó este entrenamiento. Conservamos el registro.",
       );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
     return value;
   }
 }

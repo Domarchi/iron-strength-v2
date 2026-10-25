@@ -1,17 +1,22 @@
 import { useSession } from "./session";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { useFocusEffect } from "expo-router";
 export function useQuery<T>(request: () => Promise<T>) {
   const [value, setValue] = useState<T | null>(null),
     [error, setError] = useState<string | null>(null),
     [loading, setLoading] = useState(true),
     [revision, setRevision] = useState(0);
-  const { state } = useSession(),
+  const { state, client } = useSession(),
+    dataRevision = useSyncExternalStore(
+      client.subscribe,
+      client.getDataRevision,
+      client.getDataRevision,
+    ),
     connection =
       state.status === "authenticated" ? state.session.profile.id + ":" + state.mode : state.status;
   const operation = useMemo(
-    () => ({ request, revision, connection }),
-    [request, revision, connection],
+    () => ({ request, revision, connection, dataRevision }),
+    [request, revision, connection, dataRevision],
   );
   useFocusEffect(
     useCallback(() => {

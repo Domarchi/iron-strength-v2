@@ -1,4 +1,7 @@
 import { useSession } from "../../../lib/session";
+import { useWorkoutSyncQueue } from "../../../lib/sync-context";
+import { QueuedWorkout } from "../../../components/queued-workout";
+import { SyncQueueIssue } from "../../../components/sync-queue-card";
 import { useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -12,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { Icon } from "../../../components/icon";
-import { Action, Brand, IconAction, Notice, Page, s, usePalette } from "../../../components/ui";
+import { Action, IconAction, Notice, Page, s, usePalette } from "../../../components/ui";
 import { RestControls } from "../../../components/rest-controls";
 import { DownloadedHistory } from "../../../components/downloaded-history";
 import { WorkoutSets } from "../../../components/workout-sets";
@@ -39,6 +42,7 @@ export default function Workout() {
     { id } = useLocalSearchParams<{ id: string }>(),
     { controller, training } = useTraining(),
     { state: session } = useSession(),
+    syncQueue = useWorkoutSyncQueue(),
     now = useClock();
   const [error, setError] = useState<string | null>(null),
     [closing, setClosing] = useState(false),
@@ -65,22 +69,7 @@ export default function Workout() {
         <Notice message="Recuperando tu entrenamiento…" />
       </Page>
     );
-  if (!a || !d || d.workoutId !== id)
-    return (
-      <Page>
-        <Brand />
-        <Notice message={training.error ?? "No hay un entrenamiento activo en esta pantalla."} />
-        {training.blocked ? (
-          <Action
-            label="Reintentar recuperación"
-            onPress={() => {
-              void controller.restore();
-            }}
-          />
-        ) : null}
-        <Action label="Volver a Inicio" onPress={back} />
-      </Page>
-    );
+  if (!a || !d || d.workoutId !== id) return <QueuedWorkout id={id} />;
   const index = Math.min(a.activeIndex, d.exercises.length - 1),
     exercise = d.exercises[index],
     rx = a.routine.exercises[index],
@@ -97,7 +86,9 @@ export default function Workout() {
       const result = pending
         ? offline && a?.mode === "real"
           ? null
-          : await controller.retry()
+          : syncQueue.queue.verified && !syncQueue.queue.blocked
+            ? await syncQueue.synchronize().then(() => null)
+            : await controller.retry()
         : await controller.finish(effort.trim() ? Number(effort) : null, note.trim() || null, {
             localOnly: offline,
           });
@@ -157,6 +148,7 @@ export default function Workout() {
         {error ? <Notice message={error} /> : null}
         {pending ? (
           <View style={[s.card, { backgroundColor: p.tint, borderColor: p.blue }]}>
+            <SyncQueueIssue />
             <Text style={[s.subheading, { color: p.ink }]}>
               {training.dirty
                 ? training.error
@@ -176,8 +168,13 @@ export default function Workout() {
             </Text>
             <Action
               label={a.mode === "demo" ? "Guardar resumen demo" : "Reintentar envío"}
-              disabled={training.dirty || (offline && a.mode === "real")}
-              busy={training.busy}
+              disabled={
+                training.dirty ||
+                syncQueue.transferring ||
+                syncQueue.syncing ||
+                (offline && a.mode === "real")
+              }
+              busy={training.busy || training.closing}
               onPress={() => {
                 void finish();
               }}
@@ -343,6 +340,7 @@ export default function Workout() {
                   keyboardAppearance={p.dark ? "dark" : "light"}
                   selectionColor={p.blue}
                   accessibilityLabel="Esfuerzo percibido"
+                  editable={!training.busy && !training.closing}
                   keyboardType="number-pad"
                   value={effort}
                   maxLength={2}
@@ -354,6 +352,7 @@ export default function Workout() {
                   keyboardAppearance={p.dark ? "dark" : "light"}
                   selectionColor={p.blue}
                   accessibilityLabel="Nota del entrenamiento"
+                  editable={!training.busy && !training.closing}
                   multiline
                   maxLength={500}
                   value={note}
@@ -376,7 +375,7 @@ export default function Workout() {
                         ? "Guardar en este dispositivo"
                         : "Guardar entrenamiento"
                   }
-                  busy={training.busy}
+                  busy={training.busy || training.closing}
                   disabled={summary.doneSets === 0 || training.dirty}
                   onPress={() => {
                     void finish();
@@ -399,10 +398,11 @@ export default function Workout() {
             <Action
               label="Confirmar descarte"
               secondary
-              disabled={training.busy}
+              disabled={training.busy || training.closing || (pending && syncQueue.transferring)}
               onPress={() => {
                 void act(async () => {
-                  await controller.discard();
+                  if (pending) await syncQueue.discard(d.workoutId);
+                  else await controller.discard();
                   back();
                 });
               }}
@@ -413,7 +413,7 @@ export default function Workout() {
           <Action
             label="Descartar registro local"
             quiet
-            disabled={training.busy}
+            disabled={training.busy || training.closing || (pending && syncQueue.transferring)}
             onPress={() => setDiscard(true)}
           />
         )}

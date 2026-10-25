@@ -8,7 +8,7 @@ import {
 } from "react";
 import { randomUUID } from "expo-crypto";
 import { TrainingController } from "./training";
-import { trainingStorage } from "./training-storage";
+import { atomicStorage } from "./atomic-storage";
 import { useSession } from "./session";
 const Context = createContext<TrainingController | null>(null);
 export function TrainingProvider({ userId, children }: PropsWithChildren<{ userId: string }>) {
@@ -17,7 +17,7 @@ export function TrainingProvider({ userId, children }: PropsWithChildren<{ userI
     () =>
       new TrainingController(
         userId,
-        trainingStorage,
+        atomicStorage,
         (p) => client.saveWorkout(p, userId),
         () => new Date(),
         randomUUID,

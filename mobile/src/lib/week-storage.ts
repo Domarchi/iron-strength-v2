@@ -1,13 +1,14 @@
-import Storage from "expo-sqlite/kv-store";
-import { trainingStorage, runStorageOperation } from "./training-storage";
+import { atomicStorage } from "./atomic-storage";
+import { AtomicStoreError } from "./atomic-contract";
 import { WeekStorageError, type WeekStorage } from "./week-download";
 export const weekStorage: WeekStorage = {
-  ...trainingStorage,
-  compareAndSet: (key, before, next) =>
-    runStorageOperation(() =>
-      Storage.setItemAsync(key, (previous) => {
-        if (previous !== before) throw new WeekStorageError("conflict");
-        return next;
-      }),
-    ),
+  ...atomicStorage,
+  async compareAndSet(key, before, next) {
+    try {
+      await atomicStorage.compareAndSet(key, before, next);
+    } catch (e) {
+      if (e instanceof AtomicStoreError) throw new WeekStorageError(e.reason);
+      throw e;
+    }
+  },
 };

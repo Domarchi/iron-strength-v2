@@ -122,3 +122,13 @@ describe("descarga nativa completa y verificada", () => {
     expect(x.controller.getSnapshot()).toMatchObject({ verified: false, blocked: true });
   });
 });
+it("reiniciar el efecto recupera la instancia y permite actualizar una descarga", async () => {
+  const x = setup();
+  await x.controller.restore();
+  await x.controller.download(expected);
+  x.controller.dispose();
+  await x.controller.restore();
+  x.fetch.mockResolvedValueOnce(weekDownloadFixture(id, "2026-10-24T15:00:00Z"));
+  await expect(x.controller.download(expected)).resolves.toBeUndefined();
+  expect(x.controller.getSnapshot().pack?.downloadedAt).toBe("2026-10-24T15:00:00Z");
+});

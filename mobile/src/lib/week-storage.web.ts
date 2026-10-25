@@ -1,13 +1,14 @@
-import { trainingStorage } from "./training-storage";
+import { atomicStorage } from "./atomic-storage";
+import { AtomicStoreError } from "./atomic-contract";
 import { WeekStorageError, type WeekStorage } from "./week-download";
 export const weekStorage: WeekStorage = {
-  ...trainingStorage,
+  ...atomicStorage,
   async compareAndSet(key, before, next) {
-    if (typeof navigator === "undefined" || !navigator.locks)
-      throw new WeekStorageError("unsupported");
-    await navigator.locks.request("iron-strength-native-week:" + key, () => {
-      if (localStorage.getItem(key) !== before) throw new WeekStorageError("conflict");
-      localStorage.setItem(key, next);
-    });
+    try {
+      await atomicStorage.compareAndSet(key, before, next);
+    } catch (e) {
+      if (e instanceof AtomicStoreError) throw new WeekStorageError(e.reason);
+      throw e;
+    }
   },
 };

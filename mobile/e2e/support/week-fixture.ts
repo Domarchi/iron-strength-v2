@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { santiagoDate } from "../../../src/domain/dates";
 import { downloadId, weekDownloadFixture } from "../../../src/test/fixtures/week-download";
 import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
 import type { MobileWorkout } from "../../../src/lib/mobile/contracts";
@@ -52,7 +53,7 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
         programName: control.pack.program.name,
         sessionLabel: payload.sessionLabel,
         startedAt: payload.startedAt,
-        performedOn: payload.startedAt.slice(0, 10),
+        performedOn: santiagoDate(new Date(payload.startedAt)),
         durationSeconds: payload.durationSeconds,
         perceivedEffort: payload.perceivedEffort ?? null,
         note: payload.note ?? null,
@@ -108,21 +109,24 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
         weekNumber: 1,
         weekStart: control.pack.weekStart,
         weekEnd: control.pack.weekEnd,
-        sessions: [
-          {
-            sessionId: downloadId(3),
-            label: "A",
-            title: "Piernas",
-            status: control.saved.size ? "done" : "pending",
-            exerciseCount: 2,
-            setCount: 4,
-            exerciseNames: ["Sentadilla", "Remo"],
-          },
-        ],
+        sessions: control.pack.sessions.map(({ context }) => ({
+          sessionId: context.session.id,
+          label: context.session.label,
+          title: context.session.title,
+          status: [...control.saved.values()].some((p) => p.programSessionId === context.session.id)
+            ? "done"
+            : "pending",
+          exerciseCount: context.exercises.length,
+          setCount: context.exercises.reduce((n, e) => n + e.prescribed.sets, 0),
+          exerciseNames: context.exercises.map((e) => e.name),
+        })),
       };
-    else if (path.endsWith("/sessions/" + downloadId(3)))
-      json = { version: 1, ...control.pack.sessions[0].context };
-    else if (path.endsWith("auth/logout")) json = { version: 1, ok: true };
+    else if (path.includes("/sessions/")) {
+      const found = control.pack.sessions.find((s) =>
+        path.endsWith("/sessions/" + s.context.session.id),
+      );
+      if (found) json = { version: 1, ...found.context };
+    } else if (path.endsWith("auth/logout")) json = { version: 1, ok: true };
     else if (path.endsWith("/workouts") && req.method() === "POST") {
       const payload = req.postDataJSON().payload as WorkoutPayload;
       control.saveRequests.push(payload);
@@ -153,4 +157,11 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
   await page.goto("/");
   await enterWeekUser(page);
   return control;
+}
+/** Emits the same signal Expo Network observes on web; transport failures stay controlled separately. */
+export async function setWeekConnectivity(page: Page, online: boolean) {
+  await page.evaluate((value) => {
+    Object.defineProperty(navigator, "onLine", { configurable: true, get: () => value });
+    window.dispatchEvent(new Event(value ? "online" : "offline"));
+  }, online);
 }

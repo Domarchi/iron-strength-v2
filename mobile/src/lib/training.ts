@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AtomicStoreError } from "./atomic-contract";
 import { workoutPayloadSchema } from "../../../src/lib/workout/payload";
 import { mobileRoutineSchema, type MobileRoutine } from "../../../src/lib/mobile/contracts";
 import { workoutDraftSchema, type WorkoutDraft } from "../../../src/lib/workout/draft";
@@ -15,6 +16,7 @@ export interface TrainingStorage {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<void>;
   remove(key: string): Promise<void>;
+  compareAndSet?(key: string, before: string | null, next: string): Promise<void>;
 }
 export type SaveReply = {
   version: 1;
@@ -46,6 +48,7 @@ export type TrainingState = {
   demos: DemoResult[];
   dirty: boolean;
   busy: boolean;
+  closing: boolean;
   error: string | null;
   blocked: boolean;
 };
@@ -55,6 +58,7 @@ const initial = (): TrainingState => ({
   demos: [],
   dirty: false,
   busy: false,
+  closing: false,
   error: null,
   blocked: false,
 });
@@ -156,7 +160,8 @@ export class TrainingController {
           "El registro cambió en otra ventana. Conservamos tus datos; vuelve a abrir la app para revisar.",
         );
       this.attempt = encoded;
-      await this.storage.set(this.key, encoded);
+      if (!this.storage.compareAndSet) throw new AtomicStoreError("unsupported");
+      await this.storage.compareAndSet(this.key, current, encoded);
       if ((await this.storage.get(this.key)) !== encoded)
         throw Error("No se pudo verificar el almacenamiento.");
       this.raw = encoded;
@@ -165,9 +170,13 @@ export class TrainingController {
     });
     const p = operation.catch((e: unknown) => {
       throw new Error(
-        e instanceof Error && e.message.startsWith("El registro cambió")
-          ? e.message
-          : "No pudimos guardar en este dispositivo. Revisa el espacio disponible y reintenta.",
+        e instanceof AtomicStoreError
+          ? e.reason === "conflict"
+            ? "El registro cambió en otra ventana. Conservamos tus datos; vuelve a abrir la app para revisar."
+            : "Este entorno no permite proteger el registro entre ventanas. Usa la app instalada o un navegador compatible."
+          : e instanceof Error && e.message.startsWith("El registro cambió")
+            ? e.message
+            : "No pudimos guardar en este dispositivo. Revisa el espacio disponible y reintenta.",
       );
     });
     void p.catch((e) => {
@@ -186,10 +195,14 @@ export class TrainingController {
   }
   async retryStorage() {
     this.ensure();
+    if (this.state.busy || this.state.closing)
+      throw Error("Espera a que termine el guardado o envío.");
     await this.persist();
   }
   async start(routine: MobileRoutine, mode: "demo" | "real") {
     this.ensure();
+    if (this.state.busy || this.state.closing)
+      throw Error("Espera a que termine el guardado o envío.");
     if (this.state.active)
       throw Error("Ya tienes un entrenamiento. Retómalo o descártalo primero.");
     const draft = createDraft({
@@ -210,7 +223,7 @@ export class TrainingController {
   edit(change: (draft: WorkoutDraft) => WorkoutDraft) {
     this.ensure();
     const a = this.state.active;
-    if (!a || a.draft.status !== "in_progress" || this.state.busy) return;
+    if (!a || a.draft.status !== "in_progress" || this.state.busy || this.state.closing) return;
     const draft = { ...change(a.draft), updatedAt: this.now().toISOString() };
     this.publish({ active: { ...a, draft } });
     void this.persist().catch(() => {});
@@ -218,7 +231,7 @@ export class TrainingController {
   review(effort: string, note: string) {
     this.ensure();
     const a = this.state.active;
-    if (!a || a.draft.status !== "in_progress" || this.state.busy) return;
+    if (!a || a.draft.status !== "in_progress" || this.state.busy || this.state.closing) return;
     this.publish({
       active: { ...a, review: { effort: effort.slice(0, 2), note: note.slice(0, 500) } },
     });
@@ -227,14 +240,14 @@ export class TrainingController {
   async focus(activeIndex: number) {
     this.ensure();
     const a = this.state.active;
-    if (!a || !a.draft.exercises[activeIndex] || this.state.busy) return;
+    if (!a || !a.draft.exercises[activeIndex] || this.state.busy || this.state.closing) return;
     this.publish({ active: { ...a, activeIndex } });
     await this.persist();
   }
   async complete(ex: number, set: number) {
     this.ensure();
     const a = this.state.active;
-    if (!a || a.draft.status !== "in_progress" || this.state.busy) return;
+    if (!a || a.draft.status !== "in_progress" || this.state.busy || this.state.closing) return;
     const previous = a.draft,
       exercise = previous.exercises[ex];
     if (!exercise) return;
@@ -270,27 +283,32 @@ export class TrainingController {
   }
   async finish(effort: number | null, note: string | null, options: { localOnly?: boolean } = {}) {
     this.ensure();
-    if (!this.state.active || this.state.busy) return null;
-    await this.flush();
-    this.ensure();
-    const a = this.state.active;
-    if (a.draft.status === "in_progress") {
-      if (
-        (effort !== null && (!Number.isInteger(effort) || effort < 1 || effort > 10)) ||
-        (note?.length ?? 0) > 500
-      )
-        throw Error("Revisa esfuerzo (1–10) y nota (máximo 500 caracteres).");
-      const draft = finishDraft({ ...a.draft, perceivedEffort: effort, note }, this.now());
-      const built = buildPayload(draft, this.now());
-      if (!built.ok) throw Error("Completa al menos una serie antes de finalizar.");
-      this.publish({ active: { ...a, draft, payload: built.payload }, error: null });
-      await this.persist();
+    if (!this.state.active || this.state.busy || this.state.closing) return null;
+    this.publish({ closing: true });
+    try {
+      await this.flush();
+      this.ensure();
+      const a = this.state.active;
+      if (a.draft.status === "in_progress") {
+        if (
+          (effort !== null && (!Number.isInteger(effort) || effort < 1 || effort > 10)) ||
+          (note?.length ?? 0) > 500
+        )
+          throw Error("Revisa esfuerzo (1–10) y nota (máximo 500 caracteres).");
+        const draft = finishDraft({ ...a.draft, perceivedEffort: effort, note }, this.now());
+        const built = buildPayload(draft, this.now());
+        if (!built.ok) throw Error("Completa al menos una serie antes de finalizar.");
+        this.publish({ active: { ...a, draft, payload: built.payload }, error: null });
+        await this.persist();
+      }
+      if (options.localOnly && this.state.active?.mode === "real") {
+        const prepared = await this.pendingPayload();
+        return prepared ? { mode: "pending" as const, id: prepared.active.draft.workoutId } : null;
+      }
+      return await this.performRetry();
+    } finally {
+      this.publish({ closing: false });
     }
-    if (options.localOnly && this.state.active?.mode === "real") {
-      const prepared = await this.pendingPayload();
-      return prepared ? { mode: "pending" as const, id: prepared.active.draft.workoutId } : null;
-    }
-    return this.retry();
   }
   private async pendingPayload() {
     this.ensure();
@@ -314,6 +332,46 @@ export class TrainingController {
     return { active, payload: built.payload };
   }
   async retry() {
+    if (this.state.closing) return null;
+    return this.performRetry();
+  }
+  async pendingForQueue() {
+    if (this.state.busy || this.state.closing) return null;
+    const pending = await this.pendingPayload();
+    if (!pending || pending.active.mode !== "real") return null;
+    return {
+      userId: pending.active.draft.userId,
+      title:
+        pending.active.routine.session.title ?? `Sesión ${pending.active.routine.session.label}`,
+      payload: pending.payload,
+    };
+  }
+  async releaseQueued(id: string, payload: WorkoutPayload) {
+    this.ensure();
+    await this.flush();
+    this.ensure();
+    const previous = this.state.active;
+    if (
+      this.state.busy ||
+      this.state.closing ||
+      !previous ||
+      previous.mode !== "real" ||
+      previous.draft.status !== "pending_save" ||
+      previous.draft.workoutId !== id ||
+      JSON.stringify(previous.payload) !== JSON.stringify(payload)
+    )
+      throw Error("El origen cambió. Conservamos ambas copias para comprobar el registro.");
+    this.publish({ active: null, busy: true, error: null });
+    try {
+      await this.persist();
+    } catch (e) {
+      this.publish({ active: previous });
+      throw e;
+    } finally {
+      this.publish({ busy: false });
+    }
+  }
+  private async performRetry() {
     const prepared = await this.pendingPayload();
     this.ensure();
     if (
@@ -359,18 +417,28 @@ export class TrainingController {
   }
   async discard() {
     this.ensure();
-    await this.tail;
+    if (this.state.busy || this.state.closing)
+      throw Error("Espera a que termine el guardado o envío.");
     const previous = this.state.active;
-    this.publish({ active: null, error: null, blocked: false });
+    this.publish({ busy: true });
     try {
+      await this.tail;
+      this.ensure();
+      this.publish({ active: null, error: null, blocked: false });
       await this.persist();
     } catch (e) {
       this.publish({ active: previous });
       throw e;
+    } finally {
+      this.publish({ busy: false });
     }
   }
   async clearForLogout() {
+    this.ensure();
+    if (this.state.busy || this.state.closing)
+      throw Error("Espera a que termine el guardado o envío.");
     await this.flush();
+    this.ensure();
     if (this.state.active)
       throw Error("Retoma o descarta el entrenamiento pendiente antes de salir.");
     await this.storage.remove(this.key);

@@ -13,11 +13,11 @@ const sections = [
   ],
   [
     "En este dispositivo",
-    "La app instalada conserva la credencial de renovación y el perfil verificado en el almacenamiento seguro del sistema, para abrir tus datos descargados si el servicio no está disponible. No conserva la contraseña ni el token de acceso. Las series iniciadas, demos, descargas de semana y recibos de eliminación se guardan localmente. La apariencia es una preferencia del dispositivo. Expo web usa la sesión solo en memoria. Recuperar acceso no elimina tu registro pendiente.",
+    "La app instalada conserva la credencial de renovación y el perfil verificado en el almacenamiento seguro del sistema, para abrir tus datos descargados si el servicio no está disponible. No conserva la contraseña ni el token de acceso. Las series iniciadas, cierres pendientes de envío, confirmaciones recientes, demos, descargas de semana y recibos de eliminación se guardan localmente y separados por cuenta. Los cierres se sincronizan mientras la app está abierta, al recuperar conexión o volver a ella; también puedes reintentar manualmente. Una respuesta perdida no crea otro entrenamiento. La app solo observa la conectividad; no consulta ni envía direcciones IP o MAC. La apariencia es una preferencia del dispositivo. Expo web usa la sesión solo en memoria. Recuperar acceso no elimina tu registro pendiente.",
   ],
   [
     "Salir, desinstalar o borrar",
-    "Salir elimina la sesión y los registros locales de esa cuenta después de resolver sus pendientes; conserva la apariencia y las descargas separadas por cuenta. Puedes eliminar una descarga desde Cuenta sin borrar tus entrenamientos. Desinstalar no elimina la cuenta del servidor. Borrar mi cuenta elimina los datos remotos del alumno y después sus registros y descargas de este dispositivo. No podemos borrar automáticamente copias exportadas o datos locales que tengas en otros dispositivos.",
+    "Salir elimina la sesión y los registros locales de esa cuenta después de resolver sus pendientes; conserva la apariencia y las descargas separadas por cuenta. Una cola de otra versión que todavía no podemos interpretar se conserva al salir, sin abrirla desde otra cuenta. Puedes eliminar una descarga desde Cuenta sin borrar tus entrenamientos. Desinstalar no elimina la cuenta del servidor. Borrar mi cuenta elimina los datos remotos del alumno y después sus registros, cola de envíos y descargas de este dispositivo. No podemos borrar automáticamente copias exportadas o datos locales que tengas en otros dispositivos.",
   ],
   [
     "Exportar antes de borrar",

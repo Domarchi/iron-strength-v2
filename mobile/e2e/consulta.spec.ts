@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import { fulfillEmptyCommentReads } from "./support/comment-fixture";
+import { setWeekConnectivity } from "./support/week-fixture";
 const id = "11111111-1111-4111-8111-111111111111";
 const exercise = "22222222-2222-4222-8222-222222222222";
 const group = "33333333-3333-4333-8333-333333333333";
@@ -354,18 +355,28 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
   await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Guardar entrenamiento", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Reintentar envío", exact: true })).toBeVisible();
-  expect(sent).toHaveLength(1);
-  const pending = await page.evaluate(() => {
-    const key = Object.keys(localStorage).find((k) => k.startsWith("is:native-training:"));
-    return key ? JSON.parse(localStorage.getItem(key)!).active : null;
-  });
-  expect(pending.draft.status).toBe("pending_save");
+  await expect.poll(() => sent.length).toBe(1);
+  await setWeekConnectivity(page, false);
+  const syncKey = `is:native-sync:v1:${id}`;
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (key) => JSON.parse(localStorage.getItem(key) ?? '{"entries":[]}').entries.length,
+        syncKey,
+      ),
+    )
+    .toBe(1);
+  const pending = await page.evaluate(
+    (key) => JSON.parse(localStorage.getItem(key)!).entries[0],
+    syncKey,
+  );
+  expect(pending.phase).toBe("pending");
   expect(pending.payload).toEqual((sent[0] as { payload: unknown }).payload);
   await expect(page.getByRole("button", { name: "Reintentar envío", exact: true })).toBeDisabled();
-  await page.getByRole("button", { name: "Conectar", exact: true }).click();
-  await page.getByRole("button", { name: "Reintentar envío", exact: true }).click();
-  await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
+  await setWeekConnectivity(page, true);
+  await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible({
+    timeout: 30000,
+  });
   expect(sent).toHaveLength(2);
   expect(sent[1]).toEqual(sent[0]);
   expect(

@@ -7,13 +7,15 @@ import { useSession } from "../lib/session";
 import { useTraining } from "../lib/training-context";
 import { useAccountRemoval } from "../lib/account-removal-context";
 import { useCommentDraft } from "../lib/comment-context";
+import { useWorkoutSyncQueue } from "../lib/sync-context";
 export function DeleteAccount() {
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
     { controller: removalController } = useAccountRemoval(),
     { controller: comments, draft } = useCommentDraft(),
-    { controller: downloads, download } = useWeekDownload();
+    { controller: downloads, download } = useWeekDownload(),
+    sync = useWorkoutSyncQueue();
   const [open, setOpen] = useState(false),
     [confirmation, setConfirmation] = useState(""),
     [busy, setBusy] = useState(false),
@@ -33,6 +35,11 @@ export function DeleteAccount() {
       !isDeleteConfirmation(confirmation) ||
       busy ||
       training.busy ||
+      training.closing ||
+      sync.queue.busy ||
+      sync.syncing ||
+      sync.transferring ||
+      sync.paused ||
       draft.busy ||
       downloads.getSnapshot().busy ||
       offline
@@ -40,15 +47,19 @@ export function DeleteAccount() {
       return;
     setBusy(true);
     setError(null);
+    let resume: (() => void) | undefined;
     try {
+      resume = sync.pause();
       // Flush valid drafts before unmounting the training provider. Unknown formats stay until explicit deletion.
       await downloads.flush();
+      if (!sync.queue.blocked) await sync.flush();
       if (!training.blocked) await controller.flush();
       if (!draft.blocked) await comments.flush();
       await removalController.request(userId, () => client.deleteAccount(confirmation, userId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos completar la eliminación.");
     } finally {
+      resume?.();
       setBusy(false);
     }
   }
@@ -86,6 +97,12 @@ export function DeleteAccount() {
               !isDeleteConfirmation(confirmation) ||
               !training.ready ||
               training.busy ||
+              training.closing ||
+              !sync.queue.ready ||
+              sync.queue.busy ||
+              sync.syncing ||
+              sync.transferring ||
+              sync.paused ||
               !draft.ready ||
               draft.busy ||
               !download.ready ||
@@ -114,6 +131,12 @@ export function DeleteAccount() {
           secondary
           disabled={
             training.busy ||
+            training.closing ||
+            !sync.queue.ready ||
+            sync.queue.busy ||
+            sync.syncing ||
+            sync.transferring ||
+            sync.paused ||
             draft.busy ||
             !draft.ready ||
             !download.ready ||

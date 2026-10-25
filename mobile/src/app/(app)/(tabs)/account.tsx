@@ -11,12 +11,14 @@ import { TrainingCard } from "../../../components/training-card";
 import { DeleteAccount } from "../../../components/delete-account";
 import { CommentDraftCard } from "../../../components/comment-draft-card";
 import { useCommentDraft } from "../../../lib/comment-context";
+import { useWorkoutSyncQueue } from "../../../lib/sync-context";
 export default function Account() {
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
     { controller: comments, draft } = useCommentDraft(),
-    { controller: downloads, download } = useWeekDownload();
+    { controller: downloads, download } = useWeekDownload(),
+    sync = useWorkoutSyncQueue();
   const [error, setError] = useState<string | null>(null),
     [confirm, setConfirm] = useState(false);
   if (state.status !== "authenticated") return null;
@@ -29,13 +31,18 @@ export default function Account() {
     }
   }
   async function logout() {
+    let resume: (() => void) | undefined;
     try {
+      resume = sync.pause();
       await downloads.flush();
+      await sync.clearForLogout();
       await comments.clearForLogout();
       await controller.clearForLogout();
       await client.logout(person.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos salir. Reintenta.");
+    } finally {
+      resume?.();
     }
   }
   return (
@@ -131,6 +138,12 @@ export default function Account() {
           Salir retira el acceso local. Para volver a entrar necesitarás conexión.
         </Text>
       ) : null}
+      {sync.queue.verified && sync.queue.entries.some((e) => e.phase === "pending") ? (
+        <Text style={[s.body, { color: p.muted }]}>
+          Antes de salir, sincroniza o descarta explícitamente los registros pendientes de este
+          dispositivo.
+        </Text>
+      ) : null}
       <Action
         label="Salir"
         secondary
@@ -139,13 +152,20 @@ export default function Account() {
           training.blocked ||
           !!training.active ||
           training.busy ||
+          training.closing ||
           !draft.ready ||
           draft.blocked ||
           !!draft.record ||
           draft.dirty ||
           draft.busy ||
           !download.ready ||
-          download.busy
+          download.busy ||
+          !sync.queue.ready ||
+          sync.queue.busy ||
+          sync.syncing ||
+          sync.transferring ||
+          sync.paused ||
+          (sync.queue.verified && sync.queue.entries.some((e) => e.phase === "pending"))
         }
         onPress={() => {
           void logout();

@@ -7,13 +7,19 @@ const user = "11111111-1111-4111-8111-111111111111";
 const other = "22222222-2222-4222-8222-222222222222";
 function fixture() {
   const map = new Map<string, string>();
-  const store: TrainingStorage = {
+  const store: TrainingStorage & {
+    compareAndSet(key: string, before: string | null, next: string): Promise<void>;
+  } = {
     get: vi.fn(async (key) => map.get(key) ?? null),
     set: vi.fn(async (key, value) => {
       map.set(key, value);
     }),
     remove: vi.fn(async (key) => {
       map.delete(key);
+    }),
+    compareAndSet: vi.fn(async (key, before, next) => {
+      if ((map.get(key) ?? null) !== before) throw Error("El registro cambió en otra ventana.");
+      await store.set(key, next);
     }),
   };
   const save = vi.fn(async () => ({
@@ -33,6 +39,19 @@ function fixture() {
   return { map, store, save, create };
 }
 describe("registro nativo, persistencia y separación de la demo", () => {
+  it("dos inicios simultáneos solo escriben una instantánea completa", async () => {
+    const x = fixture(),
+      a = x.create(),
+      b = x.create();
+    await a.restore();
+    await b.restore();
+    const results = await Promise.allSettled([
+      a.start(DEMO_ROUTINES[0], "demo"),
+      b.start(DEMO_ROUTINES[1], "demo"),
+    ]);
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(x.store.set).toHaveBeenCalledTimes(1);
+  });
   it("un pendiente antiguo congela su payload antes del primer intento perdido", async () => {
     const x = fixture(),
       a = x.create();
@@ -182,6 +201,7 @@ describe("registro nativo, persistencia y separación de la demo", () => {
     await b.restore();
     expect(b.getSnapshot().error).toBeTruthy();
     await expect(b.start(DEMO_ROUTINES[0], "demo")).rejects.toThrow();
+    await expect(b.clearForLogout()).rejects.toThrow();
     expect(x.map.get(key)).toContain("preserve");
   });
   it("otra instancia no puede sobrescribir silenciosamente el borrador existente", async () => {

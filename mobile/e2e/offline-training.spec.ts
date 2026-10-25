@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { setupDownloadedWeek } from "./support/week-fixture";
+import { setupDownloadedWeek, setWeekConnectivity } from "./support/week-fixture";
 import { downloadId } from "../../src/test/fixtures/week-download";
 const userId = downloadId(1),
-  trainingKey = `is:native-training:v1:${userId}`;
+  trainingKey = `is:native-training:v1:${userId}`,
+  queueKey = `is:native-sync:v1:${userId}`;
 test("descarga → pérdida de red → alternativa y ronda → cierre local → respuesta perdida → envío único", async ({
   page,
 }) => {
@@ -13,7 +14,7 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
   await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
   await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
   control.offline = true;
-  await page.getByRole("button", { name: "Actualizar semana", exact: true }).click();
+  await setWeekConnectivity(page, false);
   await expect(
     page.getByText("Usando datos de este dispositivo", { exact: true }).filter({ visible: true }),
   ).toBeVisible();
@@ -58,9 +59,17 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
     page.getByText("Tu registro está protegido", { exact: true }).filter({ visible: true }),
   ).toBeVisible();
   expect(control.saveRequests).toHaveLength(0);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (k) => JSON.parse(localStorage.getItem(k) ?? '{"entries":[]}').entries.length,
+        queueKey,
+      ),
+    )
+    .toBe(1);
   const local = await page.evaluate(
-    (k) => JSON.parse(localStorage.getItem(k)!).active.payload,
-    trainingKey,
+    (k) => JSON.parse(localStorage.getItem(k)!).entries[0].payload,
+    queueKey,
   );
   expect(local.sets[0]).toMatchObject({
     exerciseId: downloadId(6),
@@ -76,14 +85,10 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
   });
   control.offline = false;
   control.saveLost = true;
-  await page.getByRole("button", { name: "Conectar", exact: true }).click();
-  await page.getByRole("button", { name: "Reintentar envío", exact: true }).click();
-  await expect(
-    page.getByText("Usando datos de este dispositivo", { exact: true }).filter({ visible: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Conectar", exact: true }).click();
-  await page.getByRole("button", { name: "Reintentar envío", exact: true }).click();
-  await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+  await setWeekConnectivity(page, true);
+  await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible({
+    timeout: 30000,
+  });
   expect(control.saved.size).toBe(1);
   expect(control.saveRequests).toHaveLength(2);
   expect(control.saveRequests[0]).toEqual(control.saveRequests[1]);

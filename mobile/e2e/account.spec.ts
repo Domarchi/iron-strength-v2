@@ -72,15 +72,17 @@ test("borrado nativo exige confirmación, limpia su cuenta y conserva tema/otras
 }) => {
   const calls = await enter(page);
   await page.evaluate(
-    ({ trainingKey, other }) => {
+    ({ trainingKey, other, id }) => {
       localStorage.setItem(trainingKey, "pendiente sintético para eliminación explícita");
       localStorage.setItem(`is:native-training:v1:${other}`, "otra cuenta");
+      localStorage.setItem(`is:native-sync:v1:${id}`, "cola para borrado explícito");
+      localStorage.setItem(`is:native-sync:v1:${other}`, "otra cola");
       localStorage.setItem(
         "is:native-appearance:v1",
         JSON.stringify({ version: 1, preference: "dark" }),
       );
     },
-    { trainingKey, other },
+    { trainingKey, other, id },
   );
   await page.getByRole("button", { name: "Quiero borrar mi cuenta", exact: true }).click();
   await expect(
@@ -101,6 +103,12 @@ test("borrado nativo exige confirmación, limpia su cuenta y conserva tema/otras
   expect(calls.filter((c) => c.endsWith("account/delete"))).toHaveLength(1);
   expect(await page.evaluate((key) => localStorage.getItem(key), trainingKey)).toBeNull();
   expect(await page.evaluate((key) => localStorage.getItem(key), receiptKey)).toBeNull();
+  expect(
+    await page.evaluate((id) => localStorage.getItem(`is:native-sync:v1:${id}`), id),
+  ).toBeNull();
+  expect(await page.evaluate((id) => localStorage.getItem(`is:native-sync:v1:${id}`), other)).toBe(
+    "otra cola",
+  );
   expect(
     await page.evaluate((id) => localStorage.getItem(`is:native-training:v1:${id}`), other),
   ).toBe("otra cuenta");
