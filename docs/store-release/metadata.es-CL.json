@@ -1,0 +1,18 @@
+{
+  "status": "Borrador; no enviado ni publicado",
+  "name": "Iron Strength",
+  "subtitle": "Tu plan. Serie a serie.",
+  "shortDescription": "Registra tus series y sigue el plan de tu coach, también sin conexión.",
+  "description": "Iron Strength te acompaña desde la rutina que prepara tu coach hasta la última serie.\n\nConsulta tu semana, revisa los objetivos de cada ejercicio y registra peso y repeticiones. Entrena con superseries, descansos y alternativas autorizadas por tu coach. Retoma una sesión sin perder lo que ya anotaste.\n\nDescarga tu semana mientras tienes conexión para poder entrenar sin Internet. Los entrenamientos terminados quedan protegidos en el dispositivo y se envían al recuperar conexión con la app abierta. Puedes comprobar cuándo el servidor confirma cada registro.\n\nEncuentra tus sesiones en el historial, consulta tus marcas y gráficos de progreso y conversa con tu coach junto al entrenamiento correspondiente. Elige apariencia clara, oscura o según tu teléfono.\n\nPara usar tu planificación necesitas una cuenta invitada y un programa asignado por tu coach. La planificación y gestión de alumnos se realizan desde la web de Iron Strength. La app también incluye rutinas demo claramente identificadas para explorar el registro.\n\nEntrenar sin conexión requiere una primera entrada y una descarga previa. Para enviar los registros pendientes, abre la app con conexión.",
+  "categoryProposed": "Salud y forma física",
+  "supportContact": null,
+  "responsibleName": null,
+  "privacyUrl": null,
+  "supportUrl": null,
+  "accountDeletionUrl": null,
+  "reviewAccount": "Pendiente; credenciales por canal privado de la tienda",
+  "iosScreenshots": "Pendientes de captura iOS real/simulador y revisión",
+  "androidScreenshots": "Capturas funcionales para seleccionar; no enviadas",
+  "contentLocale": "es-CL",
+  "storeLocaleSelection": "Pendiente de confirmar idiomas disponibles en ambas consolas"
+}

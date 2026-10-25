@@ -1,0 +1,49 @@
+# Privacidad, soporte y eliminación — borrador T203
+
+Estado: preparación para revisar; no es una política publicada. Faltan responsable, correo público y condiciones operativas de retención/respaldo. No reutilizar el correo privado de acceso sin la respuesta del propietario. Las URLs finales deben abrir por HTTPS sin exigir sesión para leer la información.
+
+## Información del servicio
+
+Iron Strength permite al coach preparar programas y al alumno registrar entrenamientos y revisar resultados. El coach también puede entrenar con su propia cuenta. La app usa la cuenta existente; el acceso inicial requiere una invitación. La planificación del coach, medidas y fotos continúan en web.
+
+Responsable y contacto: pendientes de confirmación. Versión/fecha de la política: se fijan cuando se apruebe el contenido que realmente se publicará.
+
+## Datos y finalidad
+
+| Datos                                                | Uso y destino actual                                                          | En el dispositivo                                                                                                    |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Nombre, correo e identificador de cuenta             | Acceso, relación con el coach y separación de datos en Supabase Auth/Postgres | Perfil verificado y credencial de renovación en SecureStore; contraseña y token de acceso no se persisten por la app |
+| Programas, ejercicios, series, repeticiones y cargas | Planificar, registrar y consultar resultados, historial y progreso            | Descarga de semana y contexto reciente por cuenta en SQLite                                                          |
+| Esfuerzo y nota opcionales, comentarios              | Seguimiento y conversación entre alumno y coach                               | Borradores y envíos pendientes protegidos por cuenta hasta confirmación                                              |
+| Preferencia de apariencia                            | Claro/oscuro/sistema                                                          | Preferencia del dispositivo que puede permanecer al salir                                                            |
+| Medidas y fotos de la web                            | Seguimiento privado del alumno y su coach en el servicio existente            | La app nativa v1 no las registra ni pide cámara/galería                                                              |
+| Registros técnicos del servicio                      | Operación, seguridad y resolución de errores por Vercel/Supabase              | Revisar inventario y retención reales antes del formulario de tiendas                                                |
+
+El alumno accede a sus datos y el coach a los alumnos a su cargo. Los otros alumnos no reciben sus registros. Las reglas se comprueban en la base con RLS, no solo en la interfaz. El servicio se comunica por HTTPS; no se promete cifrado de extremo a extremo ni una auditoría sin pendientes.
+
+En esta versión no se integra HealthKit/Health Connect ni un SDK de anuncios o seguimiento publicitario. Esto no sustituye declarar los datos de ejercicio introducidos por el usuario o las prácticas de proveedores. Revisar el binario y la configuración final antes de completar App Privacy/Data safety.
+
+## Conservación, salida y eliminación
+
+La app conserva datos locales de la cuenta para retomar registros y abrir semanas descargadas. Requiere una primera entrada con conexión y una descarga previa. Los cierres se envían mientras está abierta y puede reintentarse manualmente. La confirmación del servidor es distinta del guardado local.
+
+Salir retira el acceso local y protege la separación de cuentas; antes debe resolverse un registro pendiente o confirmarse su descarte. Descartar una copia local no borra un entrenamiento que ya alcanzó el servidor. La apariencia se conserva aparte.
+
+El alumno puede solicitar el borrado autenticado desde Cuenta. Se confirma de forma explícita; la operación incluye los datos asociados y archivos privados previstos por el servicio. Un fallo no se presenta como eliminación terminada. El coach propietario mantiene la restricción del producto y debe disponer de un recorrido de soporte concreto antes de publicación.
+
+Pendientes que deben completarse con la operación real: plazo de retención de registros técnicos, ciclo/retención de respaldos y tratamiento de una restauración que incluya cuentas borradas. No prometer borrado inmediato de todas las copias históricas si eso no está implementado.
+
+## Ayuda propuesta
+
+- Acceso: pedir al coach una invitación o enlace de recuperación; abrirlo desde «Tengo un enlace de mi coach». Nunca enviar la contraseña a soporte.
+- Sin conexión: descargar antes la semana, conservar la app instalada y comprobar los estados de guardado. Abrir con conexión para enviar los pendientes.
+- Error o cierre: indicar plataforma, versión/build, acción que se intentó y texto del error. No pedir JWT, credenciales, notas, fotos o logs íntegros.
+- Contacto y tiempos de respuesta: pendientes; no publicar un correo o plazo inventados.
+
+La página pública de eliminación debe identificar Iron Strength, explicar qué se borra/conserva y ofrecer un acceso real al recorrido autenticado y una vía para quienes no pueden entrar. Leer la página no ejecuta el borrado. Las solicitudes anónimas no eliminan cuentas sin verificar identidad. Google exige un recurso web además del recorrido interno cuando la app permite crear cuentas. [Requisito oficial de eliminación](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en).
+
+## Preparación de formularios de tiendas
+
+Nombre/correo, ID de usuario, información de ejercicio y contenido de notas/comentarios se vinculan a la cuenta para la funcionalidad del producto. Revisar las categorías concretas y los registros técnicos de terceros antes de marcar opciones definitivas. No seleccionar «no recopilamos datos» por usar Supabase, ni anunciar permisos de fotos/salud que la app nativa no tiene. [App Privacy de Apple](https://developer.apple.com/app-store/app-privacy-details/).
+
+Este documento es el material de preparación; los formularios y la política finales quedan pendientes de los datos y verificaciones anteriores.
