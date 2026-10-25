@@ -80,7 +80,11 @@ export async function listExerciseProgress(
   db: Client,
   studentId: string,
 ): Promise<ExerciseProgress[]> {
-  const sets = (await fetchStudentSets(db, studentId)).filter((s) => !s.isWarmup);
+  return summarizeExerciseSets(await fetchStudentSets(db, studentId));
+}
+
+function summarizeExerciseSets(all: StudentSet[]): ExerciseProgress[] {
+  const sets = all.filter((s) => !s.isWarmup && s.reps >= 1);
   const byExercise = new Map<string, StudentSet[]>();
   for (const s of sets) byExercise.set(s.exerciseId, [...(byExercise.get(s.exerciseId) ?? []), s]);
 
@@ -118,6 +122,10 @@ export async function getExerciseSeries(
   exerciseId: string,
 ): Promise<ProgressPoint[]> {
   const sets = await fetchStudentSets(db, studentId, { exerciseIds: [exerciseId] });
+  return seriesFromSets(sets);
+}
+
+function seriesFromSets(sets: StudentSet[]): ProgressPoint[] {
   const byWorkout = new Map<string, StudentSet[]>();
   for (const s of sets) byWorkout.set(s.workoutId, [...(byWorkout.get(s.workoutId) ?? []), s]);
 
@@ -128,6 +136,13 @@ export async function getExerciseSeries(
       sets: rows.map((r) => ({ weightKg: r.weightKg, reps: r.reps, isWarmup: r.isWarmup })),
     })),
   );
+}
+
+/** One own-exercise query supplies both the all-time marks and workout evidence. */
+export async function getExerciseProgressDetail(db: Client, studentId: string, exerciseId: string) {
+  const sets = await fetchStudentSets(db, studentId, { exerciseIds: [exerciseId] });
+  const exercise = summarizeExerciseSets(sets)[0];
+  return exercise ? { exercise, points: seriesFromSets(sets) } : null;
 }
 
 export type WorkoutRecord = RecordEvent & { name: string };

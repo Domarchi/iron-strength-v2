@@ -39,6 +39,41 @@ function setup(fetcher: Transport) {
   };
 }
 describe("sesión móvil segura", () => {
+  it("progreso valida ID antes de enviar y comprueba identidad de la respuesta", async () => {
+    const exercise = {
+      exerciseId: profile.id,
+      name: "Sentadilla",
+      bestWeightKg: 50,
+      bestEstimated1RM: 60,
+      bestReps: 10,
+      isBodyweight: false,
+      lastDate: "2026-10-24",
+      workoutCount: 1,
+    };
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(
+        Response.json({ version: 1, today: "2026-10-24", exercise, points: [] }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          version: 1,
+          today: "2026-10-24",
+          exercise: { ...exercise, exerciseId: "22222222-2222-4222-8222-222222222222" },
+          points: [],
+        }),
+      );
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    await expect(x.client.progressDetail("../../other")).rejects.toMatchObject({
+      code: "not_found",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect((await x.client.progressDetail(profile.id)).exercise.exerciseId).toBe(profile.id);
+    await expect(x.client.progressDetail(profile.id)).rejects.toMatchObject({ code: "identity" });
+    expect(fetcher.mock.calls[1][1].credentials).toBe("omit");
+  });
   it("comentarios conservan ID/entrenamiento en respuesta y nunca aceptan confirmación de otro intento", async () => {
     const id = "33333333-3333-4333-8333-333333333333";
     const fetcher = vi

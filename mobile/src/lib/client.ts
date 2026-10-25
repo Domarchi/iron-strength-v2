@@ -7,6 +7,7 @@ import {
   mobileHistorySchema,
   mobileWorkoutSchema,
   mobileProgressSchema,
+  mobileProgressDetailSchema,
   mobileSaveSchema,
   mobileInvitationSchema,
   mobileRegisteredSchema,
@@ -436,6 +437,14 @@ export class MobileClient {
     const value = mobileWorkoutSchema.parse(await this.read("workouts/" + id));
     if (value.workout.id !== id)
       throw new MobileError("identity", "El entrenamiento recibido no coincide.");
+    return value;
+  }
+  async progressDetail(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese ejercicio no está disponible.", 404);
+    const value = mobileProgressDetailSchema.parse(await this.read("progress/" + id));
+    if (value.exercise.exerciseId !== id)
+      throw new MobileError("identity", "El ejercicio recibido no coincide. Reintenta.");
     return value;
   }
   async progress() {

@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useCallback, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import {
@@ -81,6 +82,13 @@ export default function Progress() {
           <Text style={[s.caption, { color: p.muted }]}>
             Último registro: {day(e.lastDate)} · mejores marcas de todo tu historial
           </Text>
+          <Action
+            label={`Ver progreso de ${e.name}`}
+            quiet
+            onPress={() =>
+              router.push({ pathname: "/progress/[id]", params: { id: e.exerciseId } })
+            }
+          />
         </View>
       ))}
       {search && !rows.length && q.value?.exercises.length ? (

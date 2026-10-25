@@ -8,7 +8,7 @@
 - [x] T194 · Extender referencia visual aceptada al cliente nativo existente; check circular en app y prototipo. Aceptación física separada; editor web en T200.
 - [x] T206 · Corregir fallos reproducibles de series/descanso y conservar entradas de la referencia al navegar.
 - [x] T195 · Comentarios nativos, lectura explícita, borrador protegido y envío atómico/idempotente; software y migración verificados localmente. Publicación/aceptación física registradas por separado.
-- [ ] T196 · Progreso por periodos y evidencia; especificar recorrido de medidas/fotos.
+- [x] T196 · Progreso nativo de 4/8/12 semanas, comparación y evidencia con retorno contextual; medidas/fotos permanecen en web por decisión del propietario. Software verificado; publicación/aceptación física por separado.
 - [ ] T197 · Descarga de semana nativa.
 - [ ] T198 · Apertura en frío y registro sin conexión.
 - [ ] T199 · Cola, migraciones y sincronización entre versiones/cuentas.

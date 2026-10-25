@@ -252,3 +252,19 @@ export const mobileCommentsReadSchema = z.object({
   workoutId: z.uuid(),
 });
 export type MobileComments = z.infer<typeof mobileCommentsSchema>;
+
+export const mobileProgressDetailSchema = z.object({
+  version: z.literal(1),
+  today: z.iso.date(),
+  exercise: mobileProgressSchema.shape.exercises.element,
+  points: z.array(
+    z.object({
+      workoutId: z.uuid(),
+      date: z.iso.date(),
+      estimated1RM: z.number().finite().nonnegative(),
+      volumeKg: z.number().finite().nonnegative(),
+      bodyweightReps: z.number().int().nonnegative(),
+    }),
+  ),
+});
+export type MobileProgressDetail = z.infer<typeof mobileProgressDetailSchema>;

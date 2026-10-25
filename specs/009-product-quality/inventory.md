@@ -27,3 +27,7 @@ API móvil v1 en /api/mobile/v1, JWT/perfil activo y clientes autenticados con R
 Una sesión activa por cuenta y dispositivo, ID estable, snapshot de prescripción, revisión de cierre y payload congelado. Borradores y credenciales separados. No retirar un pendiente antes de confirmación o descarte explícito. No trasladar silenciosamente datos del navegador al cliente nativo.
 
 La versión pública web/API permanece en Vercel; Supabase y las asignaciones reales no se modifican al explorar las referencias. Los datos de las pantallas de diseño son ficticios.
+
+## Actualización T192–T196 · 24 de octubre de 2026
+
+El inventario inicial anterior es la línea base de T189. El cliente ya incorpora invitación/recuperación propias (T192), privacidad y eliminación protegida (T193), comentarios con no leídos y borrador persistente (T195), y progreso por periodos con evidencia (T196). Los controles de software están en validation.md; publicación y aceptación física se registran por separado. Por decisión del propietario, medidas/fotos permanecen en web en esta versión y no se solicitan permisos móviles de cámara/galería. La descarga/apertura sin conexión sigue pendiente de T197–T199.

@@ -1,3 +1,4 @@
+import { progressReturn } from "../../../lib/progress-view";
 import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { Text, View, KeyboardAvoidingView, Platform } from "react-native";
@@ -12,7 +13,14 @@ import { santiagoDate } from "../../../../../src/domain/dates";
 import { setVolume } from "../../../../../src/domain/volume";
 export default function Result() {
   const p = usePalette(),
-    { id, demo } = useLocalSearchParams<{ id: string; demo?: string }>(),
+    params = useLocalSearchParams<{
+      id: string;
+      demo?: string;
+      exercise?: string;
+      weeks?: string;
+      metric?: string;
+    }>(),
+    { id, demo } = params,
     { client } = useSession(),
     { training } = useTraining();
   const sample = demo === "1" ? training.demos.find((x) => x.id === id) : null;
@@ -61,7 +69,14 @@ export default function Result() {
     };
   }, [client, id, demo, sample]);
   const q = useQuery(request),
-    w = q.value?.workout;
+    w = q.value?.workout,
+    back =
+      demo !== "1" && w
+        ? progressReturn(
+            params,
+            w.exercises.map((e) => e.exerciseId),
+          )
+        : null;
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: p.bg }}
@@ -137,6 +152,17 @@ export default function Result() {
             ))}
             {demo !== "1" ? <WorkoutComments key={w.id} workoutId={w.id} /> : null}
           </>
+        ) : null}
+        {back ? (
+          <Action
+            label="Volver al progreso"
+            onPress={() =>
+              router.navigate({
+                pathname: "/progress/[id]",
+                params: { id: back.exercise, weeks: String(back.weeks), metric: back.metric },
+              })
+            }
+          />
         ) : null}
         <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
         <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />

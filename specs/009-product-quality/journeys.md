@@ -41,3 +41,7 @@ Ficha del alumno → Adaptar base → elegir plantilla/programa anterior → cop
 ## Prueba de uso
 
 Con el coach y los tres alumnos: primer acceso, consultar sin iniciar, completar o recuperar sesión y encontrar el resultado; coach adapta y asigna una copia. Registrar dispositivo, versión, duración, acciones, errores y observaciones sin credenciales o fotos. Las pruebas con fixtures no cuentan como aceptación de estas personas. Probar al menos un iPhone y un Android físicos antes del lanzamiento.
+
+## Consultar progreso móvil · T196
+
+Progreso → elegir ejercicio realizado → 4/8/12 semanas → 1RM estimado o volumen (repeticiones si es sin carga) → valor con fecha → entrenamiento confirmado → Volver al progreso con el mismo periodo/métrica. Las marcas históricas siguen visibles fuera del periodo y la falta de datos previos no inventa una tendencia. El periodo usa hoy en Santiago confirmado por servidor. El resultado valida la pertenencia del ejercicio antes de ofrecer el retorno; nunca acepta una URL libre. Medidas y fotos conservan su recorrido web privado, por decisión del propietario.

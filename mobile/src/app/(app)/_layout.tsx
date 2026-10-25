@@ -15,6 +15,7 @@ export default function AppLayout() {
           <Stack.Screen name="routine/[id]" />
           <Stack.Screen name="workout/[id]" />
           <Stack.Screen name="result/[id]" />
+          <Stack.Screen name="progress/[id]" />
         </Stack>
       </CommentProvider>
     </TrainingProvider>

@@ -1,3 +1,4 @@
+import { createMobileProgressApi } from "./progress-api";
 import "server-only";
 import { createMobileAccessApi } from "./access-api";
 import { registerWithInvitation } from "../invitations/register";
@@ -13,7 +14,7 @@ import {
 } from "../data/mobile-comments";
 import { listUnread, markCommentsRead } from "../data/unread";
 import { listWorkouts, getWorkoutDetail } from "../data/workouts";
-import { listExerciseProgress } from "../data/progress";
+import { getExerciseProgressDetail, listExerciseProgress } from "../data/progress";
 import { saveWorkout } from "../data/save-workout";
 import { syncAchievements } from "../data/achievements";
 import { mobileHistorySchema, mobileWorkoutSchema, mobileProgressSchema } from "./contracts";
@@ -228,6 +229,22 @@ export function mobileCommentsApi() {
           (await ownsMobileWorkout(db, id, workoutId))
             ? (await markCommentsRead(db, workoutId)).ok
             : null,
+      };
+    },
+  });
+}
+
+export function mobileProgressApi() {
+  return createMobileProgressApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        detail: async (exerciseId) => {
+          const value = await getExerciseProgressDetail(db, identity.profile.id, exerciseId);
+          return value ? { version: 1 as const, today: santiagoDate(new Date()), ...value } : null;
+        },
       };
     },
   });

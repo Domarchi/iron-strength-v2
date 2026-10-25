@@ -150,6 +150,30 @@ test("el registro móvil se guarda una vez y solo su cuenta puede consultar hist
     });
     const progress = await request.get("/api/mobile/v1/progress", { headers });
     expect((await progress.json()).exercises[0].bestWeightKg).toBe(30);
+    const evidence = await request.get(`/api/mobile/v1/progress/${exercise.exerciseId}`, {
+      headers,
+    });
+    expect(evidence.status()).toBe(200);
+    expect(evidence.headers()["cache-control"]).toContain("no-store");
+    expect(evidence.headers()["set-cookie"]).toBeUndefined();
+    expect(await evidence.json()).toMatchObject({
+      version: 1,
+      exercise: { exerciseId: exercise.exerciseId, bestWeightKg: 30 },
+      points: [{ workoutId: id, volumeKg: 300 }],
+    });
+    expect(
+      (
+        await request.get(`/api/mobile/v1/progress/${exercise.exerciseId}?studentId=${bob}`, {
+          headers,
+        })
+      ).status(),
+    ).toBe(400);
+    expect(
+      (
+        await request.get(`/api/mobile/v1/progress/${exercise.exerciseId}`, { maxRedirects: 0 })
+      ).status(),
+    ).toBe(401);
+
     const bobAuth = mobileSessionSchema.parse(
       await (
         await request.post("/api/mobile/v1/auth/login", {
@@ -160,6 +184,13 @@ test("el registro móvil se guarda una vez y solo su cuenta puede consultar hist
     expect(
       (
         await request.get(`/api/mobile/v1/workouts/${id}`, {
+          headers: { Authorization: `Bearer ${bobAuth.accessToken}` },
+        })
+      ).status(),
+    ).toBe(404);
+    expect(
+      (
+        await request.get(`/api/mobile/v1/progress/${exercise.exerciseId}`, {
           headers: { Authorization: `Bearer ${bobAuth.accessToken}` },
         })
       ).status(),
