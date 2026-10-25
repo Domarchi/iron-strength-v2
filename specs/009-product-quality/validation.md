@@ -179,3 +179,13 @@ Pruebas previas fallaban por módulos/pantalla ausentes (product-t196-root-befor
 Revisión React: componentes fuera de rutas, sin efectos de escritura/navegación, consultas solo al enfocar y selección de periodo en parámetros locales; cambiar filtros no repite la lectura ni modifica entrenamientos. Solo se muestra detalle cuya identidad coincide, y el error no se presenta como un periodo vacío. Las credenciales y el progreso no se agregan al almacenamiento local en esta tarea. Las 40 migraciones remotas coinciden sin aplicar cambios (product-t196-migration-verification.json). El proyecto/equipo/rama y promoción manual Vercel se comprobaron antes de preparar la publicación; no se escribieron datos de prueba en producción.
 
 Emulación y Hermes no acreditan aceptación física ni binarios firmados. La publicación de la API y comprobación del túnel se registran después de promover el artefacto verificado.
+
+## Publicación de progreso · T196
+
+Publicado el 24 de octubre en https://iron-strength-seven.vercel.app: **J dpl_GrPnHwKMo2jNxaCwntCQYESvK2HQ**, código **2450c1ca5480b3f97d2570e189877bd529341397**, BUILD_ID **7cb209181f064d24879dde9024fee495**, Next 16.4.3 / Node 24. **28 controles Staged y 28 públicos** sobre el mismo artefacto; la nueva ruta exige Bearer y rechaza parámetros de alumno. Dominio y promoción manual false comprobados después de promover. product-t196-staged-verification.json, public-verification.json y project-after.json (este último privado).
+
+Las **40 migraciones coinciden** hasta 20261024120000; no se aplicaron migraciones, semillas, roles, resets o datos de prueba en producción. Se conserva el respaldo privado restaurado/ensayado de T195. CI **40155599463** sigue startup_failure; se usó la autorización existente con los controles locales completos. Sigue pendiente su resolución en T202.
+
+Expo entrega SDK 58 y ambos bundles actualizados con HTTP 200 e identidad EAS conservada, sin referencias a administración o secreto de servidor (product-t196-tunnel-verification.json). Hermes final: Android entry-b99c95d3ea90414e6b2e31030f951931.hbc e iOS entry-fca5fcfe6d77bdebeaf373b5bbe5ac2b.hbc. No acredita aceptación física ni tiendas. Capturas finales guardadas fuera de Git en work/product-t196-design.
+
+Recuperación anterior **I dpl_5qg6aF2JfURmxosoKkPSQF43bQbJ** conserva acceso, cuenta, entrenamiento y conversaciones, pero no el detalle nuevo de progreso. Requeriría corregir esa API hacia adelante; no se eliminarían borradores ni se revertiría SQL. No hubo cambios de formato local en T196.
