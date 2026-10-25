@@ -14,7 +14,7 @@
 - [x] T199 · Cola por cuenta, transferencia recuperable de borradores anteriores, sincronización en primer plano y guardas de salida/eliminación; software verificado. Prueba física/binarios y tiendas separados en T201–T204.
 - [x] T200 · Productividad web con posición por pestaña, guardado explícito por teclado y acabado compacto; 40 acciones frente a 95, software verificado y publicado en L. Aceptación física separada.
 - [ ] T201 · Android preview code 2 firmado, con permisos mínimos y arranque en frío offline comprobado en emulador; pendientes iOS/cuentas y aceptación física completa.
-- [ ] T202 · CI, pruebas nativas y validación física completa.
+- [ ] T202 · Dos correcciones y circuito Android A/B offline/sincronización verificados en emulador; pendientes CI, iOS, resto del circuito nativo y aceptación física.
 - [ ] T203 · Beta, privacidad, soporte y materiales de tiendas.
 - [ ] T204 · Publicación gradual del artefacto probado.
 - [ ] T205 · Observabilidad, respaldos y mantenimiento.

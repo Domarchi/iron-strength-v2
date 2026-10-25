@@ -1,0 +1,22 @@
+appId: com.domarchis.ironstrength.quality
+name: Cierre completo protegido sin conexión
+---
+- scrollUntilVisible:
+    element: ".*4/4 series.*"
+    direction: UP
+- assertVisible: ".*4/4 series.*"
+- scrollUntilVisible:
+    element: "Finalizar entrenamiento"
+- tapOn: "Finalizar entrenamiento"
+- scrollUntilVisible:
+    element: ".*4 series realizadas.*0 pendientes.*"
+- assertVisible: ".*4 series realizadas.*0 pendientes.*"
+- scrollUntilVisible:
+    element: "Guardar en este dispositivo"
+- tapOn: "Guardar en este dispositivo"
+- extendedWaitUntil:
+    visible: "Tu registro está protegido"
+    timeout: 20000
+- assertNotVisible: "Tu coach puede revisarlo.*"
+- tapOn: "Volver a Inicio"
+- assertVisible: "${PENDING_LABEL}"

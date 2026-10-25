@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -18,6 +18,7 @@ export default function Login() {
   const { reason } = useLocalSearchParams<{ reason?: string }>();
   const p = usePalette(),
     { client, state } = useSession();
+  const passwordInput = useRef<ComponentRef<typeof TextInput>>(null);
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [visible, setVisible] = useState(false),
@@ -113,6 +114,8 @@ export default function Login() {
               placeholderTextColor={p.muted}
               style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.bg }]}
               returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => passwordInput.current?.focus()}
             />
           </View>
           <View style={{ gap: 7 }}>
@@ -122,6 +125,7 @@ export default function Login() {
                 keyboardAppearance={p.dark ? "dark" : "light"}
                 selectionColor={p.blue}
                 accessibilityLabel="Contraseña"
+                ref={passwordInput}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!visible}

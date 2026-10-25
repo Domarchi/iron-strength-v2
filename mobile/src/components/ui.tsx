@@ -118,24 +118,26 @@ export function Page({ children }: PropsWithChildren) {
   const p = usePalette(),
     insets = useSafeAreaInsets();
   return (
-    <ScrollView
-      testID="app-page"
-      style={{ flex: 1, backgroundColor: p.bg }}
-      contentContainerStyle={{
-        paddingHorizontal: 20,
-        paddingTop: insets.top + 16,
-        paddingBottom: insets.bottom + 28,
-        gap: 20,
-        flexGrow: 1,
-        width: "100%",
-        maxWidth: 560,
-        alignSelf: "center",
-      }}
-      keyboardShouldPersistTaps="handled"
-    >
-      <ConnectionStatus />
-      {children}
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: p.bg, paddingTop: insets.top }}>
+      <ScrollView
+        testID="app-page"
+        style={{ flex: 1, backgroundColor: p.bg }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 16,
+          paddingBottom: insets.bottom + 28,
+          gap: 20,
+          flexGrow: 1,
+          width: "100%",
+          maxWidth: 560,
+          alignSelf: "center",
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ConnectionStatus />
+        {children}
+      </ScrollView>
+    </View>
   );
 }
 export function Loading() {

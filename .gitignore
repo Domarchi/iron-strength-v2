@@ -17,3 +17,4 @@ test-results/
 
 public/offline-workers/
 .next-interactive/
+.next-native-e2e/

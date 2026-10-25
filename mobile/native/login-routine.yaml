@@ -1,0 +1,30 @@
+# Solo instalación quality y cuentas ficticias de la pila aislada.
+appId: com.domarchis.ironstrength.quality
+name: Acceso y consulta de rutina sin iniciar entrenamiento
+---
+- launchApp:
+    clearState: false
+- assertVisible: "Bienvenido de nuevo"
+- tapOn:
+    text: "Correo"
+    index: 1
+- inputText: ${EMAIL}
+- pressKey: enter
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn: "Entrar"
+- extendedWaitUntil:
+    visible: "Hola, ${FIRST_NAME}"
+    timeout: 30000
+- tapOn: "Ver rutina A"
+- assertVisible: "Empezar entrenamiento"
+- assertVisible: "Rutina A"
+- assertNotVisible: "Retomar entrenamiento pendiente"
+- tapOn: "Volver"
+- scrollUntilVisible:
+    element: "Descargar semana"
+    direction: DOWN
+- tapOn: "Descargar semana"
+- extendedWaitUntil:
+    visible: "Descarga guardada:.*"
+    timeout: 30000

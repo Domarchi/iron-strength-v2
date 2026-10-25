@@ -74,3 +74,27 @@ for (const variant of ["preview", "production"]) {
     expect(base.android.blockedPermissions).toBeUndefined();
   });
 }
+
+it("calidad local exige un origen HTTPS de pruebas y aísla instalación/datos", () => {
+  vi.stubEnv("APP_VARIANT", "quality");
+  for (const origin of [
+    undefined,
+    "https://iron-strength-seven.vercel.app",
+    "http://127.0.0.1:3100",
+    "https://prueba.trycloudflare.com/ruta",
+    "https://user:pass@prueba.trycloudflare.com",
+  ]) {
+    vi.stubEnv("EXPO_PUBLIC_API_URL", origin);
+    expect(() => load()({ config: base })).toThrow("pruebas");
+  }
+  vi.stubEnv("EXPO_PUBLIC_API_URL", "https://prueba-nativa.trycloudflare.com");
+  const app = load()({ config: base });
+  expect(app.name).toBe("Iron Strength Pruebas");
+  expect(app.android.package).toBe("com.domarchis.ironstrength.quality");
+  expect(app.ios.bundleIdentifier).toBe("com.domarchis.ironstrength.quality");
+  expect(app.scheme).toBe("iron-strength-quality");
+  expect(app.extra.eas.projectId).toBe(base.extra.eas.projectId);
+  expect(app.android.blockedPermissions).toContain("android.permission.SYSTEM_ALERT_WINDOW");
+  vi.stubEnv("EAS_BUILD", "true");
+  expect(() => load()({ config: base })).toThrow("local");
+});

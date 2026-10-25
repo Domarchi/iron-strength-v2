@@ -10,6 +10,7 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     ".next-interactive/**",
+    ".next-native-e2e/**",
     "public/offline-workers/**",
     "out/**",
     "build/**",

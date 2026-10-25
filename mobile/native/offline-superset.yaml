@@ -1,0 +1,26 @@
+appId: com.domarchis.ironstrength.quality
+name: Superserie y alternativa con semana descargada
+---
+- assertVisible: "SEMANA DESCARGADA"
+- tapOn: "Consultar rutina descargada A"
+- tapOn: "Empezar entrenamiento"
+- assertVisible: ".*0/4 series.*"
+- scrollUntilVisible:
+    element: "Indicaciones y alternativas"
+- tapOn: "Indicaciones y alternativas"
+- scrollUntilVisible:
+    element: "Cambiar a Press de banca inclinado"
+- tapOn: "Cambiar a Press de banca inclinado"
+- scrollUntilVisible:
+    element: "Repeticiones serie 1"
+    direction: UP
+- tapOn: "Repeticiones serie 1"
+- inputText: "8"
+- hideKeyboard
+- tapOn: "Completar serie 1"
+- assertVisible: "Press de banca"
+- tapOn: "Repeticiones serie 1"
+- inputText: "8"
+- hideKeyboard
+- tapOn: "Completar serie 1"
+- assertVisible: "Tiempo de descanso restante"

@@ -326,3 +326,39 @@ La instalación -r sobre el APK 1 en el AVD propio conservó el paquete, sin des
 ### Diagnóstico externo del CI para T202
 
 El aviso de la ejecución 40169728166 se leyó en la sesión GitHub autenticada: pagos recientes fallidos o límite de gasto impiden iniciar el trabajo. Se solicitó al propietario revisar Billing & plans, sin cambiar pagos/límites. El archivo remoto coincide con el local, actionlint 1.7.12 valida sin errores, las tres acciones fijadas existen y Actions está habilitado. El run fallido usa un workflow marcador BuildFailed/deleted, con cero trabajos y checks, no un fallo ejecutado de nuestros tests. No modificar el YAML válido para ocultar ese bloqueo ni declarar CI verde. Fuente: [aviso de GitHub](https://github.com/Domarchi/iron-strength-v2/actions/runs/40169728166), lectura UI; evidencia API y actionlint privada product-t202-*.
+
+## T202 · Primer control de calidad sobre APK nativo (25 de octubre)
+
+T202 continúa pendiente: faltan CI operativo, iOS/firma y aceptación física. Este control verifica software y el circuito Android en emulador; no acredita tiendas ni participación real de los cuatro usuarios.
+
+### Correcciones verificadas
+
+- Siguiente en Correo no enfocaba Contraseña. Dos regresiones Expo web fallaron antes del cambio; ahora pasan en Chromium/WebKit. Ref compatible con TextInput de RN 0.88 y submitBehavior=submit conservan el envío explícito desde Contraseña. El APK confirmó foco en Contraseña en modo avión, sin intento de acceso.
+- Al editar/desplazar una serie, ScrollView ocupaba y=0 y el contenido pasaba bajo el reloj Android. La comprobación nativa previa falló frente a los 136 px medidos del Pixel 7. Page reserva ahora el margen superior en un View exterior fijo; el contenido conserva 16 px interiores y el margen inferior existente. APK actualizado: vista desplazable desde y=136, incluido el examen visual con teclado; no se usa ese número como constante del producto.
+- La primera pasada tras cambiar Page detectó dos expectativas de apariencia: el ScrollView había perdido su color explícito. Se restauró, cuatro casos enfocados pasaron y la suite final completa aprobó. La pasada interrumpida y sus fallos no se contabilizan como verde.
+
+Controles finales: check raíz con **542 pruebas/81 archivos y build**, diez advertencias de lint previas sin errores; check móvil **107 pruebas**, tipos y lint; **124 E2E Expo web** en Chromium/WebKit sin fallos/reintentos en la pasada final (10,3 min); Expo Doctor **20/20**. Hermes Android entry-e47796299a94c4a15bc24eb8eab99397.hbc e iOS entry-67e04793974a2985a529a411d9886b46.hbc exportados. No hay cambios SQL, API o dependencias. La auditoría transitiva móvil y sus limitaciones siguen registradas en T201.
+
+### Aislamiento y artefacto local
+
+Variante quality: com.domarchis.ironstrength.quality, nombre Iron Strength Pruebas y esquema propio. Exige origen HTTPS efímero trycloudflare.com sin ruta/credenciales; rechaza producción, ausencia de URL y compilación EAS. La prueba previa de esta configuración falló antes de implementarla. No añade un selector de backend a alumnos ni excepciones HTTP al cliente.
+
+Se generó Android por Expo CNG fuera del checkout y se compiló release x86_64 localmente, sin cuota EAS adicional ni editar fuentes nativas a mano. APK final de calidad: **024b218a9ba85f18562f6f3a0118e852ff544f1047e1297acaadc5c098d941c9**, 37.266.466 bytes, código 2 en un paquete diferente de preview. Firma, CRC, bundle Hermes local, origen, ZIP y coincidencia de los cuatro archivos de configuración/interfaz con la copia de compilación verificados. Usa la firma de pruebas generada por CNG; no es el instalador para alumnos ni usa la clave preview del propietario.
+
+Supabase exclusivo de pruebas 55321; coach y tres alumnos ficticios, sin semillas/datos reales. Next aislado con BUILD_ID e49b04c3488640bb8a04efa32c53c84c contrastado localmente y por HTTPS antes de compilar. Túnel y proxy temporales solo para ese servidor. Las medidas/fotos permanecen en web según la decisión del propietario.
+
+### Circuito Android observado
+
+Pixel 7 emulado, Android 16/API 36/x86_64, serial propio; proceso y almacenamiento nativos, sin Metro. Acceso, consulta y descarga pasaron en Maestro; el servidor conservó únicamente el entrenamiento histórico de la semilla: consultar no creó otro. Modo avión y Wi-Fi deshabilitado, cierre forzado/reapertura: identidad y semana descargada recuperadas.
+
+Sesión A: alternativa autorizada Press de banca inclinado, superserie de dos ejercicios/dos series, avance por rondas y cuatro series completadas. El descanso pasó de **85 a 28 s durante 58,29 s** de fondo/cierre/reapertura; alternativa y series conservadas. Cierre protegido localmente. Actualización -r del APK sin desinstalar conservó identidad y ese pendiente. La sesión B independiente completó otras cuatro series y se cerró localmente. Una nueva reapertura sin red mostró **dos registros pendientes**; el servidor aún no tenía ninguno de esos cierres.
+
+Al reconectar en primer plano, un proxy cortó la primera respuesta 200 de creación de cada ID después del commit del servidor. La ruta HTTPS volvió a solicitar esos mismos IDs y recibió duplicate; terminó con **un A y un B**, cuatro series cada uno y la sustitución conservada. La UI mostró ÚLTIMO ENVÍO CONFIRMADO y el acceso al resultado. Los intervalos entre solicitudes no permiten atribuir por sí solos cada reintento a la cola: el transporte HTTPS también puede reintentar. El backoff del cliente conserva sus pruebas unitarias/Expo web; no se presenta esta captura como prueba de que el dispositivo observó ambos cortes.
+
+La inspección adicional del APK preview code 2 confirmó 56 bibliotecas de 64 bits con segmentos LOAD y ZIP alineados a 16 KiB. Un chequeo auxiliar de RELRO señaló casos para ejecución; el arranque en un AVD propio de **16384 bytes por página** dibujó el acceso y mantuvo vivo el proceso sin FATAL EXCEPTION. No se aplicó un parche especulativo. El circuito completo de quality en ese segundo AVD se interrumpió por transporte ADB offline; no se acredita entrenamiento completo de 16 KiB. Se detuvo ese AVD y se continuó con uno solo.
+
+Maestro CLI 2.11.0 se obtuvo del release oficial y se verificó con SHA-256; uso local sin cloud/analyze/analytics. Algunos intentos tuvieron muerte del servidor del controlador o transporte offline con el proceso de la app vivo; se conservan separados de los resultados funcionales. Los fragmentos aceptados están en mobile/native y la guía en docs/native-quality.md. Los intentos no aceptados y registros completos permanecen fuera de Git. Las variables FIRST_NAME/PENDING_LABEL se pasan explícitamente: definirlas también en env del flujo puede prevalecer sobre la CLI.
+
+Evidencia privada principal: product-t202-{keyboard-red,keyboard-green,mobile-check-final,mobile-ui-verified,root-check-verified,doctor,hermes-final}.log; quality-apk-final-proof.json; native-next-proof.json; safe-area-{red,green}.log; native-rest-proof.json; native-{consultation,before-sync,sync}-proof.json; loss-proxy-proof.json; capturas/jerarquías native-*.png/xml. No se publican contraseñas, JWT, cabeceras o payloads privados.
+
+Pendientes adicionales del circuito nativo: detalle heterogéneo preparado para Carla pero todavía sin aceptación en APK, historial/progreso/comentarios y cambio de las cuatro cuentas en este ensayo, accesibilidad física y prueba iPhone. Producción web/API sigue en L; no se promovió este APK local ni se enviaron binarios a tiendas. GitHub permanece bloqueado por facturación/límite de gasto, solicitado al propietario; no se modificaron pagos o límites.
