@@ -22,6 +22,8 @@ Un coach y tres alumnos. El coach también entrena con su propia cuenta. Alumno 
 
 ## Diseño y estados
 
+T202: al ampliar el texto del sistema, el selector Claro/Oscuro/Sistema debe conservar palabras completas y controles táctiles, sin reducir el tamaño elegido por la persona. Por encima de escala 1,15, presentar opciones apiladas con icono y texto en una fila; mantener las tres columnas en el tamaño habitual. Verificar en Android instalado a 360 dp y 130 % con captura previa del fallo, además de la regresión de temas existente. No cambia la preferencia guardada.
+
 Una acción principal por pantalla. Inicio prioriza Retomar sobre nueva sesión; entrenamiento centrado en el ejercicio actual, kilos/repeticiones directos y opciones secundarias plegadas. Progreso permite entender el periodo, métrica y evidencia; las gráficas futuras se calculan con registros reales. Editor permite adaptar una base, ver sesión/semana activas, objetivos por serie y guardado explícito con revisión. El prototipo debe explicar qué interacción es simulada.
 
 Referencia base: tokens de mobile/src/lib/appearance.ts. Escala de espacios 4/8/12/16/24/32, texto principal 16 px, secundario 13–14 px, métricas tabulares y títulos 28–34 px; el tamaño se adapta a contenido y texto ampliado. Controles nuevos de 48 px o más; conservar al menos 44 px en los existentes hasta su revisión. Estados comprensibles mediante texto/icono además del color. Contraste AA, foco de teclado visible, movimiento reducido y áreas seguras. Revisar 360 px, tamaños habituales de teléfono y escritorio del coach.

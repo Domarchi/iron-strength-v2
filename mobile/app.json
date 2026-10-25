@@ -15,7 +15,7 @@
         "foregroundImage": "./assets/icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/icon.png",

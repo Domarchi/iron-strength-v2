@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useAppearance } from "../lib/appearance-context";
 import { Icon, type IconName } from "./icon";
 import { s, usePalette } from "./ui";
@@ -10,7 +10,9 @@ const options: { value: AppearancePreference; label: string; icon: IconName }[] 
 ];
 export function AppearanceSelect() {
   const p = usePalette(),
-    a = useAppearance();
+    a = useAppearance(),
+    { fontScale } = useWindowDimensions(),
+    stacked = fontScale > 1.15;
   const label =
     a.preference === "system"
       ? "Según tu teléfono"
@@ -23,7 +25,7 @@ export function AppearanceSelect() {
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel="Tema de la app"
-        style={{ flexDirection: "row", gap: 8 }}
+        style={{ flexDirection: stacked ? "column" : "row", gap: 8 }}
       >
         {options.map((option) => {
           const selected = a.preference === option.value;
@@ -39,8 +41,9 @@ export function AppearanceSelect() {
                 void a.choose(option.value);
               }}
               style={({ pressed }) => ({
-                flex: 1,
-                minHeight: 80,
+                flex: stacked ? undefined : 1,
+                flexDirection: stacked ? "row" : "column",
+                minHeight: stacked ? 64 : 80,
                 padding: 10,
                 borderRadius: 12,
                 borderWidth: 1,

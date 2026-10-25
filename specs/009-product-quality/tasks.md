@@ -13,8 +13,8 @@
 - [x] T198 · Identidad local verificada y registro desde semana descargada, cierre protegido y reconexión manual; software verificado. Arranque físico sin Metro pendiente de T201; cola múltiple/sincronización automática en T199.
 - [x] T199 · Cola por cuenta, transferencia recuperable de borradores anteriores, sincronización en primer plano y guardas de salida/eliminación; software verificado. Prueba física/binarios y tiendas separados en T201–T204.
 - [x] T200 · Productividad web con posición por pestaña, guardado explícito por teclado y acabado compacto; 40 acciones frente a 95, software verificado y publicado en L. Aceptación física separada.
-- [ ] T201 · Android preview code 2 firmado, con permisos mínimos y arranque en frío offline comprobado en emulador; pendientes iOS/cuentas y aceptación física completa.
-- [ ] T202 · Dos correcciones y circuito Android A/B offline/sincronización verificados en emulador; pendientes CI, iOS, resto del circuito nativo y aceptación física.
+- [ ] T201 · Android preview code 3 firmado y actualizado sin desinstalar; code 4 preparado con ajuste de texto ampliado. Pendientes instalador final, iOS/cuentas y aceptación física.
+- [ ] T202 · Circuito Android con coach/tres alumnos, registro offline, progreso, comentarios y recuperación de borrado verificados; ajuste de texto ampliado en comprobación. Pendientes CI, iOS y aceptación física.
 - [ ] T203 · Ficha y borradores de privacidad/soporte preparados; pendientes contacto público, retención, accesos, beta y materiales finales.
 - [ ] T204 · Publicación gradual del artefacto probado.
 - [ ] T205 · Control manual seguro y procedimiento de operación verificados; pendientes responsable, retención/destino de copias y circuito operativo de beta.
