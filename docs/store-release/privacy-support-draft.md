@@ -47,3 +47,9 @@ La página pública de eliminación debe identificar Iron Strength, explicar qu�
 Nombre/correo, ID de usuario, información de ejercicio y contenido de notas/comentarios se vinculan a la cuenta para la funcionalidad del producto. Revisar las categorías concretas y los registros técnicos de terceros antes de marcar opciones definitivas. No seleccionar «no recopilamos datos» por usar Supabase, ni anunciar permisos de fotos/salud que la app nativa no tiene. [App Privacy de Apple](https://developer.apple.com/app-store/app-privacy-details/).
 
 Este documento es el material de preparación; los formularios y la política finales quedan pendientes de los datos y verificaciones anteriores.
+
+## Evidencia nativa iOS · 25 de octubre de 2026
+
+La compilación para simulador cf066780-0f66-4f6b-bde1-6454071513a1 terminó desde d34366d: paquete com.domarchis.ironstrength.preview, versión 0.1.0/build 1, plataformas iPhoneSimulator y Mach-O arm64/x86_64 de simulador. Incluye once manifiestos xcprivacy y dieciséis declaraciones de acceso a API requerida; ninguno declara tracking o tipos de datos recogidos. Esto describe los manifiestos incluidos y **no permite marcar que la app no recoge datos**: el acceso y los entrenamientos/comentarios sí se envían a la API según el recorrido descrito arriba.
+
+Info.plist incluye NSFaceIDUsageDescription del SDK de almacenamiento; no incluye claves de uso de cámara o fototeca. Contrastar comportamiento del binario firmado para iPhone y formularios de tienda antes del envío. Compilar e inspeccionar en Linux no acredita ejecución, tráfico real, aceptación de permisos o aprobación de privacidad. No se publicó esta política ni un correo personal.
