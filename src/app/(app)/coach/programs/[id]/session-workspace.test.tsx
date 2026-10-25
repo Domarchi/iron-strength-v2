@@ -81,3 +81,62 @@ it("el arrastre transitorio no inserta avisos ni mueve la lista bajo el puntero"
   expect(host.textContent).not.toContain("Cambios pendientes");
   expect(host.textContent).not.toContain("Las sesiones con cambios pendientes");
 });
+
+it("recupera la posición por programa y conserva campos al cambiar de sesión", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  sessionStorage.clear();
+  host = document.createElement("div");
+  document.body.append(host);
+  root = createRoot(host);
+  const scope = { userId: "coach", programId: "base" };
+  const render = async (programId = "base") =>
+    act(() =>
+      root!.render(
+        <WeekWorkspace
+          key={programId}
+          scope={{ ...scope, programId }}
+          initialWeek={1}
+          weeks={[
+            { number: 1, editable: true, sessions: 2, exercises: 2, sessionIds: ["a", "b"] },
+            { number: 3, editable: true, sessions: 2, exercises: 2, sessionIds: ["c", "d"] },
+          ]}
+        >
+          {[
+            ["a", "b"],
+            ["c", "d"],
+          ].map((ids, index) => (
+            <SessionWorkspace
+              key={index}
+              weekNumber={index ? 3 : 1}
+              sessions={ids.map((id) => ({ id, label: id }))}
+            >
+              {ids.map((id) => (
+                <input key={id} aria-label={id} defaultValue={id} />
+              ))}
+            </SessionWorkspace>
+          ))}
+        </WeekWorkspace>,
+      ),
+    );
+  await render();
+  await act(() =>
+    host.querySelector<HTMLButtonElement>('[aria-controls="editor-week-3"]')!.click(),
+  );
+  await act(() =>
+    host.querySelector<HTMLButtonElement>('[aria-controls="editor-session-d"]')!.click(),
+  );
+  await act(() => root!.unmount());
+  root = createRoot(host);
+  await render();
+  expect(host.querySelector('[aria-controls="editor-week-3"]')!.getAttribute("aria-pressed")).toBe(
+    "true",
+  );
+  expect(
+    host.querySelector('[aria-controls="editor-session-d"]')!.getAttribute("aria-pressed"),
+  ).toBe("true");
+  await render("other");
+  expect(host.querySelector('[aria-controls="editor-week-1"]')!.getAttribute("aria-pressed")).toBe(
+    "true",
+  );
+  sessionStorage.clear();
+});

@@ -12,7 +12,7 @@
 - [x] T197 · Descarga completa de semana por cuenta, revisión de identidad/semana, persistencia atómica y recuperación; apertura en frío pendiente de T198. Publicación y aceptación física por separado.
 - [x] T198 · Identidad local verificada y registro desde semana descargada, cierre protegido y reconexión manual; software verificado. Arranque físico sin Metro pendiente de T201; cola múltiple/sincronización automática en T199.
 - [x] T199 · Cola por cuenta, transferencia recuperable de borradores anteriores, sincronización en primer plano y guardas de salida/eliminación; software verificado. Prueba física/binarios y tiendas separados en T201–T204.
-- [ ] T200 · Productividad de adaptación y asignación web con línea base.
+- [x] T200 · Productividad web con posición por pestaña, guardado explícito por teclado y acabado compacto; 40 acciones frente a 95, software verificado. Publicación registrada por separado.
 - [ ] T201 · Binarios preview e instalación real sin Metro, sujetos a cuentas/firma/cuotas.
 - [ ] T202 · CI, pruebas nativas y validación física completa.
 - [ ] T203 · Beta, privacidad, soporte y materiales de tiendas.

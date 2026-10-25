@@ -44,3 +44,7 @@ El propietario pidió avanzar con el diseño después de aprobar T190; T194 se a
 - Mantener contratos, claves de almacenamiento, proveedor y navegación. Ningún cambio de tema o detalle visual vuelve a iniciar un entrenamiento. No se añaden fuentes, imágenes, librerías ni permisos.
 
 Aceptación: consultar sin iniciar, continuar en una acción, cambiar ejercicio sin marcarlo, editar y completar series con check pequeño, recuperar al recargar, conservar temporizador, alternativas y cierre único ante respuesta perdida. Validar claro/oscuro, 360 px, teclado, movimiento reducido, contraste y áreas táctiles en Chromium/WebKit. Exportar Hermes Android/iOS; documentar por separado prueba física.
+
+## Coach web — T200
+
+Mantener una sesión visible, biblioteca vinculada y editores montados. Nombre y día orientativo comparten fila desde 640 px; en teléfono se apilan. El guardado permanece dentro del contenido, con superficie neutra y borde, y se mantiene visible al desplazar desde 1024 px; a 1280 px continúa la biblioteca lateral. Ayuda Ctrl / ⌘ + Enter junto al guardado en escritorio. No añadir tarjetas decorativas, imágenes ni indicadores que desplacen destinos durante un arrastre. La preferencia por pestaña solo recuerda orientación; los mensajes de protección de borradores siguen describiendo las escrituras reales.

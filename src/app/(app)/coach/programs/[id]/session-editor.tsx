@@ -790,7 +790,7 @@ function Editor({
           <label className="flex min-h-11 items-center gap-2 text-xs">
             <input
               type="checkbox"
-              className="size-11 accent-primary"
+              className="size-5 shrink-0 accent-primary"
               aria-label={`Seleccionar ${exercise.name}`}
               checked={selected.includes(exercise.id)}
               disabled={layoutDisabled}
@@ -908,8 +908,35 @@ function Editor({
       </div>
     );
   }
+  const saveDisabled =
+    !dirty ||
+    pending ||
+    orderPending ||
+    dragging ||
+    !!copyRequest ||
+    conflict ||
+    !!layoutRequest ||
+    alternativesDirty ||
+    selected.length > 0;
   return (
-    <Card className="coach-session" id={`session-${session.id}`}>
+    <Card
+      className="coach-session"
+      id={`session-${session.id}`}
+      onKeyDown={(event) => {
+        if (
+          event.key !== "Enter" ||
+          !(event.ctrlKey || event.metaKey) ||
+          event.altKey ||
+          event.repeat ||
+          event.defaultPrevented ||
+          event.currentTarget.closest("[hidden], fieldset[disabled]") ||
+          saveDisabled
+        )
+          return;
+        event.preventDefault();
+        save();
+      }}
+    >
       <CardHeader className="border-b pb-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -942,86 +969,88 @@ function Editor({
             />
           </div>
         </div>
-        <label className="mt-3 block text-sm font-medium">
-          Nombre de sesión {session.label}
-          <Input
-            value={title ?? session.title ?? ""}
-            maxLength={80}
-            placeholder="Por ejemplo, Tren superior"
-            disabled={
-              pending ||
-              orderPending ||
-              dragging ||
-              conflict ||
-              !!saveRequest ||
-              !!additionRequest ||
-              !!copyRequest ||
-              !!layoutRequest ||
-              alternativesDirty ||
-              selected.length > 0
-            }
-            onChange={(event) => {
-              const next =
-                event.target.value === (session.title ?? "") ? undefined : event.target.value;
-              if (baseRevision.current === null) baseRevision.current = session.revision;
-              setTitle(next);
-              persistLocal({ title: next });
-              setStatus(null);
-              setError(null);
-              guard.setDirty(
-                session.id,
-                next !== undefined ||
-                  weekday !== undefined ||
-                  changed.length > 0 ||
-                  orphanEdits.length > 0,
-              );
-            }}
-          />
-        </label>
-        <label className="mt-3 flex flex-col gap-1 text-sm font-medium">
-          Día orientativo de sesión {session.label}
-          <NativeSelect
-            aria-label={`Día orientativo de sesión ${session.label}`}
-            aria-describedby={`day-hint-${session.id}`}
+        <div className="coach-session-metadata mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm font-medium">
+            Nombre de sesión {session.label}
+            <Input
+              value={title ?? session.title ?? ""}
+              maxLength={80}
+              placeholder="Por ejemplo, Tren superior"
+              disabled={
+                pending ||
+                orderPending ||
+                dragging ||
+                conflict ||
+                !!saveRequest ||
+                !!additionRequest ||
+                !!copyRequest ||
+                !!layoutRequest ||
+                alternativesDirty ||
+                selected.length > 0
+              }
+              onChange={(event) => {
+                const next =
+                  event.target.value === (session.title ?? "") ? undefined : event.target.value;
+                if (baseRevision.current === null) baseRevision.current = session.revision;
+                setTitle(next);
+                persistLocal({ title: next });
+                setStatus(null);
+                setError(null);
+                guard.setDirty(
+                  session.id,
+                  next !== undefined ||
+                    weekday !== undefined ||
+                    changed.length > 0 ||
+                    orphanEdits.length > 0,
+                );
+              }}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Día orientativo de sesión {session.label}
+            <NativeSelect
+              aria-label={`Día orientativo de sesión ${session.label}`}
+              aria-describedby={`day-hint-${session.id}`}
 
-            value={weekday ?? session.weekday ?? -1}
-            disabled={
-              pending ||
-              orderPending ||
-              dragging ||
-              conflict ||
-              !!saveRequest ||
-              !!additionRequest ||
-              !!copyRequest ||
-              !!layoutRequest ||
-              alternativesDirty ||
-              selected.length > 0
-            }
-            onChange={(event) => {
-              const value = Number(event.target.value);
-              const next = value === (session.weekday ?? -1) ? undefined : value;
-              baseRevision.current ??= session.revision;
-              setWeekday(next);
-              persistLocal({ weekday: next });
-              setStatus(null);
-              setError(null);
-              guard.setDirty(
-                session.id,
-                next !== undefined ||
-                  title !== undefined ||
-                  changed.length > 0 ||
-                  orphanEdits.length > 0,
-              );
-            }}
-          >
-            <option value={-1}>Sin día sugerido</option>
-            {WEEKDAYS.map((day, index) => (
-              <option key={day} value={index}>
-                {day}
-              </option>
-            ))}
-          </NativeSelect>
-        </label>
+              value={weekday ?? session.weekday ?? -1}
+              disabled={
+                pending ||
+                orderPending ||
+                dragging ||
+                conflict ||
+                !!saveRequest ||
+                !!additionRequest ||
+                !!copyRequest ||
+                !!layoutRequest ||
+                alternativesDirty ||
+                selected.length > 0
+              }
+              onChange={(event) => {
+                const value = Number(event.target.value);
+                const next = value === (session.weekday ?? -1) ? undefined : value;
+                baseRevision.current ??= session.revision;
+                setWeekday(next);
+                persistLocal({ weekday: next });
+                setStatus(null);
+                setError(null);
+                guard.setDirty(
+                  session.id,
+                  next !== undefined ||
+                    title !== undefined ||
+                    changed.length > 0 ||
+                    orphanEdits.length > 0,
+                );
+              }}
+            >
+              <option value={-1}>Sin día sugerido</option>
+              {WEEKDAYS.map((day, index) => (
+                <option key={day} value={index}>
+                  {day}
+                </option>
+              ))}
+            </NativeSelect>
+          </label>
+        </div>
         <p id={`day-hint-${session.id}`} className="mt-1 text-xs text-muted-foreground">
           El alumno puede moverlo dentro de su semana.
         </p>
@@ -1237,7 +1266,10 @@ function Editor({
                   : "Edita los valores y guarda la sesión."}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="hidden text-xs text-muted-foreground lg:inline">
+                Ctrl / ⌘ + Enter
+              </span>
               {dirty ? (
                 <Button
                   variant="ghost"
@@ -1278,17 +1310,8 @@ function Editor({
                 </Button>
               ) : null}
               <Button
-                disabled={
-                  !dirty ||
-                  pending ||
-                  orderPending ||
-                  dragging ||
-                  !!copyRequest ||
-                  conflict ||
-                  !!layoutRequest ||
-                  alternativesDirty ||
-                  selected.length > 0
-                }
+                disabled={saveDisabled}
+                aria-keyshortcuts="Control+Enter Meta+Enter"
                 onClick={save}
               >
                 <Save aria-hidden />

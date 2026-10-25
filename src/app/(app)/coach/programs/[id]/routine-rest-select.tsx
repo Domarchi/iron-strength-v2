@@ -15,7 +15,7 @@ export function RoutineRestSelect({
     ...new Set([0, 30, 60, 90, 120, 180, 300, 600, ...(value === null ? [] : [value])]),
   ].sort((a, b) => a - b);
   return (
-    <label className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+    <label className="flex min-w-0 items-center gap-2 whitespace-nowrap text-xs text-muted-foreground">
       Descanso
       <NativeSelect
         aria-label={label}

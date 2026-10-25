@@ -323,3 +323,139 @@ test("asignar tras perder la respuesta confirma la misma copia y el mismo alumno
     programs.data,
   );
 });
+
+test("recupera semana y sesión; el atajo guarda solo la sesión visible", async ({ page }) => {
+  await open(page);
+  await page.getByRole("button", { name: /^Semana 3/ }).click();
+  const tabs = page.getByRole("navigation", { name: "Sesiones de semana 3", exact: true });
+  const weight = () =>
+    page.getByLabel(`Peso (kg) de ${names[0]}`, { exact: true }).filter({ visible: true });
+  // Selección múltiple bloquea el mismo guardado por botón y teclado.
+  const selection = page
+    .getByRole("checkbox", { name: `Seleccionar ${names[0]}`, exact: true })
+    .filter({ visible: true });
+  await selection.check();
+  await expect(page.getByRole("button", { name: "Guardar sesión", exact: true })).toBeDisabled();
+  await selection.press("Control+Enter");
+  expect(
+    (await snapshot()).program_sessions
+      .filter((s) => s.week_number === 3)
+      .flatMap((s) => s.session_exercises)
+      .every((e) => e.target_weight_kg === 50),
+  ).toBe(true);
+  await selection.uncheck();
+  await weight().fill("61");
+  await tabs.getByRole("button", { name: /^Sesión B/ }).click();
+  await weight().fill("62");
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.reload();
+  await expect(page.getByRole("button", { name: /^Semana 3/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(tabs.getByRole("button", { name: /^Sesión B/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(weight()).toHaveValue("62");
+  await weight().press("Control+Enter");
+  await expect(
+    page.getByText("Cambios guardados.", { exact: true }).filter({ visible: true }),
+  ).toBeVisible();
+  const after = await snapshot();
+  const a = after.program_sessions.find((s) => s.week_number === 3 && s.label === "A")!;
+  const b = after.program_sessions.find((s) => s.week_number === 3 && s.label === "B")!;
+  expect(a.session_exercises.every((e) => e.target_weight_kg === 50)).toBe(true);
+  expect(b.session_exercises.find((e) => e.position === 0)!.target_weight_kg).toBe(62);
+  await tabs.getByRole("button", { name: /^Sesión A/ }).click();
+  await expect(weight()).toHaveValue("61");
+  await expect(
+    page.getByText("Tienes cambios sin guardar. Puedes cambiar de semana sin perderlos."),
+  ).toBeVisible();
+});
+
+test("la posición con cuota agotada no impide guardar; un formato futuro se conserva", async ({
+  page,
+}) => {
+  await open(page);
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key.startsWith("is:coach-view:")) throw new DOMException("Full", "QuotaExceededError");
+      original.call(this, key, value);
+    };
+  });
+  await page.getByRole("button", { name: /^Semana 3/ }).click();
+  await expect(
+    page.getByText("No se pudo guardar la posición del editor", { exact: false }),
+  ).toBeVisible();
+  const weight = page
+    .getByLabel(`Peso (kg) de ${names[0]}`, { exact: true })
+    .filter({ visible: true });
+  await weight.fill("63");
+  await weight.press("Meta+Enter");
+  await expect(
+    page.getByText("Cambios guardados.", { exact: true }).filter({ visible: true }),
+  ).toBeVisible();
+  const coach = (await snapshot()).coach_id;
+  const key = `is:coach-view:v1:${coach}:${programId}`;
+  // Recarga restaura las API originales antes de insertar un formato futuro.
+  await page.reload();
+  await page.evaluate(({ key }) => sessionStorage.setItem(key, '{"version":99}'), { key });
+  await page.reload();
+  await page.getByRole("button", { name: /^Semana 3/ }).click();
+  await expect(
+    page.getByText("No se pudo guardar la posición del editor", { exact: false }),
+  ).toBeVisible();
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), key)).toBe('{"version":99}');
+});
+
+test("editor legible en claro/oscuro a 360, 1024 y 1440 px", async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  await open(page);
+  for (const theme of ["light", "dark"]) {
+    await page.evaluate((theme) => {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+    }, theme);
+    for (const width of [360, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page
+        .getByLabel("Nombre de sesión A", { exact: true })
+        .filter({ visible: true })
+        .scrollIntoViewIfNeeded();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+      ).toBeLessThanOrEqual(0);
+      const smallTargets = await page
+        .getByRole("checkbox", { name: /^Seleccionar / })
+        .filter({ visible: true })
+        .evaluateAll((inputs) =>
+          inputs
+            .filter((input) => {
+              const box = (input.closest("label") ?? input).getBoundingClientRect();
+              return box.width < 44 || box.height < 44;
+            })
+            .map((input) => input.getAttribute("aria-label")),
+        );
+      expect(smallTargets).toEqual([]);
+      await page.screenshot({ path: testInfo.outputPath(`coach-${theme}-${width}.png`) });
+      const save = page.getByRole("button", { name: "Guardar sesión", exact: true });
+      await save.scrollIntoViewIfNeeded();
+      const bounds = await save.boundingBox();
+      expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      if (width >= 1024)
+        expect(
+          await save
+            .locator("..")
+            .locator("..")
+            .evaluate((node) => getComputedStyle(node).position),
+        ).toBe("sticky");
+      const audit = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze();
+      expect(
+        audit.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
+      ).toEqual([]);
+    }
+  }
+});

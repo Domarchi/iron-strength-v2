@@ -1,11 +1,28 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
+import {
+  editorViewStorage,
+  readEditorView,
+  saveEditorView,
+  type EditorViewScope,
+} from "@/lib/coach/editor-view";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Guard = {
   activeWeek?: number;
+  sessions?: Record<number, string>;
+  selectSession?: (week: number, id: string) => void;
   dirtyIds: string[];
   dirty: boolean;
   setDirty: (id: string, dirty: boolean) => void;
@@ -29,8 +46,18 @@ export function CleanEditor({ children }: { children: ReactNode }) {
   );
 }
 
-export function WeekWorkspace({
+const subscribe = () => () => {};
+export function WeekWorkspace(props: Parameters<typeof Workspace>[0]) {
+  const hydrated = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
+  return hydrated ? <Workspace {...props} /> : <p role="status">Cargando espacio de trabajo…</p>;
+}
+function Workspace({
   weeks,
+  scope,
   initialWeek,
   children,
   tools,
@@ -44,11 +71,25 @@ export function WeekWorkspace({
     sessionIds?: string[];
   }[];
   initialWeek: number;
+  scope?: EditorViewScope;
   children: ReactNode[];
   tools?: ReactNode;
   footer?: ReactNode;
 }) {
-  const [active, setActive] = useState(initialWeek);
+  const [restored] = useState(() => readEditorView(editorViewStorage(), scope, weeks, initialWeek));
+  const [view, setView] = useState(restored.view);
+  const current = useRef(view);
+  const [viewError, setViewError] = useState(!restored.writable);
+  const active = weeks.some((week) => week.number === view.week) ? view.week : initialWeek;
+  function changeView(next: typeof view) {
+    current.current = next;
+    setView(next);
+    if (scope && restored.writable) setViewError(!saveEditorView(editorViewStorage(), scope, next));
+  }
+  function selectSession(week: number, id: string) {
+    if (!weeks.find((w) => w.number === week)?.sessionIds?.includes(id)) return;
+    changeView({ ...current.current, sessions: { ...current.current.sessions, [week]: id } });
+  }
   const [dirtyIds, setDirtyIds] = useState<string[]>([]);
   const dirty = dirtyIds.length > 0;
   const setDirty = useCallback(
@@ -58,7 +99,14 @@ export function WeekWorkspace({
       ),
     [],
   );
-  const guard: Guard = { activeWeek: active, dirtyIds, dirty, setDirty };
+  const guard: Guard = {
+    activeWeek: active,
+    sessions: view.sessions,
+    selectSession: scope ? selectSession : undefined,
+    dirtyIds,
+    dirty,
+    setDirty,
+  };
   useEffect(() => {
     if (!dirty) return;
     const beforeUnload = (event: BeforeUnloadEvent) => {
@@ -124,7 +172,7 @@ export function WeekWorkspace({
               className="h-auto min-h-16 justify-start gap-2 px-3 py-2 text-left"
               aria-pressed={active === week.number}
               aria-controls={`editor-week-${week.number}`}
-              onClick={() => setActive(week.number)}
+              onClick={() => changeView({ ...current.current, week: week.number })}
             >
               {!week.editable ? <Lock className="size-4 shrink-0" aria-hidden /> : null}
               <span className="min-w-0">
@@ -144,6 +192,12 @@ export function WeekWorkspace({
             </Button>
           ))}
         </nav>
+        {viewError ? (
+          <p role="status" className="text-sm text-muted-foreground">
+            No se pudo guardar la posición del editor en esta pestaña. Puedes seguir editando y
+            guardar la sesión.
+          </p>
+        ) : null}
         {dirtyIds.some((id) => !id.endsWith("-drag")) ? (
           <p
             role="status"

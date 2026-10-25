@@ -160,6 +160,7 @@ export default async function ProgramEditorPage({
       <WeekWorkspace
         key={tree.id}
         initialWeek={currentWeek ?? 1}
+        scope={{ userId: tree.coachId, programId: tree.id }}
         weeks={weekNumbers.map((week) => ({
           number: week,
           sessionIds: tree.sessions.filter((s) => s.weekNumber === week).map((s) => s.id),

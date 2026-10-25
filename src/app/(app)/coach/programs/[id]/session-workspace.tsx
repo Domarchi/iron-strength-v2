@@ -17,14 +17,19 @@ export function SessionWorkspace({
   weekNumber?: number;
 }) {
   const [selected, setSelected] = useState(sessions[0]?.id);
-  const activeId = sessions.some((s) => s.id === selected) ? selected : sessions[0]?.id;
   const guard = useRoutineGuard();
+  const selection = guard.sessions?.[weekNumber] ?? selected;
+  const activeId = sessions.some((s) => s.id === selection) ? selection : sessions[0]?.id;
+  const activate = (id: string) => {
+    setSelected(id);
+    guard.selectSession?.(weekNumber, id);
+  };
   const dirty = (id: string) =>
     guard.dirtyIds.some(
       (key) => !key.endsWith("-drag") && (key === id || key.startsWith(`${id}-`)),
     );
   return (
-    <SessionWorkspaceContext value={{ activeId, activate: setSelected }}>
+    <SessionWorkspaceContext value={{ activeId, activate }}>
       <div className="min-w-0 space-y-4">
         {sessions.length > 1 ? (
           <nav
@@ -38,7 +43,7 @@ export function SessionWorkspace({
                 className="h-auto min-h-11 max-w-full flex-col items-start gap-0.5 whitespace-normal text-left"
                 aria-pressed={activeId === session.id}
                 aria-controls={`editor-session-${session.id}`}
-                onClick={() => setSelected(session.id)}
+                onClick={() => activate(session.id)}
                 onKeyDown={(event) => {
                   let next: number | undefined;
                   if (event.key === "ArrowRight") next = (index + 1) % sessions.length;
@@ -48,7 +53,7 @@ export function SessionWorkspace({
                   if (event.key === "End") next = sessions.length - 1;
                   if (next === undefined) return;
                   event.preventDefault();
-                  setSelected(sessions[next].id);
+                  activate(sessions[next].id);
                   event.currentTarget.parentElement
                     ?.querySelectorAll<HTMLButtonElement>("button")
                     [next]?.focus();

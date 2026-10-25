@@ -25,6 +25,10 @@ npm run dev                   # http://127.0.0.1:3000
 
 Usuarios de prueba locales (ver `.env.example`): `coach-e2e@test.local`, `alumno1-e2e@test.local`, `alumno2-e2e@test.local`.
 
+## Editor del coach
+
+En el editor web del coach, cada pestaña recuerda la semana y sesión abiertas de cada programa. Los cambios de la rutina siguen requiriendo **Guardar sesión**; también puedes usar **Ctrl + Enter** o **⌘ + Enter** dentro de la sesión. Los borradores de otras sesiones se conservan y las herramientas de copia/asignación se habilitan al guardarlos o descartarlos. Recordar la posición no guarda prescripciones en el servidor.
+
 ## Comandos
 
 | Comando                 | Qué hace                                      |

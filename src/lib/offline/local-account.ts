@@ -1,3 +1,4 @@
+import { clearEditorViews, editorViewStorage } from "@/lib/coach/editor-view";
 import type { DraftStorage } from "@/lib/workout/draft";
 import { offlineTransaction } from "./storage";
 import { listQueuedWorkouts, notifyQueueChanged } from "./queue";
@@ -50,5 +51,6 @@ export async function clearLocalAccount(userId: string): Promise<void> {
   for (const key of accountStorageKeys(localStorage, userId)) localStorage.removeItem(key);
   if (accountStorageKeys(localStorage, userId).length)
     throw new Error("No se pudieron eliminar todos los borradores locales.");
+  clearEditorViews(editorViewStorage(), userId);
   notifyQueueChanged();
 }

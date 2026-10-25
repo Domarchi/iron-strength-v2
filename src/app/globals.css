@@ -503,6 +503,9 @@
   width: 2.75rem;
   height: 2.75rem;
 }
+.coach-session-metadata {
+  grid-column: 1 / -1;
+}
 .coach-save-bar {
   border: 1px solid var(--border);
 }
@@ -510,6 +513,16 @@
   background: var(--card);
 }
 @media (min-width: 1024px) {
+  .coach-save-bar {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 20;
+    background: var(--card);
+    box-shadow: 0 6px 24px #00000014;
+  }
+  .coach-session {
+    overflow: visible;
+  }
   .coach-week-ribbon {
     display: flex;
     gap: 0.25rem;
@@ -667,13 +680,6 @@
   }
   .coach-exercise-row > details {
     min-width: 0;
-  }
-  .coach-save-bar {
-    position: sticky;
-    bottom: 1rem;
-    z-index: 20;
-    background: var(--card);
-    box-shadow: 0 6px 24px #153b6e1a;
   }
 }
 /* Keep the first viewport focused on the calendar and the working sets. */
