@@ -31,7 +31,7 @@ Salir retira el acceso local y protege la separación de cuentas; antes debe res
 
 El alumno puede solicitar el borrado autenticado desde Cuenta. Se confirma de forma explícita; la operación incluye los datos asociados y archivos privados previstos por el servicio. Un fallo no se presenta como eliminación terminada. El coach propietario mantiene la restricción del producto y debe disponer de un recorrido de soporte concreto antes de publicación.
 
-Pendientes que deben completarse con la operación real: plazo de retención de registros técnicos, ciclo/retención de respaldos y tratamiento de una restauración que incluya cuentas borradas. No prometer borrado inmediato de todas las copias históricas si eso no está implementado.
+El propietario eligió respaldos locales cifrados en F.R.I.D.A.Y. con conservación de 30 días. Existe una copia verificada y con vencimiento registrado; todavía no hay una tarea periódica de respaldo/eliminación o copia externa. Esta decisión no fija la retención de registros técnicos. Pendientes que deben completarse con la operación real: frecuencia y ejecución de la limpieza, custodia independiente de claves, plazo de registros técnicos y tratamiento de una restauración que incluya cuentas borradas. No prometer borrado inmediato de todas las copias históricas o una expiración automática si eso no está implementado.
 
 ## Ayuda propuesta
 

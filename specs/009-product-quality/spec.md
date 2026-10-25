@@ -14,6 +14,8 @@ Añadir una comprobación manual y de solo lectura del dominio productivo exclus
 
 Documentar señales y respuesta ante incidentes, compatibilidad con versiones móviles anteriores, actualización segura, límites de observación de proveedores y pasos de respaldo/restauración ya ensayados. No contratar monitorización, crear envíos a terceros o programar avisos sin solicitud. Separar las comprobaciones realizadas de los accesos, política de retención y aceptación física todavía pendientes.
 
+El 25 de octubre el propietario eligió conservar los respaldos durante 30 días y aceptó F.R.I.D.A.Y. como destino, después de considerar Drive/Ultron. Preparar una copia local cifrada del respaldo ya restaurado, fuera de Git y en carpeta privada; guardar la clave aleatoria en otro directorio privado del mismo usuario, sin exponerla en argumentos, logs o chat. Verificar descifrado y hashes, rechazo de clave incorrecta y corrupción. Registrar fecha de vencimiento y límites: equipo/disco compartido, sin copia externa o borrado automático acreditados. La frecuencia y custodia independiente de la clave quedan pendientes; no afirmar que el acuerdo de 30 días ya constituye una tarea periódica configurada.
+
 El propietario aprobó el 24 de octubre de 2026 avanzar desde T188 hacia un producto completo. Este ciclo concreta las etapas 1–4 del plan: alcance, recorridos, sistema visual y cuatro pantallas de referencia, junto con preparación local de distribución. El diseño de referencia se revisa antes de extenderlo a las pantallas funcionales. El resto de la hoja de ruta queda planificado; documentarlo no lo convierte en funciones disponibles.
 
 ## Usuarios y alcance
