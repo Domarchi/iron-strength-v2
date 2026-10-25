@@ -1,11 +1,13 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
-// Carga .env.local (Node 24) si existe; en CI las variables ya vienen del entorno.
-try {
-  process.loadEnvFile(".env.local");
-} catch {
-  // sin .env.local: se usan las variables del entorno
+// La pila aislada tiene prioridad; las variables ya inyectadas conservan precedencia.
+for (const file of [process.env.INTEGRATION_ENV_FILE ?? ".env.e2e.local", ".env.local"]) {
+  try {
+    process.loadEnvFile(file);
+  } catch {
+    // El helper exige destino aislado incluso si falta el archivo.
+  }
 }
 
 export default defineConfig({

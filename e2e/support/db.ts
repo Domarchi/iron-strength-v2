@@ -1,8 +1,11 @@
 // Utilidades de E2E contra Supabase LOCAL: crear y limpiar datos con service role.
+import { isIsolatedTestBackend } from "../../src/lib/testing/isolated-backend";
 import { createHash } from "node:crypto";
 import { E2E_EMAIL_DOMAIN, isE2EAccount } from "../../src/lib/testing/e2e-isolation";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../src/types/database";
+
+const verifiedAdminClients = new WeakSet<SupabaseClient<Database>>();
 
 function env(name: string): string {
   const value = process.env[name];
@@ -18,18 +21,31 @@ export const COACH = {
   name: "Coach E2E",
 };
 
-export function admin(): SupabaseClient<Database> {
-  const url = new URL(env("NEXT_PUBLIC_SUPABASE_URL"));
-  // Barrera de seguridad: estos tests borran usuarios. Solo contra una base local.
-  if (!["127.0.0.1", "localhost"].includes(url.hostname)) {
-    throw new Error(`Los tests E2E solo corren contra Supabase local (url: ${url.hostname}).`);
+function assertIsolatedBackend(): void {
+  if (!isIsolatedTestBackend(env("NEXT_PUBLIC_SUPABASE_URL"), process.env)) {
+    throw new Error(
+      "Los tests requieren la instancia aislada 55321 o el runner efímero de GitHub.",
+    );
   }
-  return createClient<Database>(url.toString(), env("SUPABASE_SECRET_KEY"), {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+}
+
+export function admin(): SupabaseClient<Database> {
+  assertIsolatedBackend();
+  const client = createClient<Database>(
+    env("NEXT_PUBLIC_SUPABASE_URL"),
+    env("SUPABASE_SECRET_KEY"),
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+    },
+  );
+  verifiedAdminClients.add(client);
+  return client;
 }
 
 export async function resetAll(db = admin()): Promise<void> {
+  assertIsolatedBackend();
+  if (!verifiedAdminClients.has(db))
+    throw new Error("Se requiere un cliente de pruebas verificado.");
   if (!isE2EAccount(COACH.email)) throw new Error(`El coach E2E debe usar @${E2E_EMAIL_DOMAIN}.`);
   const fixtureUsers: { id: string; email?: string }[] = [];
   for (let page = 1; ; page++) {

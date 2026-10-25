@@ -93,3 +93,11 @@ La preparación manual adicional se ejecuta con `node --disable-warning=MODULE_T
 Playwright ejecuta Chromium y WebKit en serie contra la instancia aislada. En una máquina con permisos de instalación: `npx playwright install --with-deps chromium webkit`. Para un solo motor: `npm run test:e2e -- --project=webkit`. El gesto táctil continuo por CDP se limita a Chromium; la [guía para teléfonos](phone-validation.md) identifica la comprobación física de Safari pendiente.
 
 En este equipo Ubuntu 26.04, las bibliotecas que faltaban para WebKit se descargaron como paquetes del sistema y se extrajeron bajo `../work/webkit-deps/root`, sin instalar paquetes globales. Sus bibliotecas compartidas están enlazadas en `minibrowser-wpe/sys/lib` y `minibrowser-gtk/sys/lib` del navegador de pruebas. No se cambiaron binarios del navegador ni archivos del sistema. Si se reinstala el navegador, repetir esa preparación o instalar sus dependencias normalmente. Estos archivos locales no forman parte del despliegue.
+
+## Aislamiento obligatorio de pruebas · 25 de octubre de 2026
+
+Integración y E2E comparten la misma guarda antes de crear clientes Supabase: solo http://127.0.0.1:55321 en este equipo. La base interactiva 54321, otros puertos/hosts, rutas y proyectos remotos se rechazan. CI=true por sí solo no cambia esa regla. La excepción 54321 corresponde exclusivamente al runner efímero github-hosted con CI=true, GITHUB_ACTIONS=true y RUNNER_ENVIRONMENT=github-hosted. Se conserva el contrato anterior de los tests móviles, ahora reutilizado por los helpers comunes.
+
+npm run test:int carga primero .env.e2e.local; INTEGRATION_ENV_FILE puede seleccionar otro archivo privado. Las variables ya inyectadas mantienen prioridad y .env.local solo completa las ausentes. Sin un destino aislado válido no se crea el cliente ni se empieza la limpieza. Un cliente de helper ya creado también vuelve a comprobar el entorno antes de resetUsers/resetAll. Los helpers no aceptan clientes de producción para usarlos como fixtures.
+
+Integración borra usuarios de la base aislada; E2E limpia solo sus cuentas reservadas. Ejecutarlos en serie cuando compartan 55321. No ejecutar una semilla o reset interactivo para reparar resultados de pruebas. pgTAP y cualquier reinicio de esquema se mantienen limitados a la pila aislada con su procedimiento propio.

@@ -1,9 +1,11 @@
 // Utilidades para tests de integración contra Supabase LOCAL. Nunca contra producción.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { isIsolatedTestBackend } from "@/lib/testing/isolated-backend";
 import { randomUUID } from "node:crypto";
 import type { Database } from "@/types/database";
 
 export type AdminClient = SupabaseClient<Database>;
+const verifiedAdminClients = new WeakSet<AdminClient>();
 
 function env(name: string): string {
   const value = process.env[name];
@@ -12,21 +14,26 @@ function env(name: string): string {
   return value;
 }
 
-// Barrera de seguridad: estos tests borran usuarios. Solo se permiten contra una base local.
+// Barrera de seguridad antes de crear un cliente o iniciar una limpieza.
 export function assertLocalSupabase(): void {
-  const url = new URL(env("NEXT_PUBLIC_SUPABASE_URL"));
-  if (!["127.0.0.1", "localhost"].includes(url.hostname)) {
+  if (!isIsolatedTestBackend(env("NEXT_PUBLIC_SUPABASE_URL"), process.env)) {
     throw new Error(
-      `Los tests de integración solo corren contra Supabase local (url: ${url.hostname}).`,
+      "Los tests requieren la instancia aislada 55321 o el runner efímero de GitHub.",
     );
   }
 }
 
 export function adminClient(): AdminClient {
   assertLocalSupabase();
-  return createClient<Database>(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SECRET_KEY"), {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const client = createClient<Database>(
+    env("NEXT_PUBLIC_SUPABASE_URL"),
+    env("SUPABASE_SECRET_KEY"),
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+    },
+  );
+  verifiedAdminClients.add(client);
+  return client;
 }
 
 // Cliente anónimo con la clave publicable, como lo vería un visitante o un usuario con sesión.
@@ -41,6 +48,9 @@ export function anonClient(): AdminClient {
 
 // Borra todos los usuarios (cascada a perfiles y datos) y el estado auxiliar. Deja la base lista.
 export async function resetUsers(admin: AdminClient = adminClient()): Promise<void> {
+  assertLocalSupabase();
+  if (!verifiedAdminClients.has(admin))
+    throw new Error("Se requiere un cliente de pruebas verificado.");
   const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (error) throw error;
   for (const user of data.users) {
