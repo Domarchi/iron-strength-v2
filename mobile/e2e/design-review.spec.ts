@@ -95,3 +95,26 @@ test("referencia a 360 px conserva controles y foco de revisión", async ({ page
     expect(box!.height).toBeGreaterThanOrEqual(44);
   }
 });
+
+test("referencia conserva kg/reps al cambiar tema y volver del inicio; descanso explícitamente ilustrativo", async ({
+  page,
+}) => {
+  await page.goto("/design-review/index.html?view=workout&theme=dark");
+  await page.getByLabel("Peso serie 2", { exact: true }).fill("27,5");
+  await page.getByLabel("Repeticiones serie 2", { exact: true }).fill("9");
+  await page.getByRole("checkbox", { name: "Completar serie 2", exact: true }).check();
+  await page.getByRole("button", { name: "Tema claro", exact: true }).click();
+  await expect(page.getByLabel("Peso serie 2", { exact: true })).toHaveValue("27,5");
+  await page.getByRole("button", { name: "Inicio", exact: true }).first().click();
+  await page.getByRole("button", { name: "Continuar sesión", exact: true }).click();
+  await expect(page.getByLabel("Repeticiones serie 2", { exact: true })).toHaveValue("9");
+  await expect(
+    page.getByRole("checkbox", { name: "Completar serie 2", exact: true }),
+  ).toBeChecked();
+  await expect(
+    page.getByText("Tiempo fijo para revisar el diseño. El temporizador real está en Expo Go.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+});

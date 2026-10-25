@@ -17,13 +17,25 @@ export function WorkoutSets({
   onComplete,
 }: {
   index: number;
-  onComplete: (setIndex: number) => void;
+  onComplete: (setIndex: number) => Promise<unknown>;
 }) {
   const p = usePalette(),
     { controller, training } = useTraining();
   const [options, showOptions] = useState<string | null>(null);
+  const [error, setError] = useState<{ setId: string; message: string } | null>(null);
   const exercise = training.active?.draft.exercises[index];
   if (!exercise) return null;
+  async function complete(setId: string, si: number) {
+    setError(null);
+    try {
+      await onComplete(si);
+    } catch (e) {
+      setError({
+        setId,
+        message: `Serie ${si + 1}: ${e instanceof Error ? e.message : "No pudimos completar esta serie. Reintenta."}`,
+      });
+    }
+  }
   return (
     <View style={{ gap: 4 }}>
       <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
@@ -86,9 +98,10 @@ export function WorkoutSets({
                 maxLength={7}
                 placeholder={exercise.isBodyweight ? "0" : "kg"}
                 placeholderTextColor={p.muted}
-                onChangeText={(v) =>
-                  controller.edit((draft) => updateSetField(draft, index, si, "weight", v))
-                }
+                onChangeText={(v) => {
+                  if (error?.setId === set.id) setError(null);
+                  controller.edit((draft) => updateSetField(draft, index, si, "weight", v));
+                }}
                 style={[
                   s.input,
                   s.number,
@@ -114,9 +127,10 @@ export function WorkoutSets({
                 maxLength={3}
                 placeholder={target ? String(target.repsMin) : "reps"}
                 placeholderTextColor={p.muted}
-                onChangeText={(v) =>
-                  controller.edit((draft) => updateSetField(draft, index, si, "reps", v))
-                }
+                onChangeText={(v) => {
+                  if (error?.setId === set.id) setError(null);
+                  controller.edit((draft) => updateSetField(draft, index, si, "reps", v));
+                }}
                 style={[
                   s.input,
                   s.number,
@@ -133,7 +147,13 @@ export function WorkoutSets({
                   },
                 ]}
               />
-              <SetCheck number={si + 1} checked={set.done} onPress={() => onComplete(si)} />
+              <SetCheck
+                number={si + 1}
+                checked={set.done}
+                onPress={() => {
+                  void complete(set.id, si);
+                }}
+              />
             </View>
             <Text
               style={[
@@ -147,6 +167,14 @@ export function WorkoutSets({
                   ? `Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${target.targetWeightKg.toLocaleString("es-CL")} kg` : ""}`
                   : "Serie adicional"}
             </Text>
+            {error?.setId === set.id ? (
+              <Text
+                accessibilityRole="alert"
+                style={[s.caption, { color: p.danger, paddingHorizontal: 8 }]}
+              >
+                {error.message}
+              </Text>
+            ) : null}
             {options === set.id ? (
               <View style={[s.row, { paddingTop: 4 }]}>
                 <Action

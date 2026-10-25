@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { DEMO_ROUTINES } from "./demo";
 import { TrainingController, type TrainingStorage } from "./training";
-import { updateSetField } from "../../../src/lib/workout/runner-state";
+import { toggleWarmup, updateSetField } from "../../../src/lib/workout/runner-state";
+import { remainingSeconds } from "../../../src/domain/rest-timer";
 const user = "11111111-1111-4111-8111-111111111111";
 const other = "22222222-2222-4222-8222-222222222222";
 function fixture() {
@@ -180,4 +181,40 @@ it("al avanzar entre integrantes de una superserie corta el descanso anterior", 
   await a.complete(2, 0);
   expect(a.getSnapshot().active?.activeIndex).toBe(3);
   expect(a.getSnapshot().active?.draft.rest).toBeNull();
+});
+
+it("un calentamiento respeta el descanso desactivado del grupo y no avanza la ronda", async () => {
+  const x = fixture(),
+    a = x.create();
+  const routine = structuredClone(DEMO_ROUTINES[1]);
+  routine.exercises.forEach((e) => {
+    if (e.supersetId) e.supersetRestSeconds = 0;
+  });
+  await a.restore();
+  await a.start(routine, "demo");
+  await a.focus(2);
+  a.edit((d) => updateSetField(toggleWarmup(d, 2, 0), 2, 0, "weight", "10"));
+  await a.complete(2, 0);
+  expect(a.getSnapshot().active?.activeIndex).toBe(2);
+  expect(a.getSnapshot().active?.draft.rest).toBeNull();
+});
+
+it("una entrada inválida conserva series y descanso; recuperar no reinicia el término", async () => {
+  const x = fixture(),
+    a = x.create();
+  await a.restore();
+  await a.start(DEMO_ROUTINES[0], "demo");
+  a.edit((d) => updateSetField(d, 0, 0, "weight", "20"));
+  await a.complete(0, 0);
+  const rest = a.getSnapshot().active!.draft.rest!;
+  a.edit((d) => updateSetField(d, 0, 1, "weight", "501"));
+  await expect(a.complete(0, 1)).rejects.toThrow("Revisa kg");
+  expect(a.getSnapshot().active!.draft.exercises[0].sets[1].done).toBe(false);
+  expect(a.getSnapshot().active!.draft.rest).toEqual(rest);
+  await a.flush();
+  const b = x.create();
+  await b.restore();
+  expect(b.getSnapshot().active!.draft.rest).toEqual(rest);
+  expect(remainingSeconds(rest, Date.parse("2026-10-24T15:00:25Z"))).toBe(65);
+  expect(remainingSeconds(rest, Date.parse("2026-10-24T15:02:00Z"))).toBe(0);
 });

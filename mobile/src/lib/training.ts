@@ -256,7 +256,11 @@ export class TrainingController {
       } else
         draft = {
           ...draft,
-          rest: restAfterSet(this.now().getTime(), result.wasWarmup, exercise.restSeconds ?? 90),
+          rest: restAfterSet(
+            this.now().getTime(),
+            result.wasWarmup,
+            (exercise.supersetId ? exercise.supersetRestSeconds : exercise.restSeconds) ?? 90,
+          ),
         };
     } else if (!previous.exercises[ex].sets[set]?.done)
       throw Error("Revisa kg (0–500) y repeticiones (1–100) antes de marcar la serie.");

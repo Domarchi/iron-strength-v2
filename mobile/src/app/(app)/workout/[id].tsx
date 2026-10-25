@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Icon } from "../../../components/icon";
 import { Action, Brand, IconAction, Notice, Page, s, usePalette } from "../../../components/ui";
+import { RestControls } from "../../../components/rest-controls";
 import { WorkoutSets } from "../../../components/workout-sets";
 import { useTraining } from "../../../lib/training-context";
 import { summarize, workoutVolume } from "../../../../../src/lib/workout/runner-state";
@@ -226,7 +227,8 @@ export default function Workout() {
               <WorkoutSets
                 index={index}
                 onComplete={(si) => {
-                  void act(() => controller.complete(index, si));
+                  setError(null);
+                  return controller.complete(index, si);
                 }}
               />
               <Pressable
@@ -295,49 +297,6 @@ export default function Workout() {
                 </View>
               ) : null}
             </View>
-            {rest > 0 ? (
-              <View style={[s.card, { backgroundColor: p.tint, borderColor: p.blue }]}>
-                <View style={s.row}>
-                  <Text style={[s.subheading, { color: p.ink }]}>Descanso</Text>
-                  <Text
-                    accessibilityLabel="Tiempo de descanso restante"
-                    style={[s.heading, { color: p.blue }]}
-                  >
-                    {formatClock(rest)}
-                  </Text>
-                </View>
-                <View style={s.row}>
-                  <Action
-                    label="−15 s"
-                    accessibilityLabel="Restar 15 segundos"
-                    secondary
-                    onPress={() =>
-                      controller.edit((draft) => ({
-                        ...draft,
-                        rest: draft.rest ? adjustRest(draft.rest, Date.now(), -15) : null,
-                      }))
-                    }
-                  />
-                  <Action
-                    label="+15 s"
-                    accessibilityLabel="Sumar 15 segundos"
-                    secondary
-                    onPress={() =>
-                      controller.edit((draft) => ({
-                        ...draft,
-                        rest: draft.rest ? adjustRest(draft.rest, Date.now(), 15) : null,
-                      }))
-                    }
-                  />
-                  <Action
-                    label="Saltar"
-                    accessibilityLabel="Omitir descanso"
-                    secondary
-                    onPress={() => controller.edit((draft) => ({ ...draft, rest: null }))}
-                  />
-                </View>
-              </View>
-            ) : null}
             {index < d.exercises.length - 1 ? (
               <Action
                 label="Siguiente ejercicio"
@@ -431,6 +390,18 @@ export default function Workout() {
           />
         )}
       </Page>
+      {rest > 0 && !pending ? (
+        <RestControls
+          seconds={rest}
+          onAdjust={(delta) =>
+            controller.edit((draft) => ({
+              ...draft,
+              rest: draft.rest ? adjustRest(draft.rest, Date.now(), delta) : null,
+            }))
+          }
+          onSkip={() => controller.edit((draft) => ({ ...draft, rest: null }))}
+        />
+      ) : null}
     </KeyboardAvoidingView>
   );
 }

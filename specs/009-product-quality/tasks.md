@@ -6,6 +6,7 @@
 - [ ] T192 · Invitación y recuperación móvil.
 - [ ] T193 · Gestión de cuenta, privacidad y eliminación nativa.
 - [x] T194 · Extender referencia visual aceptada al cliente nativo existente; check circular en app y prototipo. Aceptación física separada; editor web en T200.
+- [x] T206 · Corregir fallos reproducibles de series/descanso y conservar entradas de la referencia al navegar.
 - [ ] T195 · Comentarios nativos y seguimiento con contexto.
 - [ ] T196 · Progreso por periodos y evidencia; especificar recorrido de medidas/fotos.
 - [ ] T197 · Descarga de semana nativa.

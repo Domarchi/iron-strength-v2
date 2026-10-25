@@ -52,3 +52,22 @@ Validación final del 24 de octubre de 2026:
 - El túnel existente entrega manifiestos SDK 58 y bundles actualizados iOS/Android con respuesta 200, nombre/proyecto conservados y componentes nuevos presentes. Referencia HTML 200 con check circular; no hay referencia a clave administrativa. product-t194-tunnel-verification.json. Esto confirma entrega de desarrollo, no apertura física.
 
 Sin cambios de SQL/API ni pruebas destructivas: no se ejecutaron pgTAP, integración, semillas o migraciones. No se desplegó Vercel ni se modificó Supabase. Las tareas de invitación/cuenta T192–T193, las nuevas funciones de seguimiento/offline, firma y publicación continúan pendientes en la hoja de ruta.
+
+## T206 · Correcciones de series y descanso
+
+El propietario reportó fallos al registrar series o descansar. Se reprodujeron antes de corregir: avisos de validación fuera de la fila, controles de descanso fuera del área visible al desplazarse, calentamiento que iniciaba 60 s pese a tener 0 s en su grupo, y valores de la referencia HTML que se reiniciaban al cambiar tema. Evidencia product-t206-unit-before.log (un fallo reproducido y una prueba de recuperación aprobada) y product-t206-ui-before.log (dos E2E en rojo).
+
+WorkoutSets muestra la causa junto a la serie, elimina el aviso al editar y conserva los valores; entradas inválidas no completan ni cambian el descanso. Los errores de almacenamiento siguen visibles en el estado global. RestControls es un hermano del ScrollView dentro de KeyboardAvoidingView: usa espacio propio, áreas seguras y controles táctiles de 48 px. No tapa el registro ni depende de desplazarse al final. Ajustar/omitir conserva la lógica de término absoluto, sin reiniciar al cambiar ejercicio o recuperar. El calentamiento usa la prescripción del grupo igual que el cliente web, incluido 0 para desactivarlo, y no avanza la ronda.
+
+La referencia conserva kg/reps en memoria al navegar o cambiar tema y escapa los valores al reconstruir HTML. Explica que el tiempo mostrado es fijo; el temporizador funcional se prueba en Expo. No añade persistencia, acceso ni escrituras de cuenta. El alcance de T190 se conserva.
+
+Validación del 24 de octubre de 2026:
+
+- Check raíz aprobado: formato, lint sin errores (diez avisos existentes), tipos, **519 unitarias** y build Next con 64 recursos. product-t206-root-check.log.
+- Check móvil aprobado: tipos, lint sin errores (un aviso previo), **33 unitarias**. Incluye el fallo de calentamiento corregido y recuperación del término absoluto/expiración, además de conservación del timer ante un valor inválido. product-t206-mobile-check.log.
+- **Seis E2E enfocadas** y luego **42 E2E completas**, Chromium/WebKit, sin fallos/reintentos; pasada completa de 3,4 min. Casos nuevos: 501 kg/101 reps y corrección, coma decimal, timer visible al enfocar la primera serie, ajustes ±15 s, cambio de ejercicio, recuperación con mismo término/valores, omisión persistida y referencia sin pérdida de entradas al navegar. Conserva pruebas de superseries, respuesta perdida/idempotencia, almacenamiento lleno, claro/oscuro, 360 px, movimiento reducido y Axe A/AA/2.1AA. product-t206-ui-focused.log y product-t206-ui-final.log.
+- Doctor **20/20** y Hermes Android/iOS aprobados: entry-979fbb87fcd5accfb5bf59c6900ef453.hbc / entry-10041a17ecc6a45aa31f00e07aa11fba.hbc. product-t206-doctor.log y product-t206-bundle.log.
+- Capturas de recuperación claro/oscuro inspeccionadas: barra de descanso visible, con espacio separado del registro. Evidencia fuera de Git en work/product-t206-design. Datos sintéticos, peticiones interceptadas; no se probaron cuentas reales mediante automatización.
+- Túnel SDK 58 entrega manifiestos/bundles nuevos iOS/Android con HTTP 200, mismos nombre/proyecto y componentes corregidos presentes. HTML 200 con retención en memoria y aclaración de tiempo fijo. product-t206-tunnel-verification.json. Sin referencia a clave administrativa; sin firma o build remoto.
+
+Sin cambios de web/API/SQL, semillas, migraciones, integración o pgTAP. La recuperación comprobada no sustituye la aceptación física en iPhone/Android, especialmente teclado y bloqueo de pantalla. No se publicaron cambios en Vercel/Supabase ni en tiendas.

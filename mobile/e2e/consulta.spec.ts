@@ -544,6 +544,77 @@ test("salir conserva apariencia oscura y la apertura siguiente la recupera", asy
 });
 
 for (const theme of ["light", "dark"] as const) {
+  test(`series y descanso ${theme}: error junto a la fila, controles visibles y término recuperable`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+    await emptyAccount(page);
+    await enter(page);
+    await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
+    await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+    await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
+    const weight = page.getByRole("textbox", { name: "Peso serie 3", exact: true });
+    const check = page.getByRole("checkbox", { name: "Completar serie 3", exact: true });
+    await weight.fill("501");
+    await check.click();
+    await expect(check).not.toBeChecked();
+    const error = page.getByRole("alert").filter({ hasText: "Serie 3: Revisa kg" });
+    await expect(error).toBeInViewport();
+    await weight.fill("22,5");
+    await expect(error).toHaveCount(0);
+    const reps = page.getByRole("textbox", { name: "Repeticiones serie 3", exact: true });
+    await reps.fill("101");
+    await check.click();
+    await expect(error).toBeInViewport();
+    await expect(check).not.toBeChecked();
+    await reps.fill("9");
+    await expect(error).toHaveCount(0);
+    await check.click();
+    await expect(check).toBeChecked();
+    const timer = page.getByLabel("Tiempo de descanso restante");
+    await page.getByRole("textbox", { name: "Peso serie 1", exact: true }).focus();
+    await expect(timer).toBeInViewport();
+    const readEnd = () =>
+      page.evaluate(() => {
+        const key = Object.keys(localStorage).find((k) => k.startsWith("is:native-training:"));
+        return key ? (JSON.parse(localStorage.getItem(key)!).active?.draft.rest?.endsAt ?? 0) : 0;
+      });
+    await expect.poll(readEnd).toBeGreaterThan(0);
+    const initial = await readEnd();
+    await page.getByRole("button", { name: "Sumar 15 segundos", exact: true }).click();
+    await expect.poll(readEnd).toBeGreaterThan(initial + 14000);
+    const extended = await readEnd();
+    await page.getByRole("button", { name: "Restar 15 segundos", exact: true }).click();
+    await expect.poll(readEnd).toBeLessThan(extended - 14000);
+    const end = await readEnd();
+    await page.getByRole("button", { name: "Ir a Press con mancuernas", exact: true }).click();
+    await expect(timer).toBeInViewport();
+    expect(await readEnd()).toBe(end);
+    await page.getByRole("button", { name: "Ir a Sentadilla goblet", exact: true }).click();
+    await enter(page);
+    await page.getByRole("button", { name: "Retomar entrenamiento", exact: true }).click();
+    await expect(timer).toBeInViewport();
+    expect(await readEnd()).toBe(end);
+    await expect(weight).toHaveValue("22,5");
+    await expect(reps).toHaveValue("9");
+    await expect(check).toBeChecked();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      360,
+    );
+    expect(
+      (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+        .violations,
+    ).toEqual([]);
+    await page.screenshot({
+      path: test.info().outputPath(`rest-recovery-${theme}.png`),
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: "Omitir descanso", exact: true }).click();
+    await expect(timer).toHaveCount(0);
+    await expect.poll(readEnd).toBe(0);
+  });
+
   test(`pantallas funcionales ${theme}: semana y marcas con datos confirmados, sin métricas ficticias`, async ({
     page,
   }) => {

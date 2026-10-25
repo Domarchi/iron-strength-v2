@@ -41,3 +41,13 @@ Validar configuración resuelta de cada variante, identidad EAS conservada, nomb
 ## Extensión visual aprobada · T194
 
 Después de revisar T190, el propietario aprobó llevar la referencia a las pantallas funcionales y pidió un check de serie pequeño y circular. Se adelanta T194 de forma independiente de acceso/cuenta: la implementación nativa conserva datos, navegación, contratos y recuperación; sus criterios están en design.md. El editor web queda en T200. La referencia de estilo está aprobada, mientras que la aceptación en dispositivos físicos continúa separada.
+
+## T206 · Repaso de series y descanso
+
+El propietario reportó fallos al registrar series o descansar. Revisar los recorridos antes de añadir funciones. Errores de entrada deben aparecer junto a la serie afectada, conservar sus valores y no marcarla ni iniciar descanso; al corregir los campos desaparece ese aviso. Conservar los fallos de almacenamiento globales y su recuperación, sin afirmar guardado antes de confirmarlo.
+
+Durante un entrenamiento en curso, el descanso y sus controles permanecen visibles al desplazarse por las series, fuera del contenido desplazable y sin taparlo. Respetar teclado, áreas seguras y movimiento reducido. Ajustar, omitir y recuperar mantienen la hora absoluta de término; volver a la app no reinicia el tiempo. Desactivar el descanso del grupo (0 segundos) se respeta también en calentamientos; estos nunca avanzan la ronda. No cambiar la regla de autocompletar repeticiones vacías desde la prescripción ni las reglas de desmarcado existentes.
+
+En la referencia HTML, conservar los pesos y repeticiones editados en memoria al cambiar tema o navegar entre vistas. Aclarar que su descanso es estático e ilustrativo; no confundirlo con el temporizador de Expo. Continúa sin persistencia, autenticación o escrituras de cuenta. No ampliar el prototipo a una segunda app funcional.
+
+Aceptación: entradas inválidas con aviso local, corrección y completado; timer visible al volver a la primera fila, ajustes y recuperación con el mismo término; calentamientos con descanso de grupo desactivado; superserie por rondas y respuesta perdida sin duplicación. Check raíz/móvil, E2E Chromium/WebKit, exportación Hermes y revisión visual. Sin cambios de API/SQL ni datos remotos.
