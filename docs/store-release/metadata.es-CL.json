@@ -12,7 +12,7 @@
   "accountDeletionUrl": null,
   "reviewAccount": "Pendiente; credenciales por canal privado de la tienda",
   "iosScreenshots": "Pendientes de captura iOS real/simulador y revisión",
-  "androidScreenshots": "Capturas funcionales para seleccionar; no enviadas",
+  "androidScreenshots": "Cuatro candidatos Android y gráfico en assets/google-play; recapturar con producción y revisar antes de enviar",
   "contentLocale": "es-CL",
   "storeLocaleSelection": "Pendiente de confirmar idiomas disponibles en ambas consolas"
 }

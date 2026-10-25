@@ -15,6 +15,6 @@
 - [x] T200 · Productividad web con posición por pestaña, guardado explícito por teclado y acabado compacto; 40 acciones frente a 95, software verificado y publicado en L. Aceptación física separada.
 - [ ] T201 · Android preview code 4 firmado, actualizado sin desinstalar y abierto offline en emuladores de 4/16 KB. iOS para simulador compilado/inspeccionado; pendientes ejecución iOS, firma iPhone/cuentas y aceptación física.
 - [ ] T202 · Circuito Android con coach/tres alumnos, registro offline, progreso, comentarios y recuperación de borrado verificados; texto ampliado corregido y verificado. Pendientes CI, iOS y aceptación física.
-- [ ] T203 · Ficha, política/soporte e iconos vectoriales exportados en borrador; pendientes contacto público, retención, accesos, beta y materiales finales.
+- [ ] T203 · Ficha, política/soporte, iconos vectoriales, cuatro capturas Android y gráfico exportados en borrador; pendientes contacto público, retención, accesos, beta y materiales finales.
 - [ ] T204 · Procedimiento y registro del candidato preparados; pendientes AAB/IPA de producción, beta y publicación del mismo artefacto probado.
 - [ ] T205 · Control manual seguro y procedimiento de operación verificados; pendientes responsable, retención/destino de copias y circuito operativo de beta.

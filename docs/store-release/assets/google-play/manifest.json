@@ -1,0 +1,70 @@
+{
+  "status": "Borradores; revisar con el candidato de producción antes de subir",
+  "platform": "Android",
+  "captureOrigin": "APK quality de T202; datos ficticios en instancia aislada",
+  "font": "Noto Sans instalada en el sistema de generación",
+  "featureGraphic": {
+    "file": "feature-graphic.png",
+    "width": 1024,
+    "height": 500,
+    "channels": 3,
+    "bytes": 30384,
+    "sha256": "5fff5160b63edae298996f7fa320d648581d84d9d2d946978165bd16742e02ff",
+    "altText": "Iron Strength: registra tus series y sigue tu planificación.",
+    "kind": "Gráfico vectorial; no es una captura de la app"
+  },
+  "screenshots": [
+    {
+      "file": "01-home-dark.png",
+      "width": 1440,
+      "height": 2560,
+      "channels": 3,
+      "bytes": 210791,
+      "sha256": "5f283ea4cb4df006c2a096c65957f26d0bb1cf7a44bc2d6a23d2a9fc515051bd",
+      "title": "Tu semana a mano",
+      "altText": "Semana con siguiente rutina y avance de sesiones en tema oscuro.",
+      "source": "source/home-dark.png",
+      "sourceSha256": "e3051c2a413bdb1d1404d6ac1c3455d82cdd23c13646e8b12b4acad254f28448",
+      "originalPixelsPreserved": true
+    },
+    {
+      "file": "02-workout.png",
+      "width": 1440,
+      "height": 2560,
+      "channels": 3,
+      "bytes": 219298,
+      "sha256": "e4aeeb316d2cd2718bd021cb43601fc538e327f90614e7f943eb07647127cedc",
+      "title": "Registra cada serie",
+      "altText": "Registro de sentadilla con objetivos distintos por serie y superserie.",
+      "source": "source/workout.png",
+      "sourceSha256": "05641005159d23d5f299c6fc3229b04a05967df6d63386c5c592d536a09bc515",
+      "originalPixelsPreserved": true
+    },
+    {
+      "file": "03-progress.png",
+      "width": 1440,
+      "height": 2560,
+      "channels": 3,
+      "bytes": 231078,
+      "sha256": "62a668b5a2b06e8e080a9b81ad9107838d14bec60a5dc8497342381941a02da5",
+      "title": "Progreso con contexto",
+      "altText": "Volumen de press de banca en doce semanas con gráfico y registros de origen.",
+      "source": "source/progress.png",
+      "sourceSha256": "838e5a41aa2da4a3561852892c4e4c092802900ad641cf90d1ed05233d82fe94",
+      "originalPixelsPreserved": true
+    },
+    {
+      "file": "04-home-light.png",
+      "width": 1440,
+      "height": 2560,
+      "channels": 3,
+      "bytes": 199060,
+      "sha256": "bd53556a8b63cbdbeb28144c4db55afdcded27a2d21c95ddba315092894b6e3c",
+      "title": "Elige claro u oscuro",
+      "altText": "Inicio en tema claro con texto ampliado y avance semanal.",
+      "source": "source/home-light.png",
+      "sourceSha256": "35071c119df8fb19f382cd2594f4eaaa4fa44b4650e2cdb9adba0f4fe244f3f9",
+      "originalPixelsPreserved": true
+    }
+  ]
+}

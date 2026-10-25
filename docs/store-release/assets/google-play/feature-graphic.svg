@@ -1,0 +1,50 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1024"
+  height="500"
+  viewBox="0 0 1024 500"
+>
+  <title>Iron Strength: registra tus series y sigue tu planificación.</title>
+  <rect width="1024" height="500" fill="#152b4d" />
+  <path d="M72 126v252" stroke="#68b0ff" stroke-width="5" />
+  <g font-family="Noto Sans, sans-serif">
+    <text
+      x="108"
+      y="155"
+      fill="#a7ccff"
+      font-size="19"
+      font-weight="700"
+      letter-spacing="2"
+    >
+      IRON STRENGTH
+    </text>
+    <text x="104" y="242" fill="#ffffff" font-size="70" font-weight="700">
+      Tu plan.
+    </text>
+    <text x="104" y="324" fill="#ffffff" font-size="70" font-weight="700">
+      Serie a serie.
+    </text>
+    <text x="108" y="377" fill="#c6d4e8" font-size="22">
+      Registra. Revisa. Retoma.
+    </text>
+  </g>
+  <g
+    fill="none"
+    stroke="#68b0ff"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <circle cx="794" cy="192" r="18" />
+    <path d="m785 192 6 6 12-13" />
+    <circle cx="794" cy="252" r="18" />
+    <path d="m785 252 6 6 12-13" />
+    <circle cx="794" cy="312" r="18" />
+    <path d="m785 312 6 6 12-13" />
+  </g>
+  <g fill="#68b0ff">
+    <rect x="836" y="186" width="92" height="12" rx="6" />
+    <rect x="836" y="246" width="92" height="12" rx="6" />
+    <rect x="836" y="306" width="92" height="12" rx="6" />
+  </g>
+</svg>
