@@ -10,9 +10,11 @@ import {
   View,
 } from "react-native";
 import { Icon } from "../components/icon";
-import { Action, Brand, Page, s, usePalette } from "../components/ui";
+import { Action, Brand, Notice, Page, s, usePalette } from "../components/ui";
 import { useSession } from "../lib/session";
+import { useAccountRemoval } from "../lib/account-removal-context";
 export default function Login() {
+  const { removal } = useAccountRemoval();
   const { reason } = useLocalSearchParams<{ reason?: string }>();
   const p = usePalette(),
     { client, state } = useSession();
@@ -50,6 +52,15 @@ export default function Login() {
     >
       <Page>
         <Brand />
+        {removal.completion ? (
+          <Notice
+            message={
+              removal.completion === "server_deleted"
+                ? "Tu cuenta fue borrada del servidor y completamos la limpieza de este dispositivo."
+                : "Se borraron solo los registros de esta cuenta en este dispositivo. No tenemos confirmación de borrado de tu cuenta remota."
+            }
+          />
+        ) : null}
         {reason === "registered" || reason === "password" ? (
           <Text accessibilityRole="alert" style={[s.body, { color: p.success }]}>
             {reason === "registered"
@@ -177,6 +188,7 @@ export default function Login() {
         <Text style={[s.caption, { color: p.muted, textAlign: "center" }]}>
           ¿Necesitas acceso? Pide a tu coach un enlace de invitación o recuperación.
         </Text>
+        <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
       </Page>
     </KeyboardAvoidingView>
   );

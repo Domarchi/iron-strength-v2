@@ -11,6 +11,7 @@ import {
   mobileInvitationSchema,
   mobileRegisteredSchema,
   mobilePasswordResetSchema,
+  mobileAccountDeletedSchema,
   type MobileSession,
 } from "../../../src/lib/mobile/contracts";
 import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
@@ -345,6 +346,19 @@ export class MobileClient {
   }
   async resetPassword(input: { token: string; password: string }) {
     return this.access("auth/reset-password", input, mobilePasswordResetSchema);
+  }
+  async deleteAccount(confirmation: string) {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const id = this.state.session.profile.id;
+    const result = mobileAccountDeletedSchema.parse(
+      await this.read("account/delete", { confirmation }),
+    );
+    if (result.userId !== id)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó esta cuenta. Conservamos el registro local.",
+      );
   }
   async week() {
     return mobileWeekSchema.parse(await this.read("week"));

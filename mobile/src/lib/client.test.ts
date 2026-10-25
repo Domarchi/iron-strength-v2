@@ -39,6 +39,24 @@ function setup(fetcher: Transport) {
   };
 }
 describe("sesión móvil segura", () => {
+  it("borrar cuenta exige respuesta de la misma identidad; confirmar no limpia la sesión prematuramente", async () => {
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(
+        Response.json({ version: 1, ok: true, userId: "22222222-2222-4222-8222-222222222222" }),
+      )
+      .mockResolvedValueOnce(Response.json({ version: 1, ok: true, userId: profile.id }));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    await expect(x.client.deleteAccount("BORRAR")).rejects.toMatchObject({ code: "identity" });
+    expect(x.client.getSnapshot().status).toBe("authenticated");
+    await x.client.deleteAccount("BORRAR");
+    expect(x.store.remove).not.toHaveBeenCalled();
+    expect(x.client.getSnapshot().status).toBe("authenticated");
+    expect(fetcher.mock.calls[2][1].headers).toMatchObject({ Authorization: "Bearer access-a" });
+    expect(JSON.parse(String(fetcher.mock.calls[2][1].body))).toEqual({ confirmation: "BORRAR" });
+  });
   it("solo permite HTTPS o desarrollo local explícito", () => {
     expect(() => validateApiOrigin("http://evil.example")).toThrow();
     expect(() => validateApiOrigin("https://user:pass@example.test")).toThrow();

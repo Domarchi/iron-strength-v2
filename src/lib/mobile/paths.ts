@@ -11,6 +11,7 @@ export function isMobileEndpointPath(path: string): boolean {
       "/api/mobile/v1/auth/reset-password",
       "/api/mobile/v1/auth/refresh",
       "/api/mobile/v1/auth/logout",
+      "/api/mobile/v1/account/delete",
       "/api/mobile/v1/week",
       "/api/mobile/v1/workouts",
       "/api/mobile/v1/progress",

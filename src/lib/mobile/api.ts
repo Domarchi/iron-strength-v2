@@ -236,4 +236,9 @@ export function createMobileApi(deps: MobileApiDependencies) {
   };
 }
 
-export { body as readMobileBody, json as mobileJson, failure as mobileFailure };
+export {
+  body as readMobileBody,
+  json as mobileJson,
+  failure as mobileFailure,
+  tokenFrom as mobileBearerToken,
+};

@@ -6,6 +6,7 @@ import { AppearanceSelect } from "../../../components/appearance-select";
 import { useSession } from "../../../lib/session";
 import { useTraining } from "../../../lib/training-context";
 import { TrainingCard } from "../../../components/training-card";
+import { DeleteAccount } from "../../../components/delete-account";
 export default function Account() {
   const p = usePalette(),
     { client, state } = useSession(),
@@ -41,6 +42,7 @@ export default function Account() {
         </Text>
       </View>
       <AppearanceSelect />
+      <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
       <TrainingCard />
       {error ? <Notice message={error} /> : null}
       {training.error ? <Notice message={training.error} /> : null}
@@ -118,6 +120,7 @@ export default function Account() {
         }}
       />
       <Action label="Ver rutinas de ejemplo" secondary onPress={() => router.navigate("/train")} />
+      <DeleteAccount />
     </Page>
   );
 }

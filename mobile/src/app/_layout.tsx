@@ -4,6 +4,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider, useSession } from "../lib/session";
 import { Action, Brand, Loading, Notice, Page, usePalette } from "../components/ui";
 import { AppearanceProvider, useAppearance } from "../lib/appearance-context";
+import { AccountRemovalProvider } from "../lib/account-removal-context";
+import { AccountRemovalGate } from "../components/account-removal-gate";
 function Routes() {
   const { client, state } = useSession(),
     p = usePalette(),
@@ -39,6 +41,7 @@ function Routes() {
           <Stack.Screen name="login" />
         </Stack.Protected>
         <Stack.Screen name="access" />
+        <Stack.Screen name="privacy" />
       </Stack>
     </>
   );
@@ -48,7 +51,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppearanceProvider>
         <SessionProvider>
-          <Routes />
+          <AccountRemovalProvider>
+            <AccountRemovalGate>
+              <Routes />
+            </AccountRemovalGate>
+          </AccountRemovalProvider>
         </SessionProvider>
       </AppearanceProvider>
     </SafeAreaProvider>

@@ -2,6 +2,8 @@ import "server-only";
 import { createMobileAccessApi } from "./access-api";
 import { registerWithInvitation } from "../invitations/register";
 import { hashToken } from "../invitations/token";
+import { deleteOwnAccount } from "../data/account";
+import { createMobileAccountApi } from "./account-api";
 import { listWorkouts, getWorkoutDetail } from "../data/workouts";
 import { listExerciseProgress } from "../data/progress";
 import { saveWorkout } from "../data/save-workout";
@@ -188,4 +190,10 @@ export function mobileAccessDependencies(): import("./access-api").MobileAccessA
 }
 export function mobileAccessApi() {
   return createMobileAccessApi(mobileAccessDependencies());
+}
+export function mobileAccountApi() {
+  return createMobileAccountApi({
+    authorize: mobileProductionDependencies().authorize,
+    remove: (token) => deleteOwnAccount(client(token)),
+  });
 }

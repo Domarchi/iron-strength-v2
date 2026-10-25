@@ -203,3 +203,8 @@ export const mobileRegisteredSchema = z.object({
   email: z.string(),
 });
 export const mobilePasswordResetSchema = z.object({ version: z.literal(1), ok: z.literal(true) });
+export const mobileAccountDeletedSchema = z.object({
+  version: z.literal(1),
+  ok: z.literal(true),
+  userId: z.uuid(),
+});
