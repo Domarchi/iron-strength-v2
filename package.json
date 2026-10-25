@@ -26,7 +26,8 @@
     "mobile:check": "npm --prefix mobile run check",
     "mobile:bundle": "npm --prefix mobile run bundle",
     "ops:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-release.ts",
-    "ops:backup:prune": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/prune-backups.ts"
+    "ops:backup:prune": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/prune-backups.ts",
+    "ops:native-audit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-native-runtime.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

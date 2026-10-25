@@ -2,6 +2,8 @@
 
 La interfaz Expo web, el APK en emulador y los teléfonos físicos son evidencias distintas. Una exportación Hermes no acredita instalación; el acceso dibujado sin red no acredita un entrenamiento completo sin conexión. Registrar fecha, commit, plataforma, versión, build, dispositivo y resultado observado.
 
+La revisión de dependencias JavaScript por ubicación de módulos se describe en [native-dependency-audit.md](native-dependency-audit.md). Conserva los avisos de herramientas y exige vincular mapas/bundle al mismo artefacto antes de atribuirle ese resultado; no reemplaza estos recorridos nativos.
+
 ## Entorno seguro
 
 - La variante `quality` usa `com.domarchis.ironstrength.quality`, nombre Iron Strength Pruebas y esquema iron-strength-quality. No comparte SQLite ni SecureStore con preview/producción.
