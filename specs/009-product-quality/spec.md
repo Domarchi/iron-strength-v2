@@ -1,5 +1,13 @@
 # Calidad de producto de Iron Strength
 
+## Entrega del mismo artefacto · T204
+
+Preparar el procedimiento de lanzamiento y un registro de candidato antes de obtener accesos o enviar binarios. Los APK .preview y el .app de simulador actuales son referencias de QA; los artefactos de tienda requieren identificadores confirmados y perfil production: AAB Android e IPA de dispositivo iOS. Registrar fuente, formato, identificador, versión, hash y build EAS, y luego referencias de la consola, firma de distribución y evidencia física del candidato. Campos desconocidos permanecen nulos; una plantilla no acredita verificación o autorización.
+
+Validar el candidato de producción por los canales de beta de cada tienda y seleccionar/promover ese mismo artefacto para la primera publicación. Un cambio de código, configuración, iconos o capacidades obliga a generar un candidato nuevo y repetir sus controles. No asumir que el APK de preview se convierte en AAB o que un paquete de simulador instala en iPhone. Conservar la API y los lectores de datos compatibles con los clientes ya instalados.
+
+Las tiendas no ofrecen publicación por porcentajes para la primera versión. El avance gradual de esta entrega ocurre en beta: piloto del coach, alumnos y participantes requeridos por la consola, antes de la primera publicación pública revisada por el propietario. Documentar ese límite y separar las opciones de actualización posterior. Sin cuentas, CI, políticas finales, aceptación física y revisión de envío no se publica, registra un identificador o invita a personas automáticamente. T204 sigue incompleta hasta disponibilidad real verificada en ambas tiendas.
+
 ## Operación verificable · T205
 
 Añadir una comprobación manual y de solo lectura del dominio productivo exclusivo: acceso web con BUILD_ID esperado y tres lecturas móviles sin credenciales que deben rechazar con 401, JSON v1 y caché privada/no-store. El origen y las rutas son cerrados; no admitir URLs arbitrarias, seguir redirecciones, enviar cookies/tokens o imprimir cuerpos, cabeceras, mensajes de excepción o datos de usuarios. Limitar tiempo y tamaño de respuestas. El comando recibe únicamente el BUILD_ID hexadecimal de 32 caracteres y devuelve estado, duración y códigos cerrados, con salida distinta de cero ante fallos. No confundir este control anónimo con una prueba autenticada, una alerta continua o una restauración de datos.

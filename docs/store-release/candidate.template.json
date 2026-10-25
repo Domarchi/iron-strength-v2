@@ -1,0 +1,56 @@
+{
+  "formatVersion": 1,
+  "status": "Plantilla; no acredita candidato, aprobación o publicación",
+  "sourceCommit": null,
+  "webApi": {
+    "origin": "https://iron-strength-seven.vercel.app",
+    "contractVersion": 1,
+    "verifiedDeploymentId": null,
+    "verifiedBuildId": null,
+    "databaseProjectRef": "udwhjcnlfqlggblnpchu",
+    "verifiedMigrationVersion": null,
+    "backupEvidencePrivateReference": null
+  },
+  "referencePreviewsOnly": {
+    "androidEasBuildId": "91d38132-87fe-4aca-aae4-368f0076dae8",
+    "iosSimulatorEasBuildId": "cf066780-0f66-4f6b-bde1-6454071513a1",
+    "usableForStorePromotion": false
+  },
+  "android": {
+    "format": "aab",
+    "confirmedApplicationId": null,
+    "versionName": null,
+    "versionCode": null,
+    "easBuildId": null,
+    "artifactSha256": null,
+    "uploadCertificateSha256": null,
+    "playSigningCertificateSha256": null,
+    "playArtifactReference": null,
+    "trackEvidencePrivateReferences": [],
+    "physicalValidationPrivateReferences": []
+  },
+  "ios": {
+    "format": "ipa-device",
+    "confirmedBundleIdentifier": null,
+    "version": null,
+    "buildNumber": null,
+    "easBuildId": null,
+    "artifactSha256": null,
+    "appStoreConnectBuildReference": null,
+    "testFlightEvidencePrivateReferences": [],
+    "physicalValidationPrivateReferences": []
+  },
+  "finalReview": {
+    "metadataCommit": null,
+    "publicPolicyAndSupportReferences": [],
+    "countriesAndRegions": null,
+    "ownerApprovalPrivateReference": null,
+    "approvedAt": null
+  },
+  "publication": {
+    "androidStoreUrl": null,
+    "iosStoreUrl": null,
+    "androidVerifiedAt": null,
+    "iosVerifiedAt": null
+  }
+}

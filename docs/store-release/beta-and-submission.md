@@ -27,3 +27,5 @@ Preparar una cuenta de revisión dedicada y sin acceso a alumnos reales. Su prog
 - Propietario revisa ficha, capturas, acceso y artefacto antes del envío final. Registrar publicación por plataforma; un envío, TestFlight o APK no equivalen a disponibilidad pública en ambas tiendas.
 
 Pendientes: cuenta Apple/Google, participantes y periodo que exija la consola, contacto público, retención/respaldo, iOS, teléfonos, resto del circuito T202 y permisos para el envío concreto. El código web/API publicado continúa siendo el artefacto L compatible.
+
+El recorrido operativo de T204 y el registro del candidato están en launch.md y candidate.template.json. El preview .preview y el paquete de simulador no son los artefactos de producción. La gradualidad de la primera versión se realiza en beta; la promoción conserva el AAB/build de dispositivo probado y respeta los límites de primera publicación de ambas tiendas.
