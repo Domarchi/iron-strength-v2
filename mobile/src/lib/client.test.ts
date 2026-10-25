@@ -232,3 +232,28 @@ describe("sesión móvil segura", () => {
     expect(x.client.getSnapshot().status).toBe("authenticated");
   });
 });
+
+it("acceso por enlace nunca persiste token/contraseña ni sustituye una sesión abierta", async () => {
+  const fetcher = vi
+    .fn<Transport>()
+    .mockResolvedValueOnce(Response.json({ version: 1, status: "valida", email: profile.email }))
+    .mockResolvedValueOnce(Response.json({ version: 1, ok: true, email: profile.email }))
+    .mockResolvedValueOnce(Response.json({ version: 1, ok: true }))
+    .mockResolvedValueOnce(Response.json(session));
+  const x = setup(fetcher);
+  await x.client.restore();
+  await x.client.invitation("a".repeat(43));
+  await x.client.registerInvitation({
+    token: "a".repeat(43),
+    name: "Ana",
+    password: "clave-segura",
+  });
+  await x.client.resetPassword({ token: "b".repeat(56), password: "clave-nueva" });
+  expect(x.store.set).not.toHaveBeenCalled();
+  expect(x.client.getSnapshot().status).toBe("signedOut");
+  await x.client.login(profile.email, "clave");
+  await expect(
+    x.client.resetPassword({ token: "b".repeat(56), password: "clave-nueva" }),
+  ).rejects.toThrow("salir");
+  expect(fetcher).toHaveBeenCalledTimes(4);
+});

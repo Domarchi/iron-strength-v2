@@ -71,3 +71,22 @@ Validación del 24 de octubre de 2026:
 - Túnel SDK 58 entrega manifiestos/bundles nuevos iOS/Android con HTTP 200, mismos nombre/proyecto y componentes corregidos presentes. HTML 200 con retención en memoria y aclaración de tiempo fijo. product-t206-tunnel-verification.json. Sin referencia a clave administrativa; sin firma o build remoto.
 
 Sin cambios de web/API/SQL, semillas, migraciones, integración o pgTAP. La recuperación comprobada no sustituye la aceptación física en iPhone/Android, especialmente teclado y bloqueo de pantalla. No se publicaron cambios en Vercel/Supabase ni en tiendas.
+
+## T192 · Invitación y recuperación móvil
+
+Se reutilizan las invitaciones y el registro existentes, con tres rutas POST cerradas de API v1 y una pantalla nativa de acceso. La consulta no consume la invitación; abrir recuperación tampoco verifica el OTP. Solo enviar una contraseña válida consume recuperación. El servidor devuelve confirmación, nunca la sesión temporal de recuperación. El acceso posterior sigue siendo explícito. Web conserva sus formularios y ofrece abrir la app instalada o copiar su enlace en Acceso móvil; Expo Go utiliza este último recorrido.
+
+Los enlaces aceptados tienen origen/ruta o esquema conocidos y parámetros cerrados. Token y contraseña permanecen en memoria del formulario y la ruta se reemplaza al terminar o cancelar. La cuenta autenticada no se sustituye al abrir otro acceso; se mantienen las protecciones de pendientes de Cuenta. Una respuesta incierta explica cómo entrar con la contraseña elegida, sin asegurar que la operación se revirtió.
+
+Pruebas previas en rojo por falta de módulos/métodos: product-t192-api-before.log, product-t192-client-before.log y product-t192-client-method-before.log. Se comprobó el hash de recuperación real de Auth (SHA-224, 56 hexadecimales) con la fuente oficial y la integración aislada, antes de fijar el contrato. No se alteró su duración remota. La comparación estructural mínima del decodificador evita acoplar los tipos internos de las dos versiones compatibles de Zod en raíz/móvil.
+
+Verificación de software del 24 de octubre de 2026:
+
+- Check raíz completo aprobado: formato, lint sin errores (diez avisos previos), tipos, **526 unitarias** y build Next 16.4.3 con 64 recursos públicos. product-t192-root-check.log.
+- Check móvil aprobado: tipos, lint sin errores (un aviso previo) y **37 unitarias**. Parser, formato cerrado, credenciales de acceso sin persistencia y protección de identidad incluidos. product-t192-mobile-final.log.
+- **280 pruebas de integración** aprobadas sobre la instancia aislada 55321. Consulta repetida, alta ligada al coach, invitación usada/vencida/desconocida, contraseña inválida que no consume, cambio válido de un solo uso y login posterior. product-t192-integration.log.
+- Exportaciones Hermes Android/iOS aprobadas: entry-375757f25d9276f274eca0574b159320.hbc y entry-a1a8c43ef5c6ae243540c9753b8627f9.hbc. product-t192-bundle.log. No son binarios firmados.
+- **52 E2E Expo web** Chromium/WebKit aprobadas, sin fallos/reintentos: acceso en claro/oscuro, Axe a 360 px, enlace externo/reutilizado, recuperación de la misma cuenta con series conservadas y regresión completa de registro/descanso/almacenamiento. La primera pasada quedó interrumpida sin resultado final; se repitió completa y terminó en verde. product-t192-native-ui-rerun.log. Capturas claro/oscuro inspeccionadas y conservadas en work/product-t192-design.
+- **12 E2E web/API** aprobadas en Chromium/WebKit, sin fallos/reintentos: circuito principal de invitar/asignar/entrenar/comentar, nuevas rutas de acceso y regresión de API móvil. Axe aprobado en invitación/recuperación web. product-t192-web-ui.log.
+
+Las nuevas rutas aún no están publicadas en Vercel. Sin migraciones, pgTAP o cambios de producción; solo Auth y datos de la pila aislada se modificaron en las pruebas. Apertura por esquema/teclado en teléfonos físicos pendiente para T201–T202. El propietario confirmó que todavía no tiene cuentas de Apple Developer ni Google Play Console: son un requisito de distribución, no un impedimento para estas tareas de desarrollo.

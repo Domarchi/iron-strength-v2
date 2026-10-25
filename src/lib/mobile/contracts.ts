@@ -186,3 +186,20 @@ export const mobileErrorSchema = z.object({
     retryAfterSeconds: z.number().optional(),
   }),
 });
+
+export const invitationTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+// GoTrue GenerateTokenHash uses SHA-224: the existing recovery links contain 56 hex digits.
+export const recoveryTokenSchema = z.string().regex(/^[a-f0-9]{56}$/i);
+export const mobileInvitationSchema = z
+  .object({
+    version: z.literal(1),
+    status: z.enum(["valida", "inexistente", "usada", "vencida"]),
+    email: z.string().nullable(),
+  })
+  .refine((value) => (value.status === "valida" ? !!value.email : value.email === null));
+export const mobileRegisteredSchema = z.object({
+  version: z.literal(1),
+  ok: z.literal(true),
+  email: z.string(),
+});
+export const mobilePasswordResetSchema = z.object({ version: z.literal(1), ok: z.literal(true) });

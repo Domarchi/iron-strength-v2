@@ -8,6 +8,9 @@ import {
   mobileWorkoutSchema,
   mobileProgressSchema,
   mobileSaveSchema,
+  mobileInvitationSchema,
+  mobileRegisteredSchema,
+  mobilePasswordResetSchema,
   type MobileSession,
 } from "../../../src/lib/mobile/contracts";
 import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
@@ -315,6 +318,33 @@ export class MobileClient {
       }
       throw error;
     }
+  }
+  private async access<T>(
+    path: string,
+    input: unknown,
+    schema: { safeParse(data: unknown): { success: true; data: T } | { success: false } },
+  ): Promise<T> {
+    if (this.state.status !== "signedOut")
+      throw new MobileError(
+        "identity",
+        "Antes de usar otro acceso, debes salir desde Cuenta y resolver tus registros pendientes.",
+      );
+    const generation = this.generation;
+    const data = await this.http(path, input);
+    this.current(generation);
+    const result = schema.safeParse(data);
+    if (!result.success)
+      throw new MobileError("version", "Esta respuesta necesita una versión compatible de la app.");
+    return result.data;
+  }
+  async invitation(token: string) {
+    return this.access("auth/invitation", { token }, mobileInvitationSchema);
+  }
+  async registerInvitation(input: { token: string; name: string; password: string }) {
+    return this.access("auth/register", input, mobileRegisteredSchema);
+  }
+  async resetPassword(input: { token: string; password: string }) {
+    return this.access("auth/reset-password", input, mobilePasswordResetSchema);
   }
   async week() {
     return mobileWeekSchema.parse(await this.read("week"));

@@ -1,3 +1,4 @@
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Keyboard,
@@ -12,6 +13,7 @@ import { Icon } from "../components/icon";
 import { Action, Brand, Page, s, usePalette } from "../components/ui";
 import { useSession } from "../lib/session";
 export default function Login() {
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
   const p = usePalette(),
     { client, state } = useSession();
   const [email, setEmail] = useState(""),
@@ -48,6 +50,13 @@ export default function Login() {
     >
       <Page>
         <Brand />
+        {reason === "registered" || reason === "password" ? (
+          <Text accessibilityRole="alert" style={[s.body, { color: p.success }]}>
+            {reason === "registered"
+              ? "Tu cuenta está lista. Entra con el correo de la invitación y la contraseña que elegiste."
+              : "Contraseña actualizada. Entra con tu contraseña nueva; tus registros locales se conservan."}
+          </Text>
+        ) : null}
         <View style={{ gap: 8 }}>
           <Text
             style={[s.caption, { color: p.muted, letterSpacing: 1.3, marginTop: compact ? 0 : 14 }]}
@@ -164,6 +173,7 @@ export default function Login() {
             PLANIFICA · ENTRENA · PROGRESA
           </Text>
         </View>
+        <Action label="Tengo un enlace de mi coach" quiet onPress={() => router.push("/access")} />
         <Text style={[s.caption, { color: p.muted, textAlign: "center" }]}>
           ¿Necesitas acceso? Pide a tu coach un enlace de invitación o recuperación.
         </Text>

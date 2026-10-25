@@ -1,3 +1,4 @@
+import { nativeAccessLink } from "@/lib/mobile/access-link";
 import type { Metadata } from "next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { hashToken } from "@/lib/invitations/token";
@@ -20,6 +21,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   const { data } = await supabase.rpc("validate_invitation", { p_token_hash: hashToken(token) });
   const invitation = data?.[0];
   const valid = invitation?.status === "valida" && invitation.email;
+  const appLink = nativeAccessLink("invite", token);
 
   return (
     <main className="flex flex-1 items-center justify-center p-4">
@@ -35,6 +37,18 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         {valid ? (
           <CardContent>
             <RegisterForm token={token} email={invitation.email!} />
+            {appLink ? (
+              <a
+                href={appLink}
+                rel="noreferrer"
+                className="mt-4 flex min-h-12 items-center justify-center rounded-xl border px-4 text-sm font-medium"
+              >
+                Abrir en Iron Strength
+              </a>
+            ) : null}
+            <p className="mt-3 text-sm text-muted-foreground">
+              También puedes pegar este enlace en «Tengo un enlace de mi coach» dentro de la app.
+            </p>
           </CardContent>
         ) : null}
       </Card>

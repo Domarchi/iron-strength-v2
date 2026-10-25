@@ -543,6 +543,64 @@ test("salir conserva apariencia oscura y la apertura siguiente la recupera", asy
   await page.screenshot({ path: test.info().outputPath("login-dark.png") });
 });
 
+test("recuperar acceso de la misma cuenta conserva el entrenamiento pendiente", async ({
+  page,
+}) => {
+  await emptyAccount(page);
+  await enter(page);
+  await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
+  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
+  await page.getByRole("textbox", { name: "Peso serie 1", exact: true }).fill("31");
+  await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
+  await expect(
+    page.getByRole("checkbox", { name: "Completar serie 1", exact: true }),
+  ).toBeChecked();
+  let expired = true;
+  await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/week", (route) =>
+    route.fulfill({
+      status: expired ? 401 : 200,
+      json: expired
+        ? { version: 1, error: { code: "unauthorized", message: "Sesión expirada" } }
+        : { version: 1, kind: "no_program" },
+      headers: { "Access-Control-Allow-Origin": "*" },
+    }),
+  );
+  await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/auth/refresh", (route) =>
+    route.fulfill({
+      status: 401,
+      json: { version: 1, error: { code: "unauthorized", message: "Sesión expirada" } },
+      headers: { "Access-Control-Allow-Origin": "*" },
+    }),
+  );
+  await page.route(
+    "https://iron-strength-seven.vercel.app/api/mobile/v1/auth/reset-password",
+    (route) =>
+      route.fulfill({
+        json: { version: 1, ok: true },
+        headers: { "Access-Control-Allow-Origin": "*" },
+      }),
+  );
+  await page.getByRole("button", { name: "Volver a Inicio", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Tengo un enlace de mi coach", exact: true }).click();
+  await page
+    .getByLabel("Enlace de tu coach", { exact: true })
+    .fill("https://iron-strength-seven.vercel.app/reset/" + "b".repeat(56));
+  await page.getByRole("button", { name: "Revisar enlace", exact: true }).click();
+  await page.getByLabel("Contraseña nueva", { exact: true }).fill("Clave-nueva-192");
+  await page.getByLabel("Repite la contraseña", { exact: true }).fill("Clave-nueva-192");
+  await page.getByRole("button", { name: "Guardar contraseña nueva", exact: true }).click();
+  await expect(page.getByText(/Contraseña actualizada/)).toBeVisible();
+  expired = false;
+  await enter(page);
+  await page.getByRole("button", { name: "Retomar entrenamiento", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "Peso serie 1", exact: true })).toHaveValue("31");
+  await expect(
+    page.getByRole("checkbox", { name: "Completar serie 1", exact: true }),
+  ).toBeChecked();
+});
+
 for (const theme of ["light", "dark"] as const) {
   test(`series y descanso ${theme}: error junto a la fila, controles visibles y término recuperable`, async ({
     page,

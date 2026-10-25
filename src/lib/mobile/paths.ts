@@ -6,6 +6,9 @@ export function isMobileEndpointPath(path: string): boolean {
   return (
     [
       "/api/mobile/v1/auth/login",
+      "/api/mobile/v1/auth/invitation",
+      "/api/mobile/v1/auth/register",
+      "/api/mobile/v1/auth/reset-password",
       "/api/mobile/v1/auth/refresh",
       "/api/mobile/v1/auth/logout",
       "/api/mobile/v1/week",

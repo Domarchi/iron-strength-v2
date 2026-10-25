@@ -1,4 +1,7 @@
 import "server-only";
+import { createMobileAccessApi } from "./access-api";
+import { registerWithInvitation } from "../invitations/register";
+import { hashToken } from "../invitations/token";
 import { listWorkouts, getWorkoutDetail } from "../data/workouts";
 import { listExerciseProgress } from "../data/progress";
 import { saveWorkout } from "../data/save-workout";
@@ -151,4 +154,38 @@ export function mobileProductionDependencies(): MobileApiDependencies {
 }
 export function mobileApi() {
   return createMobileApi(mobileProductionDependencies());
+}
+
+/** Reuses the existing invitation registration purpose; reset itself needs no admin client. */
+export function mobileAccessDependencies(): import("./access-api").MobileAccessApiDependencies {
+  return {
+    async invitation(token) {
+      const result = await client().rpc("validate_invitation", { p_token_hash: hashToken(token) });
+      if (result.error) throw Error("No se pudo comprobar la invitación");
+      const row = result.data?.[0];
+      if (row?.status === "valida" && row.email) return { status: "valida", email: row.email };
+      return {
+        status: row?.status === "usada" || row?.status === "vencida" ? row.status : "inexistente",
+        email: null,
+      };
+    },
+    register: (input) => registerWithInvitation(createAdminClient(), input),
+    async reset(input) {
+      const db = client();
+      const verified = await db.auth.verifyOtp({ type: "recovery", token_hash: input.token });
+      transient(verified.error);
+      if (verified.error || !verified.data.user) return { ok: false, reason: "invalid_link" };
+      try {
+        const changed = await db.auth.updateUser({ password: input.password });
+        transient(changed.error);
+        return changed.error ? { ok: false, reason: "password_rejected" } : { ok: true };
+      } finally {
+        // The recovery session is never returned or stored; only revoke its own refresh token.
+        await db.auth.signOut({ scope: "local" }).catch(() => {});
+      }
+    },
+  };
+}
+export function mobileAccessApi() {
+  return createMobileAccessApi(mobileAccessDependencies());
 }
