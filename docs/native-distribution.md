@@ -1,6 +1,6 @@
 # Preparar e instalar las versiones móviles
 
-La configuración local prepara desarrollo, preview y producción conservando el proyecto EAS del propietario. T201 tiene un APK Android preview code 2, firmado y comprobado sin los permisos heredados, disponible para pruebas. El code 1 se conserva únicamente como diagnóstico. Todavía no hay IPA ni una versión enviada a tiendas. Las cuentas, firma, dispositivos y cuotas se verifican antes de construir en T201.
+La configuración local prepara desarrollo, preview y producción conservando el proyecto EAS del propietario. T201 generó un APK Android preview code 2, firmado y sin los permisos heredados. T202 encontró un cierre al confirmar comentarios por un rol de accesibilidad no admitido; no distribuir ese binario anterior. El reemplazo code 3 está en preparación. El code 1 se conserva únicamente como diagnóstico. Todavía no hay IPA ni una versión enviada a tiendas. Las cuentas, firma, dispositivos y cuotas se verifican antes de construir en T201.
 
 ## Variantes
 
@@ -41,7 +41,7 @@ Para desarrollo local se mantiene `npm run start` en Expo Go. `npm run dev-clien
 
 ## Firma y mantenimiento
 
-Conservar claves de firma en el sistema de credenciales autorizado, nunca Git/chat. Registrar responsable, recuperación y acceso a las cuentas antes del lanzamiento. Versionado local: buildNumber iOS 1 y versionCode Android 2 tras retirar permisos heredados del primer APK: incrementar antes de otra entrega que lo requiera; no se modifican contadores remotos automáticamente. Una nueva dependencia nativa requiere recompilar; los cambios compatibles del JavaScript siguen el procedimiento de actualizaciones que se defina y pruebe en la etapa de operación.
+Conservar claves de firma en el sistema de credenciales autorizado, nunca Git/chat. Registrar responsable, recuperación y acceso a las cuentas antes del lanzamiento. Versionado local: buildNumber iOS 1 y versionCode Android 3 tras retirar permisos heredados del primer APK: incrementar antes de otra entrega que lo requiera; no se modifican contadores remotos automáticamente. Una nueva dependencia nativa requiere recompilar; los cambios compatibles del JavaScript siguen el procedimiento de actualizaciones que se defina y pruebe en la etapa de operación.
 
 La aceptación del diseño se realiza con el prototipo de spec 009; la aceptación del producto exige binarios y teléfonos reales. Los requisitos de privacidad, soporte, borrado y pruebas de tienda se validan antes de enviar el artefacto final.
 
@@ -49,6 +49,6 @@ Referencias oficiales: [perfiles](https://docs.expo.dev/build/eas-json/), [varia
 
 T201 bloquea en preview/producción los permisos heredados de almacenamiento externo y superposición mediante android.blockedPermissions. Comprobar su ausencia con aapt2 sobre cada APK final, además de verificar certificado y paquete. El primer APK code 1 es diagnóstico; la nueva entrega debe usar code 2 o posterior y el mismo certificado para conservar datos al actualizar. No desinstalar para aplicar una actualización con borradores pendientes.
 
-## Android preview actual
+## Android preview anterior
 
-[Instalación y estado en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/7372df00-928f-4dc6-a714-4760fd192147): versión 0.1.0/code 2, paquete com.domarchis.ironstrength.preview, compilación de 5077116. Firma y manifiesto comprobados; actualizado en emulador Android 16 y abierto en frío en modo avión. Es un APK Android, no una instalación para iPhone ni un envío a Google Play. El cliente usa la API real al entrar con tu cuenta. La prueba completa del registro/offline y los teléfonos reales se documentan por separado. iPhone necesita la membresía/perfil de dispositivo del propietario antes de construir.
+[Estado del build anterior en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/7372df00-928f-4dc6-a714-4760fd192147): versión 0.1.0/code 2, paquete com.domarchis.ironstrength.preview, compilación de 5077116. Firma y manifiesto comprobados; actualizado en emulador Android 16 y abierto en frío en modo avión. Es un APK Android, no una instalación para iPhone ni un envío a Google Play. No usar este instalador para una nueva beta: el cierre de confirmación se corrigió en el código T202 y el reemplazo code 3 debe verificarse antes de distribuir. El cliente usa la API real al entrar con tu cuenta. La prueba completa del registro/offline y los teléfonos reales se documentan por separado. iPhone necesita la membresía/perfil de dispositivo del propietario antes de construir.

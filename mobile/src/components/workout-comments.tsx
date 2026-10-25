@@ -187,7 +187,7 @@ function OnlineWorkoutComments({ workoutId }: { workoutId: string }) {
         </View>
       ))}
       {notice ? (
-        <Text accessibilityRole="status" style={[s.body, { color: p.success }]}>
+        <Text accessibilityLiveRegion="polite" style={[s.body, { color: p.success }]}>
           {notice}
         </Text>
       ) : null}
