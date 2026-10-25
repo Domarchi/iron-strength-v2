@@ -17,4 +17,4 @@
 - [ ] T202 · Dos correcciones y circuito Android A/B offline/sincronización verificados en emulador; pendientes CI, iOS, resto del circuito nativo y aceptación física.
 - [ ] T203 · Ficha y borradores de privacidad/soporte preparados; pendientes contacto público, retención, accesos, beta y materiales finales.
 - [ ] T204 · Publicación gradual del artefacto probado.
-- [ ] T205 · Observabilidad, respaldos y mantenimiento.
+- [ ] T205 · Control manual seguro y procedimiento de operación verificados; pendientes responsable, retención/destino de copias y circuito operativo de beta.

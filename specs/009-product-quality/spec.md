@@ -1,5 +1,11 @@
 # Calidad de producto de Iron Strength
 
+## Operación verificable · T205
+
+Añadir una comprobación manual y de solo lectura del dominio productivo exclusivo: acceso web con BUILD_ID esperado y tres lecturas móviles sin credenciales que deben rechazar con 401, JSON v1 y caché privada/no-store. El origen y las rutas son cerrados; no admitir URLs arbitrarias, seguir redirecciones, enviar cookies/tokens o imprimir cuerpos, cabeceras, mensajes de excepción o datos de usuarios. Limitar tiempo y tamaño de respuestas. El comando recibe únicamente el BUILD_ID hexadecimal de 32 caracteres y devuelve estado, duración y códigos cerrados, con salida distinta de cero ante fallos. No confundir este control anónimo con una prueba autenticada, una alerta continua o una restauración de datos.
+
+Documentar señales y respuesta ante incidentes, compatibilidad con versiones móviles anteriores, actualización segura, límites de observación de proveedores y pasos de respaldo/restauración ya ensayados. No contratar monitorización, crear envíos a terceros o programar avisos sin solicitud. Separar las comprobaciones realizadas de los accesos, política de retención y aceptación física todavía pendientes.
+
 El propietario aprobó el 24 de octubre de 2026 avanzar desde T188 hacia un producto completo. Este ciclo concreta las etapas 1–4 del plan: alcance, recorridos, sistema visual y cuatro pantallas de referencia, junto con preparación local de distribución. El diseño de referencia se revisa antes de extenderlo a las pantallas funcionales. El resto de la hoja de ruta queda planificado; documentarlo no lo convierte en funciones disponibles.
 
 ## Usuarios y alcance
