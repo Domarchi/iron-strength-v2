@@ -35,7 +35,7 @@ Ante una sospecha de acceso ajeno, detener el envío de nuevas versiones, conser
 
 ## Proveedores y límites
 
-Vercel permite revisar estado HTTP, despliegue y logs de runtime desde el proyecto iron-strength. Filtrar por ventana/versión antes de leer mensajes. La documentación actual indica una hora de retención para Hobby; no equivale a un archivo permanente ni a una alerta configurada. Los proveedores pueden registrar metadatos de peticiones; evitar enlaces con credenciales y no exportar logs completos al chat. [Runtime logs](https://vercel.com/docs/logs/runtime), consultado el 25 de octubre de 2026.
+Vercel permite revisar estado HTTP, despliegue y logs de runtime desde el proyecto iron-strength. Filtrar por ventana/versión antes de leer mensajes. La documentación actual indica una hora de consulta de runtime para Hobby; no equivale a un plazo máximo acreditado de eliminación de toda la telemetría del proveedor, un archivo permanente o una alerta configurada. Los proveedores pueden registrar metadatos de peticiones; evitar enlaces con credenciales y no exportar logs completos al chat. [Runtime logs](https://vercel.com/docs/logs/runtime), consultado el 25 de octubre de 2026.
 
 Supabase recomienda a proyectos gratuitos exportar con CLI y mantener copias fuera del proveedor; no se presume respaldo diario o PITR de pago. El procedimiento y los ensayos están en docs/backup-restore.md. Un dump SQL no contiene los bytes de Storage. [Respaldos oficiales](https://supabase.com/docs/guides/platform/backups), consultado el 25 de octubre de 2026.
 
@@ -60,3 +60,13 @@ El propietario eligió F.R.I.D.A.Y., 30 días y frecuencia semanal y antes de mi
 La primera revisión programada de caducidad terminó correctamente el 25 de octubre, 09:27:29 Santiago: salida 0, sin vencidos, errores o eliminaciones. No acredita una copia semanal generada; ese primer resultado todavía está pendiente. Detalle en docs/scheduled-backups.md.
 
 Responsable/contacto público confirmados el 25-oct-2026: Joaquín Domarchi, joaquindomarchi@gmail.com. Pendientes: retención de registros técnicos, aceptación física y cuentas de tiendas. Revisar la primera copia semanal programada y el circuito operativo de beta; custodia independiente de clave como mejora respecto del destino local elegido. La copia local privada y este manual no acreditan respaldo externo, guardia de soporte o monitorización continua de la app.
+
+## Ventanas de logs y límites de la comprobación · 25 de octubre de 2026
+
+Supabase describe el tiempo accesible de logs por plan: un día en Free, siete en Pro, veintiocho en Team y noventa en Enterprise. Son ventanas de consulta para el cliente, no evidencia del borrado completo de los registros internos del proveedor. [Referencia oficial de acceso a logs](https://supabase.com/kb/troubleshooting/check-usage-for-monthly-active-users-mau-MwZaBs).
+
+Su documentación de cuotas también describe una posible reducción futura de acceso/retención si se excede la asignación de consultas, pero señala expresamente que esa aplicación aún no está vigente. No interpretar esos escenarios como el estado actual del proyecto. Para diagnosticar un incidente, limitar ventana y tipo de servicio; no crear consultas periódicas amplias como sustituto de un flujo continuo de logs. [Cuotas y estado de aplicación](https://supabase.com/docs/guides/platform/manage-your-usage/logs-query).
+
+La CLI autenticada resolvió el proyecto exclusivo y su organización, pero los listados de proyectos/organizaciones no incluyen el plan ni configuración de conservación. El panel web redirigió al inicio de sesión; no se completó otra autenticación o cambió configuración. Por tanto, el plan efectivo y los ajustes de logs de esta cuenta siguen sin acreditarse en esta revisión. No convertir el requisito de planes gratuitos del repositorio en evidencia de facturación real. La política pública genérica sigue siendo válida como información con límites; no se modificó para inventar una cifra.
+
+La revisión no exportó contenido de logs, creó destinos externos o amplió su conservación. Los respaldos propios mantienen su objetivo de treinta días y sus excepciones; ese plazo no se aplica automáticamente a Vercel/Supabase o a correos de soporte. Antes de los formularios finales de tiendas, verificar el ajuste de la cuenta cuando el panel esté disponible. Evidencia técnica sin secretos en product-log-retention-verification.json, privado fuera de Git.
