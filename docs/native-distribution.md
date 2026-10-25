@@ -1,6 +1,6 @@
 # Preparar e instalar las versiones móviles
 
-La configuración local prepara desarrollo, preview y producción conservando el proyecto EAS del propietario. Hay un primer APK Android de diagnóstico firmado en T201; se reemplaza por una compilación con permisos mínimos antes de distribuir. Todavía no hay IPA ni una versión enviada a tiendas. Las cuentas, firma, dispositivos y cuotas se verifican antes de construir en T201.
+La configuración local prepara desarrollo, preview y producción conservando el proyecto EAS del propietario. T201 tiene un APK Android preview code 2, firmado y comprobado sin los permisos heredados, disponible para pruebas. El code 1 se conserva únicamente como diagnóstico. Todavía no hay IPA ni una versión enviada a tiendas. Las cuentas, firma, dispositivos y cuotas se verifican antes de construir en T201.
 
 ## Variantes
 
@@ -48,3 +48,7 @@ La aceptación del diseño se realiza con el prototipo de spec 009; la aceptaci�
 Referencias oficiales: [perfiles](https://docs.expo.dev/build/eas-json/), [variantes](https://docs.expo.dev/build-reference/variants/), [distribución interna](https://docs.expo.dev/build/internal-distribution/), [monorepos](https://docs.expo.dev/build-reference/build-with-monorepos/), [dev-client SDK 58](https://docs.expo.dev/versions/v58.0.0/sdk/dev-client/). Consulta del 24 de octubre de 2026.
 
 T201 bloquea en preview/producción los permisos heredados de almacenamiento externo y superposición mediante android.blockedPermissions. Comprobar su ausencia con aapt2 sobre cada APK final, además de verificar certificado y paquete. El primer APK code 1 es diagnóstico; la nueva entrega debe usar code 2 o posterior y el mismo certificado para conservar datos al actualizar. No desinstalar para aplicar una actualización con borradores pendientes.
+
+## Android preview actual
+
+[Instalación y estado en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/7372df00-928f-4dc6-a714-4760fd192147): versión 0.1.0/code 2, paquete com.domarchis.ironstrength.preview, compilación de 5077116. Firma y manifiesto comprobados; actualizado en emulador Android 16 y abierto en frío en modo avión. Es un APK Android, no una instalación para iPhone ni un envío a Google Play. El cliente usa la API real al entrar con tu cuenta. La prueba completa del registro/offline y los teléfonos reales se documentan por separado. iPhone necesita la membresía/perfil de dispositivo del propietario antes de construir.
