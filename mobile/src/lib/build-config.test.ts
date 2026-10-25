@@ -7,7 +7,7 @@ type App = {
   scheme: string;
   owner: string;
   ios: { bundleIdentifier?: string; buildNumber?: string };
-  android: { package?: string; versionCode?: number };
+  android: { package?: string; versionCode?: number; blockedPermissions?: string[] };
   extra: { eas: { projectId: string } };
 };
 const base = JSON.parse(readFileSync(new URL("../../app.json", import.meta.url), "utf8"))
@@ -52,3 +52,25 @@ it("respeta incrementos locales de versión antes de una nueva entrega", () => {
   expect(app.ios.buildNumber).toBe("7");
   expect(app.android.versionCode).toBe(7);
 });
+
+for (const variant of ["preview", "production"]) {
+  it(`${variant} excluye acceso a archivos externos y superposiciones heredados, conservando bloqueos previos`, () => {
+    vi.stubEnv("APP_VARIANT", variant);
+    const app = load()({
+      config: {
+        ...base,
+        android: { ...base.android, blockedPermissions: ["android.permission.RECORD_AUDIO"] },
+      },
+    });
+    expect(app.android.blockedPermissions).toEqual(
+      expect.arrayContaining([
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.RECORD_AUDIO",
+      ]),
+    );
+    expect(app.android.blockedPermissions).not.toContain("android.permission.INTERNET");
+    expect(base.android.blockedPermissions).toBeUndefined();
+  });
+}

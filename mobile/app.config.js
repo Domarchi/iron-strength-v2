@@ -23,6 +23,18 @@ module.exports = ({ config }) => {
       ...config.android,
       package: applicationId,
       versionCode: config.android?.versionCode ?? 1,
+      ...(variantName === "development"
+        ? {}
+        : {
+            blockedPermissions: [
+              ...new Set([
+                ...(config.android?.blockedPermissions ?? []),
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE",
+                "android.permission.SYSTEM_ALERT_WINDOW",
+              ]),
+            ],
+          }),
     },
   };
 };

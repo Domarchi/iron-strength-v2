@@ -1,6 +1,6 @@
 # Preparar e instalar las versiones móviles
 
-La configuración local prepara desarrollo, preview y producción conservando el proyecto EAS del propietario. Todavía no hay APK/IPA firmados ni una versión enviada a tiendas. Las cuentas, firma, dispositivos y cuotas se verifican antes de construir en T201.
+La configuración local prepara desarrollo, preview y producción conservando el proyecto EAS del propietario. Hay un primer APK Android de diagnóstico firmado en T201; se reemplaza por una compilación con permisos mínimos antes de distribuir. Todavía no hay IPA ni una versión enviada a tiendas. Las cuentas, firma, dispositivos y cuotas se verifican antes de construir en T201.
 
 ## Variantes
 
@@ -41,8 +41,10 @@ Para desarrollo local se mantiene `npm run start` en Expo Go. `npm run dev-clien
 
 ## Firma y mantenimiento
 
-Conservar claves de firma en el sistema de credenciales autorizado, nunca Git/chat. Registrar responsable, recuperación y acceso a las cuentas antes del lanzamiento. Versionado local con buildNumber/versionCode inicial 1: incrementar antes de otra entrega que lo requiera; no se modifican contadores remotos automáticamente. Una nueva dependencia nativa requiere recompilar; los cambios compatibles del JavaScript siguen el procedimiento de actualizaciones que se defina y pruebe en la etapa de operación.
+Conservar claves de firma en el sistema de credenciales autorizado, nunca Git/chat. Registrar responsable, recuperación y acceso a las cuentas antes del lanzamiento. Versionado local: buildNumber iOS 1 y versionCode Android 2 tras retirar permisos heredados del primer APK: incrementar antes de otra entrega que lo requiera; no se modifican contadores remotos automáticamente. Una nueva dependencia nativa requiere recompilar; los cambios compatibles del JavaScript siguen el procedimiento de actualizaciones que se defina y pruebe en la etapa de operación.
 
 La aceptación del diseño se realiza con el prototipo de spec 009; la aceptación del producto exige binarios y teléfonos reales. Los requisitos de privacidad, soporte, borrado y pruebas de tienda se validan antes de enviar el artefacto final.
 
 Referencias oficiales: [perfiles](https://docs.expo.dev/build/eas-json/), [variantes](https://docs.expo.dev/build-reference/variants/), [distribución interna](https://docs.expo.dev/build/internal-distribution/), [monorepos](https://docs.expo.dev/build-reference/build-with-monorepos/), [dev-client SDK 58](https://docs.expo.dev/versions/v58.0.0/sdk/dev-client/). Consulta del 24 de octubre de 2026.
+
+T201 bloquea en preview/producción los permisos heredados de almacenamiento externo y superposición mediante android.blockedPermissions. Comprobar su ausencia con aapt2 sobre cada APK final, además de verificar certificado y paquete. El primer APK code 1 es diagnóstico; la nueva entrega debe usar code 2 o posterior y el mismo certificado para conservar datos al actualizar. No desinstalar para aplicar una actualización con borradores pendientes.
