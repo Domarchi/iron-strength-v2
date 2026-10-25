@@ -9,7 +9,7 @@
 - [x] T206 · Corregir fallos reproducibles de series/descanso y conservar entradas de la referencia al navegar.
 - [x] T195 · Comentarios nativos, lectura explícita, borrador protegido y envío atómico/idempotente; software y migración verificados localmente. Publicación/aceptación física registradas por separado.
 - [x] T196 · Progreso nativo de 4/8/12 semanas, comparación y evidencia con retorno contextual; medidas/fotos permanecen en web por decisión del propietario. Software verificado; publicación/aceptación física por separado.
-- [ ] T197 · Descarga de semana nativa.
+- [x] T197 · Descarga completa de semana por cuenta, revisión de identidad/semana, persistencia atómica y recuperación; apertura en frío pendiente de T198. Publicación y aceptación física por separado.
 - [ ] T198 · Apertura en frío y registro sin conexión.
 - [ ] T199 · Cola, migraciones y sincronización entre versiones/cuentas.
 - [ ] T200 · Productividad de adaptación y asignación web con línea base.

@@ -45,3 +45,7 @@ Con el coach y los tres alumnos: primer acceso, consultar sin iniciar, completar
 ## Consultar progreso móvil · T196
 
 Progreso → elegir ejercicio realizado → 4/8/12 semanas → 1RM estimado o volumen (repeticiones si es sin carga) → valor con fecha → entrenamiento confirmado → Volver al progreso con el mismo periodo/métrica. Las marcas históricas siguen visibles fuera del periodo y la falta de datos previos no inventa una tendencia. El periodo usa hoy en Santiago confirmado por servidor. El resultado valida la pertenencia del ejercicio antes de ofrecer el retorno; nunca acepta una URL libre. Medidas y fotos conservan su recorrido web privado, por decisión del propietario.
+
+## Descargar semana móvil · T197
+
+Inicio con semana vigente → Descargar semana → comprobar fecha, sesiones y ejercicios → actualizar explícitamente cuando cambie la planificación. Una respuesta de otra cuenta/semana o una descarga más antigua no reemplaza la conocida. Falta de espacio, conflicto entre ventanas y almacenamiento no compatible tienen mensajes distintos y Comprobar descarga. Actualizar/eliminar copia no cambia una sesión iniciada. Eliminar requiere confirmación; salir conserva la descarga separada por cuenta, mientras borrar cuenta elimina también su clave. Esta entrega aún requiere entrar con conexión; T198 completa el recorrido en frío.

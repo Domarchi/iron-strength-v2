@@ -31,3 +31,5 @@ La versión pública web/API permanece en Vercel; Supabase y las asignaciones re
 ## Actualización T192–T196 · 24 de octubre de 2026
 
 El inventario inicial anterior es la línea base de T189. El cliente ya incorpora invitación/recuperación propias (T192), privacidad y eliminación protegida (T193), comentarios con no leídos y borrador persistente (T195), y progreso por periodos con evidencia (T196). Los controles de software están en validation.md; publicación y aceptación física se registran por separado. Por decisión del propietario, medidas/fotos permanecen en web en esta versión y no se solicitan permisos móviles de cámara/galería. La descarga/apertura sin conexión sigue pendiente de T197–T199.
+
+T197 (25 de octubre): la descarga explícita nativa guarda la semana completa por cuenta, con alternativas, objetivos por serie e historial reciente. Actualización/eliminación no reescriben entrenamientos iniciados. Disponibilidad de datos verificada mediante escritura atómica y relectura; todavía se requiere conexión para entrar. Apertura en frío y registro desde descarga corresponden a T198, cola/versiones a T199.

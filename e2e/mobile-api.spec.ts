@@ -68,6 +68,23 @@ test("el móvil consulta solo su semana/rutina y salir revoca su refresh sin cre
   expect((await preview.json()).exercises).toHaveLength(2);
   const foreign = await request.get(`/api/mobile/v1/sessions/${bobSession}`, { headers });
   expect(foreign.status()).toBe(404);
+
+  const download = await request.get("/api/mobile/v1/week/download", { headers });
+  expect(download.status()).toBe(200);
+  expect(download.headers()["cache-control"]).toContain("no-store");
+  expect(download.headers()["set-cookie"]).toBeUndefined();
+  const pack = (await download.json()).pack;
+  expect(pack.userId).toBe(alice);
+  expect(
+    pack.sessions.map((s: { context: { session: { id: string } } }) => s.context.session.id),
+  ).toEqual([aliceSession]);
+  expect(Object.keys(pack.history)).toHaveLength(2);
+  expect(
+    (await request.get("/api/mobile/v1/week/download?studentId=" + bob, { headers })).status(),
+  ).toBe(400);
+  expect((await request.get("/api/mobile/v1/week/download", { maxRedirects: 0 })).status()).toBe(
+    401,
+  );
   const rows = await admin().from("workouts").select("id").eq("student_id", alice);
   expect(rows.error).toBeNull();
   expect(rows.data).toHaveLength(0);

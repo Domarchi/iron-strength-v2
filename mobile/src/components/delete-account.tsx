@@ -1,3 +1,4 @@
+import { useWeekDownload } from "../lib/week-context";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { isDeleteConfirmation } from "../../../src/domain/account";
@@ -11,7 +12,8 @@ export function DeleteAccount() {
     { client, state } = useSession(),
     { controller, training } = useTraining(),
     { controller: removalController } = useAccountRemoval(),
-    { controller: comments, draft } = useCommentDraft();
+    { controller: comments, draft } = useCommentDraft(),
+    { controller: downloads, download } = useWeekDownload();
   const [open, setOpen] = useState(false),
     [confirmation, setConfirmation] = useState(""),
     [busy, setBusy] = useState(false),
@@ -26,11 +28,19 @@ export function DeleteAccount() {
     );
   const userId = state.session.profile.id;
   async function submit() {
-    if (!isDeleteConfirmation(confirmation) || busy || training.busy || draft.busy) return;
+    if (
+      !isDeleteConfirmation(confirmation) ||
+      busy ||
+      training.busy ||
+      draft.busy ||
+      downloads.getSnapshot().busy
+    )
+      return;
     setBusy(true);
     setError(null);
     try {
       // Flush valid drafts before unmounting the training provider. Unknown formats stay until explicit deletion.
+      await downloads.flush();
       if (!training.blocked) await controller.flush();
       if (!draft.blocked) await comments.flush();
       await removalController.request(userId, () => client.deleteAccount(confirmation));
@@ -46,8 +56,8 @@ export function DeleteAccount() {
       <Text style={[s.body, { color: p.muted }]}>
         Se borran para siempre tu cuenta, planes asignados, entrenamientos, medidas, fotos, logros y
         comentarios de tus entrenamientos. También se descartan los registros, mensajes pendientes y
-        demos de esta cuenta en este dispositivo. No se puede deshacer. Antes puedes exportar tu
-        historial desde Cuenta en la web.
+        demos y descargas de esta cuenta en este dispositivo. No se puede deshacer. Antes puedes
+        exportar tu historial desde Cuenta en la web.
       </Text>
       {error ? <Notice message={error} /> : null}
       {open ? (
@@ -70,7 +80,9 @@ export function DeleteAccount() {
               !training.ready ||
               training.busy ||
               !draft.ready ||
-              draft.busy
+              draft.busy ||
+              !download.ready ||
+              download.busy
             }
             busy={busy}
             onPress={() => {
@@ -92,7 +104,7 @@ export function DeleteAccount() {
         <Action
           label="Quiero borrar mi cuenta"
           secondary
-          disabled={training.busy || draft.busy || !draft.ready}
+          disabled={training.busy || draft.busy || !draft.ready || !download.ready || download.busy}
           onPress={() => setOpen(true)}
         />
       )}

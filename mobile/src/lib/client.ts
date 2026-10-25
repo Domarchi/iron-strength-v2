@@ -1,3 +1,4 @@
+import { parseNativeWeek } from "../../../src/lib/mobile/download-contract";
 import { z } from "zod";
 import {
   mobileErrorSchema,
@@ -365,6 +366,18 @@ export class MobileClient {
         "identity",
         "El servidor no confirmó esta cuenta. Conservamos el registro local.",
       );
+  }
+  async downloadWeek() {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id;
+    const record = parseNativeWeek(await this.read("week/download"), userId);
+    if (!record?.pack)
+      throw new MobileError(
+        "identity",
+        "La descarga está incompleta o no corresponde a tu cuenta. Reintenta.",
+      );
+    return record.pack;
   }
   async week() {
     return mobileWeekSchema.parse(await this.read("week"));

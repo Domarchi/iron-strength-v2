@@ -1,3 +1,5 @@
+import { WeekDownloadCard } from "../../../components/week-download-card";
+import { useWeekDownload } from "../../../lib/week-context";
 import { useState } from "react";
 import { router } from "expo-router";
 import { Linking, Text, View } from "react-native";
@@ -13,7 +15,8 @@ export default function Account() {
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
-    { controller: comments, draft } = useCommentDraft();
+    { controller: comments, draft } = useCommentDraft(),
+    { controller: downloads, download } = useWeekDownload();
   const [error, setError] = useState<string | null>(null),
     [confirm, setConfirm] = useState(false);
   if (state.status !== "authenticated") return null;
@@ -27,6 +30,7 @@ export default function Account() {
   }
   async function logout() {
     try {
+      await downloads.flush();
       await comments.clearForLogout();
       await controller.clearForLogout();
       await client.logout();
@@ -49,6 +53,7 @@ export default function Account() {
       <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
       <TrainingCard />
       <CommentDraftCard allowDiscard />
+      <WeekDownloadCard />
       {error ? <Notice message={error} /> : null}
       {training.error ? <Notice message={training.error} /> : null}
       {person.role === "coach" ? (
@@ -116,6 +121,11 @@ export default function Account() {
           )}
         </>
       ) : null}
+      {download.busy ? (
+        <Text style={[s.body, { color: p.muted }]}>
+          Espera a que termine la descarga antes de salir.
+        </Text>
+      ) : null}
       <Action
         label="Salir"
         secondary
@@ -128,7 +138,9 @@ export default function Account() {
           draft.blocked ||
           !!draft.record ||
           draft.dirty ||
-          draft.busy
+          draft.busy ||
+          !download.ready ||
+          download.busy
         }
         onPress={() => {
           void logout();

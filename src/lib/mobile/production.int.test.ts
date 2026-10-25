@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 import { adminClient, createProfileUser, resetUsers, signedInClient } from "@/test/int/helpers";
-import { mobileProductionDependencies } from "./production";
+import { mobileDownloadApi, mobileProductionDependencies } from "./production";
 import { createMobileApi } from "./api";
 import { mobileSessionSchema, type MobileSession } from "./contracts";
 import { hashEmail } from "../auth/rate-limit";
@@ -309,5 +309,26 @@ describe("cliente móvil con Auth y RLS reales", () => {
           .eq("id", payload.id)
       ).count,
     ).toBe(0);
+  });
+  it("descarga únicamente la semana propia, también al entrenar como coach", async () => {
+    for (const person of [alice, bob, coach]) {
+      const db = await signedInClient(person.email, person.password),
+        session = await db.auth.getSession();
+      const response = await mobileDownloadApi().download(
+        get("week/download", session.data.session!.access_token),
+      );
+      expect(response.status).toBe(200);
+      const value = await response.json();
+      expect(value.userId).toBe(person.id);
+      expect(value.pack.userId).toBe(person.id);
+      expect(value.pack.program.id).toBe(programs.get(person.id)!.id);
+      expect(
+        value.pack.sessions.map(
+          (s: { context: { session: { id: string } } }) => s.context.session.id,
+        ),
+      ).toEqual([programs.get(person.id)!.session]);
+      expect(value.pack.sessions[0].context.exercises[0].prescribed.sets).toBe(3);
+      expect(Object.keys(value.pack.history)).toHaveLength(1);
+    }
   });
 });

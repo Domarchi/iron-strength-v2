@@ -1,3 +1,4 @@
+import { WeekDownloadCard } from "../../../components/week-download-card";
 import { useCallback } from "react";
 import { router } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
@@ -195,6 +196,9 @@ export default function Week() {
               </Pressable>
             ))}
           </View>
+          <WeekDownloadCard
+            expected={{ programId: active.program.id, weekStart: active.weekStart }}
+          />
           {active.sessions.length === 0 ? (
             <Notice message="Tu coach aún no ha añadido sesiones para esta semana." />
           ) : null}

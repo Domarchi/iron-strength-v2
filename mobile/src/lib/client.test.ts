@@ -1,3 +1,4 @@
+import { weekDownloadFixture } from "../../../src/test/fixtures/week-download";
 import { describe, it, expect, vi } from "vitest";
 import { MobileClient, validateApiOrigin, type Transport, type CredentialStore } from "./client";
 const profile = {
@@ -39,6 +40,26 @@ function setup(fetcher: Transport) {
   };
 }
 describe("sesión móvil segura", () => {
+  it("descarga recibe solo el paquete completo de la identidad actual", async () => {
+    const pack = weekDownloadFixture(profile.id),
+      fetcher = vi
+        .fn<Transport>()
+        .mockResolvedValueOnce(Response.json(session))
+        .mockResolvedValueOnce(Response.json({ version: 1, userId: profile.id, pack }))
+        .mockResolvedValueOnce(
+          Response.json({
+            version: 1,
+            userId: profile.id,
+            pack: { ...pack, userId: "22222222-2222-4222-8222-222222222222" },
+          }),
+        );
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    expect(
+      (await x.client.downloadWeek()).sessions[0].context.exercises[0].prescribed.series,
+    ).toHaveLength(2);
+    await expect(x.client.downloadWeek()).rejects.toMatchObject({ code: "identity" });
+  });
   it("progreso valida ID antes de enviar y comprueba identidad de la respuesta", async () => {
     const exercise = {
       exerciseId: profile.id,

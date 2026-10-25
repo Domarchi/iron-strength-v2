@@ -40,6 +40,8 @@ describe("eliminación recuperable del dispositivo", () => {
     x.values.set(`is:native-comment:v1:${id}`, "mensaje pendiente");
     x.values.set(`is:native-comment:v1:${other}`, "otro mensaje");
     x.values.set("is:native-appearance:v1", "dark");
+    x.values.set(`is:native-week:v1:${id}`, "descarga");
+    x.values.set(`is:native-week:v1:${other}`, "otra descarga");
     await x.controller.restore();
     const remove = vi.fn(async () => {
       expect(JSON.parse(x.values.get(REMOVAL_KEY)!).phase).toBe("requested");
@@ -51,6 +53,8 @@ describe("eliminación recuperable del dispositivo", () => {
     expect(x.values.has(`is:native-comment:v1:${id}`)).toBe(false);
     expect(x.values.get(`is:native-comment:v1:${other}`)).toBe("otro mensaje");
     expect(x.values.get("is:native-appearance:v1")).toBe("dark");
+    expect(x.values.has(`is:native-week:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:native-week:v1:${other}`)).toBe("otra descarga");
     expect(x.controller.getSnapshot().completion).toBe("server_deleted");
   });
   it("no envía si no puede confirmar el recibo y conserva registros ante respuesta perdida", async () => {

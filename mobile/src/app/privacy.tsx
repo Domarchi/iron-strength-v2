@@ -13,11 +13,11 @@ const sections = [
   ],
   [
     "En este dispositivo",
-    "La app instalada conserva la credencial de renovación en el almacenamiento seguro del sistema. Las series iniciadas, demos y recibos de eliminación se guardan localmente. La apariencia es una preferencia del dispositivo. Expo web usa la sesión solo en memoria. Recuperar acceso no elimina tu registro pendiente.",
+    "La app instalada conserva la credencial de renovación en el almacenamiento seguro del sistema. Las series iniciadas, demos, descargas de semana y recibos de eliminación se guardan localmente. La apariencia es una preferencia del dispositivo. Expo web usa la sesión solo en memoria. Recuperar acceso no elimina tu registro pendiente.",
   ],
   [
     "Salir, desinstalar o borrar",
-    "Salir elimina la sesión y los registros locales de esa cuenta después de resolver sus pendientes; conserva la apariencia. Desinstalar no elimina la cuenta del servidor. Borrar mi cuenta elimina los datos remotos del alumno y después sus registros de este dispositivo. No podemos borrar automáticamente copias exportadas o datos locales que tengas en otros dispositivos.",
+    "Salir elimina la sesión y los registros locales de esa cuenta después de resolver sus pendientes; conserva la apariencia y las descargas separadas por cuenta. Puedes eliminar una descarga desde Cuenta sin borrar tus entrenamientos. Desinstalar no elimina la cuenta del servidor. Borrar mi cuenta elimina los datos remotos del alumno y después sus registros y descargas de este dispositivo. No podemos borrar automáticamente copias exportadas o datos locales que tengas en otros dispositivos.",
   ],
   [
     "Exportar antes de borrar",

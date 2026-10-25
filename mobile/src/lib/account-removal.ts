@@ -15,7 +15,11 @@ type State = {
 };
 export async function clearAccountTraining(storage: TrainingStorage, id: string) {
   if (!z.uuid().safeParse(id).success) throw Error("Identidad local inválida.");
-  for (const key of [`is:native-training:v1:${id}`, `is:native-comment:v1:${id}`]) {
+  for (const key of [
+    `is:native-training:v1:${id}`,
+    `is:native-comment:v1:${id}`,
+    `is:native-week:v1:${id}`,
+  ]) {
     await storage.remove(key);
     if ((await storage.get(key)) !== null)
       throw Error("No pudimos confirmar la limpieza local. Reintenta.");

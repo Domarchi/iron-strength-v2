@@ -1,5 +1,7 @@
 import { createMobileProgressApi } from "./progress-api";
 import "server-only";
+import { createMobileDownloadApi } from "./download-api";
+import { downloadCurrentWeek } from "../data/offline-week";
 import { createMobileAccessApi } from "./access-api";
 import { registerWithInvitation } from "../invitations/register";
 import { hashToken } from "../invitations/token";
@@ -245,6 +247,20 @@ export function mobileProgressApi() {
           const value = await getExerciseProgressDetail(db, identity.profile.id, exerciseId);
           return value ? { version: 1 as const, today: santiagoDate(new Date()), ...value } : null;
         },
+      };
+    },
+  });
+}
+
+export function mobileDownloadApi() {
+  return createMobileDownloadApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        download: () => downloadCurrentWeek(db, identity.profile.id),
       };
     },
   });
