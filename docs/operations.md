@@ -51,7 +51,7 @@ Ante una regresión web, L puede recuperar K según la evidencia vigente, conser
 
 ## Respaldo y mantenimiento
 
-Antes de una migración remota, comprobar el Supabase exclusivo udwhjcnlfqlggblnpchu, generar copia nueva privada, verificar hashes y restaurar en un destino aislado. El ensayo T195 conserva 49 tablas/523 filas y permisos anteriores a la migración de recibos; no cubre escrituras posteriores. No usarlo como copia actual sin contrastar cambios. No restaurar sobre la base interactiva o remota durante un ensayo.
+Antes de una migración remota, comprobar el Supabase exclusivo udwhjcnlfqlggblnpchu, generar copia nueva privada, verificar hashes y restaurar en un destino aislado. El ensayo actualizado T205 del 25 de octubre conserva 49 tablas/524 filas, 55 políticas y 28 propietarios/banderas, con las 40 migraciones actuales. Datos y permisos coinciden en una base nueva aislada; el bucket privado estaba vacío, por lo que no se acredita restauración de bytes de fotos. No cubre escrituras posteriores ni un destino externo cifrado/programado. No usarlo como copia actual sin contrastar cambios. No restaurar sobre la base interactiva o remota durante un ensayo.
 
 Revisar auditorías de dependencias y parches compatibles antes de distribuir. Conservar los avisos de herramientas pendientes, su alcance y evidencia; no aplicar audit fix forzado que cambie el SDK. Volver a probar exportación, permisos y binario después de un cambio nativo. Medir fallos/reintentos confirmados con evidencia, sin agregar analítica de comportamiento o datos personales.
 
