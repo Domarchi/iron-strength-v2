@@ -124,10 +124,12 @@ describe("sesión móvil segura", () => {
     const x = setup(fetcher);
     await x.client.login(profile.email, "clave");
     expect((await x.client.commentsPage(profile.id)).unreadCount).toBe(1);
-    await expect(x.client.publishComment(profile.id, id, "Mensaje")).rejects.toMatchObject({
+    await expect(
+      x.client.publishComment(profile.id, id, "Mensaje", profile.id),
+    ).rejects.toMatchObject({
       code: "identity",
     });
-    await x.client.publishComment(profile.id, id, "Mensaje");
+    await x.client.publishComment(profile.id, id, "Mensaje", profile.id);
     expect(JSON.parse(String(fetcher.mock.calls[3][1].body))).toEqual({ id, body: "Mensaje" });
     expect(fetcher.mock.calls[3][0]).toContain(`/workouts/${profile.id}/comments`);
     expect(x.client.getSnapshot().status).toBe("authenticated");
@@ -142,9 +144,11 @@ describe("sesión móvil segura", () => {
       .mockResolvedValueOnce(Response.json({ version: 1, ok: true, userId: profile.id }));
     const x = setup(fetcher);
     await x.client.login(profile.email, "clave");
-    await expect(x.client.deleteAccount("BORRAR")).rejects.toMatchObject({ code: "identity" });
+    await expect(x.client.deleteAccount("BORRAR", profile.id)).rejects.toMatchObject({
+      code: "identity",
+    });
     expect(x.client.getSnapshot().status).toBe("authenticated");
-    await x.client.deleteAccount("BORRAR");
+    await x.client.deleteAccount("BORRAR", profile.id);
     expect(x.store.remove).not.toHaveBeenCalled();
     expect(x.client.getSnapshot().status).toBe("authenticated");
     expect(fetcher.mock.calls[2][1].headers).toMatchObject({ Authorization: "Bearer access-a" });
@@ -156,7 +160,7 @@ describe("sesión móvil segura", () => {
     expect(() => validateApiOrigin("http://127.0.0.1:3000")).toThrow();
     expect(validateApiOrigin("http://127.0.0.1:3000", true)).toBe("http://127.0.0.1:3000");
   });
-  it("guarda únicamente refresh token y recupera verificando el servidor", async () => {
+  it("guarda credencial y perfil verificado, sin access token, y recupera verificando el servidor", async () => {
     const fetcher = vi
       .fn<Transport>()
       .mockResolvedValueOnce(Response.json(session))
@@ -166,7 +170,7 @@ describe("sesión móvil segura", () => {
     const x = setup(fetcher);
     await x.client.login(profile.email, "clave");
     expect(x.value()).not.toContain("access-a");
-    expect(x.value()).not.toContain(profile.email);
+    expect(JSON.parse(x.value()!).profile).toEqual(profile);
     expect(x.client.getSnapshot().status).toBe("authenticated");
     await x.client.restore();
     expect(x.value()).toContain("rotated");

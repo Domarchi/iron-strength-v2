@@ -33,6 +33,79 @@ function fixture() {
   return { map, store, save, create };
 }
 describe("registro nativo, persistencia y separación de la demo", () => {
+  it("un pendiente antiguo congela su payload antes del primer intento perdido", async () => {
+    const x = fixture(),
+      a = x.create();
+    await a.restore();
+    await a.start(DEMO_ROUTINES[0], "real");
+    a.edit((d) => updateSetField(d, 0, 0, "weight", "20"));
+    await a.flush();
+    await a.complete(0, 0);
+    await a.finish(null, null, { localOnly: true });
+    const key = `is:native-training:v1:${user}`,
+      raw = JSON.parse(x.map.get(key)!);
+    delete raw.active.payload;
+    x.map.set(key, JSON.stringify(raw));
+    const b = x.create();
+    await b.restore();
+    x.save.mockRejectedValueOnce(Error("network"));
+    await expect(b.retry()).rejects.toThrow("network");
+    const frozen = JSON.parse(x.map.get(key)!).active.payload;
+    expect(frozen.id).toBe(user);
+    await b.retry();
+    expect(x.save.mock.calls[0]).toEqual(x.save.mock.calls[1]);
+  });
+  it("cerrar sin red congela y confirma el registro local antes de enviarlo al reconectar", async () => {
+    const x = fixture(),
+      a = x.create();
+    await a.restore();
+    await a.start(DEMO_ROUTINES[0], "real");
+    a.edit((d) => updateSetField(d, 0, 0, "weight", "20"));
+    await a.flush();
+    await a.complete(0, 0);
+    expect(await a.finish(7, "Sin conexión", { localOnly: true })).toEqual({
+      mode: "pending",
+      id: user,
+    });
+    expect(x.save).not.toHaveBeenCalled();
+    const payload = a.getSnapshot().active!.payload;
+    const b = x.create();
+    await b.restore();
+    expect(b.getSnapshot().active?.payload).toEqual(payload);
+    expect(await b.retry()).toEqual({ mode: "real", id: user });
+    expect(x.save).toHaveBeenCalledExactlyOnceWith(payload);
+  });
+  it("desmontar por cambio de sesión conserva escrituras personales ya encoladas en su cuenta", async () => {
+    const x = fixture(),
+      a = x.create();
+    x.map.set(`is:native-training:v1:${other}`, "otra cuenta");
+    await a.restore();
+    await a.start(DEMO_ROUTINES[0], "real");
+    a.review("7", "Última nota");
+    a.dispose();
+    await expect(a.flush()).resolves.toBeUndefined();
+    const b = x.create();
+    await b.restore();
+    expect(b.getSnapshot().active?.review).toEqual({ effort: "7", note: "Última nota" });
+    expect(x.map.get(`is:native-training:v1:${other}`)).toBe("otra cuenta");
+  });
+  it("caducar la sesión durante el cierre termina la nota encolada sin iniciar un envío posterior", async () => {
+    const x = fixture(),
+      a = x.create();
+    await a.restore();
+    await a.start(DEMO_ROUTINES[0], "real");
+    a.edit((d) => updateSetField(d, 0, 0, "weight", "20"));
+    await a.complete(0, 0);
+    a.review("7", "Nota antes de caducar");
+    const closing = a.finish(7, "Nota antes de caducar");
+    a.dispose();
+    await expect(closing).rejects.toThrow("Recupera primero");
+    const b = x.create();
+    await b.restore();
+    expect(b.getSnapshot().active?.review?.note).toBe("Nota antes de caducar");
+    expect(b.getSnapshot().active?.draft.status).toBe("in_progress");
+    expect(x.save).not.toHaveBeenCalled();
+  });
   it("recupera la instantánea, serie, ejercicio activo y descanso en su cuenta", async () => {
     const x = fixture(),
       a = x.create();

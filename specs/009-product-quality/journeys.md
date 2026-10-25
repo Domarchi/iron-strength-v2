@@ -49,3 +49,7 @@ Progreso → elegir ejercicio realizado → 4/8/12 semanas → 1RM estimado o vo
 ## Descargar semana móvil · T197
 
 Inicio con semana vigente → Descargar semana → comprobar fecha, sesiones y ejercicios → actualizar explícitamente cuando cambie la planificación. Una respuesta de otra cuenta/semana o una descarga más antigua no reemplaza la conocida. Falta de espacio, conflicto entre ventanas y almacenamiento no compatible tienen mensajes distintos y Comprobar descarga. Actualizar/eliminar copia no cambia una sesión iniciada. Eliminar requiere confirmación; salir conserva la descarga separada por cuenta, mientras borrar cuenta elimina también su clave. Esta entrega aún requiere entrar con conexión; T198 completa el recorrido en frío.
+
+## Entrenar desde la descarga · T198
+
+Identidad v2 conocida → servicio no disponible → Inicio local → consultar rutina descargada sin escribir borrador → empezar dentro de la semana vigente → alternativa autorizada → ronda y descanso absoluto → cierre local protegido → Conectar → Reintentar envío → resultado confirmado. Una respuesta perdida conserva el mismo ID/contenido; una copia vencida permite consultar/retomar, pero no un nuevo inicio. Sin descarga no se inventan sesiones ni cumplimiento. Historial descargado es referencia fechada; progreso, conversaciones e historial completos requieren conexión. Un 401 pide acceso y conserva el registro; otra cuenta no abre la copia anterior. Pruebas de controladores y Expo web separadas de arranque físico del binario sin Metro (T201).

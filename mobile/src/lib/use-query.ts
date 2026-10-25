@@ -1,15 +1,24 @@
-import { useCallback, useState } from "react";
+import { useSession } from "./session";
+import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
 export function useQuery<T>(request: () => Promise<T>) {
   const [value, setValue] = useState<T | null>(null),
     [error, setError] = useState<string | null>(null),
     [loading, setLoading] = useState(true),
     [revision, setRevision] = useState(0);
+  const { state } = useSession(),
+    connection =
+      state.status === "authenticated" ? state.session.profile.id + ":" + state.mode : state.status;
+  const operation = useMemo(
+    () => ({ request, revision, connection }),
+    [request, revision, connection],
+  );
   useFocusEffect(
     useCallback(() => {
       let live = true;
       setLoading(true);
-      request().then(
+      setError(null);
+      operation.request().then(
         (data) => {
           if (live) {
             setValue(data);
@@ -27,7 +36,7 @@ export function useQuery<T>(request: () => Promise<T>) {
       return () => {
         live = false;
       };
-    }, [request, revision]),
+    }, [operation]),
   );
   const retry = useCallback(() => {
     setLoading(true);

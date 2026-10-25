@@ -85,9 +85,8 @@ export class TrainingController {
     };
   };
   private publish(p: Partial<TrainingState>) {
-    if (this.disposed) return;
     this.state = { ...this.state, ...p };
-    this.listeners.forEach((fn) => fn());
+    if (!this.disposed) this.listeners.forEach((fn) => fn());
   }
   private serialize<T>(fn: () => Promise<T>): Promise<T> {
     const p = this.tail.then(fn, fn);
@@ -150,7 +149,7 @@ export class TrainingController {
     });
     this.publish({ dirty: true });
     const operation = this.serialize(async () => {
-      if (this.disposed) return;
+      // Captured personal edits remain owned by this key after auth unmounts the provider.
       const current = await this.storage.get(this.key);
       if (current !== this.raw && current !== this.attempt)
         throw Error(
@@ -269,10 +268,11 @@ export class TrainingController {
     });
     await this.persist();
   }
-  async finish(effort: number | null, note: string | null) {
+  async finish(effort: number | null, note: string | null, options: { localOnly?: boolean } = {}) {
     this.ensure();
     if (!this.state.active || this.state.busy) return null;
     await this.flush();
+    this.ensure();
     const a = this.state.active;
     if (a.draft.status === "in_progress") {
       if (
@@ -286,21 +286,47 @@ export class TrainingController {
       this.publish({ active: { ...a, draft, payload: built.payload }, error: null });
       await this.persist();
     }
+    if (options.localOnly && this.state.active?.mode === "real") {
+      const prepared = await this.pendingPayload();
+      return prepared ? { mode: "pending" as const, id: prepared.active.draft.workoutId } : null;
+    }
     return this.retry();
   }
-  async retry() {
+  private async pendingPayload() {
     this.ensure();
     await this.flush();
+    this.ensure();
     const a = this.state.active;
     if (!a || a.draft.status !== "pending_save" || this.state.busy) return null;
     const built = a.payload
       ? { ok: true as const, payload: a.payload }
       : buildPayload(a.draft, this.now());
     if (!built.ok) throw Error("No hay series válidas para guardar.");
+    if (built.payload.id !== a.draft.workoutId)
+      throw Error(
+        "El envío no corresponde a este entrenamiento. Conservamos el registro para revisarlo.",
+      );
+    const active = a.payload ? a : { ...a, payload: built.payload };
+    if (!a.payload) {
+      this.publish({ active });
+      await this.persist();
+    }
+    return { active, payload: built.payload };
+  }
+  async retry() {
+    const prepared = await this.pendingPayload();
+    this.ensure();
+    if (
+      !prepared ||
+      this.state.busy ||
+      this.state.active?.draft.workoutId !== prepared.active.draft.workoutId
+    )
+      return null;
+    const { active: a, payload } = prepared;
     const epoch = this.epoch;
     this.publish({ busy: true, error: null });
     try {
-      if (a.mode === "real") await this.send(built.payload);
+      if (a.mode === "real") await this.send(payload);
       if (this.disposed || epoch !== this.epoch) return null;
       const demos =
         a.mode === "demo"
@@ -308,7 +334,7 @@ export class TrainingController {
               {
                 id: a.draft.workoutId,
                 title: a.routine.session.title ?? `Rutina ${a.routine.session.label}`,
-                payload: built.payload,
+                payload,
               },
               ...this.state.demos.filter((d) => d.id !== a.draft.workoutId),
             ].slice(0, 20)

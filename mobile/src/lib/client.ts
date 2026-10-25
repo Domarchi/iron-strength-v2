@@ -2,6 +2,8 @@ import { parseNativeWeek } from "../../../src/lib/mobile/download-contract";
 import { z } from "zod";
 import {
   mobileErrorSchema,
+  mobileProfileSchema,
+  type MobileProfile,
   mobileRoutineSchema,
   mobileSessionSchema,
   mobileWeekSchema,
@@ -29,11 +31,15 @@ export interface CredentialStore {
   set(value: string): Promise<void>;
   remove(): Promise<void>;
 }
+export type ClientSession = Omit<MobileSession, "accessToken" | "expiresAt"> & {
+  accessToken: string | null;
+  expiresAt: number | null;
+};
 export type SessionState =
   | { status: "booting" }
   | { status: "signedOut"; message?: string }
   | { status: "blocked"; message: string }
-  | { status: "authenticated"; session: MobileSession };
+  | { status: "authenticated"; mode: "online" | "offline"; session: ClientSession };
 export class MobileError extends Error {
   constructor(
     public readonly code: string,
@@ -61,9 +67,18 @@ export function validateApiOrigin(value: string, allowLocal = false): string {
     throw Error("El servicio debe usar un origen HTTPS válido.");
   return url.origin;
 }
-const vault = z
-  .object({ version: z.literal(1), refreshToken: z.string().min(1).max(1024) })
-  .strict();
+const vault = z.discriminatedUnion("version", [
+  z.object({ version: z.literal(1), refreshToken: z.string().min(1).max(1024) }).strict(),
+  z
+    .object({
+      version: z.literal(2),
+      refreshToken: z.string().min(1).max(1024),
+      profile: mobileProfileSchema,
+    })
+    .strict(),
+]);
+const transientConnection = (error: unknown) =>
+  error instanceof MobileError && (error.code === "network" || error.status >= 500);
 const cancelled = () => new MobileError("cancelled", "La sesión cambió. Vuelve a intentar.");
 const message = (error: unknown) =>
   error instanceof MobileError
@@ -110,7 +125,18 @@ export class MobileClient {
   private async persist(session: MobileSession, generation: number) {
     await this.serialize(async () => {
       this.current(generation);
-      await this.store.set(JSON.stringify({ version: 1, refreshToken: session.refreshToken }));
+      const encoded = JSON.stringify({
+        version: 2,
+        refreshToken: session.refreshToken,
+        profile: session.profile,
+      });
+      await this.store.set(encoded);
+      this.current(generation);
+      if ((await this.store.get()) !== encoded)
+        throw new MobileError(
+          "storage",
+          "No pudimos confirmar la sesión en este dispositivo. Reintenta.",
+        );
       this.current(generation);
     });
   }
@@ -167,6 +193,8 @@ export class MobileClient {
     const gen = ++this.generation;
     this.renewal = null;
     this.publish({ status: "booting" });
+    let cached: { profile: MobileProfile; refreshToken: string } | null = null;
+    let awaitingService = false;
     try {
       const raw = await this.serialize(() => this.store.get());
       this.current(gen);
@@ -189,28 +217,41 @@ export class MobileClient {
           "version",
           "La sesión guardada necesita una versión compatible. Se conserva en este dispositivo.",
         );
-      const next = this.session(
-        await this.http("auth/refresh", { refreshToken: saved.data.refreshToken }),
-      );
+      if (saved.data.version === 2)
+        cached = { profile: saved.data.profile, refreshToken: saved.data.refreshToken };
+      awaitingService = true;
+      const response = await this.http("auth/refresh", { refreshToken: saved.data.refreshToken });
+      awaitingService = false;
+      const next = this.session(response);
       this.current(gen);
+      if (cached && next.profile.id !== cached.profile.id)
+        throw new MobileError("identity", "La cuenta de la sesión cambió. Vuelve a entrar.", 401);
       await this.persist(next, gen);
       this.current(gen);
-      this.publish({ status: "authenticated", session: next });
+      this.publish({ status: "authenticated", mode: "online", session: next });
     } catch (error) {
       if (gen !== this.generation) return;
-      if (error instanceof MobileError && error.status === 401) {
-        try {
-          await this.serialize(() => this.store.remove());
-          this.current(gen);
-          this.publish({ status: "signedOut", message: "Tu sesión terminó. Vuelve a entrar." });
-        } catch {
-          if (gen === this.generation)
-            this.publish({
-              status: "blocked",
-              message: "No pudimos limpiar la sesión. Reintenta la salida.",
-            });
-        }
-      } else this.publish({ status: "blocked", message: message(error) });
+      if (error instanceof MobileError && error.status === 401) await this.endSession(gen);
+      else if (awaitingService && cached && transientConnection(error))
+        this.publish({
+          status: "authenticated",
+          mode: "offline",
+          session: {
+            version: 1,
+            profile: cached.profile,
+            refreshToken: cached.refreshToken,
+            accessToken: null,
+            expiresAt: null,
+          },
+        });
+      else
+        this.publish({
+          status: "blocked",
+          message:
+            awaitingService && !cached && transientConnection(error)
+              ? "Conéctate una vez para activar el acceso sin conexión. Conservamos tu sesión y tus registros."
+              : message(error),
+        });
     }
   }
   async login(email: string, password: string): Promise<void> {
@@ -223,13 +264,18 @@ export class MobileClient {
       this.current(gen);
       await this.persist(next, gen);
       this.current(gen);
-      this.publish({ status: "authenticated", session: next });
+      this.publish({ status: "authenticated", mode: "online", session: next });
     } catch (error) {
       if (gen === this.generation) this.publish({ status: "signedOut", message: message(error) });
       throw error;
     }
   }
-  async logout(): Promise<void> {
+  async logout(expectedUserId?: string): Promise<void> {
+    if (
+      expectedUserId &&
+      (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+    )
+      throw new MobileError("identity", "La cuenta cambió. No cerramos la sesión de otra cuenta.");
     const previous = this.state.status === "authenticated" ? this.state.session : null;
     const gen = ++this.generation;
     this.renewal = null;
@@ -251,14 +297,14 @@ export class MobileClient {
         await this.http(
           "auth/logout",
           { refreshToken: previous.refreshToken },
-          previous.accessToken,
+          previous.accessToken ?? undefined,
         );
       } catch {
         /* No se afirma revocación remota cuando falla el transporte. */
       }
     }
   }
-  private async renew(previous: MobileSession, gen: number): Promise<MobileSession> {
+  private async renew(previous: ClientSession, gen: number): Promise<MobileSession> {
     if (this.renewal) return this.renewal;
     const operation = (async () => {
       const next = this.session(
@@ -269,7 +315,7 @@ export class MobileClient {
         throw new MobileError("identity", "La cuenta de la sesión cambió. Vuelve a entrar.", 401);
       await this.persist(next, gen);
       this.current(gen);
-      this.publish({ status: "authenticated", session: next });
+      this.publish({ status: "authenticated", mode: "online", session: next });
       return next;
     })();
     this.renewal = operation;
@@ -279,51 +325,97 @@ export class MobileClient {
       if (this.renewal === operation) this.renewal = null;
     }
   }
+  private async endSession(gen: number) {
+    if (gen !== this.generation) return;
+    const expired = ++this.generation;
+    this.renewal = null;
+    this.publish({ status: "booting" });
+    try {
+      await this.serialize(() => {
+        this.current(expired);
+        return this.store.remove();
+      });
+      this.current(expired);
+      this.publish({ status: "signedOut", message: "Tu sesión terminó. Vuelve a entrar." });
+    } catch {
+      if (expired === this.generation)
+        this.publish({
+          status: "blocked",
+          message: "No pudimos limpiar la sesión. Reintenta la salida.",
+        });
+    }
+  }
+  private bearer(session: ClientSession) {
+    if (!session.accessToken)
+      throw new MobileError("offline", "Vuelve a conectar para consultar el servidor.");
+    return session.accessToken;
+  }
+  async reconnect(): Promise<void> {
+    const gen = this.generation;
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    try {
+      await this.renew(this.state.session, gen);
+    } catch (error) {
+      if (gen === this.generation && error instanceof MobileError && error.status === 401)
+        await this.endSession(gen);
+      throw error;
+    }
+  }
   private async read(path: string, body?: unknown): Promise<unknown> {
     const gen = this.generation;
     if (this.state.status !== "authenticated")
       throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    if (this.state.mode === "offline")
+      throw new MobileError(
+        "offline",
+        "Vuelve a conectar para consultar el servidor. Tus datos locales se conservan.",
+      );
     let session = this.state.session;
+    let renewing = false;
     try {
       let refreshed = false;
-      if (session.expiresAt * 1000 <= this.clock() + 30000) {
+      if (!session.accessToken || (session.expiresAt ?? 0) * 1000 <= this.clock() + 30000) {
+        renewing = true;
         session = await this.renew(session, gen);
+        renewing = false;
         refreshed = true;
       }
       let data: unknown;
       try {
-        data = await this.http(path, body, session.accessToken);
+        data = await this.http(path, body, this.bearer(session));
       } catch (error) {
         if (!(error instanceof MobileError) || error.status !== 401 || refreshed) throw error;
         this.current(gen);
         const current = this.state;
-        session =
-          current.status === "authenticated" && current.session.accessToken !== session.accessToken
-            ? current.session
-            : await this.renew(session, gen);
-        data = await this.http(path, body, session.accessToken);
+        if (
+          current.status === "authenticated" &&
+          current.session.accessToken !== session.accessToken
+        )
+          session = current.session;
+        else {
+          renewing = true;
+          session = await this.renew(session, gen);
+          renewing = false;
+        }
+        data = await this.http(path, body, this.bearer(session));
       }
       this.current(gen);
       return data;
     } catch (error) {
-      if (gen === this.generation && error instanceof MobileError && error.status === 401) {
-        const expired = ++this.generation;
-        this.publish({ status: "booting" });
-        try {
-          await this.serialize(() => {
-            this.current(expired);
-            return this.store.remove();
-          });
-          this.current(expired);
-          this.publish({ status: "signedOut", message: "Tu sesión terminó. Vuelve a entrar." });
-        } catch {
-          if (expired === this.generation)
-            this.publish({
-              status: "blocked",
-              message: "No pudimos limpiar la sesión. Reintenta la salida.",
-            });
-        }
-      }
+      if (gen === this.generation && error instanceof MobileError && error.status === 401)
+        await this.endSession(gen);
+      else if (
+        gen === this.generation &&
+        this.state.status === "authenticated" &&
+        error instanceof MobileError &&
+        (error.code === "network" || (renewing && transientConnection(error)))
+      )
+        this.publish({
+          ...this.state,
+          mode: "offline",
+          session: { ...this.state.session, accessToken: null, expiresAt: null },
+        });
       throw error;
     }
   }
@@ -354,7 +446,12 @@ export class MobileClient {
   async resetPassword(input: { token: string; password: string }) {
     return this.access("auth/reset-password", input, mobilePasswordResetSchema);
   }
-  async deleteAccount(confirmation: string) {
+  async deleteAccount(confirmation: string, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. No se envió la eliminación de otra cuenta.",
+      );
     if (this.state.status !== "authenticated")
       throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
     const id = this.state.session.profile.id;
@@ -406,7 +503,12 @@ export class MobileClient {
     this.confirmedComment(workoutId, result.workoutId);
     return result;
   }
-  async publishComment(workoutId: string, id: string, body: string) {
+  async publishComment(workoutId: string, id: string, body: string, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos el comentario para enviarlo con su cuenta original.",
+      );
     if (!z.uuid().safeParse(id).success)
       throw new MobileError("invalid_input", "El intento de comentario no es válido.");
     const result = mobileCommentSentSchema.parse(
@@ -463,7 +565,12 @@ export class MobileClient {
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
   }
-  async saveWorkout(payload: WorkoutPayload) {
+  async saveWorkout(payload: WorkoutPayload, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos el entrenamiento para enviarlo con su cuenta original.",
+      );
     const value = mobileSaveSchema.parse(await this.read("workouts", { version: 1, payload }));
     if (value.workoutId !== payload.id)
       throw new MobileError(

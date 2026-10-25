@@ -1,3 +1,4 @@
+import { OfflineWeek } from "../../../components/offline-week";
 import { WeekDownloadCard } from "../../../components/week-download-card";
 import { useCallback } from "react";
 import { router } from "expo-router";
@@ -29,6 +30,14 @@ const statuses = {
   upcoming: "Prevista",
 };
 export default function Week() {
+  const { state } = useSession();
+  return state.status === "authenticated" && state.mode === "offline" ? (
+    <OfflineWeek />
+  ) : (
+    <OnlineWeek />
+  );
+}
+function OnlineWeek() {
   const p = usePalette(),
     { client, state } = useSession(),
     { training } = useTraining();

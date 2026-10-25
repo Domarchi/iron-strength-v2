@@ -33,7 +33,7 @@ export default function Account() {
       await downloads.flush();
       await comments.clearForLogout();
       await controller.clearForLogout();
-      await client.logout();
+      await client.logout(person.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos salir. Reintenta.");
     }
@@ -124,6 +124,11 @@ export default function Account() {
       {download.busy ? (
         <Text style={[s.body, { color: p.muted }]}>
           Espera a que termine la descarga antes de salir.
+        </Text>
+      ) : null}
+      {state.mode === "offline" ? (
+        <Text style={[s.caption, { color: p.muted }]}>
+          Salir retira el acceso local. Para volver a entrar necesitarás conexión.
         </Text>
       ) : null}
       <Action

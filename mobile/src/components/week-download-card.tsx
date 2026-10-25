@@ -105,7 +105,8 @@ export function WeekDownloadCard({
       ) : null}
       {pack ? <RemoveDownload key={pack.program.id + pack.weekStart + pack.downloadedAt} /> : null}
       <Text style={[s.caption, { color: p.muted }]}>
-        Esta copia conserva los datos de la semana. Entrar a la app todavía requiere conexión.
+        Esta copia conserva rutinas e historial reciente. Solo puedes empezar rutinas de su semana
+        vigente.
       </Text>
     </View>
   );

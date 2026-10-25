@@ -1,3 +1,5 @@
+import { useSession } from "../../../lib/session";
+import { DownloadedSessions } from "../../../components/downloaded-sessions";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
 import {
@@ -12,7 +14,9 @@ import {
 import { DEMO_ROUTINES, demoSlug } from "../../../lib/demo";
 import { TrainingCard } from "../../../components/training-card";
 export default function Train() {
-  const p = usePalette();
+  const p = usePalette(),
+    { state } = useSession(),
+    offline = state.status === "authenticated" && state.mode === "offline";
   return (
     <Page>
       <Brand />
@@ -22,6 +26,7 @@ export default function Train() {
         description="Revisa tu semana o explora el registro con una rutina de ejemplo."
       />
       <TrainingCard />
+      {offline ? <DownloadedSessions /> : null}
       <View
         style={[
           s.card,

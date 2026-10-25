@@ -1,71 +1,9 @@
-import { test, expect, type Page } from "@playwright/test";
+import { setupDownloadedWeek as setup, enterWeekUser as enter } from "./support/week-fixture";
+import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { downloadId, weekDownloadFixture } from "../../src/test/fixtures/week-download";
-const origin = "https://iron-strength-seven.vercel.app",
-  userId = downloadId(1),
+const userId = downloadId(1),
   key = `is:native-week:v1:${userId}`;
-async function enter(page: Page) {
-  await page.getByLabel("Correo", { exact: true }).fill("ana@example.test");
-  await page.getByLabel("Contraseña", { exact: true }).fill("Synthetic-password");
-  await page.getByRole("button", { name: "Entrar", exact: true }).click();
-  await expect(page.getByText("Hola, Ana", { exact: true })).toBeVisible();
-}
-async function setup(page: Page, timestamp = "2026-10-24T12:00:00Z") {
-  const control = {
-    waiting: null as Promise<void> | null,
-    lost: false,
-    requests: 0,
-    pack: weekDownloadFixture(userId, timestamp),
-  };
-  await page.route(origin + "/api/mobile/v1/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    let json: unknown = { version: 1, kind: "no_program" };
-    if (path.endsWith("auth/login") || path.endsWith("auth/refresh"))
-      json = {
-        version: 1,
-        accessToken: "synthetic-access",
-        refreshToken: "synthetic-refresh",
-        expiresAt: 4000000000,
-        profile: { id: userId, fullName: "Ana Prueba", email: "ana@example.test", role: "student" },
-      };
-    else if (path.endsWith("comments/unread")) json = { version: 1, items: [] };
-    else if (path.endsWith("/week/download")) {
-      control.requests++;
-      if (control.waiting) await control.waiting;
-      if (control.lost) {
-        await route.abort("failed");
-        return;
-      }
-      json = { version: 1, userId, pack: control.pack };
-    } else if (path.endsWith("/week"))
-      json = {
-        version: 1,
-        kind: "active",
-        program: control.pack.program,
-        weekNumber: 1,
-        weekStart: control.pack.weekStart,
-        weekEnd: control.pack.weekEnd,
-        sessions: [
-          {
-            sessionId: downloadId(3),
-            label: "A",
-            title: "Piernas",
-            status: "pending",
-            exerciseCount: 2,
-            setCount: 4,
-            exerciseNames: ["Sentadilla", "Remo"],
-          },
-        ],
-      };
-    else if (path.endsWith("/sessions/" + downloadId(3)))
-      json = { version: 1, ...control.pack.sessions[0].context };
-    else if (path.endsWith("auth/logout")) json = { version: 1, ok: true };
-    await route.fulfill({ json, headers: { "Access-Control-Allow-Origin": "*" } });
-  });
-  await page.goto("/");
-  await enter(page);
-  return control;
-}
 test("descarga completa, recarga y eliminación conservan el entrenamiento iniciado", async ({
   page,
 }) => {

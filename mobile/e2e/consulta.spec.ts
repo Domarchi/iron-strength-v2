@@ -147,7 +147,8 @@ test("error de red conserva el recorrido y permite reintentar; estados vacíos y
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   let attempt = 0;
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
-    if (route.request().url().endsWith("auth/login"))
+    if (await fulfillEmptyCommentReads(route)) return;
+    if (/auth\/(login|refresh)$/.test(route.request().url()))
       return route.fulfill({ json: session, headers: { "Access-Control-Allow-Origin": "*" } });
     if (++attempt === 1) return route.abort("internetdisconnected");
     await route.fulfill({
@@ -156,10 +157,8 @@ test("error de red conserva el recorrido y permite reintentar; estados vacíos y
     });
   });
   await enter(page);
-  await expect(
-    page.getByText("No pudimos conectar. Revisa tu conexión y reintenta."),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Reintentar", exact: true }).click();
+  await expect(page.getByText("No hay una semana descargada para esta cuenta.")).toBeVisible();
+  await page.getByRole("button", { name: "Conectar", exact: true }).click();
   await expect(page.getByText("Tu próximo comienzo")).toBeVisible();
   const width = await page.evaluate(() => ({
     document: document.documentElement.scrollWidth,
@@ -312,7 +311,7 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
         | { payload: { id: string; startedAt: string; sets: { weightKg: number; reps: number }[] } }
         | undefined
     )?.payload;
-    const data = path.endsWith("auth/login")
+    const data = /auth\/(login|refresh)$/.test(path)
       ? session
       : path.endsWith("week")
         ? {
@@ -363,6 +362,8 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
   });
   expect(pending.draft.status).toBe("pending_save");
   expect(pending.payload).toEqual((sent[0] as { payload: unknown }).payload);
+  await expect(page.getByRole("button", { name: "Reintentar envío", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Conectar", exact: true }).click();
   await page.getByRole("button", { name: "Reintentar envío", exact: true }).click();
   await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
   expect(sent).toHaveLength(2);

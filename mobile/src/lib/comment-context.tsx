@@ -19,7 +19,7 @@ export function CommentProvider({ userId, children }: PropsWithChildren<{ userId
         userId,
         trainingStorage,
         async (input) => {
-          await client.publishComment(input.workoutId, input.id, input.body);
+          await client.publishComment(input.workoutId, input.id, input.body, userId);
         },
         randomUUID,
       ),

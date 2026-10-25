@@ -18,7 +18,7 @@ export function TrainingProvider({ userId, children }: PropsWithChildren<{ userI
       new TrainingController(
         userId,
         trainingStorage,
-        (p) => client.saveWorkout(p),
+        (p) => client.saveWorkout(p, userId),
         () => new Date(),
         randomUUID,
       ),

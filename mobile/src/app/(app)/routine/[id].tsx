@@ -6,6 +6,9 @@ import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 import { demoRoutine } from "../../../lib/demo";
 import { useTraining } from "../../../lib/training-context";
+import { useWeekDownload } from "../../../lib/week-context";
+import { downloadedRoutine, downloadedCanStart, downloadedAt } from "../../../lib/offline-week";
+import { santiagoDate } from "../../../../../src/domain/dates";
 import type { MobileRoutine } from "../../../lib/client";
 type Exercise = MobileRoutine["exercises"][number];
 function Targets({ prescribed }: { prescribed: Exercise["prescribed"] }) {
@@ -92,22 +95,47 @@ function ExerciseCard({
 }
 export default function Routine() {
   const p = usePalette(),
-    { client } = useSession(),
+    { client, state } = useSession(),
+    { download } = useWeekDownload(),
     { controller, training } = useTraining(),
     { id } = useLocalSearchParams<{ id: string }>();
   const demo = demoRoutine(typeof id === "string" ? id : "");
-  const request = useCallback(
-    () => (demo ? Promise.resolve(demo) : client.routine(typeof id === "string" ? id : "")),
-    [client, id, demo],
-  );
+  const offline = state.status === "authenticated" && state.mode === "offline",
+    userId = state.status === "authenticated" ? state.session.profile.id : "",
+    pack = download.verified ? download.pack : null,
+    cached = downloadedRoutine(pack, userId, typeof id === "string" ? id : "");
+  const request = useCallback(async () => {
+    if (demo) return demo;
+    if (offline) {
+      const local = downloadedRoutine(pack, userId, typeof id === "string" ? id : "");
+      if (!local)
+        throw Error("Esta rutina no está en la descarga de tu cuenta. Conecta para consultarla.");
+      return local;
+    }
+    return client.routine(typeof id === "string" ? id : "");
+  }, [client, id, demo, offline, pack, userId]);
   const [starting, setStarting] = useState(false),
     [startError, setStartError] = useState<string | null>(null);
   async function start() {
-    if (!query.value || starting) return;
+    if (!query.value || starting || query.loading || query.error) return;
     setStarting(true);
     setStartError(null);
     try {
-      const current = demo ?? (await client.routine(query.value.session.id));
+      if (
+        offline &&
+        !demo &&
+        !downloadedCanStart(pack, userId, query.value.session.id, santiagoDate(new Date()))
+      )
+        throw Error(
+          "Solo puedes empezar rutinas de la semana vigente. Tu registro anterior sigue disponible.",
+        );
+      const current =
+        demo ??
+        (offline
+          ? downloadedRoutine(pack, userId, query.value.session.id)
+          : await client.routine(query.value.session.id));
+      if (!current)
+        throw Error("No pudimos verificar la rutina descargada. Conservamos tus datos.");
       await controller.start(current, demo ? "demo" : "real");
       const active = controller.getSnapshot().active;
       if (active)
@@ -138,6 +166,17 @@ export default function Routine() {
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando rutina" />
       ) : null}
       {startError ? <Notice message={startError} /> : null}
+      {offline && !demo && cached && pack ? (
+        <Text style={[s.caption, { color: p.blue }]}>
+          Rutina descargada · {downloadedAt(pack.downloadedAt)}
+        </Text>
+      ) : null}
+      {offline &&
+      !demo &&
+      cached &&
+      !downloadedCanStart(pack, userId, cached.session.id, santiagoDate(new Date())) ? (
+        <Notice message="Puedes consultar esta copia y retomar un registro previo. Conecta para empezar una rutina de la semana vigente." />
+      ) : null}
       {training.blocked ? (
         <Notice
           message={training.error ?? "No pudimos recuperar el registro local."}
@@ -180,6 +219,11 @@ export default function Routine() {
               !training.ready ||
               training.blocked ||
               !!training.active ||
+              query.loading ||
+              !!query.error ||
+              (offline &&
+                !demo &&
+                !downloadedCanStart(pack, userId, view.session.id, santiagoDate(new Date()))) ||
               view.exercises.length === 0
             }
             busy={starting}

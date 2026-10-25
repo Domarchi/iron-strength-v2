@@ -1,3 +1,4 @@
+import { useSession } from "../../../lib/session";
 import { useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -13,6 +14,7 @@ import {
 import { Icon } from "../../../components/icon";
 import { Action, Brand, IconAction, Notice, Page, s, usePalette } from "../../../components/ui";
 import { RestControls } from "../../../components/rest-controls";
+import { DownloadedHistory } from "../../../components/downloaded-history";
 import { WorkoutSets } from "../../../components/workout-sets";
 import { useTraining } from "../../../lib/training-context";
 import { summarize, workoutVolume } from "../../../../../src/lib/workout/runner-state";
@@ -36,6 +38,7 @@ export default function Workout() {
   const p = usePalette(),
     { id } = useLocalSearchParams<{ id: string }>(),
     { controller, training } = useTraining(),
+    { state: session } = useSession(),
     now = useClock();
   const [error, setError] = useState<string | null>(null),
     [closing, setClosing] = useState(false),
@@ -83,7 +86,8 @@ export default function Workout() {
     rx = a.routine.exercises[index],
     summary = summarize(d),
     volume = workoutVolume(d),
-    pending = d.status === "pending_save";
+    pending = d.status === "pending_save",
+    offline = session.status === "authenticated" && session.mode === "offline";
   const elapsed =
       d.durationSeconds ?? Math.max(0, Math.floor((now - Date.parse(d.startedAt)) / 1000)),
     rest = d.rest ? remainingSeconds(d.rest, now) : 0,
@@ -91,9 +95,13 @@ export default function Workout() {
   async function finish() {
     await act(async () => {
       const result = pending
-        ? await controller.retry()
-        : await controller.finish(effort.trim() ? Number(effort) : null, note.trim() || null);
-      if (result)
+        ? offline && a?.mode === "real"
+          ? null
+          : await controller.retry()
+        : await controller.finish(effort.trim() ? Number(effort) : null, note.trim() || null, {
+            localOnly: offline,
+          });
+      if (result && result.mode !== "pending")
         router.replace({
           pathname: "/result/[id]",
           params: { id: result.id, ...(result.mode === "demo" ? { demo: "1" } : {}) },
@@ -149,15 +157,26 @@ export default function Workout() {
         {error ? <Notice message={error} /> : null}
         {pending ? (
           <View style={[s.card, { backgroundColor: p.tint, borderColor: p.blue }]}>
-            <Text style={[s.subheading, { color: p.ink }]}>Tu registro está protegido</Text>
+            <Text style={[s.subheading, { color: p.ink }]}>
+              {training.dirty
+                ? training.error
+                  ? "Guardado local sin confirmar"
+                  : "Confirmando el guardado local…"
+                : "Tu registro está protegido"}
+            </Text>
             <Text style={[s.body, { color: p.muted }]}>
               {summary.doneSets} series completadas.{" "}
-              {a.mode === "demo"
-                ? "Guarda el resumen de esta prueba en el dispositivo."
-                : "Reintenta el envío sin duplicar el entrenamiento. El coach podrá verlo después de la confirmación del servidor."}
+              {training.dirty
+                ? "Comprueba el almacenamiento antes de enviar; el guardado local aún no está confirmado."
+                : a.mode === "demo"
+                  ? "Guarda el resumen de esta prueba en el dispositivo."
+                  : offline
+                    ? "Tu registro quedó en este dispositivo. Conecta para confirmar el envío sin duplicarlo."
+                    : "Reintenta el envío sin duplicar el entrenamiento. El coach podrá verlo después de la confirmación del servidor."}
             </Text>
             <Action
               label={a.mode === "demo" ? "Guardar resumen demo" : "Reintentar envío"}
+              disabled={training.dirty || (offline && a.mode === "real")}
               busy={training.busy}
               onPress={() => {
                 void finish();
@@ -264,6 +283,9 @@ export default function Workout() {
               </Pressable>
               {details === exercise.sessionExerciseId ? (
                 <View style={{ gap: 12 }}>
+                  {a.mode === "real" ? (
+                    <DownloadedHistory exerciseId={exercise.exerciseId} />
+                  ) : null}
                   {rx.note ? (
                     <Text style={[s.body, { color: p.muted }]}>{rx.note}</Text>
                   ) : (
@@ -347,7 +369,13 @@ export default function Workout() {
                   ]}
                 />
                 <Action
-                  label={a.mode === "demo" ? "Guardar demo" : "Guardar entrenamiento"}
+                  label={
+                    a.mode === "demo"
+                      ? "Guardar demo"
+                      : offline
+                        ? "Guardar en este dispositivo"
+                        : "Guardar entrenamiento"
+                  }
                   busy={training.busy}
                   disabled={summary.doneSets === 0 || training.dirty}
                   onPress={() => {

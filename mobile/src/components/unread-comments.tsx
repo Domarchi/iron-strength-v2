@@ -5,6 +5,12 @@ import { Action, Notice, s, usePalette } from "./ui";
 import { useSession } from "../lib/session";
 import { useQuery } from "../lib/use-query";
 export function UnreadComments({ all = false }: { all?: boolean }) {
+  const { state } = useSession();
+  return state.status === "authenticated" && state.mode === "offline" ? null : (
+    <OnlineUnreadComments all={all} />
+  );
+}
+function OnlineUnreadComments({ all = false }: { all?: boolean }) {
   const p = usePalette(),
     { client } = useSession();
   const request = useCallback(() => client.unreadComments(), [client]),

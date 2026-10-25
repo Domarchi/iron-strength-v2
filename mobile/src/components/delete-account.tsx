@@ -26,14 +26,16 @@ export function DeleteAccount() {
         app.
       </Text>
     );
-  const userId = state.session.profile.id;
+  const userId = state.session.profile.id,
+    offline = state.mode === "offline";
   async function submit() {
     if (
       !isDeleteConfirmation(confirmation) ||
       busy ||
       training.busy ||
       draft.busy ||
-      downloads.getSnapshot().busy
+      downloads.getSnapshot().busy ||
+      offline
     )
       return;
     setBusy(true);
@@ -43,7 +45,7 @@ export function DeleteAccount() {
       await downloads.flush();
       if (!training.blocked) await controller.flush();
       if (!draft.blocked) await comments.flush();
-      await removalController.request(userId, () => client.deleteAccount(confirmation));
+      await removalController.request(userId, () => client.deleteAccount(confirmation, userId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos completar la eliminación.");
     } finally {
@@ -59,6 +61,11 @@ export function DeleteAccount() {
         demos y descargas de esta cuenta en este dispositivo. No se puede deshacer. Antes puedes
         exportar tu historial desde Cuenta en la web.
       </Text>
+      {offline ? (
+        <Text style={[s.body, { color: p.muted }]}>
+          Conecta para borrar tu cuenta. Tus datos locales se conservan.
+        </Text>
+      ) : null}
       {error ? <Notice message={error} /> : null}
       {open ? (
         <>
@@ -82,7 +89,8 @@ export function DeleteAccount() {
               !draft.ready ||
               draft.busy ||
               !download.ready ||
-              download.busy
+              download.busy ||
+              offline
             }
             busy={busy}
             onPress={() => {
@@ -104,7 +112,14 @@ export function DeleteAccount() {
         <Action
           label="Quiero borrar mi cuenta"
           secondary
-          disabled={training.busy || draft.busy || !draft.ready || !download.ready || download.busy}
+          disabled={
+            training.busy ||
+            draft.busy ||
+            !draft.ready ||
+            !download.ready ||
+            download.busy ||
+            offline
+          }
           onPress={() => setOpen(true)}
         />
       )}

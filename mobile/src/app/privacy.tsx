@@ -13,7 +13,7 @@ const sections = [
   ],
   [
     "En este dispositivo",
-    "La app instalada conserva la credencial de renovación en el almacenamiento seguro del sistema. Las series iniciadas, demos, descargas de semana y recibos de eliminación se guardan localmente. La apariencia es una preferencia del dispositivo. Expo web usa la sesión solo en memoria. Recuperar acceso no elimina tu registro pendiente.",
+    "La app instalada conserva la credencial de renovación y el perfil verificado en el almacenamiento seguro del sistema, para abrir tus datos descargados si el servicio no está disponible. No conserva la contraseña ni el token de acceso. Las series iniciadas, demos, descargas de semana y recibos de eliminación se guardan localmente. La apariencia es una preferencia del dispositivo. Expo web usa la sesión solo en memoria. Recuperar acceso no elimina tu registro pendiente.",
   ],
   [
     "Salir, desinstalar o borrar",

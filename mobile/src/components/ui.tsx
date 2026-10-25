@@ -1,3 +1,4 @@
+import { ConnectionStatus } from "./connection-status";
 import type { PropsWithChildren } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -132,6 +133,7 @@ export function Page({ children }: PropsWithChildren) {
       }}
       keyboardShouldPersistTaps="handled"
     >
+      <ConnectionStatus />
       {children}
     </ScrollView>
   );

@@ -22,7 +22,7 @@ async function setup(page: Page, loseFirst = false) {
     const req = route.request(),
       path = new URL(req.url()).pathname;
     let json: unknown = { version: 1, kind: "no_program" };
-    if (path.endsWith("auth/login"))
+    if (path.endsWith("auth/login") || path.endsWith("auth/refresh"))
       json = {
         version: 1,
         accessToken: "synthetic-access",
@@ -153,10 +153,13 @@ test("respuesta perdida conserva intento; recarga, bloqueo de salida y reintento
     .getByLabel("Tu comentario", { exact: true })
     .fill("Mensaje que debe aparecer una vez.");
   await page.getByRole("button", { name: "Publicar comentario", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Reintentar publicación", exact: true }),
-  ).toBeVisible();
-  await expect(page.getByLabel("Tu comentario", { exact: true })).not.toBeEditable();
+  await expect(page.getByRole("button", { name: "Conectar", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Tu comentario", { exact: true })).toHaveCount(0);
+  const frozen = await page.evaluate(
+    (id) => JSON.parse(localStorage.getItem(`is:native-comment:v1:${id}`)!),
+    userId,
+  );
+  expect(frozen).toMatchObject({ phase: "pending", body: "Mensaje que debe aparecer una vez." });
   expect(f.sent).toHaveLength(1);
   await page.reload();
   await f.enter();
@@ -260,9 +263,7 @@ test("un mensaje borrado desde otra pantalla no se reenvía: conserva texto y pe
   await page.getByRole("button", { name: "Ver comentario pendiente", exact: true }).click();
   await page.getByLabel("Tu comentario", { exact: true }).fill("Texto del mensaje ya borrado.");
   await page.getByRole("button", { name: "Publicar comentario", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Reintentar publicación", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Conectar", exact: true })).toBeVisible();
   f.comments.splice(
     f.comments.findIndex((c) => c.mine),
     1,
@@ -282,6 +283,7 @@ test("un mensaje borrado desde otra pantalla no se reenvía: conserva texto y pe
       headers: { "Access-Control-Allow-Origin": "*" },
     });
   });
+  await page.getByRole("button", { name: "Conectar", exact: true }).click();
   await page.getByRole("button", { name: "Reintentar publicación", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Publicación detenida", exact: true }),

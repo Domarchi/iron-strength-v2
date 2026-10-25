@@ -14,6 +14,17 @@ const when = new Intl.DateTimeFormat("es-CL", {
   timeZone: "America/Santiago",
 });
 export function WorkoutComments({ workoutId }: { workoutId: string }) {
+  const { state } = useSession();
+  return state.status === "authenticated" && state.mode === "offline" ? (
+    <>
+      <Notice message="Conecta para consultar y responder comentarios. Tu mensaje pendiente se conserva." />
+      <CommentDraftCard />
+    </>
+  ) : (
+    <OnlineWorkoutComments workoutId={workoutId} />
+  );
+}
+function OnlineWorkoutComments({ workoutId }: { workoutId: string }) {
   const p = usePalette(),
     { client } = useSession(),
     { controller, draft } = useCommentDraft();
