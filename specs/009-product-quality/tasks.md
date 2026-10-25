@@ -17,4 +17,4 @@
 - [ ] T202 · Circuito Android con coach/tres alumnos, registro offline, progreso, comentarios y recuperación de borrado verificados; texto ampliado corregido y verificado. Pendientes CI, iOS y aceptación física.
 - [ ] T203 · Ficha, política/soporte, iconos vectoriales, cuatro capturas Android y gráfico exportados en borrador; pendientes contacto público, retención, accesos, beta y materiales finales.
 - [ ] T204 · Procedimiento y registro del candidato preparados; pendientes AAB/IPA de producción, beta y publicación del mismo artefacto probado.
-- [ ] T205 · Control manual, restauración y copia cifrada en F.R.I.D.A.Y. verificados; conservación de 30 días acordada. Pendientes responsable, frecuencia/limpieza, custodia independiente de clave y circuito operativo de beta.
+- [ ] T205 · Control manual, restauración y copia cifrada nueva verificados; 30 días, respaldo semanal/previo a migraciones y caducidad diaria configurados. Pendientes primera ejecución programada, responsable/contacto y circuito operativo de beta; clave local elegida, sin copia externa.
