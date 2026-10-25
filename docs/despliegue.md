@@ -2,6 +2,8 @@
 
 La publicación sigue T165–T166 de `specs/005-complete-training/`. El código local está validado; estos pasos no acreditan un despliegue remoto. No trasladar usuarios, contraseñas, fotos ni entrenamientos de demostración a producción.
 
+Actualización del 24 de octubre: acceso/cuenta móvil T192–T193 publicados en **H dpl_2uzVPtnPS6u4joJDok6KG4dpiAD8**, source ea47e63, BUILD_ID 1d3e1ab731c441548260d5f9b0e19695. Mismo artefacto preparado y promovido; 19 controles antes y 19 públicos, promoción manual conservada. Supabase mantiene 39 migraciones, RLS y fotos privadas sin cambios de esquema/datos. [Validación y recuperación actuales](../specs/009-product-quality/validation.md). CI 40149833366 continúa en startup_failure; controles locales aprobados, aceptación física y tiendas pendientes.
+
 T181 y la API móvil se publicaron el 23 de octubre de 2026: [estado y artefacto actual](../specs/007-training-flow/release.md). Dominio en E dpl_4oP53eMvsERAkw3f9ec4B5BroYKs, BUILD_ID cefb52e61feb46d4944d84fc776f95cc, código cf38b90, Next 16.4.3. Recuperación compatible F dpl_3ffHvzqJvyZWMq9eDSegRhB7zmMz. Supabase tiene 39 migraciones y conserva sus datos. 514 unitarias, 275 integración, 459 pgTAP del esquema y 197 E2E con un skip previsto. El propietario autorizó publicar con controles locales; GitHub continúa en startup_failure antes de trabajos. No volver automáticamente a builds 16.4.0 ni c45ee9d. Expo de consulta está en mobile; prueba física, acceso Expo y firma siguen pendientes separados.
 
 ## Destino y estado comprobado
