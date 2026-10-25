@@ -1,5 +1,7 @@
 # Respaldo y restauración
 
+Último ensayo T195, 24 de octubre de 2026: seis volcados del proyecto exclusivo, 39 versiones antes del cambio, restaurados en iron_restore_t195_20261024 del runtime aislado. Coinciden 49 tablas/523 filas, 53 políticas y 27 propietarios/banderas. Se alineó solo el permiso CREATE de postgres en el esquema público de esa copia (su dueño de base difiere del remoto), sin modificar roles globales o producción. La migración 20261024120000 se ensayó allí con rol postgres, manteniendo filas y políticas anteriores. Después se aplicó en remoto: 40 versiones, recibos vacíos y RLS/grants/invoker verificados; solo cambió el historial de migraciones entre las tablas previas. Detalles en specs/009-product-quality/validation.md y evidencia privada work/product-t195-release/backup. El respaldo previo a esa migración no contiene recibos creados posteriormente; actualizarlo antes de una recuperación real.
+
 Un respaldo solo está comprobado después de restaurarlo en un destino aislado y verificar datos y permisos. Nunca ensayar sobre la base interactiva ni sobre producción. No guardar respaldos, claves, tokens o fotos privadas en Git, CI artifacts o el chat.
 
 ## Antes de una migración remota
