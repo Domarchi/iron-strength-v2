@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accessDecision, isPublicPath } from "./route-access";
+import { accessDecision, isPublicInfoPath, isPublicPath } from "./route-access";
 
 describe("rutas públicas", () => {
   it.each([
@@ -54,5 +54,25 @@ describe("decisión de acceso del proxy", () => {
     expect(accessDecision("/coach/students", true)).toBe("allow");
     // Importante: no se redirige fuera de /login, o un usuario desactivado entraría en bucle.
     expect(accessDecision("/login", true)).toBe("allow");
+  });
+});
+
+describe("información pública sin sesión ni consulta de identidad", () => {
+  it.each(["/privacy", "/support", "/delete-account"])("solo permite %s", (path) => {
+    expect(isPublicInfoPath(path)).toBe(true);
+    expect(isPublicPath(path)).toBe(true);
+    expect(accessDecision(path, false)).toBe("allow");
+  });
+  it.each([
+    "/privacy/private",
+    "/supportx",
+    "/delete-account/confirm",
+    "/account",
+    "/api/account/delete",
+    "/coach",
+    "/login",
+    "/PRIVACY",
+  ])("no exime identidad para %s", (path) => {
+    expect(isPublicInfoPath(path)).toBe(false);
   });
 });

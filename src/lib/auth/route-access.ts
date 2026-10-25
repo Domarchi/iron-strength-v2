@@ -14,12 +14,18 @@ const PUBLIC_PREFIXES = [
   "/offline",
 ];
 
+const PUBLIC_INFO_PATHS = new Set(["/privacy", "/support", "/delete-account"]);
+
+export function isPublicInfoPath(pathname: string): boolean {
+  return PUBLIC_INFO_PATHS.has(pathname);
+}
+
 export function isOfflineResource(pathname: string): boolean {
   return pathname === "/offline" || /^\/offline-workers\/[a-f0-9]{32}\.js$/.test(pathname);
 }
 
 export function isPublicPath(pathname: string): boolean {
-  if (isMobileEndpointPath(pathname)) return true;
+  if (isMobileEndpointPath(pathname) || isPublicInfoPath(pathname)) return true;
   if (isOfflineResource(pathname) || designAssets.includes(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) =>
     prefix.endsWith("/") ? pathname.startsWith(prefix) : pathname === prefix,

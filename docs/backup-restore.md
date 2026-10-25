@@ -55,6 +55,8 @@ Comprobar:
 3. Entrada con usuario existente, recuperación de acceso, vista semanal, guardado atómico y reintento idempotente. Verificar una foto privada con URL firmada y rechazo anónimo.
 4. Conservación de borradores/cola en el navegador: un registro pendiente se sincroniza una sola vez después de recuperar el servidor.
 
+Antes de habilitar tráfico en un destino restaurado, el responsable debe contrastar las solicitudes de eliminación verificadas recibidas desde la fecha de la copia. Retirar de ese destino las cuentas/datos ya eliminados y comprobar también los archivos privados. Si no puede verificar esa conciliación, no promover la copia restaurada al servicio. Es un control manual del responsable, no un registro automático de eliminaciones ni un proceso ya ensayado con cuentas reales. Conservar la evidencia de solicitudes de forma privada y mínima, nunca en Git o en los logs públicos.
+
 Registrar el resultado, los ajustes necesarios y cuánto tardó. Una restauración real requiere una ventana de mantenimiento y un destino verificado; conservar el respaldo y el despliegue anterior hasta concluir la aceptación.
 
 ## Ensayo local T165

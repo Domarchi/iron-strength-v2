@@ -1,6 +1,6 @@
 # Operación y recuperación
 
-Estado: controles manuales disponibles, sin monitor continuo o avisos externos configurados. No hay una promesa de disponibilidad, plazo de respuesta o pérdida máxima de datos aprobada. T205 no está completa hasta cerrar los responsables y el circuito operativo de la beta.
+Estado: controles manuales disponibles, sin monitor continuo o avisos externos configurados. No hay una promesa de disponibilidad, plazo de respuesta o pérdida máxima de datos aprobada. Responsable y contacto público autorizado: Joaquín Domarchi, joaquindomarchi@gmail.com. T205 no está completa hasta cerrar el circuito operativo de la beta y verificar la primera copia semanal programada.
 
 ## Comprobación de la versión
 
@@ -59,4 +59,4 @@ El propietario eligió F.R.I.D.A.Y., 30 días y frecuencia semanal y antes de mi
 
 La primera revisión programada de caducidad terminó correctamente el 25 de octubre, 09:27:29 Santiago: salida 0, sin vencidos, errores o eliminaciones. No acredita una copia semanal generada; ese primer resultado todavía está pendiente. Detalle en docs/scheduled-backups.md.
 
-Pendiente con el propietario: responsable operativo/contacto público, retención de registros técnicos, aceptación física y cuentas de tiendas. Revisar la primera copia semanal programada y el circuito operativo de beta; custodia independiente de clave como mejora respecto del destino local elegido. La copia local privada y este manual no acreditan respaldo externo, guardia de soporte o monitorización continua de la app.
+Responsable/contacto público confirmados el 25-oct-2026: Joaquín Domarchi, joaquindomarchi@gmail.com. Pendientes: retención de registros técnicos, aceptación física y cuentas de tiendas. Revisar la primera copia semanal programada y el circuito operativo de beta; custodia independiente de clave como mejora respecto del destino local elegido. La copia local privada y este manual no acreditan respaldo externo, guardia de soporte o monitorización continua de la app.

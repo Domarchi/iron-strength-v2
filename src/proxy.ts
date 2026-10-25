@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { accessDecision, isOfflineResource } from "@/lib/auth/route-access";
+import { accessDecision, isOfflineResource, isPublicInfoPath } from "@/lib/auth/route-access";
 import { isMobileEndpointPath } from "@/lib/mobile/paths";
 import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/env";
 import type { Database } from "@/types/database";
@@ -8,7 +8,11 @@ import type { Database } from "@/types/database";
 // Next 16: `proxy` reemplaza a `middleware`. Refresca la sesión de Supabase (cookies) y exige
 // sesión en las rutas protegidas. No decide permisos finos: eso es de los layouts y la RLS.
 export async function proxy(request: NextRequest) {
-  if (isOfflineResource(request.nextUrl.pathname) || isMobileEndpointPath(request.nextUrl.pathname))
+  if (
+    isOfflineResource(request.nextUrl.pathname) ||
+    isMobileEndpointPath(request.nextUrl.pathname) ||
+    isPublicInfoPath(request.nextUrl.pathname)
+  )
     return NextResponse.next();
   let response = NextResponse.next({ request });
 

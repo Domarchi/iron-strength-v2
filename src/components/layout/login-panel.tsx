@@ -1,3 +1,4 @@
+import { PublicInfoLinks } from "./public-info-links";
 import { Brand } from "./brand";
 
 export function LoginPanel({ message, children }: { message?: string; children: React.ReactNode }) {
@@ -25,6 +26,7 @@ export function LoginPanel({ message, children }: { message?: string; children: 
           </p>
         </section>
       </div>
+      <PublicInfoLinks />
     </main>
   );
 }

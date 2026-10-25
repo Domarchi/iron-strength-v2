@@ -1,3 +1,4 @@
+import { PublicInfoLinks } from "@/components/layout/public-info-links";
 import { ThemeSelect } from "@/components/layout/theme-select";
 import { PageHeading } from "@/components/layout/page-heading";
 import { Download, LogOut } from "lucide-react";
@@ -57,6 +58,7 @@ export default async function AccountPage() {
       </LogoutForm>
 
       {user.role === "student" ? <DeleteAccount userId={user.id} /> : null}
+      <PublicInfoLinks />
     </div>
   );
 }
