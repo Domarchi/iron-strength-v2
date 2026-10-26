@@ -1,3 +1,5 @@
+import AxeBuilder from "@axe-core/playwright";
+import { login as loginWeb } from "./support/ui";
 import { randomUUID } from "node:crypto";
 import { expect, test, type APIRequestContext } from "@playwright/test";
 import { admin, COACH, createUser, resetAll, seedCoach } from "./support/db";
@@ -143,4 +145,48 @@ test("base personal HTTP mantiene procedencia y un registro borrado no reaparece
   expect(replay.status()).toBe(422);
   expect((await replay.json()).error.code).toBe("removed");
   expect((await admin().from("workouts").select("id").eq("id", payload.id)).data).toHaveLength(0);
+});
+
+test("coach revisa título y procedencia del entrenamiento libre en la web", async ({
+  page,
+  request,
+}) => {
+  const headers = await login(request);
+  const catalog = await (await request.get("/api/mobile/v1/exercises", { headers })).json();
+  const now = new Date(),
+    title = "Sesión libre de revisión",
+    id = randomUUID();
+  const saved = await request.post("/api/mobile/v1/personal-workouts", {
+    headers,
+    data: {
+      version: 1,
+      payload: {
+        version: 1,
+        id,
+        origin: { kind: "free" },
+        title,
+        startedAt: new Date(now.getTime() - 60000).toISOString(),
+        finishedAt: now.toISOString(),
+        durationSeconds: 60,
+        sets: [
+          {
+            exerciseId: catalog.exercises[0].id,
+            position: 0,
+            setNumber: 1,
+            weightKg: 30,
+            reps: 8,
+            isWarmup: false,
+          },
+        ],
+      },
+    },
+  });
+  expect(saved.status()).toBe(200);
+  await loginWeb(page, COACH.email, COACH.password);
+  await page.goto("/history/" + id);
+  await expect(page.getByText(title + " · Entrenamiento libre", { exact: true })).toBeVisible();
+  expect(
+    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+      .violations,
+  ).toEqual([]);
 });

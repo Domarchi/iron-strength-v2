@@ -1,3 +1,4 @@
+import { workoutSourceKindSchema } from "./personal-workout-contracts";
 import { z } from "zod";
 import {
   coherentPrescriptionSeries,
@@ -102,7 +103,14 @@ const summary = z.object({
   bodyweightReps: z.number().int().nonnegative(),
   exerciseCount: z.number().int().nonnegative(),
 });
+const workoutOriginFields = {
+  sourceKind: workoutSourceKindSchema.optional(),
+  title: z.string().nullable().optional(),
+  personalRoutineId: z.uuid().nullish(),
+  personalRoutineRevision: z.number().int().nonnegative().nullish(),
+};
 const historyItem = summary.extend({
+  ...workoutOriginFields,
   id: z.uuid(),
   sessionLabel: z.string().nullable(),
   startedAt: z.string(),
@@ -119,6 +127,7 @@ export const mobileHistorySchema = z.object({
 export const mobileWorkoutSchema = z.object({
   version: z.literal(1),
   workout: z.object({
+    ...workoutOriginFields,
     id: z.uuid(),
     programName: z.string().nullable(),
     sessionLabel: z.string().nullable(),

@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { workoutPayloadSchema } from "../../../src/lib/workout/payload";
+import { nativeWorkoutPayloadSchema, type NativeWorkoutPayload } from "./personal-training";
 import { mobileSaveSchema } from "../../../src/lib/mobile/contracts";
-import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
 import type { SaveReply, TrainingStorage } from "./training";
 export type QueueStorage = TrainingStorage & {
   compareAndSet(key: string, before: string | null, next: string): Promise<void>;
@@ -12,7 +11,7 @@ const failureSchema = z
 const entrySchema = z
   .object({
     title: z.string().min(1).max(140),
-    payload: workoutPayloadSchema,
+    payload: nativeWorkoutPayloadSchema,
     queuedAt: z.iso.datetime(),
     phase: z.enum(["pending", "confirmed"]),
     confirmedAt: z.iso.datetime().nullable(),
@@ -31,8 +30,9 @@ const recordSchema = z
       r.entries.filter((e) => e.phase === "confirmed").length <= 20,
   );
 export const nativeSyncKey = (userId: string) => `is:native-sync:v1:${userId}`;
-export const samePayload = (a: WorkoutPayload, b: WorkoutPayload) =>
-  JSON.stringify(workoutPayloadSchema.parse(a)) === JSON.stringify(workoutPayloadSchema.parse(b));
+export const samePayload = (a: NativeWorkoutPayload, b: NativeWorkoutPayload) =>
+  JSON.stringify(nativeWorkoutPayloadSchema.parse(a)) ===
+  JSON.stringify(nativeWorkoutPayloadSchema.parse(b));
 type State = {
   ready: boolean;
   busy: boolean;
@@ -86,7 +86,7 @@ export class NativeWorkoutQueue {
   constructor(
     readonly userId: string,
     private storage: QueueStorage,
-    private send: (payload: WorkoutPayload) => Promise<SaveReply>,
+    private send: (payload: NativeWorkoutPayload) => Promise<SaveReply>,
     private now = () => new Date(),
   ) {
     if (!z.uuid().safeParse(userId).success) throw Error("Identidad de cola inválida.");
@@ -181,11 +181,11 @@ export class NativeWorkoutQueue {
       if (epoch === this.epoch) this.publish({ busy: false });
     }
   }
-  async enqueue(input: { userId: string; title: string; payload: WorkoutPayload }) {
+  async enqueue(input: { userId: string; title: string; payload: NativeWorkoutPayload }) {
     return this.run(async () => {
       if (input.userId !== this.userId)
         throw Error("La cuenta del registro no corresponde a esta cola.");
-      const payload = workoutPayloadSchema.parse(input.payload),
+      const payload = nativeWorkoutPayloadSchema.parse(input.payload),
         existing = this.state.entries.find((e) => e.payload.id === payload.id);
       if (existing) {
         if (!samePayload(existing.payload, payload)) {

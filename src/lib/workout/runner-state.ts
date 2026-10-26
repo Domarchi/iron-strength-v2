@@ -26,6 +26,50 @@ export type PrefillExercise = PrefillChoice & {
 
 const asText = (kg: number | null) => (kg === null ? "" : String(kg).replace(".", ","));
 
+// Common record fields keep assigned IDs outside the pure set/rond logic.
+export type RunnerDraft = Omit<WorkoutDraft, "version" | "programId" | "plannedSessionId">;
+const clonePrescription = (p: DraftExercise["prescribed"]): DraftExercise["prescribed"] => ({
+  ...p,
+  ...(p.series ? { series: p.series.map((target) => ({ ...target })) } : {}),
+});
+export function prefillDraftExercises(exercises: PrefillExercise[]): DraftExercise[] {
+  return exercises.map((e) => ({
+    sessionExerciseId: e.sessionExerciseId,
+    exerciseId: e.exerciseId,
+    name: e.name,
+    isBodyweight: e.isBodyweight,
+    prescribed: clonePrescription(e.prescribed),
+    skipped: false,
+    ...(e.alternatives?.length
+      ? {
+          original: {
+            exerciseId: e.exerciseId,
+            name: e.name,
+            isBodyweight: e.isBodyweight,
+            prescribed: clonePrescription(e.prescribed),
+            lastWeightKg: e.lastWeightKg,
+          },
+          alternatives: e.alternatives.map((choice) => ({
+            ...choice,
+            prescribed: clonePrescription(choice.prescribed),
+          })),
+        }
+      : {}),
+    ...(e.restSeconds != null ? { restSeconds: e.restSeconds } : {}),
+    ...(e.supersetId ? { supersetId: e.supersetId } : {}),
+    ...(e.supersetRestSeconds != null ? { supersetRestSeconds: e.supersetRestSeconds } : {}),
+    sets: Array.from({ length: e.prescribed.sets }, (_, i) => ({
+      id: `${e.sessionExerciseId}-${i + 1}`,
+      weight: asText(
+        prefillWeight(seriesTargetAt(e.prescribed, i)?.targetWeightKg ?? null, e.lastWeightKg),
+      ),
+      reps: "",
+      done: false,
+      isWarmup: false,
+    })),
+  }));
+}
+
 export function createDraft(input: {
   workoutId: string;
   userId: string;
@@ -43,48 +87,17 @@ export function createDraft(input: {
     startedAt: input.now.toISOString(),
     updatedAt: input.now.toISOString(),
     status: "in_progress",
-    exercises: input.exercises.map((e) => ({
-      sessionExerciseId: e.sessionExerciseId,
-      exerciseId: e.exerciseId,
-      name: e.name,
-      isBodyweight: e.isBodyweight,
-      prescribed: e.prescribed,
-      skipped: false,
-      ...(e.alternatives?.length
-        ? {
-            original: {
-              exerciseId: e.exerciseId,
-              name: e.name,
-              isBodyweight: e.isBodyweight,
-              prescribed: e.prescribed,
-              lastWeightKg: e.lastWeightKg,
-            },
-            alternatives: e.alternatives,
-          }
-        : {}),
-      ...(e.restSeconds != null ? { restSeconds: e.restSeconds } : {}),
-      ...(e.supersetId ? { supersetId: e.supersetId } : {}),
-      ...(e.supersetRestSeconds != null ? { supersetRestSeconds: e.supersetRestSeconds } : {}),
-      sets: Array.from({ length: e.prescribed.sets }, (_, i) => ({
-        id: `${e.sessionExerciseId}-${i + 1}`,
-        weight: asText(
-          prefillWeight(seriesTargetAt(e.prescribed, i)?.targetWeightKg ?? null, e.lastWeightKg),
-        ),
-        reps: "",
-        done: false,
-        isWarmup: false,
-      })),
-    })),
+    exercises: prefillDraftExercises(input.exercises),
   };
 }
 
 // --- helpers de actualización inmutable -------------------------------------------------------
-function mapSet(
-  draft: WorkoutDraft,
+function mapSet<T extends RunnerDraft>(
+  draft: T,
   exIdx: number,
   setIdx: number,
   fn: (set: DraftSet) => DraftSet,
-): WorkoutDraft {
+): T {
   const exercise = draft.exercises[exIdx];
   if (!exercise?.sets[setIdx]) return draft;
   return {
@@ -95,22 +108,22 @@ function mapSet(
   };
 }
 
-function mapExercise(
-  draft: WorkoutDraft,
+function mapExercise<T extends RunnerDraft>(
+  draft: T,
   exIdx: number,
   fn: (e: DraftExercise) => DraftExercise,
-): WorkoutDraft {
+): T {
   if (!draft.exercises[exIdx]) return draft;
   return { ...draft, exercises: draft.exercises.map((e, i) => (i === exIdx ? fn(e) : e)) };
 }
 
-export function updateSetField(
-  draft: WorkoutDraft,
+export function updateSetField<T extends RunnerDraft>(
+  draft: T,
   exIdx: number,
   setIdx: number,
   field: "weight" | "reps",
   value: string,
-): WorkoutDraft {
+): T {
   const exercise = draft.exercises[exIdx];
   if (!exercise) return draft;
   return mapSet(draft, exIdx, setIdx, (s) => {
@@ -119,11 +132,11 @@ export function updateSetField(
   });
 }
 
-export function setExerciseRestSeconds(
-  draft: WorkoutDraft,
+export function setExerciseRestSeconds<T extends RunnerDraft>(
+  draft: T,
   exIdx: number,
   restSeconds: number,
-): WorkoutDraft {
+): T {
   if (
     !Number.isInteger(restSeconds) ||
     (restSeconds !== 0 && (restSeconds < MIN_REST_SECONDS || restSeconds > MAX_REST_SECONDS))
@@ -142,7 +155,7 @@ export function setExerciseRestSeconds(
 }
 
 // Comparte la regla de volumen del historial; nunca cuenta valores de referencia sin marcar.
-export function workoutVolume(draft: WorkoutDraft): ReturnType<typeof setVolume> {
+export function workoutVolume(draft: RunnerDraft): ReturnType<typeof setVolume> {
   return setVolume(
     draft.exercises.flatMap((exercise) => {
       if (exercise.skipped) return [];
@@ -169,7 +182,7 @@ export function canComplete(exercise: DraftExercise, set: DraftSet): boolean {
     : false;
 }
 
-export function toggleDone(draft: WorkoutDraft, exIdx: number, setIdx: number): WorkoutDraft {
+export function toggleDone<T extends RunnerDraft>(draft: T, exIdx: number, setIdx: number): T {
   const exercise = draft.exercises[exIdx];
   const set = exercise?.sets[setIdx];
   if (!exercise || !set) return draft;
@@ -203,12 +216,12 @@ export function previousForSet(
 }
 
 // Tocar "anterior" copia peso y repeticiones a la fila (RF-54).
-export function copyPrevious(
-  draft: WorkoutDraft,
+export function copyPrevious<T extends RunnerDraft>(
+  draft: T,
   exIdx: number,
   setIdx: number,
   previous: PreviousSet,
-): WorkoutDraft {
+): T {
   if (draft.exercises[exIdx]?.sets[setIdx]?.done) return draft;
   return mapSet(draft, exIdx, setIdx, (s) => ({
     ...s,
@@ -217,11 +230,11 @@ export function copyPrevious(
   }));
 }
 
-export function copyLastPerformance(
-  draft: WorkoutDraft,
+export function copyLastPerformance<T extends RunnerDraft>(
+  draft: T,
   exIdx: number,
   last: { sets: LastSet[] } | null,
-): WorkoutDraft {
+): T {
   const exercise = draft.exercises[exIdx];
   if (!exercise || !last) return draft;
   return mapExercise(draft, exIdx, (e) => ({
@@ -235,11 +248,11 @@ export function copyLastPerformance(
   }));
 }
 
-export function copySuggestedValues(
-  draft: WorkoutDraft,
+export function copySuggestedValues<T extends RunnerDraft>(
+  draft: T,
   exIdx: number,
   values: PreviousSet,
-): WorkoutDraft {
+): T {
   if (
     !draft.exercises[exIdx] ||
     !isUniformPrescription(draft.exercises[exIdx].prescribed) ||
@@ -259,12 +272,12 @@ export function copySuggestedValues(
 // Marcar la serie sin bloquear al alumno (RF-55): completa lo que falte con la referencia
 // (peso de "anterior", repeticiones de "anterior" o el mínimo prescrito; DC-27). Si la serie ya estaba
 // hecha, la desmarca. `completed` solo es verdadero al marcarla (RF-60: desmarcar no inicia descanso).
-export function completeSet(
-  draft: WorkoutDraft,
+export function completeSet<T extends RunnerDraft>(
+  draft: T,
   exIdx: number,
   setIdx: number,
   previous: PreviousSet | null,
-): { draft: WorkoutDraft; completed: boolean; wasWarmup: boolean } {
+): { draft: T; completed: boolean; wasWarmup: boolean } {
   const exercise = draft.exercises[exIdx];
   const set = exercise?.sets[setIdx];
   if (!exercise || !set) return { draft, completed: false, wasWarmup: false };
@@ -300,17 +313,17 @@ export function isExerciseComplete(exercise: DraftExercise): boolean {
   return total > 0 && done === total;
 }
 
-export function nextPendingExercise(draft: WorkoutDraft, afterId?: string): DraftExercise | null {
+export function nextPendingExercise(draft: RunnerDraft, afterId?: string): DraftExercise | null {
   const start = draft.exercises.findIndex((e) => e.sessionExerciseId === afterId) + 1;
   const ordered = [...draft.exercises.slice(start), ...draft.exercises.slice(0, start)];
   return ordered.find((e) => !e.skipped && e.sets.some((s) => !s.done)) ?? null;
 }
 
-export function toggleWarmup(draft: WorkoutDraft, exIdx: number, setIdx: number): WorkoutDraft {
+export function toggleWarmup<T extends RunnerDraft>(draft: T, exIdx: number, setIdx: number): T {
   return mapSet(draft, exIdx, setIdx, (s) => ({ ...s, isWarmup: !s.isWarmup }));
 }
 
-export function addSet(draft: WorkoutDraft, exIdx: number): WorkoutDraft {
+export function addSet<T extends RunnerDraft>(draft: T, exIdx: number): T {
   return mapExercise(draft, exIdx, (e) => {
     const last = e.sets.at(-1);
     return {
@@ -329,15 +342,15 @@ export function addSet(draft: WorkoutDraft, exIdx: number): WorkoutDraft {
   });
 }
 
-export function removeSet(draft: WorkoutDraft, exIdx: number, setIdx: number): WorkoutDraft {
+export function removeSet<T extends RunnerDraft>(draft: T, exIdx: number, setIdx: number): T {
   return mapExercise(draft, exIdx, (e) => ({ ...e, sets: e.sets.filter((_, i) => i !== setIdx) }));
 }
 
-export function setSkipped(draft: WorkoutDraft, exIdx: number, skipped: boolean): WorkoutDraft {
+export function setSkipped<T extends RunnerDraft>(draft: T, exIdx: number, skipped: boolean): T {
   return mapExercise(draft, exIdx, (e) => ({ ...e, skipped }));
 }
 
-export function summarize(draft: WorkoutDraft): {
+export function summarize(draft: RunnerDraft): {
   doneSets: number;
   totalSets: number;
   skippedExercises: number;
@@ -426,7 +439,7 @@ export function buildPayload(
 }
 
 // Marca la sesión como terminada pero aún no guardada en el servidor (RF-24): conserva el mismo id.
-export function finishDraft(draft: WorkoutDraft, now: Date): WorkoutDraft {
+export function finishDraft<T extends RunnerDraft>(draft: T, now: Date): T {
   return {
     ...draft,
     status: "pending_save",

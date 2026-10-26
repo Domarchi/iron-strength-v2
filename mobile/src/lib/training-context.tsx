@@ -1,3 +1,4 @@
+import { isPersonalWorkoutPayload } from "./personal-training";
 import {
   createContext,
   useContext,
@@ -18,7 +19,10 @@ export function TrainingProvider({ userId, children }: PropsWithChildren<{ userI
       new TrainingController(
         userId,
         atomicStorage,
-        (p) => client.saveWorkout(p, userId),
+        (p) =>
+          isPersonalWorkoutPayload(p)
+            ? client.savePersonalWorkout(p, userId)
+            : client.saveWorkout(p, userId),
         () => new Date(),
         randomUUID,
       ),

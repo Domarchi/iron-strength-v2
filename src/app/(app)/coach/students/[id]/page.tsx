@@ -1,3 +1,4 @@
+import { workoutTitle } from "@/domain/workout-title";
 import {
   navigationContext,
   studentHref,
@@ -327,8 +328,7 @@ export default async function StudentDetailPage({
                     <UnreadBadge count={unread?.byWorkout.get(w.id) ?? 0} />
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {w.sessionLabel ? `Sesión ${w.sessionLabel} · ` : ""}
-                    {w.workingSets} series · {formatDuration(w.durationSeconds)}
+                    {workoutTitle(w)} · {w.workingSets} series · {formatDuration(w.durationSeconds)}
                     {w.volumeKg > 0 ? ` · ${formatKg(w.volumeKg)}` : ""}
                   </span>
                   {w.perceivedEffort != null ? (

@@ -55,7 +55,7 @@ for (const theme of ["light", "dark"] as const) {
     ).toEqual([]);
     await page.getByRole("button", { name: "Guardar rutina", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "Editar rutina Superior", exact: true }),
+      page.getByRole("button", { name: "Ver rutina Superior", exact: true }),
     ).toBeVisible();
     const saved = state.value.routines[0];
     expect(saved.items).toHaveLength(2);
@@ -82,7 +82,7 @@ test("respuesta perdida, recarga y reintento usan un único intento; no duplica"
   await page.getByRole("button", { name: "Mis rutinas", exact: true }).click();
   await page.getByRole("button", { name: "Reintentar guardado de rutina", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Editar rutina Pendiente", exact: true }),
+    page.getByRole("button", { name: "Ver rutina Pendiente", exact: true }),
   ).toBeVisible();
   expect(state.value.routines).toHaveLength(1);
   expect(state.calls[1]).toEqual(state.calls[0]);
@@ -114,7 +114,7 @@ test("recupera edición al recargar y protege el conflicto con el servidor", asy
   );
   await page.getByRole("button", { name: "Guardar rutina", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Editar rutina Mi base (copia)", exact: true }),
+    page.getByRole("button", { name: "Ver rutina Mi base (copia)", exact: true }),
   ).toBeVisible();
   expect(state.calls[1].requestId).not.toBe(state.calls[0].requestId);
   expect(state.calls[1].targetId).not.toBe(state.calls[0].targetId);
@@ -134,7 +134,7 @@ test("carpetas, copia independiente, orden y borrado confirmado", async ({ page 
   await expect(page.getByRole("button", { name: "Bajar", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Duplicar rutina", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Editar rutina Base (copia)", exact: true }),
+    page.getByRole("button", { name: "Ver rutina Base (copia)", exact: true }),
   ).toBeVisible();
   expect(state.value.routines).toHaveLength(2);
   expect(state.value.routines[0].id).not.toBe(state.value.routines[1].id);
@@ -169,7 +169,7 @@ test("carpetas, copia independiente, orden y borrado confirmado", async ({ page 
   await page.getByRole("button", { name: "Eliminar rutina", exact: true }).click();
   await page.getByRole("button", { name: "Confirmar eliminación de rutina", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Editar rutina Base (copia)", exact: true }),
+    page.getByRole("button", { name: "Ver rutina Base (copia)", exact: true }),
   ).toHaveCount(0);
   expect(state.value.routines.map((r) => r.name)).toEqual(["Base"]);
 });
@@ -205,7 +205,7 @@ test("cuota conserva la selección agregada y reintenta sin duplicar filas", asy
   );
   await page.getByRole("button", { name: "Guardar rutina", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Editar rutina Conservar", exact: true }),
+    page.getByRole("button", { name: "Ver rutina Conservar", exact: true }),
   ).toBeVisible();
   expect(state.value.routines[0].items).toHaveLength(1);
 });
@@ -277,9 +277,7 @@ test("mover superserie conserva bloque; edición colectiva conserva notas", asyn
   await expect(page.getByLabel("Series de Press de banca", { exact: true })).toHaveValue("4");
   await expect(page.getByLabel("Nota de Press de banca", { exact: true })).toHaveValue("Mi nota");
   await page.getByRole("button", { name: "Guardar rutina", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Editar rutina Bloques", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ver rutina Bloques", exact: true })).toBeVisible();
   const items = state.value.routines[0].items;
   expect(items.map((r) => r.name)).toEqual(["Sentadilla", "Press de banca", "Remo con mancuerna"]);
   expect(items.map((r) => r.sets)).toEqual([3, 4, 4]);

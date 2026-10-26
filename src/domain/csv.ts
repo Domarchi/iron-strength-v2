@@ -1,3 +1,4 @@
+import { workoutOriginLabel, type WorkoutSourceKind } from "./workout-title";
 // Exportar el historial a CSV (RF-47, RF-67; DC-31). Formato pensado para Excel en español de Chile:
 // UTF-8 con BOM, separador ";" y coma decimal. Los nombres de ejercicio los escribe el coach, así que
 // todo texto libre se neutraliza contra inyección de fórmulas antes de entrar a una celda.
@@ -17,9 +18,13 @@ const HEADER = [
   "Ejercicio prescrito",
   "Esfuerzo (1–10)",
   "Nota del entrenamiento",
+  "Origen",
+  "Título",
 ];
 
 export type ExportSet = {
+  sourceKind?: WorkoutSourceKind;
+  workoutTitle?: string | null;
   date: DateString;
   sessionLabel: string | null;
   exerciseName: string;
@@ -57,6 +62,8 @@ export function buildHistoryCsv(rows: ExportSet[]): string {
       r.prescribedExerciseName ?? r.exerciseName,
       r.perceivedEffort == null ? "" : String(r.perceivedEffort),
       r.workoutNote ?? "",
+      workoutOriginLabel(r.sourceKind),
+      r.workoutTitle ?? "",
     ]
       .map(escapeField)
       .join(SEPARATOR),

@@ -52,7 +52,7 @@ describe("buildHistoryCsv (RF-47)", () => {
     const csv = buildHistoryCsv([]);
     expect(csv.startsWith(BOM)).toBe(true);
     expect(csv).toBe(
-      `${BOM}Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento\r\n`,
+      `${BOM}Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento;Origen;Título\r\n`,
     );
   });
 
@@ -62,14 +62,14 @@ describe("buildHistoryCsv (RF-47)", () => {
       row({ setNumber: 2, isWarmup: true, weightKg: 40, reps: 12 }),
     ]);
     expect(csv.slice(BOM.length).split("\r\n")).toEqual([
-      "Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento",
-      "2026-10-05;A;Sentadilla;1;Trabajo;62,5;10;Sentadilla;;",
-      "2026-10-05;A;Sentadilla;2;Calentamiento;40;12;Sentadilla;;",
+      "Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento;Origen;Título",
+      "2026-10-05;A;Sentadilla;1;Trabajo;62,5;10;Sentadilla;;;Programa del coach;",
+      "2026-10-05;A;Sentadilla;2;Calentamiento;40;12;Sentadilla;;;Programa del coach;",
       "",
     ]);
   });
 
-  it("una sesión sin etiqueta (entrenamiento libre) queda vacía", () => {
+  it("un histórico sin etiqueta conserva su celda vacía", () => {
     const csv = buildHistoryCsv([row({ sessionLabel: null })]);
     expect(csv).toContain("2026-10-05;;Sentadilla;");
   });
@@ -80,6 +80,13 @@ describe("buildHistoryCsv (RF-47)", () => {
     expect(csv).not.toMatch(/;=HYPERLINK/);
   });
 
+  it("exporta procedencia explícita y protege títulos contra fórmulas", () => {
+    const csv = buildHistoryCsv([
+      row({ sourceKind: "free", workoutTitle: "=1+1", sessionLabel: null }),
+    ]);
+    expect(csv).toContain("Entrenamiento libre;'=1+1");
+    expect(buildHistoryCsv([row({ sessionLabel: null })])).toContain("Programa del coach;");
+  });
   it("respeta el orden recibido", () => {
     const csv = buildHistoryCsv([row({ date: "2026-10-06" }), row({ date: "2026-10-05" })]);
     const lines = csv.slice(BOM.length).split("\r\n");
@@ -101,6 +108,6 @@ describe("csvFileName", () => {
 
 it("exporta esfuerzo y nota del entrenamiento con neutralización (T156)", () => {
   expect(buildHistoryCsv([row({ perceivedEffort: 8, workoutNote: "=1+1" })])).toContain(
-    ";8;'=1+1\r\n",
+    ";8;'=1+1;Programa del coach;\r\n",
   );
 });

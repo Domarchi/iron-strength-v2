@@ -1,3 +1,4 @@
+import { workoutSourceKindSchema } from "../mobile/personal-workout-contracts";
 // Historial listo para exportar a CSV (RF-47). La RLS decide quién puede ver al alumno: el propio
 // alumno y su coach. Para cualquier otro, el alumno "no existe" (no se revela que existe).
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -24,7 +25,7 @@ export async function getHistoryExport(db: Client, studentId: string): Promise<H
   const { data, error } = await db
     .from("workouts")
     .select(
-      `started_at, performed_on, session_label, perceived_effort, note,
+      `started_at, performed_on, source_kind, title, session_label, perceived_effort, note,
        workout_sets ( prescribed_exercise_name, exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
     )
     .eq("student_id", studentId)
@@ -37,6 +38,8 @@ export async function getHistoryExport(db: Client, studentId: string): Promise<H
       .sort((a, b) => a.position - b.position || a.set_number - b.set_number)
       .map((set) => ({
         date: workout.performed_on as string,
+        sourceKind: workoutSourceKindSchema.parse(workout.source_kind),
+        workoutTitle: workout.title,
         perceivedEffort: workout.perceived_effort,
         workoutNote: workout.note,
         sessionLabel: workout.session_label,

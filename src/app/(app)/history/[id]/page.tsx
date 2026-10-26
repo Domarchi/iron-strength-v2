@@ -1,3 +1,4 @@
+import { workoutTitle, workoutOriginLabel } from "@/domain/workout-title";
 import { navigationContext, evidenceReturn } from "@/lib/navigation/training-context";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -101,7 +102,10 @@ export default async function WorkoutDetailPage({
         </h1>
         <p className="text-sm text-muted-foreground">
           {workout.programName ? `${workout.programName} · ` : ""}
-          {workout.sessionLabel ? `Sesión ${workout.sessionLabel}` : "Sesión"}
+          {workoutTitle(workout)}
+          {workout.sourceKind && workout.sourceKind !== "assigned"
+            ? ` · ${workoutOriginLabel(workout.sourceKind)}`
+            : ""}
         </p>
       </header>
 

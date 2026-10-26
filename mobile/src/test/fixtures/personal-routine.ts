@@ -1,0 +1,30 @@
+import type { PersonalRoutine } from "../../../../src/lib/mobile/personal-contracts";
+const id = (n: number) => `af213000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+export const personalRoutineFixture = (): PersonalRoutine => ({
+  id: id(100),
+  name: "Superior",
+  folderId: null,
+  position: 0,
+  revision: 4,
+  createdAt: "2026-10-26T12:00:00Z",
+  updatedAt: "2026-10-26T12:00:00Z",
+  items: [0, 1].map((n) => ({
+    id: id(200 + n),
+    exerciseId: id(300 + n),
+    name: n ? "Remo" : "Press",
+    muscleGroup: n ? "Espalda" : "Pecho",
+    equipment: "Barra",
+    isBodyweight: false,
+    progressionIncrementKg: 2.5,
+    position: n,
+    sets: 2,
+    repsMin: 8,
+    repsMax: 12,
+    targetWeightKg: 30,
+    note: "Controlado",
+    restSeconds: 90,
+    supersetId: id(400),
+    supersetRestSeconds: 60,
+    series: null,
+  })),
+});

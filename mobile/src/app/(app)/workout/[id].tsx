@@ -15,7 +15,15 @@ import {
   View,
 } from "react-native";
 import { Icon } from "../../../components/icon";
-import { Action, IconAction, Notice, Page, s, usePalette } from "../../../components/ui";
+import {
+  Action,
+  IconAction,
+  Notice,
+  Page,
+  ScreenIntro,
+  s,
+  usePalette,
+} from "../../../components/ui";
 import { RestControls } from "../../../components/rest-controls";
 import { DownloadedHistory } from "../../../components/downloaded-history";
 import { WorkoutSets } from "../../../components/workout-sets";
@@ -80,7 +88,7 @@ export default function Workout() {
   const elapsed =
       d.durationSeconds ?? Math.max(0, Math.floor((now - Date.parse(d.startedAt)) / 1000)),
     rest = d.rest ? remainingSeconds(d.rest, now) : 0,
-    next = exercise.supersetId ? nextSupersetSet(d.exercises, exercise.supersetId) : null;
+    next = exercise?.supersetId ? nextSupersetSet(d.exercises, exercise.supersetId) : null;
   async function finish() {
     await act(async () => {
       const result = pending
@@ -100,6 +108,56 @@ export default function Workout() {
     });
   }
 
+  const personal = d.version === 3;
+  const free = d.version === 3 && d.origin.kind === "free";
+  const addExercises = () =>
+    router.push({ pathname: "/workout-add/[id]", params: { id: d!.workoutId } });
+  if (!exercise)
+    return (
+      <Page compact>
+        <Action label="Volver a Inicio" quiet onPress={back} />
+        <ScreenIntro title={a.routine.session.title ?? "Entrenamiento"} />
+        <Text style={[s.caption, { color: p.muted }]}>{formatClock(elapsed)}</Text>
+        {training.error ? (
+          <Notice
+            message={training.error}
+            retry={() => {
+              void act(() => controller.retryStorage());
+            }}
+          />
+        ) : null}
+        {error ? <Notice message={error} /> : null}
+        {free ? (
+          <Action
+            label="Agregar ejercicios"
+            icon="plus"
+            disabled={
+              offline || training.blocked || training.busy || training.closing || training.dirty
+            }
+            onPress={addExercises}
+          />
+        ) : null}
+        {discard ? (
+          <>
+            <Notice message="¿Descartar este registro local?" />
+            <Action
+              label="Confirmar descarte"
+              secondary
+              onPress={() => {
+                void act(async () => {
+                  await controller.discard();
+                  back();
+                });
+              }}
+            />
+            <Action label="Cancelar descarte" quiet onPress={() => setDiscard(false)} />
+          </>
+        ) : (
+          <Action label="Descartar registro local" quiet onPress={() => setDiscard(true)} />
+        )}
+      </Page>
+    );
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: p.bg }}
@@ -109,7 +167,12 @@ export default function Workout() {
         <View style={[s.row, { alignItems: "flex-start" }]}>
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={[s.caption, { color: p.blue }]}>
-              {a.mode === "demo" ? "DEMO · " : ""}SESIÓN {d.sessionLabel}
+              {a.mode === "demo" ? "DEMO · " : ""}
+              {d.version === 3
+                ? d.origin.kind === "free"
+                  ? "LIBRE"
+                  : "RUTINA PERSONAL"
+                : `SESIÓN ${d.sessionLabel}`}
               {pending ? " · PENDIENTE DE ENVIAR" : ""}
             </Text>
             <Text style={[s.subheading, { color: p.ink }]}>
@@ -270,7 +333,9 @@ export default function Workout() {
               />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Indicaciones y alternativas"
+                accessibilityLabel={
+                  personal ? "Detalles del ejercicio" : "Indicaciones y alternativas"
+                }
                 accessibilityState={{ expanded: details === exercise.sessionExerciseId }}
                 aria-expanded={details === exercise.sessionExerciseId}
                 onPress={() =>
@@ -291,7 +356,7 @@ export default function Workout() {
                 })}
               >
                 <Text style={[s.label, { color: p.blue, flex: 1 }]}>
-                  Indicaciones y alternativas
+                  {personal ? "Detalles del ejercicio" : "Indicaciones y alternativas"}
                 </Text>
                 <Icon
                   name={details === exercise.sessionExerciseId ? "minus" : "plus"}
@@ -302,15 +367,15 @@ export default function Workout() {
               {details === exercise.sessionExerciseId ? (
                 <View style={{ gap: 12 }}>
                   {a.mode === "real" ? (
-                    <DownloadedHistory exerciseId={exercise.exerciseId} />
+                    <DownloadedHistory exerciseId={exercise.exerciseId} personal={personal} />
                   ) : null}
                   {rx.note ? (
                     <Text style={[s.body, { color: p.muted }]}>{rx.note}</Text>
-                  ) : (
+                  ) : !personal ? (
                     <Text style={[s.caption, { color: p.muted }]}>
                       Sin indicaciones adicionales del coach.
                     </Text>
-                  )}
+                  ) : null}
                   {exercise.alternatives?.length ? (
                     <>
                       <Text style={[s.label, { color: p.ink }]}>Alternativas autorizadas</Text>
@@ -405,11 +470,27 @@ export default function Workout() {
                 <Action label="Seguir entrenando" secondary onPress={() => setClosing(false)} />
               </View>
             ) : (
-              <Action
-                label="Finalizar entrenamiento"
-                disabled={summary.doneSets === 0 || training.dirty}
-                onPress={() => setClosing(true)}
-              />
+              <View style={{ gap: 12 }}>
+                {free ? (
+                  <Action
+                    label="Agregar ejercicios"
+                    secondary
+                    disabled={
+                      offline ||
+                      training.blocked ||
+                      training.busy ||
+                      training.closing ||
+                      d.exercises.length >= 15
+                    }
+                    onPress={addExercises}
+                  />
+                ) : null}
+                <Action
+                  label="Finalizar entrenamiento"
+                  disabled={summary.doneSets === 0 || training.dirty}
+                  onPress={() => setClosing(true)}
+                />
+              </View>
             )}
           </>
         )}

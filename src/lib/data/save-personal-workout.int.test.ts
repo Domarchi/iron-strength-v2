@@ -1,3 +1,6 @@
+import { getWeekView } from "./week";
+import { getHistoryExport } from "./export";
+import { getWorkoutDetail, listWorkouts } from "./workouts";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -65,6 +68,23 @@ describe("guardado personal real y separación", () => {
     ]);
     expect(results.map((r) => r.status).sort()).toEqual(["created", "duplicate"]);
     expect(results.every((r) => r.workoutId === input.id)).toBe(true);
+    expect(await getWorkoutDetail(students[0], input.id)).toMatchObject({
+      title: input.title,
+      sourceKind: "free",
+    });
+    expect(
+      (await listWorkouts(students[0], people[0])).items.find((w) => w.id === input.id),
+    ).toMatchObject({ title: input.title, sourceKind: "free" });
+    for (const reader of [students[0], coach]) {
+      expect(await getHistoryExport(reader, people[0])).toMatchObject({
+        ok: true,
+        rows: [{ sourceKind: "free", workoutTitle: input.title, sessionLabel: null }],
+      });
+    }
+    expect(await getHistoryExport(students[1], people[0])).toEqual({
+      ok: false,
+      reason: "not_found",
+    });
     expect(
       (await students[0].from("workout_sets").select("id").eq("workout_id", input.id)).data,
     ).toHaveLength(1);
@@ -127,6 +147,51 @@ describe("guardado personal real y separación", () => {
     ).rejects.toMatchObject({ code: "P0002" });
     await students[0].from("personal_routines").delete().eq("id", routineId);
     expect(await savePersonalWorkout(students[0], input)).toMatchObject({ status: "duplicate" });
+  });
+  it("un libre con nombre A no completa la sesión A del programa", async () => {
+    const c = await coach.auth.getUser();
+    const program = await admin
+      .from("programs")
+      .insert({
+        coach_id: c.data.user!.id,
+        student_id: people[2],
+        name: "Asignado",
+        weeks_count: 1,
+        start_date: "2025-03-03",
+        ends_on: "2025-03-09",
+      })
+      .select("id")
+      .single();
+    if (program.error) throw program.error;
+    const session = await admin
+      .from("program_sessions")
+      .insert({ program_id: program.data.id, week_number: 1, label: "A" })
+      .select("id")
+      .single();
+    if (session.error) throw session.error;
+    const row = await admin.from("session_exercises").insert({
+      program_session_id: session.data.id,
+      exercise_id: exerciseId,
+      position: 0,
+      sets: 1,
+      reps_min: 8,
+      reps_max: 12,
+    });
+    if (row.error) throw row.error;
+    const input = {
+      ...payload(),
+      title: "A",
+      startedAt: "2025-03-04T15:00:00Z",
+      finishedAt: "2025-03-04T15:30:00Z",
+    };
+    await savePersonalWorkout(students[2], input);
+    const view = await getWeekView(students[2], people[2], "2025-03-05");
+    expect(view).toMatchObject({
+      kind: "active",
+      compliance: { planned: 1, done: 0, complete: false },
+      allDone: false,
+    });
+    if (view.kind === "active") expect(view.sessions[0].status).toBe("pending");
   });
   it("los tres alumnos y el coach entrenan con identidad propia; GoTrue limpia recibos solo del borrado", async () => {
     const inputs: PersonalWorkoutPayload[] = [];

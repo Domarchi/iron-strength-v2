@@ -4,6 +4,7 @@ import { MobileError } from "./client";
 import { DEMO_ROUTINES } from "./demo";
 import { TrainingController, type TrainingStorage, type SaveReply } from "./training";
 import { updateSetField } from "../../../src/lib/workout/runner-state";
+import type { NativeWorkoutPayload } from "./personal-training";
 import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
 const user = "11111111-1111-4111-8111-111111111111",
   other = "22222222-2222-4222-8222-222222222222",
@@ -49,7 +50,7 @@ function fixture() {
       await storage.set(key, next);
     }),
   };
-  const send = vi.fn(async (p: WorkoutPayload): Promise<SaveReply> => ({
+  const send = vi.fn(async (p: NativeWorkoutPayload): Promise<SaveReply> => ({
     version: 1 as const,
     ok: true as const,
     status: "created" as const,

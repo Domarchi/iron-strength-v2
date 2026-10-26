@@ -1,3 +1,4 @@
+import { workoutTitle } from "@/domain/workout-title";
 import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeading } from "@/components/layout/page-heading";
 import Link from "next/link";
@@ -49,8 +50,7 @@ async function WorkoutList({ cursor }: { cursor?: string }) {
                 <UnreadBadge count={unread?.byWorkout.get(w.id) ?? 0} />
               </span>
               <span className="text-sm text-muted-foreground">
-                {w.sessionLabel ? `Sesión ${w.sessionLabel} · ` : ""}
-                {w.workingSets} series · {formatDuration(w.durationSeconds)}
+                {workoutTitle(w)} · {w.workingSets} series · {formatDuration(w.durationSeconds)}
                 {w.volumeKg > 0 ? ` · ${formatKg(w.volumeKg)}` : ""}
               </span>
             </Link>

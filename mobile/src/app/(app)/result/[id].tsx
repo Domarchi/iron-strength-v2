@@ -1,3 +1,4 @@
+import { workoutTitle } from "../../../../../src/domain/workout-title";
 import { progressReturn } from "../../../lib/progress-view";
 import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
@@ -114,7 +115,10 @@ export default function Result() {
               </Text>
             </View>
             <Text style={[s.subheading, { color: p.ink }]}>
-              {w.programName ?? "Tu entrenamiento"} · {day(w.performedOn)}
+              {w.sourceKind === "personal" || w.sourceKind === "free"
+                ? workoutTitle(w)
+                : (w.programName ?? "Tu entrenamiento")}{" "}
+              · {day(w.performedOn)}
             </Text>
             <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
               <Text style={[s.subheading, { color: p.ink }]}>

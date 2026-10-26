@@ -1,17 +1,31 @@
+import type { MobileCatalogEntry } from "../../../src/lib/mobile/exercise-contracts";
+import {
+  personalContextSchema,
+  nativeWorkoutDraftSchema,
+  nativeWorkoutPayloadSchema,
+  createPersonalTrainingDraft,
+  buildPersonalTrainingPayload,
+  isPersonalWorkoutPayload,
+  type PersonalTrainingContext,
+  type NativeWorkoutDraft,
+  type NativeWorkoutPayload,
+} from "./personal-training";
 import { z } from "zod";
 import { AtomicStoreError } from "./atomic-contract";
 import { workoutPayloadSchema } from "../../../src/lib/workout/payload";
 import { mobileRoutineSchema, type MobileRoutine } from "../../../src/lib/mobile/contracts";
-import { workoutDraftSchema, type WorkoutDraft } from "../../../src/lib/workout/draft";
 import {
   buildPayload,
   completeSet,
   createDraft,
+  prefillDraftExercises,
   finishDraft,
   type WorkoutPayload,
 } from "../../../src/lib/workout/runner-state";
 import { finishedSupersetRound, nextSupersetSet } from "../../../src/domain/superset-rounds";
 import { restAfterSet } from "../../../src/domain/rest-timer";
+const buildNativePayload = (draft: NativeWorkoutDraft, now: Date) =>
+  draft.version === 3 ? buildPersonalTrainingPayload(draft, now) : buildPayload(draft, now);
 export interface TrainingStorage {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<void>;
@@ -24,14 +38,41 @@ export type SaveReply = {
   status: "created" | "duplicate";
   workoutId: string;
 };
-const activeSchema = z.object({
-  mode: z.enum(["demo", "real"]),
-  routine: mobileRoutineSchema,
-  draft: workoutDraftSchema,
-  activeIndex: z.number().int().min(0).max(14),
-  payload: workoutPayloadSchema.optional(),
-  review: z.object({ effort: z.string().max(2), note: z.string().max(500) }).optional(),
-});
+const activeSchema = z
+  .object({
+    mode: z.enum(["demo", "real"]),
+    routine: z.union([mobileRoutineSchema, personalContextSchema]),
+    draft: nativeWorkoutDraftSchema,
+    activeIndex: z.number().int().min(0).max(14),
+    payload: nativeWorkoutPayloadSchema.optional(),
+    review: z.object({ effort: z.string().max(2), note: z.string().max(500) }).optional(),
+  })
+  .refine((a) => {
+    const personal = a.routine.version === 2;
+    if (personal !== (a.draft.version === 3) || (personal && a.mode !== "real")) return false;
+    if (
+      a.draft.version === 3 &&
+      a.routine.version === 2 &&
+      (JSON.stringify(a.draft.origin) !== JSON.stringify(a.routine.origin) ||
+        a.draft.title !== a.routine.session.title ||
+        a.draft.exercises.length !== a.routine.exercises.length ||
+        a.draft.exercises.some(
+          (e, i) => e.sessionExerciseId !== a.routine.exercises[i].sessionExerciseId,
+        ))
+    )
+      return false;
+    if (a.payload && isPersonalWorkoutPayload(a.payload) && a.draft.version === 3) {
+      if (
+        a.payload.title !== a.draft.title ||
+        JSON.stringify(a.payload.origin) !== JSON.stringify(a.draft.origin)
+      )
+        return false;
+    }
+    return (
+      !a.payload ||
+      (a.payload.id === a.draft.workoutId && isPersonalWorkoutPayload(a.payload) === personal)
+    );
+  });
 export type ActiveTraining = z.infer<typeof activeSchema>;
 export type DemoResult = { id: string; title: string; payload: WorkoutPayload };
 const envelopeSchema = z.object({
@@ -75,7 +116,7 @@ export class TrainingController {
   constructor(
     private userId: string,
     private storage: TrainingStorage,
-    private send: (payload: WorkoutPayload) => Promise<SaveReply>,
+    private send: (payload: NativeWorkoutPayload) => Promise<SaveReply>,
     private now = () => new Date(),
     private uuid: () => string = () => globalThis.crypto.randomUUID(),
   ) {
@@ -220,7 +261,65 @@ export class TrainingController {
     this.publish({ active, error: null });
     await this.persist();
   }
-  edit(change: (draft: WorkoutDraft) => WorkoutDraft) {
+  async startPersonal(value: PersonalTrainingContext) {
+    this.ensure();
+    if (this.state.busy || this.state.closing)
+      throw Error("Espera a que termine el guardado o envío.");
+    if (this.state.active)
+      throw Error("Ya tienes un entrenamiento. Retómalo o descártalo primero.");
+    const routine = personalContextSchema.parse(value);
+    if (routine.origin.kind === "personal" && !routine.exercises.length)
+      throw Error("Agrega ejercicios a la rutina antes de empezar.");
+    const draft = createPersonalTrainingDraft({
+      context: routine,
+      userId: this.userId,
+      workoutId: this.uuid(),
+      now: this.now(),
+    });
+    this.publish({ active: { mode: "real", routine, draft, activeIndex: 0 }, error: null });
+    await this.persist();
+  }
+  async appendFreeExercises(entries: MobileCatalogEntry[]) {
+    this.ensure();
+    const a = this.state.active;
+    if (
+      !a ||
+      a.draft.version !== 3 ||
+      a.routine.version !== 2 ||
+      a.routine.origin.kind !== "free" ||
+      a.draft.status !== "in_progress" ||
+      this.state.busy ||
+      this.state.closing
+    )
+      throw Error("Retoma un entrenamiento libre en curso antes de agregar ejercicios.");
+    if (!entries.length) throw Error("Selecciona al menos un ejercicio.");
+    if (a.draft.exercises.length + entries.length > 15)
+      throw Error("Máximo 15 ejercicios por entrenamiento.");
+    const additions = entries.map((e) => ({
+      sessionExerciseId: this.uuid(),
+      exerciseId: e.id,
+      name: e.name,
+      isBodyweight: e.isBodyweight,
+      prescribed: { sets: 3, repsMin: 8, repsMax: 12, targetWeightKg: null },
+      lastWeightKg: null,
+      note: null,
+      restSeconds: 90,
+      supersetId: null,
+      supersetRestSeconds: null,
+    }));
+    const routine = personalContextSchema.parse({
+      ...a.routine,
+      exercises: [...a.routine.exercises, ...additions],
+    });
+    const draft = {
+      ...a.draft,
+      updatedAt: this.now().toISOString(),
+      exercises: [...a.draft.exercises, ...prefillDraftExercises(additions)],
+    };
+    this.publish({ active: activeSchema.parse({ ...a, routine, draft }), error: null });
+    await this.persist();
+  }
+  edit(change: (draft: NativeWorkoutDraft) => NativeWorkoutDraft) {
     this.ensure();
     const a = this.state.active;
     if (!a || a.draft.status !== "in_progress" || this.state.busy || this.state.closing) return;
@@ -296,8 +395,13 @@ export class TrainingController {
         )
           throw Error("Revisa esfuerzo (1–10) y nota (máximo 500 caracteres).");
         const draft = finishDraft({ ...a.draft, perceivedEffort: effort, note }, this.now());
-        const built = buildPayload(draft, this.now());
-        if (!built.ok) throw Error("Completa al menos una serie antes de finalizar.");
+        const built = buildNativePayload(draft, this.now());
+        if (!built.ok)
+          throw Error(
+            built.reason === "no_sets"
+              ? "Completa al menos una serie antes de finalizar."
+              : "Revisa las series completadas antes de finalizar.",
+          );
         this.publish({ active: { ...a, draft, payload: built.payload }, error: null });
         await this.persist();
       }
@@ -318,7 +422,7 @@ export class TrainingController {
     if (!a || a.draft.status !== "pending_save" || this.state.busy) return null;
     const built = a.payload
       ? { ok: true as const, payload: a.payload }
-      : buildPayload(a.draft, this.now());
+      : buildNativePayload(a.draft, this.now());
     if (!built.ok) throw Error("No hay series válidas para guardar.");
     if (built.payload.id !== a.draft.workoutId)
       throw Error(
@@ -346,7 +450,7 @@ export class TrainingController {
       payload: pending.payload,
     };
   }
-  async releaseQueued(id: string, payload: WorkoutPayload) {
+  async releaseQueued(id: string, payload: NativeWorkoutPayload) {
     this.ensure();
     await this.flush();
     this.ensure();
@@ -386,13 +490,15 @@ export class TrainingController {
     try {
       if (a.mode === "real") await this.send(payload);
       if (this.disposed || epoch !== this.epoch) return null;
+      if (a.mode === "demo" && isPersonalWorkoutPayload(payload))
+        throw Error("Una demo no puede guardar un registro personal.");
       const demos =
         a.mode === "demo"
           ? [
               {
                 id: a.draft.workoutId,
                 title: a.routine.session.title ?? `Rutina ${a.routine.session.label}`,
-                payload,
+                payload: workoutPayloadSchema.parse(payload),
               },
               ...this.state.demos.filter((d) => d.id !== a.draft.workoutId),
             ].slice(0, 20)

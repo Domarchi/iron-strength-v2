@@ -4,7 +4,13 @@ import { useWeekDownload } from "../lib/week-context";
 import { useSession } from "../lib/session";
 import { downloadedAt, downloadedHistory } from "../lib/offline-week";
 import { Action, day, s, usePalette } from "./ui";
-export function DownloadedHistory({ exerciseId }: { exerciseId: string }) {
+export function DownloadedHistory({
+  exerciseId,
+  personal = false,
+}: {
+  exerciseId: string;
+  personal?: boolean;
+}) {
   const p = usePalette(),
     { state } = useSession(),
     { download } = useWeekDownload();
@@ -14,7 +20,9 @@ export function DownloadedHistory({ exerciseId }: { exerciseId: string }) {
   if (!history || !pack)
     return (
       <Text style={[s.caption, { color: p.muted }]}>
-        Descarga tu semana con conexión para traer el historial reciente.
+        {personal
+          ? "No hay historial descargado de este ejercicio."
+          : "Descarga tu semana con conexión para traer el historial reciente."}
       </Text>
     );
   return (

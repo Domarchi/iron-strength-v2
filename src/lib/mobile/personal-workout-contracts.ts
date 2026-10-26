@@ -1,4 +1,6 @@
+import { WORKOUT_SOURCE_KINDS } from "../../domain/workout-title";
 import { z } from "zod";
+export const workoutSourceKindSchema = z.enum(WORKOUT_SOURCE_KINDS);
 const uuid = z.uuid().transform((value) => value.toLowerCase());
 export const personalWorkoutOriginSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("free") }).strict(),

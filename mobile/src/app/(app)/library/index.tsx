@@ -104,21 +104,6 @@ export default function PersonalLibraryScreen() {
       setOpeningEditor(false);
     }
   }
-  async function edit(row: PersonalRoutine) {
-    if (opening.current) return;
-    opening.current = true;
-    setOpeningEditor(true);
-    setError(null);
-    try {
-      await controller.createDraft(row);
-      router.push({ pathname: "/library/[id]", params: { id: row.id } });
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      opening.current = false;
-      setOpeningEditor(false);
-    }
-  }
   function reorder(kind: "routine" | "folder", id: string, direction: -1 | 1) {
     if (!snapshot) return;
     const row = snapshot.routines.find((r) => r.id === id),
@@ -194,11 +179,12 @@ export default function PersonalLibraryScreen() {
         >
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`${row.draft ? "Retomar borrador" : "Editar rutina"} ${row.name}`}
+            accessibilityLabel={`${row.draft ? "Retomar borrador" : "Ver rutina"} ${row.name}`}
             disabled={openingEditor || library.busy || library.blocked}
             onPress={() => {
               if (row.draft) router.push({ pathname: "/library/[id]", params: { id: row.id } });
-              else if (row.source) void edit(row.source);
+              else if (row.source)
+                router.navigate({ pathname: "/library/[id]/preview", params: { id: row.id } });
             }}
             style={({ pressed }) => ({
               flex: 1,

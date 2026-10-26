@@ -1,3 +1,5 @@
+import { workoutSourceKindSchema } from "../mobile/personal-workout-contracts";
+import type { WorkoutSourceKind } from "../../domain/workout-title";
 // Entrenamientos realizados: detalle y lista paginada (RF-34, RF-77). La RLS decide quién ve qué:
 // el alumno sus entrenamientos, el coach los de sus alumnos.
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -32,6 +34,10 @@ export type WorkoutExerciseRow = {
 };
 
 export type WorkoutDetail = {
+  sourceKind?: WorkoutSourceKind;
+  title?: string | null;
+  personalRoutineId?: string | null;
+  personalRoutineRevision?: number | null;
   id: string;
   studentId: string;
   programId: string | null;
@@ -79,7 +85,7 @@ export async function getWorkoutDetail(
   let query = db
     .from("workouts")
     .select(
-      `id, student_id, program_id, session_label, started_at, duration_seconds, performed_on, perceived_effort, note,
+      `id, student_id, program_id, source_kind, title, personal_routine_id, personal_routine_revision, session_label, started_at, duration_seconds, performed_on, perceived_effort, note,
        programs ( name ),
        workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
     )
@@ -114,6 +120,10 @@ export async function getWorkoutDetail(
   return {
     id: data.id,
     studentId: data.student_id,
+    sourceKind: workoutSourceKindSchema.parse(data.source_kind),
+    title: data.title,
+    personalRoutineId: data.personal_routine_id,
+    personalRoutineRevision: data.personal_routine_revision,
     programId: data.program_id,
     programName: (data.programs as unknown as { name: string } | null)?.name ?? null,
     sessionLabel: data.session_label,
@@ -128,6 +138,8 @@ export async function getWorkoutDetail(
 }
 
 export type WorkoutListItem = {
+  sourceKind?: WorkoutSourceKind;
+  title?: string | null;
   id: string;
   perceivedEffort: number | null;
   note: string | null;
@@ -146,7 +158,7 @@ export async function listWorkouts(
   let query = db
     .from("workouts")
     .select(
-      "id, session_label, started_at, performed_on, duration_seconds, perceived_effort, note, workout_sets(exercise_id, weight_kg, reps, is_warmup)",
+      "id, source_kind, title, session_label, started_at, performed_on, duration_seconds, perceived_effort, note, workout_sets(exercise_id, weight_kg, reps, is_warmup)",
     )
     .eq("student_id", studentId)
     .order("started_at", { ascending: false })
@@ -160,6 +172,8 @@ export async function listWorkouts(
   return {
     items: page.map((w) => ({
       id: w.id,
+      sourceKind: workoutSourceKindSchema.parse(w.source_kind),
+      title: w.title,
       sessionLabel: w.session_label,
       startedAt: w.started_at,
       performedOn: w.performed_on as string,

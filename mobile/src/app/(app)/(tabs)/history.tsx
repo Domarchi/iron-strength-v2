@@ -1,3 +1,4 @@
+import { workoutTitle } from "../../../../../src/domain/workout-title";
 import { Icon } from "../../../components/icon";
 import { santiagoDate } from "../../../../../src/domain/dates";
 import { useCallback, useState } from "react";
@@ -67,7 +68,7 @@ export default function History() {
         >
           <View style={s.row}>
             <Text style={[s.caption, { color: p.blue }]}>
-              {day(w.performedOn)} · SESIÓN {w.sessionLabel ?? "LIBRE"}
+              {day(w.performedOn)} · {workoutTitle(w)}
             </Text>
             <Text style={[s.caption, { color: p.muted }]}>
               {Math.max(1, Math.round(w.durationSeconds / 60))} min

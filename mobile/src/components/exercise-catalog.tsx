@@ -1,3 +1,4 @@
+import { useTraining } from "../lib/training-context";
 import { randomUUID } from "expo-crypto";
 import { addPersonalExercise } from "../../../src/domain/personal-routines";
 import { useLibraryDrafts } from "../lib/library-context";
@@ -19,12 +20,30 @@ const normalize = (value: string) =>
     .toLocaleLowerCase("es")
     .trim();
 const noEquipment = "__none__";
-export function ExerciseCatalog({ pickFor }: { pickFor?: string }) {
+export function ExerciseCatalog({
+  pickFor,
+  pickForTraining,
+}: {
+  pickFor?: string;
+  pickForTraining?: string;
+}) {
   const p = usePalette(),
     insets = useSafeAreaInsets(),
     { client, state } = useSession();
   const { controller, library } = useLibraryDrafts();
+  const { controller: trainingController, training } = useTraining();
   const draft = library.drafts.find((d) => d.id === pickFor);
+  const picking = !!(pickFor || pickForTraining);
+  const trainingTarget =
+    training.active?.draft.version === 3 &&
+    training.active.draft.origin.kind === "free" &&
+    training.active.draft.workoutId === pickForTraining &&
+    training.active.draft.status === "in_progress"
+      ? training.active
+      : null;
+  const existingCount = pickForTraining
+    ? (trainingTarget?.draft.exercises.length ?? 0)
+    : (draft?.items.length ?? 0);
   const [selected, setSelected] = useState<string[]>([]),
     [addError, setAddError] = useState<string | null>(null),
     [adding, setAdding] = useState(false),
@@ -74,11 +93,37 @@ export function ExerciseCatalog({ pickFor }: { pickFor?: string }) {
             exercise.needle.includes(needle),
         );
   async function add() {
-    if (addingRef.current || !draft) return;
+    if (addingRef.current || (!draft && !trainingTarget)) return;
     addingRef.current = true;
     setAdding(true);
     setAddError(null);
     try {
+      if (pickForTraining) {
+        if (
+          !trainingTarget ||
+          trainingController.getSnapshot().active?.draft.workoutId !== pickForTraining
+        )
+          throw Error("Este registro ya no está disponible.");
+        if (added) await trainingController.retryStorage();
+        else {
+          const additions = catalog.filter((e) => selected.includes(e.id));
+          const before = new Set(trainingTarget.draft.exercises.map((e) => e.sessionExerciseId));
+          try {
+            await trainingController.appendFreeExercises(additions);
+          } finally {
+            const active = trainingController.getSnapshot().active;
+            setAdded(
+              active?.draft.workoutId === pickForTraining &&
+                active.draft.exercises.filter((e) => !before.has(e.sessionExerciseId)).length ===
+                  additions.length &&
+                additions.length > 0,
+            );
+          }
+        }
+        router.back();
+        return;
+      }
+      if (!draft) throw Error("Ese borrador ya no está disponible.");
       if (added) await controller.retryStorage();
       else {
         const additions = catalog
@@ -137,11 +182,17 @@ export function ExerciseCatalog({ pickFor }: { pickFor?: string }) {
           <View style={{ gap: 16, paddingBottom: 16 }}>
             <ConnectionStatus />
             <Action
-              label={pickFor ? "Volver a la rutina" : "Volver a Entrenar"}
+              label={
+                pickForTraining
+                  ? "Volver al entrenamiento"
+                  : picking
+                    ? "Volver a la rutina"
+                    : "Volver a Entrenar"
+              }
               quiet
-              onPress={() => (pickFor ? router.back() : router.navigate("/train"))}
+              onPress={() => (picking ? router.back() : router.navigate("/train"))}
             />
-            <ScreenIntro title={pickFor ? "Agregar ejercicios" : "Biblioteca"} />
+            <ScreenIntro title={picking ? "Agregar ejercicios" : "Biblioteca"} />
             {addError ? <Notice message={addError} /> : null}
             <TextInput
               accessibilityLabel="Buscar ejercicios"
@@ -250,17 +301,17 @@ export function ExerciseCatalog({ pickFor }: { pickFor?: string }) {
         }
         renderItem={({ item }) => (
           <Pressable
-            accessibilityRole={pickFor ? "checkbox" : "button"}
-            aria-checked={pickFor ? selected.includes(item.id) : undefined}
+            accessibilityRole={picking ? "checkbox" : "button"}
+            aria-checked={picking ? selected.includes(item.id) : undefined}
             accessibilityState={
-              pickFor
+              picking
                 ? { checked: selected.includes(item.id), disabled: adding || added }
                 : undefined
             }
-            disabled={!!pickFor && (adding || added)}
-            accessibilityLabel={pickFor ? `Seleccionar ${item.name}` : `Ver ejercicio ${item.name}`}
+            disabled={picking && (adding || added)}
+            accessibilityLabel={picking ? `Seleccionar ${item.name}` : `Ver ejercicio ${item.name}`}
             onPress={() => {
-              if (!pickFor) {
+              if (!picking) {
                 router.push({
                   pathname: "/exercises/[id]",
                   params: { id: item.id, from: "catalog" },
@@ -268,10 +319,7 @@ export function ExerciseCatalog({ pickFor }: { pickFor?: string }) {
                 return;
               }
               setAddError(null);
-              if (
-                !selected.includes(item.id) &&
-                selected.length + (draft?.items.length ?? 0) >= 15
-              ) {
+              if (!selected.includes(item.id) && selected.length + existingCount >= 15) {
                 setAddError("Máximo 15 ejercicios por rutina.");
                 return;
               }
@@ -299,7 +347,7 @@ export function ExerciseCatalog({ pickFor }: { pickFor?: string }) {
                 {item.muscleGroup} · {item.equipment ?? "Sin equipo indicado"}
               </Text>
             </View>
-            {pickFor ? (
+            {picking ? (
               <View
                 accessible={false}
                 style={{
@@ -321,7 +369,7 @@ export function ExerciseCatalog({ pickFor }: { pickFor?: string }) {
           </Pressable>
         )}
       />
-      {pickFor ? (
+      {picking ? (
         <View
           style={{
             paddingHorizontal: 20,
@@ -340,9 +388,9 @@ export function ExerciseCatalog({ pickFor }: { pickFor?: string }) {
             }
             busy={adding}
             disabled={
-              !draft ||
-              library.blocked ||
-              !!library.pending ||
+              (pickForTraining
+                ? !trainingTarget || training.blocked || training.busy || training.closing
+                : !draft || library.blocked || !!library.pending) ||
               offline ||
               (!added && !selected.length)
             }

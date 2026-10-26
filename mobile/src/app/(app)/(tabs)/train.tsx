@@ -1,3 +1,4 @@
+import { FreeStart } from "../../../components/free-start";
 import { Icon } from "../../../components/icon";
 import { useSession } from "../../../lib/session";
 import { DownloadedSessions } from "../../../components/downloaded-sessions";
@@ -14,6 +15,7 @@ export default function Train() {
     <Page>
       <ScreenIntro title="Entrenar" />
       <TrainingCard />
+      <FreeStart />
       <Action label="Mis rutinas" icon="train" onPress={() => router.push("/library")} />
       <Action
         label="Biblioteca de ejercicios"
