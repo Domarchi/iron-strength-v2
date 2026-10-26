@@ -5,9 +5,7 @@ import { router } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import {
   Action,
-  Brand,
   IconAction,
-  Metric,
   Notice,
   Page,
   ScreenIntro,
@@ -51,30 +49,25 @@ function OnlineWeek() {
   const completed = active?.sessions.filter((session) => session.status === "done").length ?? 0;
   return (
     <Page>
-      <View style={s.row}>
-        <Brand />
+      <View style={[s.row, { alignItems: "flex-start", flexWrap: "nowrap" }]}>
+        <View style={{ flex: 1, gap: 6 }}>
+          <ScreenIntro
+            eyebrow={
+              active
+                ? `Semana ${active.weekNumber} · ${day(active.weekStart)} — ${day(active.weekEnd)}`
+                : undefined
+            }
+            title={`Hola, ${person.fullName.trim().split(" ")[0]}`}
+            description={active?.program.name}
+          />
+        </View>
         <IconAction label="Mi cuenta" icon="account" onPress={() => router.navigate("/account")} />
       </View>
-      <ScreenIntro
-        eyebrow={
-          active
-            ? `SEMANA ${active.weekNumber} · ${day(active.weekStart)} — ${day(active.weekEnd)}`
-            : "INICIO"
-        }
-        title={`Hola, ${person.fullName.trim().split(" ")[0]}`}
-        description={
-          training.active
-            ? "Tu sesión sigue donde la dejaste."
-            : active
-              ? active.program.name
-              : "Tu planificación y tus entrenamientos, aquí."
-        }
-      />
       <TrainingCard />
       <CommentDraftCard />
       <UnreadComments />
       {query.error ? <Notice message={query.error} retry={query.retry} /> : null}
-      {query.loading ? (
+      {query.loading && !view ? (
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando tu semana" />
       ) : null}
       {active ? (
@@ -86,21 +79,19 @@ function OnlineWeek() {
                 {
                   backgroundColor: p.card,
                   borderColor: p.border,
-                  borderTopColor: p.blue,
-                  borderTopWidth: 2,
-                  gap: 18,
+                  gap: 12,
                 },
               ]}
             >
               <View style={s.row}>
-                <Text style={[s.caption, { color: p.blue, letterSpacing: 1 }]}>
+                <Text style={[s.caption, { color: p.muted, fontWeight: "500" }]}>
                   SIGUIENTE SESIÓN
                 </Text>
                 <SessionMark label={next.label} />
               </View>
               <Text
                 accessibilityRole="header"
-                style={[s.heading, { fontSize: 28, lineHeight: 34, color: p.ink }]}
+                style={[s.heading, { fontSize: 25, lineHeight: 31, color: p.ink }]}
               >
                 {next.title ?? `Rutina ${next.label}`}
               </Text>
@@ -108,20 +99,14 @@ function OnlineWeek() {
                 {next.exerciseCount} ejercicios · {next.setCount ?? 0} series
                 {next.scheduledOn ? ` · ${day(next.scheduledOn)}` : ""}
               </Text>
-              <Text style={[s.caption, { color: p.muted }]}>
-                {next.exerciseNames.slice(0, 3).join(" · ")}
-                {next.exerciseNames.length > 3 ? "…" : ""}
-              </Text>
               <Action
-                label={`Ver rutina ${next.label}`}
+                label="Ver rutina"
+                accessibilityLabel={`Ver rutina ${next.label}`}
                 icon="arrow"
                 onPress={() =>
                   router.push({ pathname: "/routine/[id]", params: { id: next.sessionId } })
                 }
               />
-              <Text style={[s.caption, { color: p.muted }]}>
-                Consulta los ejercicios antes de empezar.
-              </Text>
             </View>
           ) : null}
           <View style={{ gap: 18 }}>
@@ -130,15 +115,8 @@ function OnlineWeek() {
                 Tu semana
               </Text>
               <Text style={[s.caption, { color: p.muted }]}>
-                {day(active.weekStart)} — {day(active.weekEnd)}
+                Semana {active.weekNumber} de {active.program.weeksCount}
               </Text>
-            </View>
-            <View style={{ flexDirection: "row", gap: 20 }}>
-              <Metric value={`${completed} / ${active.sessions.length}`} label="sesiones hechas" />
-              <Metric
-                value={`${active.weekNumber} / ${active.program.weeksCount}`}
-                label="semana del plan"
-              />
             </View>
             <View
               accessibilityRole="progressbar"
@@ -176,11 +154,11 @@ function OnlineWeek() {
                   router.push({ pathname: "/routine/[id]", params: { id: session.sessionId } })
                 }
                 style={({ pressed }) => ({
-                  paddingVertical: 18,
+                  paddingVertical: 16,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 12,
-                  borderTopWidth: 1,
+                  borderTopWidth: 0.5,
                   borderTopColor: p.border,
                   backgroundColor: pressed ? p.raised : "transparent",
                 })}

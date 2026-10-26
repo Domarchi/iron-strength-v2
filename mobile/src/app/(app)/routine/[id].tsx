@@ -162,7 +162,7 @@ export default function Routine() {
         />
       </View>
       {query.error ? <Notice message={query.error} retry={query.retry} /> : null}
-      {query.loading ? (
+      {query.loading && !query.value ? (
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando rutina" />
       ) : null}
       {startError ? <Notice message={startError} /> : null}

@@ -1,5 +1,6 @@
+import { Icon } from "./icon";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useWeekDownload } from "../lib/week-context";
 import { Action, Notice, day, s, usePalette } from "./ui";
 const dateFormat = new Intl.DateTimeFormat("es-CL", {
@@ -42,6 +43,7 @@ export function WeekDownloadCard({
 }: {
   expected?: { programId: string; weekStart: string };
 }) {
+  const [expanded, setExpanded] = useState(false);
   const p = usePalette(),
     { controller, download } = useWeekDownload(),
     pack = download.verified ? download.pack : null;
@@ -50,12 +52,9 @@ export function WeekDownloadCard({
   return (
     <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
       <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
-        Tu semana en este dispositivo
+        Semana sin conexión
       </Text>
-      <Text style={[s.body, { color: p.muted }]}>
-        Guarda rutinas, alternativas e historial reciente.
-      </Text>
-      <Text style={[s.label, { color: p.ink }]}>
+      <Text style={[s.caption, { color: p.muted }]}>
         {download.busy
           ? "Comprobando la descarga…"
           : !download.ready
@@ -66,21 +65,10 @@ export function WeekDownloadCard({
                 ? "Todavía no has descargado esta semana."
                 : "Descarga sin verificar."}
       </Text>
-      {pack ? (
-        <>
-          <Text style={[s.body, { color: p.ink }]}>
-            {pack.program.name} · {day(pack.weekStart)} — {day(pack.weekEnd)}
-          </Text>
-          <Text style={[s.caption, { color: p.muted }]}>
-            {pack.sessions.length} {pack.sessions.length === 1 ? "sesión" : "sesiones"} ·{" "}
-            {pack.sessions.reduce((n, r) => n + r.context.exercises.length, 0)} ejercicios
-          </Text>
-          {expected && !same ? (
-            <Text style={[s.body, { color: p.muted }]}>
-              Esta copia corresponde a otra semana. Descarga la vigente antes de entrenar.
-            </Text>
-          ) : null}
-        </>
+      {pack && expected && !same ? (
+        <Text style={[s.body, { color: p.muted }]}>
+          Esta copia corresponde a otra semana. Descarga la vigente antes de entrenar.
+        </Text>
       ) : null}
       {download.error ? <Notice message={download.error} /> : null}
       {download.blocked ? (
@@ -103,11 +91,45 @@ export function WeekDownloadCard({
           }}
         />
       ) : null}
-      {pack ? <RemoveDownload key={pack.program.id + pack.weekStart + pack.downloadedAt} /> : null}
-      <Text style={[s.caption, { color: p.muted }]}>
-        Esta copia conserva rutinas e historial reciente. Solo puedes empezar rutinas de su semana
-        vigente.
-      </Text>
+      {pack ? (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Detalles de descarga"
+            accessibilityState={{ expanded }}
+            aria-expanded={expanded}
+            onPress={() => setExpanded((value) => !value)}
+            style={({ pressed }) => ({
+              minHeight: 44,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              borderRadius: 8,
+              backgroundColor: pressed ? p.raised : "transparent",
+            })}
+          >
+            <Text style={[s.caption, { color: p.ink }]}>Detalles de descarga</Text>
+            <Icon name={expanded ? "minus" : "plus"} size={16} color={p.muted} />
+          </Pressable>
+          {expanded ? (
+            <View style={{ gap: 10 }}>
+              <Text style={[s.body, { color: p.ink }]}>
+                {pack.program.name} · {day(pack.weekStart)} — {day(pack.weekEnd)}
+              </Text>
+              <Text style={[s.caption, { color: p.muted }]}>
+                {pack.sessions.length} {pack.sessions.length === 1 ? "sesión" : "sesiones"} ·{" "}
+                {pack.sessions.reduce((n, r) => n + r.context.exercises.length, 0)} ejercicios
+              </Text>
+              <Text style={[s.caption, { color: p.muted }]}>
+                Rutinas, alternativas e historial reciente. Inicia sesiones solo durante su semana
+                vigente.
+              </Text>
+              <RemoveDownload key={pack.program.id + pack.weekStart + pack.downloadedAt} />
+            </View>
+          ) : null}
+        </>
+      ) : null}
     </View>
   );
 }

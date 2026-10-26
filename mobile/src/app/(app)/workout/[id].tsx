@@ -105,7 +105,7 @@ export default function Workout() {
       style={{ flex: 1, backgroundColor: p.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Page>
+      <Page compact>
         <View style={[s.row, { alignItems: "flex-start" }]}>
           <View style={{ flex: 1, gap: 6 }}>
             <Text style={[s.caption, { color: p.blue }]}>
@@ -115,7 +115,7 @@ export default function Workout() {
             <Text style={[s.label, { color: p.ink }]}>
               {a.routine.session.title ?? `Sesión ${d.sessionLabel}`}
             </Text>
-            <Text style={[s.number, { color: p.ink, fontSize: 23, lineHeight: 30 }]}>
+            <Text style={[s.number, { color: p.ink, fontSize: 21, lineHeight: 28 }]}>
               {formatClock(elapsed)}{" "}
               <Text style={[s.caption, { color: p.muted }]}>
                 · {summary.doneSets}/{summary.totalSets} series
@@ -124,19 +124,21 @@ export default function Workout() {
           </View>
           <IconAction label="Volver a Inicio" icon="home" disabled={training.busy} onPress={back} />
         </View>
-        <Text
-          accessibilityLiveRegion="polite"
-          style={[s.caption, { color: training.error ? p.danger : p.muted }]}
-        >
-          {training.dirty
-            ? "Cambios pendientes de guardar en este dispositivo"
-            : pending
-              ? "Guardado en este dispositivo · pendiente de enviar"
-              : "Guardado en este dispositivo"}
-        </Text>
-        {a.mode === "demo" ? (
-          <Text style={[s.caption, { color: p.blue }]}>PRUEBA LOCAL · No se envía al coach</Text>
-        ) : null}
+        <View style={{ gap: 4 }}>
+          <Text
+            accessibilityLiveRegion="polite"
+            style={[s.caption, { color: training.error ? p.danger : p.muted }]}
+          >
+            {training.dirty
+              ? "Cambios pendientes de guardar en este dispositivo"
+              : pending
+                ? "Guardado en este dispositivo · pendiente de enviar"
+                : "Guardado en este dispositivo"}
+          </Text>
+          {a.mode === "demo" ? (
+            <Text style={[s.caption, { color: p.blue }]}>PRUEBA LOCAL · No se envía al coach</Text>
+          ) : null}
+        </View>
         {training.error ? (
           <Notice
             message={training.error}
@@ -182,10 +184,9 @@ export default function Workout() {
           </View>
         ) : (
           <>
-            <Text style={[s.caption, { color: p.muted }]}>EJERCICIOS</Text>
             <ScrollView
               horizontal
-              showsHorizontalScrollIndicator
+              showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ gap: 8 }}
               style={{ flexGrow: 0 }}
             >
@@ -200,10 +201,10 @@ export default function Workout() {
                     void act(() => controller.focus(i));
                   }}
                   style={{
-                    minHeight: 52,
-                    width: 144,
-                    borderRadius: 14,
-                    borderWidth: 1,
+                    minHeight: 48,
+                    width: 156,
+                    borderRadius: 16,
+                    borderWidth: 0.5,
                     borderColor: i === index ? p.blue : p.border,
                     backgroundColor: i === index ? p.tint : p.card,
                     padding: 8,
@@ -232,14 +233,16 @@ export default function Workout() {
                     : "Todas las rondas completadas"}
                 </Text>
               ) : null}
-              <Text style={[s.heading, { fontSize: 25, lineHeight: 32, color: p.ink }]}>
-                {exercise.name}
-              </Text>
-              <Text style={[s.caption, { color: p.muted }]}>
-                {exercise.supersetId
-                  ? `Descanso al terminar la ronda: ${exercise.supersetRestSeconds ?? 90} s`
-                  : `Descanso entre series: ${exercise.restSeconds ?? 90} s`}
-              </Text>
+              <View style={{ gap: 4 }}>
+                <Text style={[s.heading, { fontSize: 25, lineHeight: 32, color: p.ink }]}>
+                  {exercise.name}
+                </Text>
+                <Text style={[s.caption, { color: p.muted }]}>
+                  {exercise.supersetId
+                    ? `Descanso al terminar la ronda: ${exercise.supersetRestSeconds ?? 90} s`
+                    : `Descanso entre series: ${exercise.restSeconds ?? 90} s`}
+                </Text>
+              </View>
               <WorkoutSets
                 index={index}
                 onComplete={(si) => {

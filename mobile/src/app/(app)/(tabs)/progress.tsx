@@ -1,17 +1,7 @@
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
 import { Text, TextInput, View } from "react-native";
-import {
-  Action,
-  Brand,
-  Metric,
-  Notice,
-  Page,
-  ScreenIntro,
-  day,
-  s,
-  usePalette,
-} from "../../../components/ui";
+import { Action, Notice, Page, ScreenIntro, day, s, usePalette } from "../../../components/ui";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 export default function Progress() {
@@ -26,23 +16,13 @@ export default function Progress() {
     ) ?? [];
   return (
     <Page>
-      <Brand />
-      <ScreenIntro
-        eyebrow="PROGRESO"
-        title="Tu progreso"
-        description="Tus mejores series de trabajo, confirmadas en tu cuenta."
-      />
+      <ScreenIntro title="Progreso" />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
-      {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando marcas…</Text> : null}
+      {q.loading && !q.value ? (
+        <Text style={[s.body, { color: p.muted }]}>Cargando marcas…</Text>
+      ) : null}
       {q.value?.exercises.length ? (
         <>
-          <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-            <Text style={[s.caption, { color: p.blue }]}>REGISTROS CONFIRMADOS</Text>
-            <Metric
-              value={String(q.value.exercises.length)}
-              label="ejercicios con registros reales"
-            />
-          </View>
           <TextInput
             keyboardAppearance={p.dark ? "dark" : "light"}
             selectionColor={p.blue}
@@ -67,7 +47,7 @@ export default function Progress() {
             {e.isBodyweight ? "MEJOR SERIE SIN CARGA" : "MEJOR PESO REGISTRADO"}
           </Text>
           <View style={s.row}>
-            <Text style={[s.heading, s.number, { color: p.ink, fontSize: 38, lineHeight: 46 }]}>
+            <Text style={[s.heading, s.number, { color: p.ink, fontSize: 30, lineHeight: 38 }]}>
               {e.isBodyweight
                 ? `${e.bestReps} reps`
                 : `${e.bestWeightKg.toLocaleString("es-CL")} kg`}
@@ -76,12 +56,10 @@ export default function Progress() {
           </View>
           {!e.isBodyweight ? (
             <Text style={[s.body, { color: p.muted }]}>
-              1RM estimado: {Math.round(e.bestEstimated1RM * 10) / 10} kg · referencia calculada
+              1RM estimado: {Math.round(e.bestEstimated1RM * 10) / 10} kg
             </Text>
           ) : null}
-          <Text style={[s.caption, { color: p.muted }]}>
-            Último registro: {day(e.lastDate)} · mejores marcas de todo tu historial
-          </Text>
+          <Text style={[s.caption, { color: p.muted }]}>Último registro: {day(e.lastDate)}</Text>
           <Action
             label={`Ver progreso de ${e.name}`}
             quiet

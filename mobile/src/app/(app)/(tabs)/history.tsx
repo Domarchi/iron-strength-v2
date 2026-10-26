@@ -1,17 +1,9 @@
+import { Icon } from "../../../components/icon";
 import { santiagoDate } from "../../../../../src/domain/dates";
 import { useCallback, useState } from "react";
 import { router } from "expo-router";
-import { Text, View } from "react-native";
-import {
-  Action,
-  Brand,
-  Notice,
-  Page,
-  ScreenIntro,
-  day,
-  s,
-  usePalette,
-} from "../../../components/ui";
+import { Pressable, Text, View } from "react-native";
+import { Action, Notice, Page, ScreenIntro, day, s, usePalette } from "../../../components/ui";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 import { useTraining } from "../../../lib/training-context";
@@ -47,24 +39,32 @@ export default function History() {
   );
   return (
     <Page>
-      <Brand />
-      <ScreenIntro
-        eyebrow="HISTORIAL"
-        title="Tu historial"
-        description="Entrenamientos guardados, series y notas de cada sesión."
-      />
+      <ScreenIntro title="Historial" />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
       <CommentDraftCard />
       <UnreadComments all />
       {error ? <Notice message={error} /> : null}
-      {q.loading ? (
+      {q.loading && !q.value ? (
         <Text style={[s.body, { color: p.muted }]}>Cargando entrenamientos…</Text>
       ) : null}
       {q.value && !rows.length ? (
         <Notice message="Aún no tienes entrenamientos guardados en tu cuenta. Puedes probar una demo desde Entrenar." />
       ) : null}
       {rows.map((w) => (
-        <View key={w.id} style={[s.divider, { borderColor: p.border }]}>
+        <Pressable
+          key={w.id}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver entrenamiento del ${day(w.performedOn)}`}
+          onPress={() => router.push({ pathname: "/result/[id]", params: { id: w.id } })}
+          style={({ pressed }) => [
+            s.divider,
+            {
+              borderColor: p.border,
+              paddingBottom: 12,
+              backgroundColor: pressed ? p.raised : "transparent",
+            },
+          ]}
+        >
           <View style={s.row}>
             <Text style={[s.caption, { color: p.blue }]}>
               {day(w.performedOn)} · SESIÓN {w.sessionLabel ?? "LIBRE"}
@@ -73,9 +73,12 @@ export default function History() {
               {Math.max(1, Math.round(w.durationSeconds / 60))} min
             </Text>
           </View>
-          <Text style={[s.subheading, { color: p.ink }]}>
-            {w.exerciseCount} ejercicios · {w.workingSets} series
-          </Text>
+          <View style={[s.row, { flexWrap: "nowrap" }]}>
+            <Text style={[s.subheading, { color: p.ink, flex: 1 }]}>
+              {w.exerciseCount} ejercicios · {w.workingSets} series
+            </Text>
+            <Icon name="arrow" size={18} color={p.muted} />
+          </View>
           <Text style={[s.body, { color: p.muted }]}>
             {w.volumeKg.toLocaleString("es-CL")} kg de volumen
             {w.perceivedEffort ? ` · Esfuerzo ${w.perceivedEffort}/10` : ""}
@@ -85,12 +88,7 @@ export default function History() {
               {w.note}
             </Text>
           ) : null}
-          <Action
-            label={`Ver entrenamiento del ${day(w.performedOn)}`}
-            secondary
-            onPress={() => router.push({ pathname: "/result/[id]", params: { id: w.id } })}
-          />
-        </View>
+        </Pressable>
       ))}
       {(cursor === undefined ? q.value?.nextCursor : cursor) ? (
         <Action

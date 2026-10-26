@@ -17,7 +17,7 @@ for (const theme of ["light", "dark"] as const)
     ).toBeVisible();
     await expect(page.getByRole("progressbar")).toHaveCount(0);
     await expect(
-      page.getByText("Tu semana en este dispositivo", { exact: true }).filter({ visible: true }),
+      page.getByText("Semana sin conexión", { exact: true }).filter({ visible: true }),
     ).toHaveCount(0);
     expect(
       (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())

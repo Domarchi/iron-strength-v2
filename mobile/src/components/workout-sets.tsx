@@ -59,8 +59,8 @@ export function WorkoutSets({
             key={set.id}
             style={{
               gap: 5,
-              paddingVertical: 8,
-              borderBottomWidth: 1,
+              paddingVertical: 6,
+              borderBottomWidth: 0,
               borderBottomColor: p.border,
               borderRadius: 10,
               backgroundColor: set.done ? p.tint : "transparent",

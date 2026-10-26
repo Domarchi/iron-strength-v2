@@ -1,6 +1,7 @@
+import { useReducedMotion } from "../../../lib/motion-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Tabs } from "expo-router";
-import { View, type ColorValue } from "react-native";
+import { View, useWindowDimensions, type ColorValue } from "react-native";
 import { usePalette } from "../../../components/ui";
 import { Icon, type IconName } from "../../../components/icon";
 const icon = (name: IconName) =>
@@ -9,12 +10,12 @@ const icon = (name: IconName) =>
     return (
       <View
         style={{
-          width: 48,
-          height: 32,
+          width: 36,
+          height: 28,
           borderRadius: 10,
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: focused ? p.tint : "transparent",
+          opacity: focused ? 1 : 0.85,
         }}
       >
         <Icon name={name} color={typeof color === "string" ? color : p.muted} size={22} />
@@ -29,23 +30,35 @@ const icons = {
   account: icon("account"),
 };
 export default function TabLayout() {
+  const reduced = useReducedMotion();
   const p = usePalette(),
-    insets = useSafeAreaInsets();
+    insets = useSafeAreaInsets(),
+    { fontScale } = useWindowDimensions();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        animation: reduced ? "none" : "fade",
+        transitionSpec: { animation: "timing", config: { duration: 160 } },
+        sceneStyle: { backgroundColor: p.bg },
         tabBarActiveTintColor: p.blue,
         tabBarInactiveTintColor: p.muted,
+        tabBarAllowFontScaling: true,
         tabBarStyle: {
-          backgroundColor: p.card,
+          backgroundColor: p.bg,
           borderTopColor: p.border,
-          height: 60 + insets.bottom,
+          height: Math.max(66, Math.ceil(50 + 16 * fontScale)) + insets.bottom,
           paddingTop: 4,
           paddingBottom: Math.max(insets.bottom, 4),
         },
         tabBarItemStyle: { minHeight: 48 },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", marginTop: 3 },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          lineHeight: 16,
+          fontWeight: "500",
+          marginTop: 2,
+          flexShrink: 0,
+        },
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Inicio", tabBarIcon: icons.home }} />

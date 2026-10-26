@@ -1,12 +1,12 @@
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useAppearance } from "../lib/appearance-context";
-import { Icon, type IconName } from "./icon";
+
 import { s, usePalette } from "./ui";
 import type { AppearancePreference } from "../lib/appearance";
-const options: { value: AppearancePreference; label: string; icon: IconName }[] = [
-  { value: "light", label: "Claro", icon: "sun" },
-  { value: "dark", label: "Oscuro", icon: "moon" },
-  { value: "system", label: "Sistema", icon: "system" },
+const options: { value: AppearancePreference; label: string }[] = [
+  { value: "light", label: "Claro" },
+  { value: "dark", label: "Oscuro" },
+  { value: "system", label: "Sistema" },
 ];
 export function AppearanceSelect() {
   const p = usePalette(),
@@ -25,7 +25,13 @@ export function AppearanceSelect() {
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel="Tema de la app"
-        style={{ flexDirection: stacked ? "column" : "row", gap: 8 }}
+        style={{
+          flexDirection: stacked ? "column" : "row",
+          gap: 4,
+          padding: 4,
+          borderRadius: 9,
+          backgroundColor: p.raised,
+        }}
       >
         {options.map((option) => {
           const selected = a.preference === option.value;
@@ -42,20 +48,19 @@ export function AppearanceSelect() {
               }}
               style={({ pressed }) => ({
                 flex: stacked ? undefined : 1,
-                flexDirection: stacked ? "row" : "column",
-                minHeight: stacked ? 64 : 80,
-                padding: 10,
-                borderRadius: 12,
+                flexDirection: "row",
+                minHeight: stacked ? 52 : 44,
+                padding: 8,
+                borderRadius: 9,
                 borderWidth: 1,
-                borderColor: selected ? p.blue : p.border,
-                backgroundColor: selected ? p.tint : pressed ? p.raised : p.bg,
+                borderColor: selected ? p.control : "transparent",
+                backgroundColor: selected ? p.card : pressed ? p.bg : "transparent",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 7,
                 opacity: !a.ready || a.busy ? 0.6 : 1,
               })}
             >
-              <Icon name={option.icon} size={21} color={selected ? p.blue : p.muted} />
               <Text style={[s.label, { color: selected ? p.blue : p.ink }]}>{option.label}</Text>
             </Pressable>
           );

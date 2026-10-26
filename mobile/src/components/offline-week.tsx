@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Action, Brand, Page, ScreenIntro } from "./ui";
+import { Action, Page, ScreenIntro } from "./ui";
 import { useSession } from "../lib/session";
 import { TrainingCard } from "./training-card";
 import { CommentDraftCard } from "./comment-draft-card";
@@ -9,11 +9,9 @@ export function OfflineWeek() {
   if (state.status !== "authenticated") return null;
   return (
     <Page>
-      <Brand />
       <ScreenIntro
         eyebrow="SEMANA DESCARGADA"
         title={`Hola, ${state.session.profile.fullName.trim().split(" ")[0]}`}
-        description="Consulta tus rutinas y sigue con el registro de este dispositivo."
       />
       <TrainingCard />
       <CommentDraftCard />

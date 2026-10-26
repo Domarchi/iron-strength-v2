@@ -7,11 +7,11 @@ import { Icon, type IconName } from "./icon";
 export { usePalette } from "../lib/appearance-context";
 export type { Palette } from "../lib/appearance";
 export const s = StyleSheet.create({
-  body: { fontSize: 16, lineHeight: 24 },
-  caption: { fontSize: 13, lineHeight: 19, fontWeight: "500", letterSpacing: 0.2 },
-  heading: { fontSize: 34, lineHeight: 40, fontWeight: "700", letterSpacing: -1.1 },
-  subheading: { fontSize: 20, lineHeight: 27, fontWeight: "700", letterSpacing: -0.4 },
-  card: { borderRadius: 18, padding: 18, borderWidth: 1, gap: 12 },
+  body: { fontSize: 15, lineHeight: 22 },
+  caption: { fontSize: 13, lineHeight: 19, fontWeight: "400" },
+  heading: { fontSize: 30, lineHeight: 36, fontWeight: "600", letterSpacing: -0.7 },
+  subheading: { fontSize: 19, lineHeight: 25, fontWeight: "600", letterSpacing: -0.3 },
+  card: { borderRadius: 16, padding: 16, borderWidth: StyleSheet.hairlineWidth, gap: 10 },
   number: { fontVariant: ["tabular-nums"], fontWeight: "600" },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 18, gap: 12 },
   row: {
@@ -23,24 +23,24 @@ export const s = StyleSheet.create({
   },
   button: {
     maxWidth: "100%",
-    minHeight: 52,
-    borderRadius: 14,
-    paddingVertical: 13,
-    paddingHorizontal: 18,
+    minHeight: 48,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
   },
-  buttonText: { fontSize: 16, lineHeight: 24, fontWeight: "600" },
+  buttonText: { fontSize: 15, lineHeight: 22, fontWeight: "600" },
   input: {
     minHeight: 52,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 13,
     fontSize: 16,
   },
-  label: { fontSize: 14, lineHeight: 21, fontWeight: "600" },
+  label: { fontSize: 15, lineHeight: 21, fontWeight: "500" },
   screen: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 18 },
 });
@@ -81,9 +81,9 @@ export function Action({
             : secondary
               ? pressed
                 ? p.raised
-                : p.card
+                : p.raised
               : p.button,
-          borderColor: quiet ? "transparent" : secondary ? p.border : p.button,
+          borderColor: quiet || secondary ? "transparent" : p.button,
           opacity: disabled ? 0.5 : pressed ? 0.86 : 1,
           flexDirection: "row",
           gap: 9,
@@ -114,7 +114,7 @@ export function Action({
     </Pressable>
   );
 }
-export function Page({ children }: PropsWithChildren) {
+export function Page({ children, compact = false }: PropsWithChildren<{ compact?: boolean }>) {
   const p = usePalette(),
     insets = useSafeAreaInsets();
   return (
@@ -124,9 +124,9 @@ export function Page({ children }: PropsWithChildren) {
         style={{ flex: 1, backgroundColor: p.bg }}
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingTop: 16,
+          paddingTop: compact ? 12 : 20,
           paddingBottom: insets.bottom + 28,
-          gap: 20,
+          gap: compact ? 14 : 24,
           flexGrow: 1,
           width: "100%",
           maxWidth: 560,
@@ -194,14 +194,14 @@ export function ScreenIntro({
   title,
   description,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description?: string;
 }) {
   const p = usePalette();
   return (
     <View style={{ gap: 7 }}>
-      <Text style={[s.caption, { color: p.muted, letterSpacing: 1.3 }]}>{eyebrow}</Text>
+      {eyebrow ? <Text style={[s.caption, { color: p.muted }]}>{eyebrow}</Text> : null}
       <Text accessibilityRole="header" style={[s.heading, { color: p.ink }]}>
         {title}
       </Text>
@@ -234,17 +234,17 @@ export function SessionMark({ label }: { label: string }) {
   return (
     <View
       style={{
-        height: 46,
-        width: 46,
-        borderRadius: 13,
-        borderWidth: 1,
+        height: 36,
+        width: 36,
+        borderRadius: 11,
+        borderWidth: StyleSheet.hairlineWidth,
         borderColor: p.border,
         backgroundColor: p.raised,
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      <Text style={{ color: p.ink, fontSize: 22, fontWeight: "700" }}>{label}</Text>
+      <Text style={{ color: p.ink, fontSize: 17, fontWeight: "600" }}>{label}</Text>
     </View>
   );
 }

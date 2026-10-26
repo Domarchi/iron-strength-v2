@@ -85,7 +85,9 @@ export default function Result() {
       <Page>
         <Brand />
         {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
-        {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text> : null}
+        {q.loading && !q.value ? (
+          <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text>
+        ) : null}
         {w ? (
           <>
             <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>

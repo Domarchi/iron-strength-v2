@@ -36,6 +36,7 @@ test("descarga completa, recarga y eliminación conservan el entrenamiento inici
   expect(
     await page.evaluate((id) => localStorage.getItem("is:native-training:v1:" + id), userId),
   ).toBe(active);
+  await page.getByRole("button", { name: "Detalles de descarga", exact: true }).click();
   await page.getByRole("button", { name: "Eliminar descarga", exact: true }).click();
   await page
     .getByRole("button", { name: "Confirmar eliminación de descarga", exact: true })
@@ -161,7 +162,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
     await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
     const card = page
-      .getByRole("heading", { name: "Tu semana en este dispositivo", exact: true })
+      .getByRole("heading", { name: "Semana sin conexión", exact: true })
       .locator("..");
     await expect(
       card.getByRole("button", { name: "Actualizar descarga", exact: true }),

@@ -1,3 +1,4 @@
+import { MotionProvider, useReducedMotion } from "../lib/motion-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -7,6 +8,7 @@ import { AppearanceProvider, useAppearance } from "../lib/appearance-context";
 import { AccountRemovalProvider } from "../lib/account-removal-context";
 import { AccountRemovalGate } from "../components/account-removal-gate";
 function Routes() {
+  const reduced = useReducedMotion();
   const { client, state } = useSession(),
     p = usePalette(),
     { ready } = useAppearance();
@@ -33,7 +35,14 @@ function Routes() {
   return (
     <>
       <StatusBar style={p.dark ? "light" : "dark"} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: p.bg } }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: reduced ? "none" : "fade",
+          animationDuration: 180,
+          contentStyle: { backgroundColor: p.bg },
+        }}
+      >
         <Stack.Protected guard={state.status === "authenticated"}>
           <Stack.Screen name="(app)" />
         </Stack.Protected>
@@ -49,15 +58,17 @@ function Routes() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AppearanceProvider>
-        <SessionProvider>
-          <AccountRemovalProvider>
-            <AccountRemovalGate>
-              <Routes />
-            </AccountRemovalGate>
-          </AccountRemovalProvider>
-        </SessionProvider>
-      </AppearanceProvider>
+      <MotionProvider>
+        <AppearanceProvider>
+          <SessionProvider>
+            <AccountRemovalProvider>
+              <AccountRemovalGate>
+                <Routes />
+              </AccountRemovalGate>
+            </AccountRemovalProvider>
+          </SessionProvider>
+        </AppearanceProvider>
+      </MotionProvider>
     </SafeAreaProvider>
   );
 }

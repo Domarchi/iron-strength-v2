@@ -32,8 +32,6 @@ function ActiveTrainingCard() {
         {
           backgroundColor: p.card,
           borderColor: p.border,
-          borderTopWidth: 2,
-          borderTopColor: p.blue,
         },
       ]}
     >
@@ -41,7 +39,7 @@ function ActiveTrainingCard() {
         {a.mode === "demo" ? "DEMO · " : ""}
         {a.draft.status === "pending_save" ? "PENDIENTE DE ENVIAR" : "ENTRENAMIENTO EN CURSO"}
       </Text>
-      <Text style={[s.heading, { color: p.ink, fontSize: 28, lineHeight: 34 }]}>
+      <Text style={[s.heading, { color: p.ink, fontSize: 24, lineHeight: 30 }]}>
         {a.routine.session.title ?? `Sesión ${a.routine.session.label}`}
       </Text>
       <Text style={[s.body, { color: p.muted }]}>

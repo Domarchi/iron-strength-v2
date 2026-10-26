@@ -3,7 +3,7 @@ import { useWeekDownload } from "../../../lib/week-context";
 import { useState } from "react";
 import { router } from "expo-router";
 import { Linking, Text, View } from "react-native";
-import { Action, Brand, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
+import { Action, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
 import { AppearanceSelect } from "../../../components/appearance-select";
 import { useSession } from "../../../lib/session";
 import { useTraining } from "../../../lib/training-context";
@@ -47,13 +47,12 @@ export default function Account() {
   }
   return (
     <Page>
-      <Brand />
-      <ScreenIntro eyebrow="CUENTA" title="Tu cuenta" />
+      <ScreenIntro title="Cuenta" />
       <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
         <Text style={[s.subheading, { color: p.ink }]}>{person.fullName}</Text>
         <Text style={[s.body, { color: p.muted }]}>{person.email}</Text>
         <Text style={[s.caption, { color: p.blue }]}>
-          {person.role === "coach" ? "COACH · TAMBIÉN PUEDES ENTRENAR" : "ALUMNO"}
+          {person.role === "coach" ? "COACH" : "ALUMNO"}
         </Text>
       </View>
       <AppearanceSelect />
@@ -79,10 +78,7 @@ export default function Account() {
               void open("/coach/students");
             }}
           />
-          <Text style={[s.body, { color: p.muted }]}>
-            El navegador usa su propia sesión. Si te pide acceso, entra con tu cuenta de Iron
-            Strength.
-          </Text>
+          <Text style={[s.caption, { color: p.muted }]}>Se abre en tu navegador.</Text>
         </>
       ) : null}
       <Action
@@ -92,13 +88,6 @@ export default function Account() {
           void open("/account");
         }}
       />
-      <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-        <Text style={[s.subheading, { color: p.ink }]}>En tu teléfono</Text>
-        <Text style={[s.body, { color: p.muted }]}>
-          Tus sesiones iniciadas se recuperan en este dispositivo. Las demos se guardan aparte y no
-          se envían al coach.
-        </Text>
-      </View>
       {training.active ? (
         <>
           <Text style={[s.body, { color: p.muted }]}>

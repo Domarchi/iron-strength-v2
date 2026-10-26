@@ -69,33 +69,13 @@ export default function Login() {
               : "Contraseña actualizada. Entra con tu contraseña nueva; tus registros locales se conservan."}
           </Text>
         ) : null}
-        <View style={{ gap: 8 }}>
-          <Text
-            style={[s.caption, { color: p.muted, letterSpacing: 1.3, marginTop: compact ? 0 : 14 }]}
-          >
-            ENTRENA CON INTENCIÓN
-          </Text>
-          <Text
-            accessibilityRole="header"
-            style={[
-              s.heading,
-              {
-                color: p.ink,
-                fontSize: compact ? 28 : 44,
-                lineHeight: compact ? 34 : 48,
-                letterSpacing: -1.6,
-              },
-            ]}
-          >
-            Más fuerte.{"\n"}
-            <Text style={{ color: p.blue }}>Serie a serie.</Text>
-          </Text>
-          <Text style={[s.body, { color: p.muted }]}>
-            Tu plan. Tu progreso. El apoyo de tu coach.
-          </Text>
-        </View>
-        <View style={[s.card, { backgroundColor: p.card, borderColor: p.border, gap: 18 }]}>
-          <Text style={[s.subheading, { color: p.ink }]}>Bienvenido de nuevo</Text>
+        <Text
+          accessibilityRole="header"
+          style={[s.heading, { color: p.ink, marginTop: compact ? 0 : 12 }]}
+        >
+          Inicia sesión
+        </Text>
+        <View style={{ gap: 20 }}>
           <View style={{ gap: 7 }}>
             <Text style={[s.label, { color: p.ink }]}>Correo</Text>
             <TextInput

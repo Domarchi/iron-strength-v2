@@ -24,7 +24,9 @@ export default function ExerciseProgress() {
     <Page>
       <Brand />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
-      {q.loading ? <Text style={[s.body, { color: p.muted }]}>Cargando progreso…</Text> : null}
+      {q.loading && !q.value ? (
+        <Text style={[s.body, { color: p.muted }]}>Cargando progreso…</Text>
+      ) : null}
       {value && !q.error ? (
         <ProgressDetail
           value={value}

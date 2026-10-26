@@ -22,3 +22,5 @@ Acceso Supabase desde Codex resuelto el 25-oct-2026 mediante el conector autoriz
 - [ ] T203 · Contacto público autorizado y páginas de privacidad/soporte/eliminación verificadas/publicadas en M; enlaces nativos verificados en software. Ficha, iconos, cuatro capturas Android y gráfico preparados; pendientes formularios, accesos, beta y materiales finales.
 - [ ] T204 · Procedimiento y registro del candidato preparados; pendientes AAB/IPA de producción, beta y publicación del mismo artefacto probado.
 - [ ] T205 · Control manual, restauración y copia cifrada nueva verificados; 30 días, respaldo semanal/previo a migraciones y caducidad diaria configurados. Primera caducidad programada ejecutada sin errores/eliminaciones; pendientes primera copia semanal programada y circuito operativo de beta; responsable/contacto autorizados en T203. Clave local elegida, sin copia externa.
+
+- [x] T207 · Acabado móvil minimalista: jerarquía y textos, superficies, navegación con movimiento reducido, detalles de descarga y registro compacto. Software verificado en Chromium/WebKit y entregado por Expo Go; revisión física del acabado por el propietario separada.
