@@ -24,6 +24,11 @@ import {
 } from "../../../src/lib/workout/runner-state";
 import { finishedSupersetRound, nextSupersetSet } from "../../../src/domain/superset-rounds";
 import { restAfterSet } from "../../../src/domain/rest-timer";
+import {
+  elapsedSessionSeconds,
+  pauseSession,
+  resumeSession,
+} from "../../../src/domain/session-timer";
 const buildNativePayload = (draft: NativeWorkoutDraft, now: Date) =>
   draft.version === 3 ? buildPersonalTrainingPayload(draft, now) : buildPayload(draft, now);
 export interface TrainingStorage {
@@ -46,6 +51,14 @@ const activeSchema = z
     activeIndex: z.number().int().min(0).max(14),
     payload: nativeWorkoutPayloadSchema.optional(),
     review: z.object({ effort: z.string().max(2), note: z.string().max(500) }).optional(),
+    pause: z
+      .object({
+        version: z.literal(1),
+        pausedAtMs: z.number().int().nonnegative().nullable(),
+        pausedMilliseconds: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+      })
+      .strict()
+      .optional(),
   })
   .refine((a) => {
     const personal = a.routine.version === 2;
@@ -75,7 +88,7 @@ const activeSchema = z
   });
 export type ActiveTraining = z.infer<typeof activeSchema>;
 export type DemoResult = { id: string; title: string; payload: WorkoutPayload };
-const envelopeSchema = z.object({
+const envelopeBase = z.object({
   version: z.literal(1),
   userId: z.uuid(),
   active: activeSchema.nullable(),
@@ -83,6 +96,24 @@ const envelopeSchema = z.object({
     .array(z.object({ id: z.uuid(), title: z.string(), payload: workoutPayloadSchema }))
     .max(20),
 });
+const legacyEnvelopeSchema = envelopeBase.refine((r) => r.active?.pause === undefined);
+const currentEnvelopeSchema = envelopeBase
+  .extend({ version: z.literal(2), previousFormat: z.string().min(1).optional() })
+  .refine((r) => {
+    if (r.previousFormat === undefined) return true;
+    try {
+      const previous = legacyEnvelopeSchema.safeParse(JSON.parse(r.previousFormat));
+      return (
+        previous.success &&
+        previous.data.userId === r.userId &&
+        previous.data.active?.draft.userId === r.userId &&
+        previous.data.active?.draft.workoutId === r.active?.draft.workoutId
+      );
+    } catch {
+      return false;
+    }
+  });
+const envelopeSchema = z.union([legacyEnvelopeSchema, currentEnvelopeSchema]);
 export type TrainingState = {
   ready: boolean;
   active: ActiveTraining | null;
@@ -112,6 +143,8 @@ export class TrainingController {
   private revision = 0;
   private disposed = false;
   private epoch = 0;
+  private formatVersion: 1 | 2 = 1;
+  private previousFormat: string | null = null;
   private readonly key: string;
   constructor(
     private userId: string,
@@ -149,6 +182,8 @@ export class TrainingController {
       if (this.disposed || epoch !== this.epoch) return;
       this.raw = raw;
       if (raw === null) {
+        this.formatVersion = 1;
+        this.previousFormat = null;
         this.publish({ ...initial(), ready: true });
         return;
       }
@@ -160,6 +195,8 @@ export class TrainingController {
       )
         throw Error("Formato no compatible");
       const data = parsed.data;
+      this.formatVersion = data.version;
+      this.previousFormat = data.version === 2 ? (data.previousFormat ?? null) : null;
       // El payload de una demo también se reconstruye/valida con las reglas compartidas al crearlo.
       this.publish({
         ready: true,
@@ -187,10 +224,11 @@ export class TrainingController {
   private persist() {
     const rev = ++this.revision;
     const encoded = JSON.stringify({
-      version: 1,
+      version: this.formatVersion,
       userId: this.userId,
       active: this.state.active,
       demos: this.state.demos,
+      ...(this.state.active && this.previousFormat ? { previousFormat: this.previousFormat } : {}),
     });
     this.publish({ dirty: true });
     const operation = this.serialize(async () => {
@@ -207,6 +245,7 @@ export class TrainingController {
         throw Error("No se pudo verificar el almacenamiento.");
       this.raw = encoded;
       this.attempt = null;
+      if (!this.state.active) this.previousFormat = null;
       if (rev === this.revision) this.publish({ dirty: false, error: null });
     });
     const p = operation.catch((e: unknown) => {
@@ -238,6 +277,46 @@ export class TrainingController {
     this.ensure();
     if (this.state.busy || this.state.closing)
       throw Error("Espera a que termine el guardado o envío.");
+    await this.persist();
+  }
+  private assertNotPaused(active: ActiveTraining | null) {
+    if (active?.pause?.pausedAtMs != null)
+      throw Error(
+        "El entrenamiento está en pausa. Reanuda antes de registrar o modificar ejercicios.",
+      );
+  }
+  private liveForControls() {
+    this.ensure();
+    const a = this.state.active;
+    if (!a || a.draft.status !== "in_progress")
+      throw Error("Retoma un entrenamiento en curso para usar la pausa.");
+    if (this.state.busy || this.state.closing)
+      throw Error("Espera a que termine el guardado o envío.");
+    return a;
+  }
+  async pause() {
+    this.liveForControls();
+    await this.flush();
+    const a = this.liveForControls();
+    if (a.pause?.pausedAtMs != null) return;
+    if (this.formatVersion === 1) {
+      if (!this.raw) throw Error("Protege el registro local antes de pausarlo.");
+      this.previousFormat = this.raw;
+      this.formatVersion = 2;
+    }
+    this.publish({
+      active: { ...a, pause: pauseSession(a.pause ?? null, this.now().getTime()) },
+      error: null,
+    });
+    await this.persist();
+  }
+  async resume() {
+    this.liveForControls();
+    await this.flush();
+    const a = this.liveForControls();
+    if (a.pause?.pausedAtMs == null) return;
+    const pause = resumeSession(a.pause, this.now().getTime());
+    this.publish({ active: { ...a, pause: pause ?? undefined }, error: null });
     await this.persist();
   }
   async start(routine: MobileRoutine, mode: "demo" | "real") {
@@ -282,6 +361,7 @@ export class TrainingController {
   async appendFreeExercises(entries: MobileCatalogEntry[]) {
     this.ensure();
     const a = this.state.active;
+    this.assertNotPaused(a);
     if (
       !a ||
       a.draft.version !== 3 ||
@@ -323,6 +403,7 @@ export class TrainingController {
     this.ensure();
     const a = this.state.active;
     if (!a || a.draft.status !== "in_progress" || this.state.busy || this.state.closing) return;
+    this.assertNotPaused(a);
     const draft = { ...change(a.draft), updatedAt: this.now().toISOString() };
     this.publish({ active: { ...a, draft } });
     void this.persist().catch(() => {});
@@ -347,6 +428,7 @@ export class TrainingController {
     this.ensure();
     const a = this.state.active;
     if (!a || a.draft.status !== "in_progress" || this.state.busy || this.state.closing) return;
+    this.assertNotPaused(a);
     const previous = a.draft,
       exercise = previous.exercises[ex];
     if (!exercise) return;
@@ -394,7 +476,15 @@ export class TrainingController {
           (note?.length ?? 0) > 500
         )
           throw Error("Revisa esfuerzo (1–10) y nota (máximo 500 caracteres).");
-        const draft = finishDraft({ ...a.draft, perceivedEffort: effort, note }, this.now());
+        const finishedAt = this.now();
+        const draft = {
+          ...finishDraft({ ...a.draft, perceivedEffort: effort, note }, finishedAt),
+          durationSeconds: elapsedSessionSeconds(
+            Date.parse(a.draft.startedAt),
+            finishedAt.getTime(),
+            a.pause ?? null,
+          ),
+        };
         const built = buildNativePayload(draft, this.now());
         if (!built.ok)
           throw Error(
