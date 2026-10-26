@@ -201,6 +201,104 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"personal_folders": {
+                  Row: {
+                    "id": string,"name": string,"owner_id": string,"position": number,"revision": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "id": string,"name": string,"owner_id": string,"position": number,"revision"?: number
+                  }
+                  Update: {
+                    "id"?: string,"name"?: string,"owner_id"?: string,"position"?: number,"revision"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "personal_folders_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"personal_routine_items": {
+                  Row: {
+                    "exercise_id": string,"id": string,"note": string | null,"owner_id": string,"position": number,"prescription_sets": Json | null,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"routine_id": string,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "exercise_id": string,"id": string,"note"?: string | null,"owner_id": string,"position": number,"prescription_sets"?: Json | null,"reps_max": number,"reps_min": number,"rest_seconds"?: number | null,"routine_id": string,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                  }
+                  Update: {
+                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"owner_id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number,"reps_min"?: number,"rest_seconds"?: number | null,"routine_id"?: string,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "personal_routine_items_exercise_id_fkey"
+      columns: ["exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "personal_routine_items_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "personal_routine_items_routine_id_owner_id_fkey"
+      columns: ["routine_id","owner_id"]
+isOneToOne: false
+      referencedRelation: "personal_routines"
+      referencedColumns: ["id","owner_id"]
+    }
+                  ]
+                },"personal_routines": {
+                  Row: {
+                    "created_at": string,"folder_id": string | null,"id": string,"name": string,"owner_id": string,"position": number,"revision": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"folder_id"?: string | null,"id": string,"name": string,"owner_id": string,"position": number,"revision"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"folder_id"?: string | null,"id"?: string,"name"?: string,"owner_id"?: string,"position"?: number,"revision"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "personal_routines_folder_id_owner_id_fkey"
+      columns: ["folder_id","owner_id"]
+isOneToOne: false
+      referencedRelation: "personal_folders"
+      referencedColumns: ["id","owner_id"]
+    },{
+      foreignKeyName: "personal_routines_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"personal_training_receipts": {
+                  Row: {
+                    "created_at": string,"operation": string,"owner_id": string,"payload_hash": string,"request_id": string,"result": NonNullable<Json>,"target_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"operation": string,"owner_id": string,"payload_hash": string,"request_id": string,"result": NonNullable<Json>,"target_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"operation"?: string,"owner_id"?: string,"payload_hash"?: string,"request_id"?: string,"result"?: NonNullable<Json>,"target_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "personal_training_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"planning_mutations": {
                   Row: {
                     "coach_id": string,"created_at": string,"id": string,"payload": NonNullable<Json>,"program_id": string,"result": NonNullable<Json>,"student_id": string | null
@@ -546,6 +644,9 @@ isOneToOne: false
 "can_edit_routine_session":
 { Args: { "p_session_id": string }; Returns: boolean
                            },
+"check_personal_routine":
+{ Args: { "p_owner": string,"p_routine": string }; Returns: undefined
+                           },
 "configure_session_alternatives":
 { Args: { "p_alternatives": Json,"p_exercise_row_id": string,"p_expected_revision": number,"p_request_id": string,"p_session_id": string }; Returns: number
                            },
@@ -573,6 +674,9 @@ isOneToOne: false
 "edit_window_start":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"get_personal_library":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "is_active_member":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -584,6 +688,9 @@ isOneToOne: false
                            },
 "mark_comments_read":
 { Args: { "p_workout_id": string }; Returns: undefined
+                           },
+"mutate_personal_library":
+{ Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string }; Returns: Json
                            },
 "mutate_routine_session":
 { Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string,"p_title"?: string,"p_weekday"?: number }; Returns: number

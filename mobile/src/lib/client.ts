@@ -1,3 +1,9 @@
+import {
+  personalLibrarySchema,
+  personalMutationSchema,
+  personalMutationResultSchema,
+  type PersonalMutation,
+} from "../../../src/lib/mobile/personal-contracts";
 import { parseNativeWeek } from "../../../src/lib/mobile/download-contract";
 import {
   mobileCatalogSchema,
@@ -554,6 +560,55 @@ export class MobileClient {
     const result = mobileRoutineSchema.parse(await this.read("sessions/" + id));
     if (result.session.id !== id)
       throw new MobileError("identity", "La rutina recibida no coincide. Reintenta.");
+    return result;
+  }
+  private async readPersonalLibrary(path: "library" | "library/export") {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id;
+    const parsed = personalLibrarySchema.safeParse(await this.read(path));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tus rutinas recibidas no son compatibles. Actualiza la app y reintenta.",
+      );
+    if (parsed.data.userId !== userId)
+      throw new MobileError("identity", "Las rutinas recibidas no corresponden a tu cuenta.");
+    return parsed.data;
+  }
+  async personalLibrary() {
+    return this.readPersonalLibrary("library");
+  }
+  async exportPersonalLibrary() {
+    return this.readPersonalLibrary("library/export");
+  }
+  async mutatePersonalLibrary(value: PersonalMutation, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos los cambios para su cuenta original.",
+      );
+    const input = personalMutationSchema.safeParse(value);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa los datos de la rutina.", 400);
+    if (input.data.operation.endsWith("_reorder") && input.data.targetId !== expectedUserId)
+      throw new MobileError("identity", "El orden no corresponde a tu cuenta.");
+    const parsed = personalMutationResultSchema.safeParse(
+      await this.read("library/mutations", input.data),
+    );
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "No pudimos interpretar la confirmación. Conserva tus cambios y reintenta.",
+      );
+    const result = parsed.data;
+    if (result.requestId !== input.data.requestId || result.targetId !== input.data.targetId)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este intento. Conservamos tus cambios.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
     return result;
   }
   async exerciseCatalog() {

@@ -2,7 +2,7 @@
 
 - [x] T209 · Inventario funcional, decisiones de origen/propiedad, hoja de ruta y evidencia de Hevy con REA. No acredita funciones pendientes.
 - [x] T210 · Catálogo nativo real: API autenticada, búsqueda/filtros, ficha e historial propio, sin truncamiento silencioso. Código y controles locales completos; publicación registrada en validation.md.
-- [ ] T211 · Modelo y mutaciones de biblioteca personal: propiedad, carpetas, rutinas, filas, revisión, recibos, copias y pruebas SQL.
+- [x] T211 · Modelo y mutaciones de biblioteca personal: propiedad, carpetas, rutinas, filas, revisión, recibos, copias y pruebas SQL. API y cliente preparados; validación local completa, aplicación remota pendiente del respaldo/ensayo de publicación.
 - [ ] T212 · Editor móvil personal: selección múltiple, prescripciones, grupos, orden, carpetas y borrador recuperable.
 - [ ] T213 · Registro libre/personal real: origen explícito, guardado atómico/idempotente, borradores/cola compatibles y resultados visibles al coach.
 - [ ] T214 · Adaptación durante la sesión y repetir desde historial sin modificar la base: agregar, reemplazar, quitar, ordenar, grupos y pausa.

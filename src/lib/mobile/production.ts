@@ -1,3 +1,5 @@
+import { createMobilePersonalApi } from "./personal-api";
+import { readPersonalLibrary, mutatePersonalLibrary } from "../data/personal-library";
 import { createMobileProgressApi } from "./progress-api";
 import { createMobileExerciseApi } from "./exercise-api";
 import { getActiveExercise, listMobileExercises } from "../data/exercises";
@@ -292,6 +294,21 @@ export function mobileExerciseApi() {
             },
           };
         },
+      };
+    },
+  });
+}
+
+export function mobilePersonalApi() {
+  return createMobilePersonalApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: () => readPersonalLibrary(db),
+        mutate: (input) => mutatePersonalLibrary(db, input),
       };
     },
   });

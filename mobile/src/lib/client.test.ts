@@ -40,6 +40,44 @@ function setup(fetcher: Transport) {
   };
 }
 describe("sesión móvil segura", () => {
+  it("biblioteca personal valida cuenta, versión y recibo estable antes de confirmar", async () => {
+    const requestId = "22222222-2222-4222-8222-222222222222";
+    const targetId = "33333333-3333-4333-8333-333333333333";
+    const library = { version: 1, userId: profile.id, folders: [], routines: [] };
+    const input = {
+      version: 1 as const,
+      requestId,
+      targetId,
+      expectedRevision: 0 as const,
+      operation: "folder_create" as const,
+      data: { name: "Fuerza" },
+    };
+    const receipt = { requestId, targetId, revision: 1, status: "created", duplicate: false };
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(library))
+      .mockResolvedValueOnce(Response.json({ ...library, userId: targetId }))
+      .mockResolvedValueOnce(Response.json(receipt))
+      .mockResolvedValueOnce(Response.json({ ...receipt, requestId: targetId }))
+      .mockResolvedValueOnce(Response.json({ ...library, version: 2 }));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    expect(await x.client.personalLibrary()).toEqual(library);
+    await expect(x.client.personalLibrary()).rejects.toMatchObject({ code: "identity" });
+    const before = fetcher.mock.calls.length;
+    await expect(x.client.mutatePersonalLibrary(input, targetId)).rejects.toMatchObject({
+      code: "identity",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(before);
+    expect(await x.client.mutatePersonalLibrary(input, profile.id)).toEqual(receipt);
+    expect(JSON.parse(String(fetcher.mock.calls.at(-1)?.[1].body))).toEqual(input);
+    await expect(x.client.mutatePersonalLibrary(input, profile.id)).rejects.toMatchObject({
+      code: "identity",
+    });
+    await expect(x.client.exportPersonalLibrary()).rejects.toMatchObject({ code: "version" });
+  });
+
   it("descarga recibe solo el paquete completo de la identidad actual", async () => {
     const pack = weekDownloadFixture(profile.id),
       fetcher = vi

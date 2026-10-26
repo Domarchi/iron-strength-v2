@@ -20,6 +20,9 @@ export function isMobileEndpointPath(path: string): boolean {
       "/api/mobile/v1/workouts",
       "/api/mobile/v1/progress",
       "/api/mobile/v1/exercises",
+      "/api/mobile/v1/library",
+      "/api/mobile/v1/library/export",
+      "/api/mobile/v1/library/mutations",
     ].includes(path) ||
     SESSION.test(path) ||
     WORKOUT.test(path) ||

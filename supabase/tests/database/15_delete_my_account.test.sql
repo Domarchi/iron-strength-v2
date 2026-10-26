@@ -1,6 +1,6 @@
 -- T126 · Borrar la propia cuenta (RF-48; DC-4, DC-32).
 begin;
-select plan(24);
+select plan(28);
 
 select tests.setup_basic();
 
@@ -48,6 +48,9 @@ insert into public.session_day_overrides values('91000000-0000-0000-0000-0000000
 insert into public.planning_mutations(id,program_id,coach_id,student_id,payload,result) values(gen_random_uuid(),'90000000-0000-0000-0000-0000000000a1',tests.coach_id(),tests.student_a_id(),'{}','{}');
 select tests.authenticate_as(tests.student_a_id());
 select is(public.publish_mobile_comment('c1950000-0000-4000-8000-000000000001','d0000000-0000-0000-0000-0000000000a1','Comentario del alumno'),'created','prepara recibo propio');
+select public.mutate_personal_library('a2110000-0000-4000-8000-000000000001','folder_create','a2110000-0000-4000-8000-000000000002',0,'{"name":"Personal"}');
+select public.mutate_personal_library('a2110000-0000-4000-8000-000000000003','routine_create','a2110000-0000-4000-8000-000000000004',0,
+ '{"name":"Personal A","folderId":"a2110000-0000-4000-8000-000000000002","items":[{"id":"a2110000-0000-4000-8000-000000000005","exerciseId":"e0000000-0000-0000-0000-000000000001","sets":1,"repsMin":8,"repsMax":12,"targetWeightKg":null,"note":null,"restSeconds":null,"supersetId":null,"supersetRestSeconds":null,"series":null}]}');
 reset role;
 
 -- ===== Quien no puede =====
@@ -90,6 +93,10 @@ select is((select count(*)::int from public.session_day_overrides),0,'sus días 
 
 select is((select count(*)::int from public.planning_mutations),0,'los recibos que mencionan al alumno desaparecen');
 select is((select count(*)::int from public.mobile_comment_receipts where author_id=tests.student_a_id()),0,'sus referencias de envío desaparecen');
+select is((select count(*)::int from public.personal_folders where owner_id=tests.student_a_id()),0,'sus carpetas personales desaparecen');
+select is((select count(*)::int from public.personal_routines where owner_id=tests.student_a_id()),0,'sus rutinas personales desaparecen');
+select is((select count(*)::int from public.personal_routine_items where owner_id=tests.student_a_id()),0,'sus filas personales desaparecen');
+select is((select count(*)::int from public.personal_training_receipts where owner_id=tests.student_a_id()),0,'sus recibos personales desaparecen');
 
 -- ===== Lo de los demás sigue intacto =====
 select is((select count(*)::int from public.workouts where student_id = tests.student_b_id()), 1, 'el entrenamiento de B sigue');
