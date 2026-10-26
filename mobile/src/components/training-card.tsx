@@ -37,7 +37,11 @@ function ActiveTrainingCard() {
     >
       <Text style={[s.caption, { color: p.blue }]}>
         {a.mode === "demo" ? "DEMO · " : ""}
-        {a.draft.status === "pending_save" ? "PENDIENTE DE ENVIAR" : "ENTRENAMIENTO EN CURSO"}
+        {a.draft.status === "pending_save"
+          ? "PENDIENTE DE ENVIAR"
+          : a.pause?.pausedAtMs != null
+            ? "ENTRENAMIENTO EN PAUSA"
+            : "ENTRENAMIENTO EN CURSO"}
       </Text>
       <Text style={[s.heading, { color: p.ink, fontSize: 24, lineHeight: 30 }]}>
         {a.routine.session.title ?? `Sesión ${a.routine.session.label}`}

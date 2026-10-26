@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   AppState,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -30,7 +31,8 @@ import { WorkoutSets } from "../../../components/workout-sets";
 import { useTraining } from "../../../lib/training-context";
 import { summarize, workoutVolume } from "../../../../../src/lib/workout/runner-state";
 import { substituteExercise } from "../../../../../src/lib/workout/substitution";
-import { adjustRest, formatClock, remainingSeconds } from "../../../../../src/domain/rest-timer";
+import { formatClock, remainingSeconds } from "../../../../../src/domain/rest-timer";
+import { elapsedSessionSeconds } from "../../../../../src/domain/session-timer";
 import { nextSupersetSet } from "../../../../../src/domain/superset-rounds";
 function useClock() {
   const [now, setNow] = useState(() => Date.now());
@@ -86,7 +88,7 @@ export default function Workout() {
     pending = d.status === "pending_save",
     offline = session.status === "authenticated" && session.mode === "offline";
   const elapsed =
-      d.durationSeconds ?? Math.max(0, Math.floor((now - Date.parse(d.startedAt)) / 1000)),
+      d.durationSeconds ?? elapsedSessionSeconds(Date.parse(d.startedAt), now, a.pause ?? null),
     rest = d.rest ? remainingSeconds(d.rest, now) : 0,
     next = exercise?.supersetId ? nextSupersetSet(d.exercises, exercise.supersetId) : null;
   async function finish() {
@@ -110,6 +112,18 @@ export default function Workout() {
 
   const personal = d.version === 3;
   const free = d.version === 3 && d.origin.kind === "free";
+  const paused = !pending && a.pause?.pausedAtMs != null;
+  const pauseControl = !pending ? (
+    <IconAction
+      label={paused ? "Reanudar entrenamiento" : "Pausar entrenamiento"}
+      icon={paused ? "play" : "pause"}
+      disabled={training.blocked || training.busy || training.closing || training.dirty}
+      onPress={() => {
+        if (!paused) Keyboard.dismiss();
+        void act(() => (paused ? controller.resume() : controller.pause()));
+      }}
+    />
+  ) : null;
   const addExercises = () =>
     router.push({ pathname: "/workout-add/[id]", params: { id: d!.workoutId } });
   if (!exercise)
@@ -117,7 +131,18 @@ export default function Workout() {
       <Page compact>
         <Action label="Volver a Inicio" quiet onPress={back} />
         <ScreenIntro title={a.routine.session.title ?? "Entrenamiento"} />
-        <Text style={[s.caption, { color: p.muted }]}>{formatClock(elapsed)}</Text>
+        <View style={s.row}>
+          <View style={{ gap: 4, flex: 1 }}>
+            <Text style={[s.caption, { color: p.muted }]}>{paused ? "En pausa" : "Duración"}</Text>
+            <Text
+              accessibilityLabel="Duración del entrenamiento"
+              style={[s.number, { color: p.ink }]}
+            >
+              {formatClock(elapsed)}
+            </Text>
+          </View>
+          {pauseControl}
+        </View>
         {training.error ? (
           <Notice
             message={training.error}
@@ -132,7 +157,12 @@ export default function Workout() {
             label="Agregar ejercicios"
             icon="plus"
             disabled={
-              offline || training.blocked || training.busy || training.closing || training.dirty
+              paused ||
+              offline ||
+              training.blocked ||
+              training.busy ||
+              training.closing ||
+              training.dirty
             }
             onPress={addExercises}
           />
@@ -179,7 +209,15 @@ export default function Workout() {
               {a.routine.session.title ?? `Sesión ${d.sessionLabel}`}
             </Text>
           </View>
-          <IconAction label="Volver a Inicio" icon="home" disabled={training.busy} onPress={back} />
+          <View style={{ flexDirection: "row" }}>
+            {pauseControl}
+            <IconAction
+              label="Volver a Inicio"
+              icon="home"
+              disabled={training.busy}
+              onPress={back}
+            />
+          </View>
         </View>
         <View
           style={{
@@ -191,8 +229,13 @@ export default function Workout() {
           }}
         >
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[s.caption, { color: p.muted }]}>Duración</Text>
-            <Text style={[s.number, { color: p.blue, fontSize: 17 }]}>{formatClock(elapsed)}</Text>
+            <Text style={[s.caption, { color: p.muted }]}>{paused ? "En pausa" : "Duración"}</Text>
+            <Text
+              accessibilityLabel="Duración del entrenamiento"
+              style={[s.number, { color: p.blue, fontSize: 17 }]}
+            >
+              {formatClock(elapsed)}
+            </Text>
           </View>
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={[s.caption, { color: p.muted }]}>Volumen</Text>
@@ -389,7 +432,7 @@ export default function Workout() {
                             key={choice!.exerciseId}
                             label={`Cambiar a ${choice!.name}`}
                             secondary
-                            disabled={exercise.sets.some((x) => x.done)}
+                            disabled={paused || exercise.sets.some((x) => x.done)}
                             onPress={() =>
                               controller.edit((draft) =>
                                 substituteExercise(draft, index, choice!.exerciseId),
@@ -476,6 +519,7 @@ export default function Workout() {
                     label="Agregar ejercicios"
                     secondary
                     disabled={
+                      paused ||
                       offline ||
                       training.blocked ||
                       training.busy ||
@@ -524,13 +568,10 @@ export default function Workout() {
         <RestControls
           seconds={rest}
           totalSeconds={d.rest?.totalSeconds ?? rest}
-          onAdjust={(delta) =>
-            controller.edit((draft) => ({
-              ...draft,
-              rest: draft.rest ? adjustRest(draft.rest, Date.now(), delta) : null,
-            }))
-          }
-          onSkip={() => controller.edit((draft) => ({ ...draft, rest: null }))}
+          onAdjust={(delta) => void act(() => controller.changeRest(delta))}
+          onSkip={() => {
+            void act(() => controller.changeRest(null));
+          }}
         />
       ) : null}
     </KeyboardAvoidingView>

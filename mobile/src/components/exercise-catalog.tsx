@@ -38,6 +38,7 @@ export function ExerciseCatalog({
     training.active?.draft.version === 3 &&
     training.active.draft.origin.kind === "free" &&
     training.active.draft.workoutId === pickForTraining &&
+    training.active.pause?.pausedAtMs == null &&
     training.active.draft.status === "in_progress"
       ? training.active
       : null;

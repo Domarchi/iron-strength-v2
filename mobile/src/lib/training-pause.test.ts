@@ -195,4 +195,23 @@ describe("pausa nativa protege duración y formato anterior", () => {
     expect(x.values.get(key)).toBe(frozen);
     expect(b.getSnapshot().blocked).toBe(false);
   });
+  it("ajustar y omitir descanso en pausa conserva reloj y series, incluso tras recuperar", async () => {
+    const x = setup(),
+      a = await x.start("assigned");
+    await a.pause();
+    const original = a.getSnapshot().active!;
+    const endsAt = original.draft.rest!.endsAt;
+    x.clock.now += 10000;
+    await a.changeRest(15);
+    expect(a.getSnapshot().active?.draft.rest?.endsAt).toBe(endsAt + 15000);
+    expect(a.getSnapshot().active?.pause).toEqual(original.pause);
+    expect(a.getSnapshot().active?.draft.exercises).toEqual(original.draft.exercises);
+    await expect(a.changeRest(7)).rejects.toThrow();
+    const b = x.create();
+    await b.restore();
+    await b.changeRest(null);
+    expect(b.getSnapshot().active?.draft.rest).toBeNull();
+    expect(b.getSnapshot().active?.pause).toEqual(original.pause);
+    expect(b.getSnapshot().active?.draft.startedAt).toBe(original.draft.startedAt);
+  });
 });

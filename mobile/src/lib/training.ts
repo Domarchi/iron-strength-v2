@@ -23,7 +23,7 @@ import {
   type WorkoutPayload,
 } from "../../../src/lib/workout/runner-state";
 import { finishedSupersetRound, nextSupersetSet } from "../../../src/domain/superset-rounds";
-import { restAfterSet } from "../../../src/domain/rest-timer";
+import { adjustRest, restAfterSet } from "../../../src/domain/rest-timer";
 import {
   elapsedSessionSeconds,
   pauseSession,
@@ -317,6 +317,30 @@ export class TrainingController {
     if (a.pause?.pausedAtMs == null) return;
     const pause = resumeSession(a.pause, this.now().getTime());
     this.publish({ active: { ...a, pause: pause ?? undefined }, error: null });
+    await this.persist();
+  }
+  async changeRest(deltaSeconds: number | null) {
+    this.ensure();
+    if (deltaSeconds !== null && deltaSeconds !== -15 && deltaSeconds !== 15)
+      throw Error("Ajusta el descanso en pasos de 15 segundos.");
+    const a = this.state.active;
+    if (!a || a.draft.status !== "in_progress") return;
+    if (this.state.busy || this.state.closing)
+      throw Error("Espera a que termine el guardado o envío.");
+    const now = this.now();
+    this.publish({
+      active: {
+        ...a,
+        draft: {
+          ...a.draft,
+          updatedAt: now.toISOString(),
+          rest:
+            deltaSeconds === null || !a.draft.rest
+              ? null
+              : adjustRest(a.draft.rest, now.getTime(), deltaSeconds),
+        },
+      },
+    });
     await this.persist();
   }
   async start(routine: MobileRoutine, mode: "demo" | "real") {
