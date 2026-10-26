@@ -15,7 +15,11 @@ describe("control operativo anónimo", () => {
     const fetcher = vi.fn(async (url: string) => response(url));
     const result = await checkRelease(build, fetcher);
     expect(result.ok).toBe(true);
-    expect(result.checks).toHaveLength(4);
+    expect(result.checks).toHaveLength(6);
+    expect(result.checks.slice(-2).map((c) => c.path)).toEqual([
+      "/api/mobile/v1/exercises",
+      "/api/mobile/v1/exercises/11111111-1111-4111-8111-111111111111",
+    ]);
     for (const [url, init] of fetcher.mock.calls as unknown as [string, RequestInit][]) {
       expect(url).toMatch(/^https:\/\/iron-strength-seven\.vercel\.app\//);
       expect(init).toMatchObject({ method: "GET", credentials: "omit", redirect: "error" });
@@ -43,6 +47,8 @@ describe("control operativo anónimo", () => {
     expect(result.ok).toBe(false);
     expect(result.checks.map((c) => c.code)).toEqual([
       "artifact_mismatch",
+      "unexpected_status",
+      "unexpected_status",
       "unexpected_status",
       "unexpected_status",
       "unexpected_status",

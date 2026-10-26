@@ -4,6 +4,8 @@ const PATHS = [
   "/api/mobile/v1/week",
   "/api/mobile/v1/workouts",
   "/api/mobile/v1/progress",
+  "/api/mobile/v1/exercises",
+  "/api/mobile/v1/exercises/11111111-1111-4111-8111-111111111111",
 ];
 const MAX_BYTES = 131072;
 type Code =

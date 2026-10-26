@@ -4,6 +4,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { exerciseInputSchema, type MUSCLE_GROUPS } from "../../domain/schemas.ts";
 import type { Database } from "../../types/database.ts";
+import { MOBILE_CATALOG_LIMIT } from "../mobile/exercise-contracts";
 
 type Client = SupabaseClient<Database>;
 type Row = Database["public"]["Tables"]["exercises"]["Row"];
@@ -67,6 +68,41 @@ export async function listExercises(
   const { data, error } = await request;
   if (error) throw new Error(`No se pudieron cargar los ejercicios: ${error.message}`);
   return data.map(toExercise);
+}
+
+// One statement gives rows and exact count the same database snapshot. Never join
+// OFFSET pages: same-count archive/insert operations could silently skip an exercise.
+export async function listMobileExercises(db: Client): Promise<Exercise[]> {
+  const { data, error, count } = await db
+    .from("exercises")
+    .select(COLUMNS, { count: "exact" })
+    .is("archived_at", null)
+    .order("name")
+    .order("id")
+    .range(0, MOBILE_CATALOG_LIMIT - 1);
+  if (
+    error ||
+    !data ||
+    count === null ||
+    !Number.isInteger(count) ||
+    count < 0 ||
+    count > MOBILE_CATALOG_LIMIT ||
+    data.length !== count ||
+    new Set(data.map((row) => row.id)).size !== data.length
+  )
+    throw new Error("No se pudo completar el catálogo de ejercicios.");
+  return data.map(toExercise);
+}
+
+export async function getActiveExercise(db: Client, id: string): Promise<Exercise | null> {
+  const { data, error } = await db
+    .from("exercises")
+    .select(COLUMNS)
+    .eq("id", id)
+    .is("archived_at", null)
+    .maybeSingle();
+  if (error) throw new Error("No se pudo consultar el ejercicio.");
+  return data ? toExercise(data) : null;
 }
 
 // Un ejercicio propio del coach (no del catálogo base).

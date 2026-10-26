@@ -1,4 +1,9 @@
 import { parseNativeWeek } from "../../../src/lib/mobile/download-contract";
+import {
+  mobileCatalogSchema,
+  mobileExerciseDetailSchema,
+  parseExerciseHistoryCursor,
+} from "../../../src/lib/mobile/exercise-contracts";
 import { z } from "zod";
 import {
   mobileErrorSchema,
@@ -24,6 +29,10 @@ import {
   type MobileSession,
 } from "../../../src/lib/mobile/contracts";
 import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
+export type {
+  MobileCatalogEntry,
+  MobileExerciseDetail,
+} from "../../../src/lib/mobile/exercise-contracts";
 export type { MobileWeek, MobileRoutine, MobileProfile } from "../../../src/lib/mobile/contracts";
 export type Transport = (url: string, init: RequestInit) => Promise<Response>;
 export interface CredentialStore {
@@ -545,6 +554,33 @@ export class MobileClient {
     const result = mobileRoutineSchema.parse(await this.read("sessions/" + id));
     if (result.session.id !== id)
       throw new MobileError("identity", "La rutina recibida no coincide. Reintenta.");
+    return result;
+  }
+  async exerciseCatalog() {
+    const parsed = mobileCatalogSchema.safeParse(await this.read("exercises"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La biblioteca recibida no es compatible. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
+  }
+  async exerciseDetail(id: string, cursor?: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese ejercicio no está disponible.", 404);
+    if (cursor !== undefined && !parseExerciseHistoryCursor(cursor))
+      throw new MobileError("invalid_input", "El filtro de historial no es válido.", 400);
+    const parsed = mobileExerciseDetailSchema.safeParse(
+      await this.read("exercises/" + id + (cursor ? "?cursor=" + encodeURIComponent(cursor) : "")),
+    );
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La ficha recibida no es compatible. Actualiza la app y reintenta.",
+      );
+    const result = parsed.data;
+    if (result.exercise.id.toLowerCase() !== id.toLowerCase())
+      throw new MobileError("identity", "El ejercicio recibido no coincide. Reintenta.");
     return result;
   }
   async history(cursor?: string) {

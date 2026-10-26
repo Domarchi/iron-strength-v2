@@ -53,8 +53,8 @@ beforeAll(async () => {
               student_id: owner,
               exercise_id: position === 2 ? catalog[1].id : exerciseId,
               exercise_name: "Ejercicio",
-              position,
-              set_number: 1,
+              position: position === 1 ? 15 : position,
+              set_number: position === 1 ? 21 : 1,
               weight_kg: 50,
               reps: 10,
               is_warmup: position === 0,
@@ -76,7 +76,8 @@ it("pagina por entrenamientos y no pierde empates de fecha ni repeticiones del e
   expect(new Set([...first.items, ...second.items].map((w) => w.id)).size).toBe(12);
   for (const item of first.items) {
     expect(item.date).toBe("2026-10-01");
-    expect(item.sets.map((s) => s.position)).toEqual([0, 1]);
+    expect(item.sets.map((s) => s.position)).toEqual([0, 15]);
+    expect(item.sets[1].setNumber).toBe(21);
     expect(item.sets[0].isWarmup).toBe(true);
   }
 });

@@ -2,6 +2,10 @@ import { expect, test } from "@playwright/test";
 import { admin, COACH, createUser, resetAll, seedCoach, seedProgram } from "./support/db";
 import { login } from "./support/ui";
 import { mobileSessionSchema } from "../src/lib/mobile/contracts";
+import {
+  mobileCatalogSchema,
+  mobileExerciseDetailSchema,
+} from "../src/lib/mobile/exercise-contracts";
 
 import { isMobileTestBackend } from "../src/lib/testing/mobile-backend";
 
@@ -24,6 +28,13 @@ test.beforeAll(async () => {
     role: "student",
     name: "Bruno móvil",
     email: "mobile-bob@iron-strength.e2e.test",
+    password,
+    coachId: coach,
+  });
+  await createUser(admin(), {
+    role: "student",
+    name: "Carla móvil",
+    email: "mobile-catalog@iron-strength.e2e.test",
     password,
     coachId: coach,
   });
@@ -97,6 +108,45 @@ test("el móvil consulta solo su semana/rutina y salir revoca su refresh sin cre
     data: { refreshToken: session.refreshToken },
   });
   expect(restored.status()).toBe(401);
+});
+
+test("catálogo real completo, ficha privada sin programa y frontera JWT cerrada", async ({
+  request,
+}) => {
+  const auth = mobileSessionSchema.parse(
+    await (
+      await request.post("/api/mobile/v1/auth/login", {
+        data: { email: "mobile-catalog@iron-strength.e2e.test", password },
+      })
+    ).json(),
+  );
+  const headers = { Authorization: `Bearer ${auth.accessToken}` };
+  const response = await request.get("/api/mobile/v1/exercises", { headers });
+  expect(response.status()).toBe(200);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect(response.headers()["set-cookie"]).toBeUndefined();
+  const catalog = mobileCatalogSchema.parse(await response.json());
+  expect(catalog.exercises.length).toBeGreaterThanOrEqual(467);
+  expect(catalog.exercises[0]).not.toHaveProperty("coachId");
+  const id = catalog.exercises[0].id;
+  const detail = await request.get("/api/mobile/v1/exercises/" + id, { headers });
+  expect(detail.status()).toBe(200);
+  expect(mobileExerciseDetailSchema.parse(await detail.json())).toMatchObject({
+    exercise: { id },
+    history: { items: [], nextCursor: null },
+  });
+  for (const path of ["exercises", "exercises/" + id]) {
+    expect((await request.get("/api/mobile/v1/" + path, { maxRedirects: 0 })).status()).toBe(401);
+    expect(
+      (await request.get("/api/mobile/v1/" + path + "?studentId=" + bob, { headers })).status(),
+    ).toBe(400);
+  }
+  expect(
+    (await request.get("/api/mobile/v1/exercises/" + id + "?cursor=broken", { headers })).status(),
+  ).toBe(400);
+  expect(
+    (await request.get("/api/mobile/v1/exercises/" + crypto.randomUUID(), { headers })).status(),
+  ).toBe(404);
 });
 
 test("el registro móvil se guarda una vez y solo su cuenta puede consultar historial y progreso", async ({
@@ -178,6 +228,25 @@ test("el registro móvil se guarda una vez y solo su cuenta puede consultar hist
       exercise: { exerciseId: exercise.exerciseId, bestWeightKg: 30 },
       points: [{ workoutId: id, volumeKg: 300 }],
     });
+    const catalogDetail = await request.get(`/api/mobile/v1/exercises/${exercise.exerciseId}`, {
+      headers,
+    });
+    expect(catalogDetail.status()).toBe(200);
+    expect(
+      mobileExerciseDetailSchema.parse(await catalogDetail.json()).history.items.map((w) => w.id),
+    ).toEqual([id]);
+    const coachAuth = mobileSessionSchema.parse(
+      await (
+        await request.post("/api/mobile/v1/auth/login", {
+          data: { email: COACH.email, password: COACH.password },
+        })
+      ).json(),
+    );
+    const coachDetail = await request.get(`/api/mobile/v1/exercises/${exercise.exerciseId}`, {
+      headers: { Authorization: `Bearer ${coachAuth.accessToken}` },
+    });
+    expect(coachDetail.status()).toBe(200);
+    expect(mobileExerciseDetailSchema.parse(await coachDetail.json()).history.items).toEqual([]);
     expect(
       (
         await request.get(`/api/mobile/v1/progress/${exercise.exerciseId}?studentId=${bob}`, {
@@ -198,6 +267,11 @@ test("el registro móvil se guarda una vez y solo su cuenta puede consultar hist
         })
       ).json(),
     );
+    const bobDetail = await request.get(`/api/mobile/v1/exercises/${exercise.exerciseId}`, {
+      headers: { Authorization: `Bearer ${bobAuth.accessToken}` },
+    });
+    expect(bobDetail.status()).toBe(200);
+    expect(mobileExerciseDetailSchema.parse(await bobDetail.json()).history.items).toEqual([]);
     expect(
       (
         await request.get(`/api/mobile/v1/workouts/${id}`, {

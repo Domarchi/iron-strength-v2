@@ -20,7 +20,7 @@ export default function AppLayout() {
               screenOptions={{
                 headerShown: false,
                 animation: reduced ? "none" : "slide_from_right",
-                animationDuration: 240,
+                animationDuration: reduced ? 0 : 240,
                 contentStyle: { backgroundColor: p.bg },
               }}
             >

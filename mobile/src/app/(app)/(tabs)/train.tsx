@@ -14,6 +14,12 @@ export default function Train() {
     <Page>
       <ScreenIntro title="Entrenar" />
       <TrainingCard />
+      <Action
+        label="Biblioteca de ejercicios"
+        secondary
+        icon="train"
+        onPress={() => router.push("/exercises")}
+      />
       {offline ? <DownloadedSessions /> : null}
       <View
         style={[

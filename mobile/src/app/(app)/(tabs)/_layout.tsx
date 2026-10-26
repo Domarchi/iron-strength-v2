@@ -39,7 +39,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         animation: reduced ? "none" : "fade",
-        transitionSpec: { animation: "timing", config: { duration: 160 } },
+        transitionSpec: { animation: "timing", config: { duration: reduced ? 0 : 160 } },
         sceneStyle: { backgroundColor: p.bg },
         tabBarActiveTintColor: p.blue,
         tabBarInactiveTintColor: p.muted,

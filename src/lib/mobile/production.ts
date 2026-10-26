@@ -1,4 +1,8 @@
 import { createMobileProgressApi } from "./progress-api";
+import { createMobileExerciseApi } from "./exercise-api";
+import { getActiveExercise, listMobileExercises } from "../data/exercises";
+import { listExerciseHistory } from "../data/exercise-history";
+import { exerciseHistoryCursorString } from "./exercise-contracts";
 import "server-only";
 import { createMobileDownloadApi } from "./download-api";
 import { downloadCurrentWeek } from "../data/offline-week";
@@ -261,6 +265,33 @@ export function mobileDownloadApi() {
       return {
         userId: identity.profile.id,
         download: () => downloadCurrentWeek(db, identity.profile.id),
+      };
+    },
+  });
+}
+
+export function mobileExerciseApi() {
+  return createMobileExerciseApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        catalog: () => listMobileExercises(db),
+        detail: async (id, cursor) => {
+          const exercise = await getActiveExercise(db, id);
+          if (!exercise) return null;
+          const history = await listExerciseHistory(db, identity.profile.id, id, { cursor });
+          return {
+            exercise,
+            history: {
+              items: history.items,
+              nextCursor: history.nextCursor
+                ? exerciseHistoryCursorString(history.nextCursor)
+                : null,
+            },
+          };
+        },
       };
     },
   });

@@ -19,10 +19,14 @@ export function isMobileEndpointPath(path: string): boolean {
       "/api/mobile/v1/week/download",
       "/api/mobile/v1/workouts",
       "/api/mobile/v1/progress",
+      "/api/mobile/v1/exercises",
     ].includes(path) ||
     SESSION.test(path) ||
     WORKOUT.test(path) ||
     COMMENTS.test(path) ||
+    /^\/api\/mobile\/v1\/exercises\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+      path,
+    ) ||
     /^\/api\/mobile\/v1\/progress\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
       path,
     )
