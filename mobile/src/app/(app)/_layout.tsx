@@ -1,3 +1,4 @@
+import { LibraryProvider } from "../../lib/library-context";
 import { useReducedMotion } from "../../lib/motion-context";
 import { WeekDownloadProvider } from "../../lib/week-context";
 import { Stack } from "expo-router";
@@ -12,27 +13,29 @@ export default function AppLayout() {
     p = usePalette();
   if (state.status !== "authenticated") return null;
   return (
-    <TrainingProvider key={state.session.profile.id} userId={state.session.profile.id}>
-      <CommentProvider key={state.session.profile.id} userId={state.session.profile.id}>
-        <WeekDownloadProvider key={state.session.profile.id} userId={state.session.profile.id}>
-          <WorkoutSyncProvider key={state.session.profile.id} userId={state.session.profile.id}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation: reduced ? "none" : "slide_from_right",
-                animationDuration: reduced ? 0 : 240,
-                contentStyle: { backgroundColor: p.bg },
-              }}
-            >
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="routine/[id]" />
-              <Stack.Screen name="workout/[id]" />
-              <Stack.Screen name="result/[id]" />
-              <Stack.Screen name="progress/[id]" />
-            </Stack>
-          </WorkoutSyncProvider>
-        </WeekDownloadProvider>
-      </CommentProvider>
-    </TrainingProvider>
+    <LibraryProvider key={state.session.profile.id} userId={state.session.profile.id}>
+      <TrainingProvider key={state.session.profile.id} userId={state.session.profile.id}>
+        <CommentProvider key={state.session.profile.id} userId={state.session.profile.id}>
+          <WeekDownloadProvider key={state.session.profile.id} userId={state.session.profile.id}>
+            <WorkoutSyncProvider key={state.session.profile.id} userId={state.session.profile.id}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  animation: reduced ? "none" : "slide_from_right",
+                  animationDuration: reduced ? 0 : 240,
+                  contentStyle: { backgroundColor: p.bg },
+                }}
+              >
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="routine/[id]" />
+                <Stack.Screen name="workout/[id]" />
+                <Stack.Screen name="result/[id]" />
+                <Stack.Screen name="progress/[id]" />
+              </Stack>
+            </WorkoutSyncProvider>
+          </WeekDownloadProvider>
+        </CommentProvider>
+      </TrainingProvider>
+    </LibraryProvider>
   );
 }

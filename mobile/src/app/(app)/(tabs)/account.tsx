@@ -1,3 +1,5 @@
+import { useLibraryDrafts } from "../../../lib/library-context";
+import { LibraryDraftCard } from "../../../components/library-draft-card";
 import { WeekDownloadCard } from "../../../components/week-download-card";
 import { useWeekDownload } from "../../../lib/week-context";
 import { useState } from "react";
@@ -17,6 +19,7 @@ export default function Account() {
     { client, state } = useSession(),
     { controller, training } = useTraining(),
     { controller: comments, draft } = useCommentDraft(),
+    { controller: routines, library } = useLibraryDrafts(),
     { controller: downloads, download } = useWeekDownload(),
     sync = useWorkoutSyncQueue();
   const [error, setError] = useState<string | null>(null),
@@ -37,6 +40,7 @@ export default function Account() {
       await downloads.flush();
       await sync.clearForLogout();
       await comments.clearForLogout();
+      await routines.clearForLogout();
       await controller.clearForLogout();
       await client.logout(person.id);
     } catch (e) {
@@ -59,6 +63,7 @@ export default function Account() {
       <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
       <TrainingCard />
       <CommentDraftCard allowDiscard />
+      <LibraryDraftCard />
       <WeekDownloadCard />
       {error ? <Notice message={error} /> : null}
       {training.error ? <Notice message={training.error} /> : null}
@@ -137,6 +142,12 @@ export default function Account() {
         label="Salir"
         secondary
         disabled={
+          !library.ready ||
+          library.blocked ||
+          library.busy ||
+          library.dirty ||
+          !!library.pending ||
+          library.drafts.some((d) => d.changed) ||
           !training.ready ||
           training.blocked ||
           !!training.active ||

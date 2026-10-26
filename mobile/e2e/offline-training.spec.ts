@@ -102,6 +102,14 @@ test("copia vencida se consulta sin iniciar; un borrador previo sigue recuperabl
   await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
   await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (key) => JSON.parse(localStorage.getItem(key) ?? "null")?.active?.draft?.workoutId ?? null,
+        trainingKey,
+      ),
+    )
+    .not.toBeNull();
   const before = await page.evaluate(
     (k) => JSON.parse(localStorage.getItem(k)!).active.draft.workoutId,
     trainingKey,

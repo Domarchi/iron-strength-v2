@@ -20,6 +20,7 @@ export async function clearAccountTraining(storage: TrainingStorage, id: string)
     `is:native-comment:v1:${id}`,
     `is:native-week:v1:${id}`,
     `is:native-sync:v1:${id}`,
+    `is:native-library:v1:${id}`,
   ]) {
     await storage.remove(key);
     if ((await storage.get(key)) !== null)

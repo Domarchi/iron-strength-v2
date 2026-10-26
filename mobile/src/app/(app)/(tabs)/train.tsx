@@ -14,6 +14,7 @@ export default function Train() {
     <Page>
       <ScreenIntro title="Entrenar" />
       <TrainingCard />
+      <Action label="Mis rutinas" icon="train" onPress={() => router.push("/library")} />
       <Action
         label="Biblioteca de ejercicios"
         secondary
