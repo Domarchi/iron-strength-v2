@@ -1,0 +1,55 @@
+# Iron Strength · Entrenamiento y planificación privados
+
+## Decisión del propietario · 26 de octubre de 2026
+
+El propietario pide aplicar la experiencia y las funciones de entrenamiento y planificación de Hevy a Iron Strength. Confirma mantener el producto privado para coach y alumnos. Se amplían los recorridos de entrenamiento; comunidad, seguidores, rankings públicos, Strava y relojes quedan fuera de este alcance. Se mantienen el coach con sus tres alumnos, su entrenamiento propio, Expo SDK 58 y la planificación web. Medidas/fotos continúan en web según la decisión vigente. No añadir pagos, publicidad, generación con IA o servicios de pago.
+
+Implementar con código y recursos propios, apoyados en documentación oficial, capturas y análisis REA de distribuciones públicas. No reutilizar marcas, ilustraciones, vídeos, bases privadas, claves o endpoints de Hevy. La evidencia web es estática y parcial; no equivale a disponer del código original ni acreditar la app iOS. Registrar lo existente y lo pendiente sin llamar completa a la paridad mientras falten recorridos.
+
+## Dos orígenes de entrenamiento
+
+1. **Asignado por el coach:** conserva IDs de programa/sesión, revisión y prescripción. Mantener semanas vigentes, bloqueo de edición de semanas actuales/pasadas del programa activo y sustitutos autorizados, con identidad prescrita/realizada en SQL. Añadir herramientas de consulta/registro no permite alterar arbitrariamente lo asignado.
+2. **Personal/libre:** propiedad explícita de la cuenta; puede existir sin programa. La persona puede elegir, agregar, ordenar, reemplazar o quitar ejercicios y guardar una base reutilizable. No inventar IDs de programa, asignaciones o cumplimiento. El coach puede revisar sus entrenamientos por los permisos actuales; las plantillas personales se gestionan solo por su propietario hasta una copia explícita al recorrido del coach.
+
+Una sesión activa por cuenta, borradores protegidos y cola con IDs estables para ambos orígenes. Iniciar, repetir o copiar siempre genera IDs de entrenamiento nuevos; reintentar un guardado conserva el mismo ID y payload. Un entrenamiento libre no completa sesiones del programa por coincidir en nombre, fecha o ejercicios. Las demos siguen siendo locales y explícitas.
+
+## Alcance funcional y aceptación
+
+| Área                         | Resultado requerido                                                                                                                                  | Base actual / ampliación                                                             |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Catálogo                     | Buscar sin depender de tildes/mayúsculas, filtrar por músculo y equipo, abrir ficha e historial propio. Sin truncamiento silencioso.                 | Catálogo SQL existente; cliente móvil general pendiente.                             |
+| Ejercicios propios           | Crear/editar/archivar ejercicios personales con tipo de registro y metadatos; conservar referencias históricas.                                      | Creación del coach existente; propiedad del alumno pendiente.                        |
+| Biblioteca personal          | Crear, nombrar, editar, duplicar, ordenar y organizar rutinas en carpetas. Vista previa de ejercicios y series.                                      | Biblioteca del coach existente; modelo personal pendiente.                           |
+| Editor móvil                 | Selección múltiple del catálogo, orden por gesto y teclado, series comunes o por serie, descansos, notas y superseries.                              | Consulta de asignadas existente; edición personal pendiente.                         |
+| Entrenamiento libre          | Empezar sin programa, agregar ejercicios, registrar y cerrar un resultado real.                                                                      | Demos no equivalen a este recorrido.                                                 |
+| Adaptación durante la sesión | Agregar, reemplazar, quitar y ordenar en origen personal; notas propias por ejercicio; cambios de la sesión no reescriben la base sin elegirlo.      | Sustitución autorizada del coach existente.                                          |
+| Registro                     | Peso/repeticiones, calentamiento, trabajo, fallo y descendente; esfuerzo opcional por serie; objetivos y referencia anterior explícitos.             | Trabajo/calentamiento, objetivos e historial descargado existentes.                  |
+| Tiempo/distancia             | Registrar duración y distancia cuando el tipo lo requiera, sin convertirlos en repeticiones ficticias. Guardar kg/metros/segundos canónicos.         | Peso/repeticiones existentes; modelo adicional pendiente.                            |
+| Superseries                  | Crear/separar bloques personales, ejecutar rondas y descansar al terminar; conservar grupos al copiar y recuperar.                                   | Rondas y grupos prescritos existentes.                                               |
+| Temporizadores               | Descanso automático/configurable, ajustar/omitir, duración de sesión y pausa explícita sin perder la hora real de inicio.                            | Descanso absoluto y duración existentes; pausa pendiente.                            |
+| Herramientas                 | Discos por lado con barra/equipo disponible y carga imposible explícita; calentamientos configurables con vista previa antes de añadir.              | Pendiente. Fórmulas propias y comprobables, sin presentarlas como consejo del coach. |
+| Historial                    | Buscar/filtrar calendario, consultar series/notas, repetir como copia personal y editar dentro de los siete días actuales.                           | Lista/detalle existentes; repetición y edición nativa pendientes.                    |
+| Progreso                     | Récords reales, historial por ejercicio, 4/8/12 semanas, volumen y series por grupo, regularidad y resúmenes mensuales/anuales. Enlaces a evidencia. | Marcas, periodos y evidencia existentes; distribución/resúmenes pendientes.          |
+| Preferencias                 | Claro/Oscuro/Sistema, descanso, visibilidad de columnas y unidades de presentación; almacenamiento canónico no cambia.                               | Temas existentes; ajustes de entrenamiento pendientes.                               |
+| Coach web                    | Conservar adaptación/asignación/revisión; admitir los nuevos tipos y métricas sin perder diferencias entre prescripción y ejecución.                 | Editor, revisión, comentarios y copias existentes.                                   |
+| Offline                      | Catálogo/bases descargados explícitamente, registro personal y asignado, formatos versionados, recuperación y envío idempotente.                     | Semana/cola propias existentes; ampliar a origen personal.                           |
+
+## Contratos transversales
+
+- Ampliar esquemas compatibles con entrenamientos antiguos. Ausencia de origen nuevo significa contrato asignado legado; no reinterpretar entrenamientos que perdieron sus FKs por borrado de programa. Las nuevas lecturas identifican el origen por datos explícitos, no por etiquetas.
+- Las rutinas personales tienen propietario, revisión y mutaciones completas con request ID estable; las copias regeneran IDs de filas y grupos. Los conflictos conservan borrador/selección y exigen revisión explícita. No confundir guardado local con confirmación del servidor.
+- Toda tabla nueva usa migración, RLS, grants mínimos y pruebas. Cliente autenticado para escrituras, sin añadir usos administrativos. Las restricciones de ejercicio asignado también se comprueban en SQL.
+- Exportación, borrado de cuenta, consulta del coach, duplicación, paquetes y cola incorporan cada dato nuevo antes de declarar su función completa. Los recibos no recrean recursos borrados al reintentar una petición antigua.
+- Separar borradores/descargas por cuenta y versión; escritura/relectura antes de retirar el formato anterior. Formatos desconocidos o almacenamiento lleno conservan origen y pendientes. No reemplazar una sesión iniciada al actualizar una descarga.
+- Mantener los límites actuales de seguridad: hasta 15 ejercicios por sesión, 20 series registrables por ejercicio, 300 series guardadas, pesos 0–500 kg y repeticiones 1–100. Los objetivos prescritos mantienen sus límites vigentes. Si una función exige ampliarlos, hacerlo como cambio explícito con validación de aplicación/SQL.
+- Las vistas son móviles desde 360 px, con controles de al menos 44 px, fuente del sistema, contraste AA, teclado y movimiento reducido. Acciones secundarias agrupadas, sin añadir explicaciones repetidas o métricas ficticias.
+
+## T210 · Catálogo nativo de consulta
+
+GET /api/mobile/v1/exercises exige Bearer, identidad activa y RLS. Devuelve versión 1 y catálogo completo de ejercicios activos visibles con id, nombre, grupo, equipo, peso corporal e incremento. El backend lee páginas ordenadas por nombre/ID de hasta 500 filas para no depender del máximo de PostgREST; admite hasta 2.000 filas y devuelve un error explícito si excede ese límite. No aceptar parámetros de cuenta, archivados u origen arbitrarios. No usar claves administrativas, caché pública ni cookies.
+
+GET /api/mobile/v1/exercises/:UUID devuelve metadatos del ejercicio activo visible y hasta diez entrenamientos propios mediante listExerciseHistory. Cursor opcional validado para anteriores; la cuenta se deriva de la sesión incluso si es coach. Un ejercicio archivado o invisible no se expone desde catálogo/ficha, aunque su resultado histórico propio siga accesible por el recorrido existente.
+
+Pantalla Biblioteca accesible desde Entrenar: búsqueda local normalizada y filtros por músculo/equipo sobre el catálogo completo, lista virtualizada, conteo real, vacíos, carga y reintento. No exigir programa asignado. La ficha conserva filtros al volver, muestra metadatos, últimas series, más resultados y enlaces a entrenamientos/progreso propios cuando existen. Sin conexión se explica la necesidad de conexión; descarga del catálogo y selección para rutinas se incorporan en tareas posteriores, sin botones que aparenten funciones aún no implementadas.
+
+Aceptación: un alumno sin programa abre el catálogo, encuentra «bíceps» escribiendo «biceps», combina filtros, abre un ejercicio con/sin historial y vuelve a la misma búsqueda. Verificar más de 200 entradas, paginación de backend, archivados, 401, parámetros inválidos, errores reales y separación de historial entre tres alumnos/coach. Sin nuevas tablas o ampliación de permisos.
