@@ -7,10 +7,10 @@ Estado: controles manuales disponibles, sin monitor continuo o avisos externos c
 Desde la raíz, con Node compatible y sin cargar archivos de entorno:
 
 ```sh
-npm run ops:check -- e19735d1127b4e6fa077b00c754dd716
+npm run ops:check -- dd1795c0a99d49078e164855db8af453
 ```
 
-El argumento es el BUILD_ID del artefacto promovido, no el commit ni un dominio. El valor del ejemplo corresponde a M, publicado el 25 de octubre de 2026. Contrastar siempre con la evidencia de publicación vigente en specs/009-product-quality/validation.md y specs/010-private-training/validation.md. Desde T210 el comando hace seis GET al dominio exclusivo, incluyendo catálogo/ficha de ejercicio anónimos; M todavía no incluye esas dos rutas. No acepta otro origen, redirecciones o identidad. Cada petición tiene diez segundos y 128 KiB máximos. Informa rutas, estados, duración y códigos cerrados; no publica respuestas, cookies, tokens o excepciones. Salida 0 significa que estos seis controles pasaron; 1 indica un fallo y 2 un argumento inválido.
+El argumento es el BUILD_ID del artefacto promovido, no el commit ni un dominio. El valor del ejemplo corresponde a N, publicado el 26 de octubre de 2026. Contrastar siempre con la evidencia de publicación vigente en specs/009-product-quality/validation.md y specs/010-private-training/validation.md. Desde T210 el comando hace seis GET al dominio exclusivo, incluyendo catálogo/ficha de ejercicio anónimos. No acepta otro origen, redirecciones o identidad. Cada petición tiene diez segundos y 128 KiB máximos. Informa rutas, estados, duración y códigos cerrados; no publica respuestas, cookies, tokens o excepciones. Salida 0 significa que estos seis controles pasaron; 1 indica un fallo y 2 un argumento inválido.
 
 Ejecutar al verificar una promoción y al investigar un aviso de un participante. No reemplaza entrar y completar el recorrido con una cuenta de QA aislada; no verifica una escritura real ni una conexión directa a la base. No afirma que un pendiente local ya llegó al coach.
 
@@ -47,7 +47,7 @@ Registrar commit, BUILD_ID, EAS build, paquete, versión, certificado y API. And
 
 Conservar compatibilidad con los formatos anteriores de sesión, descarga, borradores y cola. No reemplazar el snapshot de un entrenamiento iniciado ni retirar un formato desconocido. Publicar primero la API compatible; comprobar el mismo artefacto preparado y promoverlo manualmente. Las versiones móviles instaladas seguirán usando la API: recuperar web no permite retirar endpoints o revertir migraciones a ciegas.
 
-Ante una regresión web, M puede recuperar L según la evidencia vigente, conservando la base y las migraciones aditivas. Verificar identificador, permisos y compatibilidad antes de promover; repetir ops:check con el BUILD_ID de K y el recorrido autenticado apropiado. Una recuperación móvil exige un build corregido con versión superior y misma firma, no desinstalar para perder pendientes. No hay actualizaciones OTA configuradas ni un mecanismo para retirar binarios ya instalados.
+Ante una regresión web, verificar identificador, permisos y compatibilidad antes de promover y repetir ops:check con el BUILD_ID del artefacto recuperado y el recorrido autenticado apropiado. N añade catálogo/ficha móvil: M no sirve esas rutas, por lo que no es una recuperación transparente para el cliente actual; conservar la API nueva mediante una corrección compatible. Las migraciones y los datos se conservan. Una recuperación móvil exige un build corregido con versión superior y misma firma, no desinstalar para perder pendientes. No hay actualizaciones OTA configuradas ni un mecanismo para retirar binarios ya instalados.
 
 ## Respaldo y mantenimiento
 
