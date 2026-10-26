@@ -107,22 +107,42 @@ export default function Workout() {
     >
       <Page compact>
         <View style={[s.row, { alignItems: "flex-start" }]}>
-          <View style={{ flex: 1, gap: 6 }}>
+          <View style={{ flex: 1, gap: 4 }}>
             <Text style={[s.caption, { color: p.blue }]}>
-              {a.mode === "demo" ? "DEMO · " : ""}SESIÓN {d.sessionLabel} ·{" "}
-              {pending ? "PENDIENTE DE ENVIAR" : "EN CURSO"}
+              {a.mode === "demo" ? "DEMO · " : ""}SESIÓN {d.sessionLabel}
+              {pending ? " · PENDIENTE DE ENVIAR" : ""}
             </Text>
-            <Text style={[s.label, { color: p.ink }]}>
+            <Text style={[s.subheading, { color: p.ink }]}>
               {a.routine.session.title ?? `Sesión ${d.sessionLabel}`}
-            </Text>
-            <Text style={[s.number, { color: p.ink, fontSize: 21, lineHeight: 28 }]}>
-              {formatClock(elapsed)}{" "}
-              <Text style={[s.caption, { color: p.muted }]}>
-                · {summary.doneSets}/{summary.totalSets} series
-              </Text>
             </Text>
           </View>
           <IconAction label="Volver a Inicio" icon="home" disabled={training.busy} onPress={back} />
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 16,
+            borderBottomWidth: 0.5,
+            borderBottomColor: p.border,
+            paddingBottom: 12,
+          }}
+        >
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={[s.caption, { color: p.muted }]}>Duración</Text>
+            <Text style={[s.number, { color: p.blue, fontSize: 17 }]}>{formatClock(elapsed)}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={[s.caption, { color: p.muted }]}>Volumen</Text>
+            <Text style={[s.number, { color: p.ink, fontSize: 17 }]}>
+              {volume.loadKg.toLocaleString("es-CL")} kg
+            </Text>
+          </View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={[s.caption, { color: p.muted }]}>Series</Text>
+            <Text style={[s.number, { color: p.ink, fontSize: 17 }]}>
+              {summary.doneSets}/{summary.totalSets}
+            </Text>
+          </View>
         </View>
         <View style={{ gap: 4 }}>
           <Text
@@ -203,7 +223,7 @@ export default function Workout() {
                   style={{
                     minHeight: 48,
                     width: 156,
-                    borderRadius: 16,
+                    borderRadius: 8,
                     borderWidth: 0.5,
                     borderColor: i === index ? p.blue : p.border,
                     backgroundColor: i === index ? p.tint : p.card,
@@ -234,10 +254,8 @@ export default function Workout() {
                 </Text>
               ) : null}
               <View style={{ gap: 4 }}>
-                <Text style={[s.heading, { fontSize: 25, lineHeight: 32, color: p.ink }]}>
-                  {exercise.name}
-                </Text>
-                <Text style={[s.caption, { color: p.muted }]}>
+                <Text style={[s.subheading, { color: p.blue }]}>{exercise.name}</Text>
+                <Text style={[s.caption, { color: p.blue }]}>
                   {exercise.supersetId
                     ? `Descanso al terminar la ronda: ${exercise.supersetRestSeconds ?? 90} s`
                     : `Descanso entre series: ${exercise.restSeconds ?? 90} s`}
@@ -424,6 +442,7 @@ export default function Workout() {
       {rest > 0 && !pending ? (
         <RestControls
           seconds={rest}
+          totalSeconds={d.rest?.totalSeconds ?? rest}
           onAdjust={(delta) =>
             controller.edit((draft) => ({
               ...draft,

@@ -493,7 +493,7 @@ test("apariencia clara y negra persiste sin tocar el entrenamiento; sistema resp
     page
       .getByTestId("app-page")
       .filter({ has: page.getByRole("radiogroup", { name: "Tema de la app" }) }),
-  ).toHaveCSS("background-color", "rgb(11, 11, 13)");
+  ).toHaveCSS("background-color", "rgb(0, 0, 0)");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 });
 
@@ -552,10 +552,10 @@ test("salir conserva apariencia oscura y la apertura siguiente la recupera", asy
   await expect(page.getByRole("radio", { name: "Oscuro", exact: true })).toBeChecked();
   await page.getByRole("button", { name: "Salir", exact: true }).click();
   await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
-  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(11, 11, 13)");
+  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(0, 0, 0)");
   await page.reload();
   await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
-  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(11, 11, 13)");
+  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(0, 0, 0)");
   await page.screenshot({ path: test.info().outputPath("login-dark.png") });
 });
 

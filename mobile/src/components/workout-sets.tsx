@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Action, s, usePalette } from "./ui";
 import { Icon } from "./icon";
 import { SetCheck } from "./set-check";
 import { useTraining } from "../lib/training-context";
+import { useWeekDownload } from "../lib/week-context";
+import { useSession } from "../lib/session";
+import { downloadedHistory } from "../lib/offline-week";
 import {
   addSet,
+  copyPrevious,
+  previousForSet,
   removeSet,
   targetForSet,
   toggleWarmup,
@@ -20,11 +25,24 @@ export function WorkoutSets({
   onComplete: (setIndex: number) => Promise<unknown>;
 }) {
   const p = usePalette(),
-    { controller, training } = useTraining();
+    { controller, training } = useTraining(),
+    { download } = useWeekDownload(),
+    { state } = useSession(),
+    { width, fontScale } = useWindowDimensions();
   const [options, showOptions] = useState<string | null>(null);
   const [error, setError] = useState<{ setId: string; message: string } | null>(null);
   const exercise = training.active?.draft.exercises[index];
   if (!exercise) return null;
+  const history =
+      state.status === "authenticated" && training.active?.mode === "real"
+        ? downloadedHistory(
+            download.verified ? download.pack : null,
+            state.session.profile.id,
+            exercise.exerciseId,
+          )
+        : null,
+    last = history?.items[0] ?? null,
+    previousColumn = width >= 360 && fontScale <= 1.15;
   async function complete(setId: string, si: number) {
     setError(null);
     try {
@@ -37,36 +55,95 @@ export function WorkoutSets({
     }
   }
   return (
-    <View style={{ gap: 4 }}>
-      <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-        <Text style={[s.caption, { width: 48, color: p.muted, textAlign: "center", fontSize: 11 }]}>
+    <View style={{ gap: 2 }}>
+      {!exercise.prescribed.series ? (
+        <Text style={[s.caption, { color: p.muted, marginBottom: 8 }]}>
+          Objetivo{" "}
+          {exercise.prescribed.repsMin === exercise.prescribed.repsMax
+            ? exercise.prescribed.repsMin
+            : `${exercise.prescribed.repsMin}–${exercise.prescribed.repsMax}`}{" "}
+          reps
+          {exercise.prescribed.targetWeightKg != null
+            ? ` · ${exercise.prescribed.targetWeightKg.toLocaleString("es-CL")} kg`
+            : ""}
+        </Text>
+      ) : null}
+      {last ? (
+        <Text style={[s.caption, { color: p.muted, marginBottom: 8 }]}>
+          Anterior · {last.date.split("-").reverse().slice(0, 2).join("/")} · copia descargada
+        </Text>
+      ) : null}
+      <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+        <Text style={[s.caption, { width: 44, color: p.muted, textAlign: "center", fontSize: 11 }]}>
           SERIE
         </Text>
+        {previousColumn ? (
+          <Text
+            style={[s.caption, { width: 72, color: p.muted, textAlign: "center", fontSize: 11 }]}
+          >
+            ANTERIOR
+          </Text>
+        ) : null}
         <Text style={[s.caption, { flex: 1, color: p.muted, textAlign: "center", fontSize: 11 }]}>
           KG
         </Text>
         <Text style={[s.caption, { flex: 1, color: p.muted, textAlign: "center", fontSize: 11 }]}>
           REPS
         </Text>
-        <Text style={[s.caption, { width: 48, color: p.muted, textAlign: "center", fontSize: 11 }]}>
-          HECHA
-        </Text>
+        <View style={{ width: 48, alignItems: "center" }}>
+          <Icon name="check" size={16} color={p.muted} />
+        </View>
       </View>
       {exercise.sets.map((set, si) => {
-        const target = targetForSet(exercise, si);
+        const target = targetForSet(exercise, si),
+          previous = previousForSet(last, exercise, si),
+          previousValue = previous ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Copiar anterior a serie ${si + 1}`}
+              accessibilityHint={`${previous.weightKg.toLocaleString("es-CL")} kg y ${previous.reps} repeticiones. Copia solo al tocar.`}
+              accessibilityState={{ disabled: set.done }}
+              disabled={set.done}
+              onPress={() => {
+                if (error?.setId === set.id) setError(null);
+                controller.edit((draft) => copyPrevious(draft, index, si, previous));
+              }}
+              style={({ pressed }) => ({
+                width: previousColumn ? 72 : undefined,
+                minHeight: 48,
+                justifyContent: "center",
+                alignItems: previousColumn ? "center" : "flex-start",
+                borderRadius: 6,
+                backgroundColor: pressed ? p.raised : "transparent",
+              })}
+            >
+              <Text style={[s.caption, s.number, { color: p.muted, fontSize: 12 }]}>
+                {previousColumn ? "" : "Anterior · "}
+                {previous.weightKg.toLocaleString("es-CL")} × {previous.reps}
+              </Text>
+            </Pressable>
+          ) : (
+            <Text
+              accessibilityLabel={`Sin referencia anterior para serie ${si + 1}`}
+              style={[
+                s.caption,
+                { width: previousColumn ? 72 : undefined, color: p.muted, textAlign: "center" },
+              ]}
+            >
+              {previousColumn ? "—" : "Anterior · —"}
+            </Text>
+          );
         return (
           <View
             key={set.id}
             style={{
-              gap: 5,
-              paddingVertical: 6,
-              borderBottomWidth: 0,
-              borderBottomColor: p.border,
-              borderRadius: 10,
-              backgroundColor: set.done ? p.tint : "transparent",
+              gap: 2,
+              paddingVertical: 3,
+              borderRadius: 6,
+              backgroundColor: set.done ? p.completed : "transparent",
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Opciones de serie ${si + 1}`}
@@ -75,20 +152,21 @@ export function WorkoutSets({
                 aria-expanded={options === set.id}
                 onPress={() => showOptions((current) => (current === set.id ? null : set.id))}
                 style={({ pressed }) => ({
-                  width: 48,
+                  width: 44,
                   minHeight: 48,
-                  borderRadius: 12,
+                  borderRadius: 6,
                   alignItems: "center",
                   justifyContent: "center",
                   backgroundColor: pressed ? p.raised : "transparent",
                   gap: 1,
                 })}
               >
-                <Text style={[s.label, s.number, { color: set.done ? p.blue : p.ink }]}>
+                <Text style={[s.label, s.number, { color: set.done ? p.success : p.ink }]}>
                   {set.isWarmup ? "C" : si + 1}
                 </Text>
                 <Icon name="more" size={12} color={p.muted} />
               </Pressable>
+              {previousColumn ? previousValue : null}
               <TextInput
                 accessibilityLabel={`Peso serie ${si + 1}`}
                 keyboardAppearance={p.dark ? "dark" : "light"}
@@ -114,7 +192,10 @@ export function WorkoutSets({
                     textAlign: "center",
                     color: p.ink,
                     borderColor: p.control,
-                    backgroundColor: p.card,
+                    borderWidth: 0,
+                    borderBottomWidth: 1,
+                    borderRadius: 6,
+                    backgroundColor: set.done ? p.completed : p.raised,
                   },
                 ]}
               />
@@ -143,7 +224,10 @@ export function WorkoutSets({
                     textAlign: "center",
                     color: p.ink,
                     borderColor: p.control,
-                    backgroundColor: p.card,
+                    borderWidth: 0,
+                    borderBottomWidth: 1,
+                    borderRadius: 6,
+                    backgroundColor: set.done ? p.completed : p.raised,
                   },
                 ]}
               />
@@ -155,18 +239,21 @@ export function WorkoutSets({
                 }}
               />
             </View>
-            <Text
-              style={[
-                s.caption,
-                { paddingLeft: 56, paddingRight: 8, color: p.muted, fontSize: 12 },
-              ]}
-            >
-              {set.isWarmup
-                ? "Calentamiento · no avanza la ronda"
-                : target
-                  ? `Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${target.targetWeightKg.toLocaleString("es-CL")} kg` : ""}`
-                  : "Serie adicional"}
-            </Text>
+            {!previousColumn ? <View style={{ paddingLeft: 48 }}>{previousValue}</View> : null}
+            {set.isWarmup || exercise.prescribed.series || !target ? (
+              <Text
+                style={[
+                  s.caption,
+                  { paddingLeft: 48, paddingRight: 8, color: p.muted, fontSize: 12 },
+                ]}
+              >
+                {set.isWarmup
+                  ? "Calentamiento · no avanza la ronda"
+                  : target
+                    ? `Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${target.targetWeightKg.toLocaleString("es-CL")} kg` : ""}`
+                    : "Serie adicional"}
+              </Text>
+            ) : null}
             {error?.setId === set.id ? (
               <Text
                 accessibilityRole="alert"

@@ -1,5 +1,15 @@
 # Calidad de producto de Iron Strength
 
+## T208 · Referencia directa de Hevy mediante REA
+
+El propietario solicita acercar la app móvil a Hevy y usar REA. Analizar la distribución web pública con el CLI oficial ya instalado, sin ejecutar sus bundles, entrar en cuentas o modificar la configuración MCP. Conservar inventario, hashes y Evidence completos fuera del repositorio; registrar módulos, rangos y límites en docs/research/hevy-rea.md. La evidencia web no acredita el paquete móvil ni su comportamiento en ejecución.
+
+Aplicar con código propio el fondo negro, superficies grafito, jerarquía azul y filas compactas observadas. Conservar Claro/Oscuro/Sistema, el check circular pequeño aprobado y áreas táctiles de 48 px. El contraste AA tiene prioridad sobre copiar literalmente colores de texto/botones. Rutinas con vista previa breve; entrenamiento con métricas de duración/volumen/series, título de ejercicio azul y tabla Serie/Anterior/Kg/Reps/completado.
+
+Anterior usa exclusivamente el historial descargado verificado de la cuenta y del ejercicio realizado, alineando series de trabajo y calentamientos con previousForSet. Sin evidencia mostrar un guion, nunca inferir repeticiones desde lastWeightKg o inventar datos demo. Copiar es explícito, no modifica series completadas ni precarga automáticamente el historial sobre la prescripción del coach. Con texto ampliado, permitir que la referencia pase debajo de los campos sin reducir la letra ni desbordar.
+
+El descanso conserva su término absoluto y controles fuera del scroll/teclado, con cuenta centrada y progreso relativo a totalSeconds. No modificar controladores, contratos, descargas, API, SQL, datos remotos ni marcas/recursos de Hevy. Verificar copia, recarga, sustitución, ausencia de historial, temas, 360 px, teclado y contraste en ambos motores, check raíz/móvil y Hermes; aceptación física separada.
+
 ## Entrega del mismo artefacto · T204
 
 Preparar el procedimiento de lanzamiento y un registro de candidato antes de obtener accesos o enviar binarios. Los APK .preview y el .app de simulador actuales son referencias de QA; los artefactos de tienda requieren identificadores confirmados y perfil production: AAB Android e IPA de dispositivo iOS. Registrar fuente, formato, identificador, versión, hash y build EAS, y luego referencias de la consola, firma de distribución y evidencia física del candidato. Campos desconocidos permanecen nulos; una plantilla no acredita verificación o autorización.

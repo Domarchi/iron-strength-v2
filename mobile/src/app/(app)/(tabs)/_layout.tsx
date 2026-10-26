@@ -1,7 +1,7 @@
 import { useReducedMotion } from "../../../lib/motion-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Tabs } from "expo-router";
-import { View, useWindowDimensions, type ColorValue } from "react-native";
+import { Platform, View, useWindowDimensions, type ColorValue } from "react-native";
 import { usePalette } from "../../../components/ui";
 import { Icon, type IconName } from "../../../components/icon";
 const icon = (name: IconName) =>
@@ -53,6 +53,7 @@ export default function TabLayout() {
         },
         tabBarItemStyle: { minHeight: 48 },
         tabBarLabelStyle: {
+          fontFamily: Platform.OS === "web" ? "system-ui, Helvetica, Arial, sans-serif" : undefined,
           fontSize: 11,
           lineHeight: 16,
           fontWeight: "500",

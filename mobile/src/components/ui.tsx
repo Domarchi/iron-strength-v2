@@ -7,11 +7,11 @@ import { Icon, type IconName } from "./icon";
 export { usePalette } from "../lib/appearance-context";
 export type { Palette } from "../lib/appearance";
 export const s = StyleSheet.create({
-  body: { fontSize: 15, lineHeight: 22 },
-  caption: { fontSize: 13, lineHeight: 19, fontWeight: "400" },
-  heading: { fontSize: 30, lineHeight: 36, fontWeight: "600", letterSpacing: -0.7 },
-  subheading: { fontSize: 19, lineHeight: 25, fontWeight: "600", letterSpacing: -0.3 },
-  card: { borderRadius: 16, padding: 16, borderWidth: StyleSheet.hairlineWidth, gap: 10 },
+  body: { fontSize: 15, lineHeight: 21 },
+  caption: { fontSize: 13, lineHeight: 18, fontWeight: "400" },
+  heading: { fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -0.6 },
+  subheading: { fontSize: 18, lineHeight: 24, fontWeight: "600", letterSpacing: -0.3 },
+  card: { borderRadius: 12, padding: 16, borderWidth: StyleSheet.hairlineWidth, gap: 10 },
   number: { fontVariant: ["tabular-nums"], fontWeight: "600" },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 18, gap: 12 },
   row: {
@@ -24,7 +24,7 @@ export const s = StyleSheet.create({
   button: {
     maxWidth: "100%",
     minHeight: 48,
-    borderRadius: 12,
+    borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: "center",

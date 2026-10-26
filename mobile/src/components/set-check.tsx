@@ -37,7 +37,7 @@ export function SetCheck({
           borderRadius: 13,
           borderWidth: checked ? 0 : 1.5,
           borderColor: p.control,
-          backgroundColor: checked ? p.button : "transparent",
+          backgroundColor: checked ? p.completedMark : "transparent",
           alignItems: "center",
           justifyContent: "center",
         }}

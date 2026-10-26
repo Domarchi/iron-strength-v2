@@ -54,3 +54,32 @@ Respondido parcialmente: estructura del cliente web de rutinas y detalle. Se ana
 T135 implementa descanso por ejercicio y volumen en vivo con código propio. Además corrige un fallo local descubierto durante la revisión: editar una serie hecha a un valor inválido ahora la desmarca, de modo que el guardado coincide con la confirmación. Esta corrección es una decisión de Iron Strength, no un comportamiento atribuido a Hevy.
 
 La implementación no contiene código, imágenes, dependencias, endpoints ni credenciales de Hevy. Las comprobaciones y las limitaciones del entorno se registran en `specs/004-review-redesign/validation.md`.
+
+## Revisión de temas y densidad · 26 de octubre de 2026 · T208
+
+Se reutilizó el CLI oficial 6.7.0 ya instalado y su habilidad incluida, sin actualizar paquetes o registrar MCP. Primero se analizó el archivo principal archivado del 19 de octubre: Evidence `ev_37dd57d5cd30413123ca87cc105e74ac9049573658a90f1b2963ad2f628e3fd4`. Esa observación histórica no se atribuye al cliente actual.
+
+La navegación HTTP pública ahora redirige a `hevy.com/login`. Se adquirieron únicamente los recursos de ese origen enlazados por el HTML: CSS, archivo principal y manifiesto. No hubo sesión, ejecución de bundles, solicitud a datos de usuarios ni adquisición de binarios móviles. Build observado `0PJhmMBt21ztKxybUcIVp`; [archivo principal público](https://hevy.com/_next/static/chunks/pages/_app-6a7c7443650d8a95.js), SHA-256 `bcb7a289d3c884ba6ad531a0381e09264db91e6ccf683236ad6a6cbdccef2e44`.
+
+```sh
+node work/rea-tooling/package/scripts/rea.mjs analyze-javascript-application \
+  "$PWD/work/hevy-rea-20261026/current" \
+  --source-path _app-6a7c7443650d8a95.js \
+  --max-semantic-nodes 12000 --max-semantic-nodes-per-file 12000 \
+  --max-semantic-unknowns 3000 --max-semantic-unknowns-per-file 3000 \
+  --analysis-timeout-ms 60000 --json > work/hevy-rea-20261026/current-evidence.json
+```
+
+Resultado REA: Evidence `ev_481fe641abf80dec0fa38a66ee984334f8e14fa0c1835b787a69acda7c975cb8`, 7.432.077 bytes, 285.281 nodos AST visitados, 275 módulos y cero fallos de parseo. La vista resumen es `ev_83e2ce31480d60efb28d0cb434000f04974332aa7dd8e7e007c5fa433101a711`; la vista del módulo de colores, `ev_7523449443c1c17bd07a832b176d77ac34095d152151e218d8d21dfcc5bf4de1`. La evidencia completa y las entradas/salidas de esas vistas quedan en `work/hevy-rea-20261026`, fuera de Git.
+
+La lectura de los rangos inertes identificados por REA confirma:
+
+| Factory de esta versión | Rango REA, línea/columnas base cero para columnas | Observación estática                                                                                                     |
+| ----------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `84548`                 | 38:4523135–4524102                                | Paleta: negro `#000000`, grafito `#161618`, borde oscuro `#2C2C2E`, azul `#008CFF`, variante `#1266BB`, verde `#56BD23`. |
+| `3289`                  | 38:4524467–4525678                                | Dos temas con fondo negro/claro y superficies, borde y acento separados.                                                 |
+| `12805`                 | 38:4518515–4522861                                | Escala tipográfica: cuerpo 15/21, secundario 13/18 y 11/16; encabezados 32/40, 24/32, 20/28 y 18/24.                     |
+
+Esto orienta nuestra implementación, sin incorporar funciones, marcas, imágenes, dependencias ni llamadas de Hevy. El contraste accesible y el check circular aprobado se mantienen como decisiones de Iron Strength. Las [capturas oficiales del registro](https://www.hevyapp.com/features/track-workouts/) permiten contrastar tabla, estado completado y descanso; esas observaciones visuales no proceden del AST.
+
+**Límites:** solo se analizó un archivo de los tres adquiridos; el inventario no representa toda la aplicación. La cobertura del grafo es parcial y el grafo semántico alcanzó los límites explícitos de 12.000 nodos/3.000 desconocidos. No se inferirá ausencia de lógica a partir de esos cortes. El análisis no establece comportamiento en ejecución, medidas exactas del cliente iOS ni código fuente original. Queda pendiente contrastar el resultado propio en el teléfono del propietario.
