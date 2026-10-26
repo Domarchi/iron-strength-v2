@@ -1,4 +1,8 @@
 import {
+  personalWorkoutPayloadSchema,
+  type PersonalWorkoutPayload,
+} from "../../../src/lib/mobile/personal-workout-contracts";
+import {
   personalLibrarySchema,
   personalMutationSchema,
   personalMutationResultSchema,
@@ -661,6 +665,32 @@ export class MobileClient {
   }
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
+  }
+  async savePersonalWorkout(payload: PersonalWorkoutPayload, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos el entrenamiento para su cuenta original.",
+      );
+    const input = personalWorkoutPayloadSchema.safeParse(payload);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa el entrenamiento antes de enviarlo.", 400);
+    const parsed = mobileSaveSchema.safeParse(
+      await this.read("personal-workouts", { version: 1, payload: input.data }),
+    );
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La confirmación no es compatible. Conservamos tu registro.",
+      );
+    if (parsed.data.workoutId !== input.data.id)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este entrenamiento. Conservamos el registro.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return parsed.data;
   }
   async saveWorkout(payload: WorkoutPayload, expectedUserId: string) {
     if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)

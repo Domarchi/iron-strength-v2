@@ -299,6 +299,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"personal_workout_receipts": {
+                  Row: {
+                    "created_at": string,"owner_id": string,"payload_hash": string,"workout_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"owner_id": string,"payload_hash": string,"workout_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"owner_id"?: string,"payload_hash"?: string,"workout_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "personal_workout_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"planning_mutations": {
                   Row: {
                     "coach_id": string,"created_at": string,"id": string,"payload": NonNullable<Json>,"program_id": string,"result": NonNullable<Json>,"student_id": string | null
@@ -593,17 +613,23 @@ isOneToOne: false
                   ]
                 },"workouts": {
                   Row: {
-                    "created_at": string,"duration_seconds": number,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"started_at": string,"student_id": string,"week_start": string | null
+                    "created_at": string,"duration_seconds": number,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"personal_routine_id": string | null,"personal_routine_revision": number | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"source_kind": string,"started_at": string,"student_id": string,"title": string | null,"week_start": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"duration_seconds": number,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"started_at": string,"student_id": string,"week_start"?: never
+                    "created_at"?: string,"duration_seconds": number,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at": string,"student_id": string,"title"?: string | null,"week_start"?: never
                   }
                   Update: {
-                    "created_at"?: string,"duration_seconds"?: number,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"started_at"?: string,"student_id"?: string,"week_start"?: never
+                    "created_at"?: string,"duration_seconds"?: number,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at"?: string,"student_id"?: string,"title"?: string | null,"week_start"?: never
                   }
                   Relationships: [
                     {
+      foreignKeyName: "workouts_personal_owner_fk"
+      columns: ["personal_routine_id","student_id"]
+isOneToOne: false
+      referencedRelation: "personal_routines"
+      referencedColumns: ["id","owner_id"]
+    },{
       foreignKeyName: "workouts_program_id_fkey"
       columns: ["program_id"]
 isOneToOne: false
@@ -712,6 +738,9 @@ isOneToOne: false
                            },
 "routine_week_snapshot":
 { Args: { "p_program_id": string,"p_week": number }; Returns: Json
+                           },
+"save_personal_workout":
+{ Args: { "p_workout": Json }; Returns: Json
                            },
 "save_workout":
 { Args: { "p_workout": Json }; Returns: Json

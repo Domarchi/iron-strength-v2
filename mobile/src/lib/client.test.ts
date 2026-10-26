@@ -40,6 +40,53 @@ function setup(fetcher: Transport) {
   };
 }
 describe("sesión móvil segura", () => {
+  it("registro libre valida cuenta y confirmación del ID sin inventar programa", async () => {
+    const workoutId = "22222222-2222-4222-8222-222222222222";
+    const input = {
+      version: 1 as const,
+      id: workoutId,
+      origin: { kind: "free" as const },
+      title: "Libre",
+      startedAt: "2026-10-26T12:00:00Z",
+      finishedAt: "2026-10-26T12:30:00Z",
+      durationSeconds: 1800,
+      sets: [
+        {
+          exerciseId: workoutId,
+          position: 0,
+          setNumber: 1,
+          weightKg: 30,
+          reps: 8,
+          isWarmup: false,
+        },
+      ],
+    };
+    const reply = { version: 1, ok: true, workoutId, status: "created" };
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(reply))
+      .mockResolvedValueOnce(Response.json({ ...reply, workoutId: profile.id }))
+      .mockResolvedValueOnce(Response.json({ ...reply, version: 99 }));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    await expect(x.client.savePersonalWorkout(input, workoutId)).rejects.toMatchObject({
+      code: "identity",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(await x.client.savePersonalWorkout(input, profile.id)).toEqual(reply);
+    expect(fetcher.mock.calls[1][0]).toContain("/api/mobile/v1/personal-workouts");
+    expect(JSON.parse(String(fetcher.mock.calls[1][1]!.body))).toEqual({
+      version: 1,
+      payload: input,
+    });
+    await expect(x.client.savePersonalWorkout(input, profile.id)).rejects.toMatchObject({
+      code: "identity",
+    });
+    await expect(x.client.savePersonalWorkout(input, profile.id)).rejects.toMatchObject({
+      code: "version",
+    });
+  });
   it("biblioteca personal valida cuenta, versión y recibo estable antes de confirmar", async () => {
     const requestId = "22222222-2222-4222-8222-222222222222";
     const targetId = "33333333-3333-4333-8333-333333333333";
