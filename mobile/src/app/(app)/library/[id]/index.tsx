@@ -12,20 +12,23 @@ import {
   duplicatePersonalItem,
   groupPersonalItems,
   movePersonalBlock,
-  patchPersonalItems,
   personalEditorBlocks,
   removePersonalItem,
   ungroupPersonalItems,
-  type PersonalBulkPatch,
-  type PersonalEditorItem,
 } from "../../../../../../src/domain/personal-routines";
+import {
+  patchTypedPersonalItems as patchPersonalItems,
+  personalTargetFields,
+  type TypedPersonalBulkPatch as PersonalBulkPatch,
+  type TypedPersonalEditorItem as PersonalEditorItem,
+} from "../../../../../../src/domain/typed-personal-routines";
 import { useLibraryDrafts } from "../../../../lib/library-context";
 import { useSession } from "../../../../lib/session";
 import { useQuery } from "../../../../lib/use-query";
 import { Action, Loading, Notice, s, usePalette } from "../../../../components/ui";
 import { ConnectionStatus } from "../../../../components/connection-status";
 import { PersonalField, SelectionMark } from "../../../../components/personal-controls";
-import { PersonalEditorRow } from "../../../../components/personal-editor-row";
+import { PersonalEditorRow } from "../../../../components/typed-personal-editor-row";
 import { LibraryAttempt } from "../../../../components/library-attempt";
 import { BlockReorder } from "../../../../components/block-reorder";
 export default function PersonalRoutineEditor() {
@@ -34,7 +37,7 @@ export default function PersonalRoutineEditor() {
     insets = useSafeAreaInsets(),
     { client, state } = useSession(),
     { controller, library } = useLibraryDrafts();
-  const q = useQuery(useCallback(() => client.personalLibrary(), [client]));
+  const q = useQuery(useCallback(() => client.trainingLibrary(), [client]));
   const draft = library.drafts.find((d) => d.id === id),
     pending = library.pending?.draftId === id;
   const [error, setError] = useState<string | null>(null),
@@ -239,7 +242,7 @@ export default function PersonalRoutineEditor() {
                     <Text style={[s.label, { color: p.ink }]}>{latest.name}</Text>
                     <Text style={[s.caption, { color: p.muted }]}>
                       {latest.items.length} ejercicios ·{" "}
-                      {latest.items.reduce((n, item) => n + item.sets, 0)} series
+                      {latest.items.reduce((n, item) => n + item.prescribed.sets, 0)} series
                     </Text>
                     <Action
                       label="Usar versión actual"
@@ -299,6 +302,7 @@ export default function PersonalRoutineEditor() {
                 quiet
                 onPress={() => {
                   setSelected([]);
+                  setPatch({});
                   setBulk(false);
                   setPreview(null);
                 }}
@@ -330,13 +334,42 @@ export default function PersonalRoutineEditor() {
             </View>
             {bulk ? (
               <>
-                {(["sets", "repsMin", "repsMax", "targetWeightKg", "restSeconds"] as const).map(
-                  (field, index) => {
+                {(
+                  [
+                    "sets",
+                    "repsMin",
+                    "repsMax",
+                    "targetWeightKg",
+                    "targetDurationSeconds",
+                    "targetDistanceMeters",
+                    "restSeconds",
+                  ] as const
+                )
+                  .filter(
+                    (field) =>
+                      field === "sets" ||
+                      field === "restSeconds" ||
+                      draft.items
+                        .filter((i) => selectedIds.includes(i.id))
+                        .every((i) => personalTargetFields(i.recordType).includes(field)),
+                  )
+                  .map((field) => {
+                    const index = [
+                      "sets",
+                      "repsMin",
+                      "repsMax",
+                      "targetWeightKg",
+                      "targetDurationSeconds",
+                      "targetDistanceMeters",
+                      "restSeconds",
+                    ].indexOf(field);
                     const label = [
                       "Series",
                       "Repeticiones mínimas",
                       "Repeticiones máximas",
                       "Peso (kg)",
+                      "Tiempo (s)",
+                      "Distancia (m)",
                       "Descanso (s)",
                     ][index];
                     return (
@@ -353,7 +386,7 @@ export default function PersonalRoutineEditor() {
                             setPatch((previous) => {
                               const next = { ...previous };
                               if (next[field] !== undefined) delete next[field];
-                              else next[field] = ["3", "8", "12", "", "90"][index];
+                              else next[field] = ["3", "8", "12", "", "", "", "90"][index];
                               return next;
                             });
                           }}
@@ -372,8 +405,7 @@ export default function PersonalRoutineEditor() {
                         />
                       </View>
                     );
-                  },
-                )}
+                  })}
                 {!preview ? (
                   <Action
                     label="Revisar cambios de selección"
@@ -488,13 +520,15 @@ export default function PersonalRoutineEditor() {
                   canEarlier={memberIndex > 0}
                   canLater={memberIndex < block.exercises.length - 1}
                   disabled={disabled}
-                  onToggle={() =>
+                  onToggle={() => {
                     setSelected((previous) =>
                       previous.includes(item.id)
                         ? previous.filter((id) => id !== item.id)
                         : [...previous, item.id],
-                    )
-                  }
+                    );
+                    setPatch({});
+                    setPreview(null);
+                  }}
                   onChange={(patch) =>
                     update((items) =>
                       items.map((row) => (row.id === item.id ? { ...row, ...patch } : row)),

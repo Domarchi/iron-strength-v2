@@ -1,5 +1,6 @@
 import {
   typedPersonalLibrarySchema,
+  upgradePersonalLibrary,
   typedPersonalMutationSchema,
   typedPersonalMutationResultSchema,
   type TypedPersonalMutation,
@@ -639,8 +640,21 @@ export class MobileClient {
   private async readTrainingLibrary(path: "training-library" | "training-library/export") {
     if (this.state.status !== "authenticated")
       throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
-    const userId = this.state.session.profile.id;
-    const parsed = typedPersonalLibrarySchema.safeParse(await this.read(path));
+    const userId = this.state.session.profile.id,
+      generation = this.generation;
+    let value: unknown;
+    try {
+      value = await this.read(path);
+    } catch (error) {
+      this.current(generation);
+      if (!(error instanceof MobileError) || ![404, 503].includes(error.status)) throw error;
+      const legacy = await this.readPersonalLibrary(
+        path === "training-library" ? "library" : "library/export",
+      );
+      value = upgradePersonalLibrary(legacy);
+    }
+    this.current(generation);
+    const parsed = typedPersonalLibrarySchema.safeParse(value);
     if (!parsed.success)
       throw new MobileError(
         "version",

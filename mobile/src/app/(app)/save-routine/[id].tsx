@@ -1,13 +1,17 @@
+import { formatTrainingTarget } from "../../../lib/training-labels";
+import { forkPersonalItems } from "../../../../../src/domain/personal-routines";
+import { prepareTypedWorkoutRoutine } from "../../../../../src/domain/typed-workout-routine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { randomUUID } from "expo-crypto";
 import { Text, View } from "react-native";
 import { prepareWorkoutRoutine } from "../../../../../src/domain/workout-routine";
 import {
-  editablePersonalItems,
-  forkPersonalItems,
-  type PersonalEditorItem,
-} from "../../../../../src/domain/personal-routines";
+  editableTypedPersonalItems as editablePersonalItems,
+  upgradePersonalEditorItem,
+  typedPersonalItemInput,
+  type TypedPersonalEditorItem as PersonalEditorItem,
+} from "../../../../../src/domain/typed-personal-routines";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 import { useLibraryDrafts } from "../../../lib/library-context";
@@ -24,14 +28,14 @@ function RoutineSummary({ items }: { items: PersonalEditorItem[] }) {
             {index + 1}. {e.name}
           </Text>
           <Text style={[s.body, { color: p.muted }]}>
-            {e.series
-              ? e.series
-                  .map(
-                    (r, i) =>
-                      `${i + 1}: ${r.repsMin}–${r.repsMax} reps${r.targetWeightKg ? ` · ${r.targetWeightKg} kg` : ""}`,
-                  )
-                  .join(" / ")
-              : `${e.sets} × ${e.repsMin}–${e.repsMax} reps${e.targetWeightKg ? ` · ${e.targetWeightKg} kg` : ""}`}
+            {(() => {
+              const prescribed = typedPersonalItemInput(e).prescribed;
+              return prescribed.series
+                ? prescribed.series
+                    .map((t, i) => `${i + 1}: ${formatTrainingTarget(t) || "Objetivo libre"}`)
+                    .join(" / ")
+                : `${prescribed.sets} × ${formatTrainingTarget(prescribed.target) || "Objetivo libre"}`;
+            })()}
           </Text>
           <Text style={[s.caption, { color: p.muted }]}>
             {e.supersetId
@@ -67,9 +71,9 @@ function SaveRoutinePreview({ id, initialUpdate }: { id: string; initialUpdate: 
     if (before.status !== "authenticated" || before.mode !== "online")
       throw Error("Conecta para preparar la rutina.");
     const [result, catalog, bases] = await Promise.all([
-      client.workout(id),
-      client.exerciseCatalog(),
-      client.personalLibrary(),
+      client.workoutResult(id),
+      client.trainingCatalog(),
+      client.trainingLibrary(),
     ]);
     const after = client.getSnapshot();
     if (
@@ -86,7 +90,18 @@ function SaveRoutinePreview({ id, initialUpdate }: { id: string; initialUpdate: 
       userId: before.session.profile.id,
       workout: result.workout,
       base,
-      prepared: prepareWorkoutRoutine(result.workout, catalog.exercises),
+      prepared:
+        result.version === 3
+          ? prepareTypedWorkoutRoutine(result.workout, catalog.exercises)
+          : (() => {
+              const prepared = prepareWorkoutRoutine(
+                result.workout,
+                catalog.exercises.filter((e) => e.recordType === null),
+              );
+              return prepared.ok
+                ? { ...prepared, items: prepared.items.map(upgradePersonalEditorItem) }
+                : prepared;
+            })(),
     };
   }, [client, id]);
   const q = useQuery(load);

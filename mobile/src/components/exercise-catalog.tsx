@@ -5,7 +5,7 @@ import { useTraining } from "../lib/training-context";
 import { TrainingChangeNeedsReview, type ExerciseChangeReview } from "../lib/training-structure";
 import { TrainingChangeReview } from "./training-change-review";
 import { randomUUID } from "expo-crypto";
-import { addPersonalExercise } from "../../../src/domain/personal-routines";
+import { addTypedPersonalExercise } from "../../../src/domain/typed-personal-routines";
 import { useLibraryDrafts } from "../lib/library-context";
 import { useCallback, useMemo, useState, useRef } from "react";
 import { router } from "expo-router";
@@ -69,13 +69,8 @@ export function ExerciseCatalog({
   const offline = state.status === "authenticated" && state.mode === "offline";
   const request = useCallback(async (): Promise<{ exercises: TypedCatalogEntry[] }> => {
     if (offline) throw Error("Necesitas conexión para consultar la biblioteca.");
-    // Personal bases keep their existing contract until their typed prescription editor is ready.
-    if (pickFor) {
-      const legacy = await client.exerciseCatalog();
-      return { exercises: legacy.exercises.map((e) => ({ ...e, recordType: null })) };
-    }
     return client.trainingCatalog();
-  }, [client, offline, pickFor]);
+  }, [client, offline]);
   const q = useQuery(request);
   const [search, setSearch] = useState(""),
     [muscle, setMuscle] = useState(""),
@@ -170,19 +165,7 @@ export function ExerciseCatalog({
       else {
         const additions = catalog
           .filter((e) => selected.includes(e.id))
-          .map((e) =>
-            addPersonalExercise(
-              {
-                id: e.id,
-                name: e.name,
-                muscleGroup: e.muscleGroup,
-                equipment: e.equipment,
-                isBodyweight: e.isBodyweight,
-                progressionIncrementKg: e.progressionIncrementKg,
-              },
-              randomUUID(),
-            ),
-          );
+          .map((e) => addTypedPersonalExercise(e.source, randomUUID()));
         if (!additions.length) throw Error("Selecciona al menos un ejercicio.");
         if (draft.items.length + additions.length > 15)
           throw Error("Máximo 15 ejercicios por rutina.");

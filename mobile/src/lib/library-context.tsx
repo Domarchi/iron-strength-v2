@@ -7,18 +7,21 @@ import {
   type PropsWithChildren,
 } from "react";
 import { randomUUID } from "expo-crypto";
-import { LibraryDraftController } from "./library-drafts";
+import { TypedLibraryDraftController } from "./typed-library-drafts";
 import { atomicStorage } from "./atomic-storage";
 import { useSession } from "./session";
-const Context = createContext<LibraryDraftController | null>(null);
+const Context = createContext<TypedLibraryDraftController | null>(null);
 export function LibraryProvider({ userId, children }: PropsWithChildren<{ userId: string }>) {
   const { client } = useSession();
   const [controller] = useState(
     () =>
-      new LibraryDraftController(
+      new TypedLibraryDraftController(
         userId,
         atomicStorage,
-        (input) => client.mutatePersonalLibrary(input, userId),
+        (input) =>
+          input.version === 2
+            ? client.mutateTrainingLibrary(input, userId)
+            : client.mutatePersonalLibrary(input, userId),
         randomUUID,
       ),
   );

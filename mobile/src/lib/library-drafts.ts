@@ -46,6 +46,10 @@ const documentSchema = z
       new Set(doc.drafts.map((d) => d.id)).size === doc.drafts.length &&
       (!doc.pending?.draftId || doc.drafts.some((d) => d.id === doc.pending!.draftId)),
   );
+export function parseLegacyLibraryDocument(value: unknown) {
+  return documentSchema.parse(value);
+}
+
 type Document = z.infer<typeof documentSchema>;
 type State = Document & {
   ready: boolean;

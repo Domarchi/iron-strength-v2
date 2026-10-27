@@ -1,3 +1,13 @@
+import { TypedLibraryDraftController } from "../mobile/src/lib/typed-library-drafts";
+import { TrainingController } from "../mobile/src/lib/training";
+import { personalRoutineTrainingContext } from "../mobile/src/lib/typed-personal-training";
+import {
+  addTypedPersonalExercise,
+  detailTypedPersonalItem,
+} from "../src/domain/typed-personal-routines";
+import { forkPersonalItems } from "../src/domain/personal-routines";
+import { prepareTypedWorkoutRoutine } from "../src/domain/typed-workout-routine";
+import { sendQueuedRecording } from "../mobile/src/lib/queued-recording";
 import { MobileClient } from "../mobile/src/lib/client";
 import { randomUUID } from "node:crypto";
 import { expect, test, type APIRequestContext } from "@playwright/test";
@@ -246,4 +256,146 @@ test("cliente nativo real recupera respuesta perdida y mantiene objetivos de la 
     client.mutateTrainingLibrary({ ...input, requestId: randomUUID() }, randomUUID()),
   ).rejects.toMatchObject({ code: "identity" });
   expect(sent).toHaveLength(2);
+});
+
+test("editor tipado real → guardar/recuperar base → entrenar → actualizar y copiar resultado3 sin alterarlo", async ({
+  baseURL,
+}) => {
+  if (!baseURL) throw Error("Sin servidor aislado");
+  let credential: string | null = null,
+    lose = true;
+  const client = new MobileClient(
+    baseURL,
+    {
+      get: async () => credential,
+      set: async (v) => {
+        credential = v;
+      },
+      remove: async () => {
+        credential = null;
+      },
+    },
+    async (url, options) => {
+      const response = await fetch(url, options);
+      if (url.endsWith("/training-library/mutations") && response.ok && lose) {
+        lose = false;
+        throw Error("lost after commit");
+      }
+      return response;
+    },
+    Date.now,
+    true,
+  );
+  await client.login(email, password);
+  const identity = client.getSnapshot();
+  if (identity.status !== "authenticated") throw Error("fixture");
+  const owner = identity.session.profile.id,
+    catalog = await client.trainingCatalog(),
+    entry = catalog.exercises.find((e) => e.id === exercise)!;
+  const values = new Map<string, string>(),
+    storage = {
+      get: async (k: string) => values.get(k) ?? null,
+      set: async (k: string, v: string) => {
+        values.set(k, v);
+      },
+      remove: async (k: string) => {
+        values.delete(k);
+      },
+      compareAndSet: async (k: string, b: string | null, v: string) => {
+        if ((values.get(k) ?? null) !== b) throw Error("conflict");
+        values.set(k, v);
+      },
+    };
+  const sendBase = (
+      request: Parameters<ConstructorParameters<typeof TypedLibraryDraftController>[2]>[0],
+    ) =>
+      request.version === 2
+        ? client.mutateTrainingLibrary(request, owner)
+        : client.mutatePersonalLibrary(request, owner),
+    createLibrary = () => new TypedLibraryDraftController(owner, storage, sendBase, randomUUID);
+  const library = createLibrary();
+  await library.restore();
+  const id = await library.createDraft();
+  const item = addTypedPersonalExercise(entry, randomUUID());
+  item.sets = "2";
+  item.targetDurationSeconds = "60";
+  item.note = "Indicación del editor";
+  const detailed = detailTypedPersonalItem(item);
+  detailed.series![1].targetDurationSeconds = "90";
+  await library.edit(id, (d) => ({ ...d, name: "Circuito completo", items: [detailed] }));
+  await expect(library.saveDraft(id)).rejects.toMatchObject({ code: "network" });
+  const frozen = library.getSnapshot().pending!.request;
+  expect(frozen.version).toBe(2);
+  await client.reconnect();
+  const restored = createLibrary();
+  await restored.restore();
+  expect(restored.getSnapshot().pending!.request).toEqual(frozen);
+  expect(await restored.retryPending()).toMatchObject({ version: 2, duplicate: true });
+  const base = (await client.trainingLibrary()).routines.find((r) => r.id === id)!;
+  expect(base.items[0].prescribed.series?.map((t) => t.targetDurationSeconds)).toEqual([60, 90]);
+  const training = new TrainingController(
+    owner,
+    storage,
+    (p) => sendQueuedRecording(client, p, owner),
+    () => new Date(),
+    randomUUID,
+  );
+  await training.restore();
+  const context = personalRoutineTrainingContext(base);
+  if (context.version !== 3) throw Error("Sin contexto3");
+  await training.startTyped(context);
+  const workoutId = training.getSnapshot().active!.draft.workoutId;
+  training.editTyped((d) => ({
+    ...d,
+    exercises: d.exercises.map((e) => ({
+      ...e,
+      athleteNote: "Nota propia que no va a la base",
+      sets: e.sets.map((s, i) => (i ? s : { ...s, duration: "60", effort: "8,5" })),
+    })),
+  }));
+  await training.flush();
+  await training.complete(0, 0);
+  await training.finish(8, "Nota global privada");
+  const result = await client.typedWorkout(workoutId),
+    before = JSON.stringify(result);
+  expect(result.workout).toMatchObject({
+    sourceKind: "personal",
+    personalRoutineId: id,
+    personalRoutineRevision: base.revision,
+  });
+  expect(result.workout.exercises[0].sets[0]).toMatchObject({
+    effort: 8.5,
+    metrics: { recordType: "duration", durationSeconds: 60, reps: null },
+  });
+  const prepared = prepareTypedWorkoutRoutine(result.workout, catalog.exercises);
+  if (!prepared.ok) throw Error(prepared.message);
+  expect(JSON.stringify(prepared)).not.toContain("Nota propia");
+  expect(JSON.stringify(prepared)).not.toContain("Nota global");
+  expect(prepared.items[0].note).toBe("Indicación del editor");
+  await restored.stageDraft({
+    id: base.id,
+    baseRevision: base.revision,
+    folderId: base.folderId,
+    name: base.name,
+    changed: true,
+    items: prepared.items,
+  });
+  await restored.saveDraft(base.id);
+  const updated = (await client.trainingLibrary()).routines.find((r) => r.id === id)!;
+  expect(updated.revision).toBeGreaterThan(base.revision);
+  expect(updated.items[0].prescribed).toEqual(base.items[0].prescribed);
+  const copyId = randomUUID();
+  await restored.stageDraft({
+    id: copyId,
+    baseRevision: null,
+    folderId: null,
+    name: "Copia independiente",
+    changed: true,
+    items: forkPersonalItems(prepared.items, randomUUID),
+  });
+  await restored.saveDraft(copyId);
+  const copied = (await client.trainingLibrary()).routines.find((r) => r.id === copyId)!;
+  expect(copied.items[0].id).not.toBe(updated.items[0].id);
+  expect(copied.items[0].prescribed).toEqual(updated.items[0].prescribed);
+  expect(JSON.stringify(await client.typedWorkout(workoutId))).toBe(before);
 });

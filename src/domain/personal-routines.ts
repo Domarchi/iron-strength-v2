@@ -54,7 +54,7 @@ export function addPersonalExercise(exercise: MobileCatalogEntry, id: string): P
     series: null,
   };
 }
-export function clonePersonalItem(item: PersonalEditorItem): PersonalEditorItem {
+export function clonePersonalItem<T extends PersonalEditorItem>(item: T): T {
   return { ...item, series: item.series?.map((target) => ({ ...target })) ?? null };
 }
 const raw = (n: number | null) => (n === null ? "" : String(n));
@@ -150,11 +150,11 @@ export function simplifyPersonalItem(item: PersonalEditorItem): PersonalEditorIt
   if (!item.series) return clonePersonalItem(item);
   return { ...item, ...item.series[0], sets: String(item.series.length), series: null };
 }
-export function groupPersonalItems(
-  items: PersonalEditorItem[],
+export function groupPersonalItems<T extends PersonalEditorItem>(
+  items: T[],
   selected: string[],
   groupId: string,
-): PersonalEditorItem[] {
+): T[] {
   const indices = items.flatMap((item, index) => (selected.includes(item.id) ? [index] : []));
   if (
     new Set(selected).size !== selected.length ||
@@ -169,15 +169,15 @@ export function groupPersonalItems(
     selected.includes(item.id) ? { ...item, supersetId: groupId, supersetRestSeconds: 90 } : item,
   );
 }
-export function ungroupPersonalItems(
-  items: PersonalEditorItem[],
+export function ungroupPersonalItems<T extends PersonalEditorItem>(
+  items: T[],
   groupId: string,
-): PersonalEditorItem[] {
+): T[] {
   return items.map((item) =>
     item.supersetId === groupId ? { ...item, supersetId: null, supersetRestSeconds: null } : item,
   );
 }
-export function removePersonalItem(items: PersonalEditorItem[], id: string): PersonalEditorItem[] {
+export function removePersonalItem<T extends PersonalEditorItem>(items: T[], id: string): T[] {
   const result = items.filter((item) => item.id !== id);
   return result.map((item) =>
     item.supersetId && result.filter((r) => r.supersetId === item.supersetId).length === 1
@@ -185,7 +185,7 @@ export function removePersonalItem(items: PersonalEditorItem[], id: string): Per
       : item,
   );
 }
-export function detachPersonalItem(items: PersonalEditorItem[], id: string): PersonalEditorItem[] {
+export function detachPersonalItem<T extends PersonalEditorItem>(items: T[], id: string): T[] {
   const item = items.find((row) => row.id === id);
   if (!item?.supersetId) return items;
   const others = removePersonalItem(items, id),
@@ -204,11 +204,11 @@ export function detachPersonalItem(items: PersonalEditorItem[], id: string): Per
     ...others.slice(index),
   ];
 }
-export function duplicatePersonalItem(
-  items: PersonalEditorItem[],
+export function duplicatePersonalItem<T extends PersonalEditorItem>(
+  items: T[],
   id: string,
   newId: string,
-): PersonalEditorItem[] {
+): T[] {
   if (items.length >= 15) throw Error("Máximo 15 ejercicios por rutina.");
   const item = items.find((row) => row.id === id);
   if (!item) throw Error("El ejercicio ya no está en esta rutina.");
@@ -221,7 +221,7 @@ export function duplicatePersonalItem(
     ...items.slice(end + 1),
   ];
 }
-export function personalEditorBlocks(items: PersonalEditorItem[]) {
+export function personalEditorBlocks<T extends PersonalEditorItem>(items: T[]) {
   // Keep the group visible while its numeric rest field is temporarily invalid.
   return exerciseBlocks(items.map((item) => ({ ...item, supersetRestSeconds: null }))).map(
     (block) => ({
@@ -230,11 +230,11 @@ export function personalEditorBlocks(items: PersonalEditorItem[]) {
     }),
   );
 }
-export function movePersonalBlock(
-  items: PersonalEditorItem[],
+export function movePersonalBlock<T extends PersonalEditorItem>(
+  items: T[],
   id: string,
   direction: -1 | 1,
-): PersonalEditorItem[] {
+): T[] {
   if (!validSupersetLayout(items)) throw Error("Revisa la superserie antes de moverla.");
   const blocks = exerciseBlocks(items),
     index = blocks.findIndex((block) => block.exercises.some((item) => item.id === id));
@@ -270,10 +270,10 @@ export function patchPersonalItems(
   personalItemsInput(result);
   return result;
 }
-export function forkPersonalItems(
-  items: PersonalEditorItem[],
+export function forkPersonalItems<T extends PersonalEditorItem>(
+  items: T[],
   uuid: () => string,
-): PersonalEditorItem[] {
+): T[] {
   const groups = new Map<string, string>();
   return items.map((item) => {
     let groupId: string | null = null;

@@ -532,3 +532,65 @@ it("acceso por enlace nunca persiste token/contraseña ni sustituye una sesión 
   ).rejects.toThrow("salir");
   expect(fetcher).toHaveBeenCalledTimes(4);
 });
+it("biblioteca2 cae a snapshot1 solo por404/503; mutaciones2 no se degradan", async () => {
+  const legacy = { version: 1, userId: profile.id, folders: [], routines: [] };
+  for (const status of [404, 503]) {
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(
+        Response.json(
+          { version: 1, error: { code: "unavailable", message: "Anterior" } },
+          { status },
+        ),
+      )
+      .mockResolvedValueOnce(Response.json(legacy));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    expect(await x.client.trainingLibrary()).toEqual({ ...legacy, version: 2 });
+    expect(fetcher.mock.calls.map((c) => new URL(c[0]).pathname)).toEqual([
+      "/api/mobile/v1/auth/login",
+      "/api/mobile/v1/training-library",
+      "/api/mobile/v1/library",
+    ]);
+  }
+  const input = {
+    version: 2 as const,
+    requestId: "22222222-2222-4222-8222-222222222222",
+    targetId: "33333333-3333-4333-8333-333333333333",
+    expectedRevision: 0 as const,
+    operation: "folder_create" as const,
+    data: { name: "Fuerza" },
+  };
+  const fetcher = vi
+    .fn<Transport>()
+    .mockResolvedValueOnce(Response.json(session))
+    .mockResolvedValueOnce(
+      Response.json(
+        { version: 1, error: { code: "unavailable", message: "Anterior" } },
+        { status: 404 },
+      ),
+    );
+  const x = setup(fetcher);
+  await x.client.login(profile.email, "clave");
+  await expect(x.client.mutateTrainingLibrary(input, profile.id)).rejects.toMatchObject({
+    status: 404,
+  });
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+it("snapshot2 futuro, malformado o ajeno nunca se convierte a biblioteca1", async () => {
+  for (const value of [
+    { version: 3, userId: profile.id, folders: [], routines: [] },
+    { version: 2, userId: profile.id, folders: [], routines: [{}] },
+    { version: 2, userId: "33333333-3333-4333-8333-333333333333", folders: [], routines: [] },
+  ]) {
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(value));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    await expect(x.client.trainingLibrary()).rejects.toBeInstanceOf(Error);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  }
+});

@@ -1,3 +1,7 @@
+import {
+  typedPersonalMutationSchema,
+  upgradePersonalLibrary,
+} from "../../../src/lib/mobile/typed-personal-contracts";
 import type { Page } from "@playwright/test";
 import { setupDownloadedWeek } from "./week-fixture";
 import { downloadId } from "../../../src/test/fixtures/week-download";
@@ -49,12 +53,50 @@ export async function setupPersonalLibrary(page: Page) {
   await page.route(origin + "/exercises", (route) =>
     route.fulfill({ json: { version: 1, exercises: libraryExercises } }),
   );
-  await page.route(origin + "/library**", async (route) => {
-    if (route.request().method() === "GET") return route.fulfill({ json: state.value });
-    const input = personalMutationSchema.parse(route.request().postDataJSON());
+  // These legacy regression fixtures intentionally keep their old data shape.
+  // The protocol2 bridge is limited to legacy null, never modern metrics.
+  const handleLibrary = async (route: import("@playwright/test").Route) => {
+    const modern = new URL(route.request().url()).pathname.includes("/training-library");
+    if (route.request().method() === "GET")
+      return route.fulfill({ json: modern ? upgradePersonalLibrary(state.value) : state.value });
+    let body: unknown = route.request().postDataJSON();
+    if (modern) {
+      const input2 = typedPersonalMutationSchema.parse(body);
+      if (input2.operation === "routine_create" || input2.operation === "routine_save") {
+        body = {
+          ...input2,
+          version: 1,
+          data: {
+            ...input2.data,
+            items: input2.data.items.map((item) => {
+              if (item.prescribed.recordType !== null)
+                throw Error("Modern metrics require typed fixtures");
+              const { prescribed, ...common } = item;
+              return {
+                ...common,
+                sets: prescribed.sets,
+                repsMin: prescribed.target.repsMin,
+                repsMax: prescribed.target.repsMax,
+                targetWeightKg: prescribed.target.targetWeightKg,
+                series:
+                  prescribed.series?.map((t) => ({
+                    repsMin: t.repsMin,
+                    repsMax: t.repsMax,
+                    targetWeightKg: t.targetWeightKg,
+                  })) ?? null,
+              };
+            }),
+          },
+        };
+      } else body = { ...input2, version: 1 };
+    }
+    const input = personalMutationSchema.parse(body);
     state.calls.push(input);
     const previous = state.receipts.get(input.requestId);
-    if (previous) return route.fulfill({ json: { ...previous, duplicate: true } });
+    if (previous)
+      return route.fulfill({
+        json: { ...previous, ...(modern ? { version: 2 } : {}), duplicate: true },
+      });
     if (state.conflict) {
       state.conflict = false;
       return route.fulfill({
@@ -179,8 +221,10 @@ export async function setupPersonalLibrary(page: Page) {
         },
       });
     }
-    return route.fulfill({ json: result });
-  });
+    return route.fulfill({ json: { ...result, ...(modern ? { version: 2 } : {}) } });
+  };
+  await page.route(origin + "/library**", handleLibrary);
+  await page.route(origin + "/training-library**", handleLibrary);
   await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
   await page.getByRole("button", { name: "Mis rutinas", exact: true }).click();
   return { state, week };

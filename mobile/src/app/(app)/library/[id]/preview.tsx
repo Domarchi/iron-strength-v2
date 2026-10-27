@@ -1,11 +1,12 @@
-import { useCallback, useRef, useState } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 import { useQuery } from "../../../../lib/use-query";
 import { useSession } from "../../../../lib/session";
 import { useTraining } from "../../../../lib/training-context";
 import { useLibraryDrafts } from "../../../../lib/library-context";
-import { personalRoutineContext } from "../../../../lib/personal-training";
+import { personalRoutineTrainingContext } from "../../../../lib/typed-personal-training";
+import { formatTrainingTarget } from "../../../../lib/training-labels";
 import {
   Action,
   Loading,
@@ -15,9 +16,14 @@ import {
   s,
   usePalette,
 } from "../../../../components/ui";
-export default function PersonalRoutinePreview() {
+export default function PersonalRoutinePreviewRoute() {
   const { id } = useLocalSearchParams<{ id: string }>(),
-    p = usePalette(),
+    { state } = useSession();
+  const userId = state.status === "authenticated" ? state.session.profile.id : "";
+  return <PersonalRoutinePreview key={`${userId}:${id}`} id={id} />;
+}
+function PersonalRoutinePreview({ id }: { id: string }) {
+  const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
     { controller: libraryController, library } = useLibraryDrafts();
@@ -26,12 +32,29 @@ export default function PersonalRoutinePreview() {
     [details, setDetails] = useState<string | null>(null);
   const inFlight = useRef(false),
     offline = state.status === "authenticated" && state.mode === "offline";
+  const mounted = useRef(true),
+    focusEpoch = useRef(0);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      focusEpoch.current++;
+    };
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      focusEpoch.current++;
+      return () => {
+        focusEpoch.current++;
+      };
+    }, []),
+  );
   const q = useQuery(
     useCallback(
       () =>
         offline
           ? Promise.reject(Error("Conecta para consultar tus rutinas personales."))
-          : client.personalLibrary(),
+          : client.trainingLibrary(),
       [client, offline],
     ),
   );
@@ -39,25 +62,40 @@ export default function PersonalRoutinePreview() {
   async function run(edit: boolean) {
     if (inFlight.current) return;
     inFlight.current = true;
+    const epoch = focusEpoch.current,
+      currentView = () => mounted.current && focusEpoch.current === epoch;
+    const identity = client.getSnapshot();
     setBusy(true);
     setError(null);
     try {
-      const current = (await client.personalLibrary()).routines.find((r) => r.id === id);
+      const snapshot = await client.trainingLibrary();
+      if (!currentView()) return;
+      const after = client.getSnapshot();
+      if (
+        identity.status !== "authenticated" ||
+        after.status !== "authenticated" ||
+        identity.session.profile.id !== after.session.profile.id ||
+        snapshot.userId !== identity.session.profile.id
+      )
+        throw Error("La cuenta cambió. Vuelve a abrir la rutina.");
+      const current = snapshot.routines.find((r) => r.id === id);
       if (!current) throw Error("Esta rutina ya no está disponible.");
       if (edit) {
         await libraryController.createDraft(current);
-        router.push({ pathname: "/library/[id]", params: { id } });
+        if (currentView()) router.push({ pathname: "/library/[id]", params: { id } });
       } else {
-        await controller.startPersonal(personalRoutineContext(current));
+        const context = personalRoutineTrainingContext(current);
+        if (context.version === 3) await controller.startTyped(context);
+        else await controller.startPersonal(context);
         const active = controller.getSnapshot().active;
-        if (active)
+        if (active && currentView())
           router.push({ pathname: "/workout/[id]", params: { id: active.draft.workoutId } });
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No pudimos abrir la rutina.");
+      if (currentView()) setError(e instanceof Error ? e.message : "No pudimos abrir la rutina.");
     } finally {
       inFlight.current = false;
-      setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   }
   return (
@@ -82,8 +120,8 @@ export default function PersonalRoutinePreview() {
         <>
           <ScreenIntro title={routine.name} />
           <Text style={[s.caption, { color: p.muted }]}>
-            {routine.items.length} ejercicios · {routine.items.reduce((n, e) => n + e.sets, 0)}{" "}
-            series
+            {routine.items.length} ejercicios ·{" "}
+            {routine.items.reduce((n, e) => n + e.prescribed.sets, 0)} series
           </Text>
           <Action
             label="Empezar entrenamiento"
@@ -129,20 +167,16 @@ export default function PersonalRoutinePreview() {
               ) : null}
               <Text style={[s.subheading, { color: p.ink }]}>{item.name}</Text>
               <Text style={[s.body, { color: p.muted }]}>
-                {item.sets} ×{" "}
-                {item.repsMin === item.repsMax ? item.repsMin : `${item.repsMin}–${item.repsMax}`}{" "}
-                reps
-                {item.targetWeightKg !== null
-                  ? ` · ${item.targetWeightKg.toLocaleString("es-CL")} kg`
-                  : ""}
-                {item.series ? " · Por serie" : ""}
+                {item.prescribed.sets} ×{" "}
+                {formatTrainingTarget(item.prescribed.target) || "Objetivo libre"}
+                {item.prescribed.series ? " · Por serie" : ""}
               </Text>
               {!item.supersetId ? (
                 <Text style={[s.caption, { color: p.muted }]}>
                   Descanso: {item.restSeconds ?? 90} s
                 </Text>
               ) : null}
-              {item.note || item.series ? (
+              {item.note || item.prescribed.series ? (
                 <Action
                   label={`Ver detalles de ${item.name}`}
                   quiet
@@ -152,16 +186,9 @@ export default function PersonalRoutinePreview() {
               {details === item.id ? (
                 <>
                   {item.note ? <Text style={[s.body, { color: p.muted }]}>{item.note}</Text> : null}
-                  {item.series?.map((target, i) => (
+                  {item.prescribed.series?.map((target, i) => (
                     <Text key={i} style={[s.caption, { color: p.ink }]}>
-                      Serie {i + 1} ·{" "}
-                      {target.repsMin === target.repsMax
-                        ? target.repsMin
-                        : `${target.repsMin}–${target.repsMax}`}{" "}
-                      reps
-                      {target.targetWeightKg !== null
-                        ? ` · ${target.targetWeightKg.toLocaleString("es-CL")} kg`
-                        : ""}
+                      Serie {i + 1} · {formatTrainingTarget(target) || "Objetivo libre"}
                     </Text>
                   ))}
                 </>

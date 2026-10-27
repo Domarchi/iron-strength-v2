@@ -3,7 +3,7 @@ import { LIMITS } from "../../domain/limits";
 import { trainingPrescriptionSchema } from "../../domain/training-metrics";
 import { validRestSeconds, validSupersetLayout } from "../../domain/supersets";
 import { typedCatalogEntrySchema } from "./typed-exercise-contracts";
-import { personalMutationResultSchema } from "./personal-contracts";
+import { personalMutationResultSchema, personalLibrarySchema } from "./personal-contracts";
 
 const uuid = z.uuid().transform((value) => value.toLowerCase());
 const revision = z.number().int().nonnegative();
@@ -101,7 +101,7 @@ const snapshotItem = typedCatalogEntrySchema
   })
   .strict()
   .refine((row) => row.recordType === row.prescribed.recordType);
-const routine = z
+export const typedPersonalRoutineSchema = z
   .object({
     id: uuid,
     name,
@@ -123,7 +123,7 @@ export const typedPersonalLibrarySchema = z
     folders: z.array(
       z.object({ id: uuid, name, position: z.number().int().nonnegative(), revision }).strict(),
     ),
-    routines: z.array(routine),
+    routines: z.array(typedPersonalRoutineSchema),
   })
   .strict()
   .refine(({ folders, routines }) => {
@@ -145,3 +145,54 @@ export const typedPersonalMutationResultSchema = personalMutationResultSchema
   .extend({ version: z.literal(2) })
   .strict();
 export type TypedPersonalMutationResult = z.infer<typeof typedPersonalMutationResultSchema>;
+
+/** Projects a declared legacy routine without inferring exercise types. */
+export function upgradePersonalRoutine(
+  routine: import("./personal-contracts").PersonalRoutine,
+): TypedPersonalRoutine {
+  return typedPersonalRoutineSchema.parse({
+    ...routine,
+    items: routine.items.map((item) => ({
+      id: item.id,
+      exerciseId: item.exerciseId,
+      position: item.position,
+      name: item.name,
+      muscleGroup: item.muscleGroup,
+      equipment: item.equipment,
+      isBodyweight: item.isBodyweight,
+      progressionIncrementKg: item.progressionIncrementKg,
+      recordType: null,
+      prescribed: {
+        recordType: null,
+        sets: item.sets,
+        target: {
+          repsMin: item.repsMin,
+          repsMax: item.repsMax,
+          targetWeightKg: item.targetWeightKg,
+          targetDurationSeconds: null,
+          targetDistanceMeters: null,
+        },
+        series:
+          item.series?.map((t) => ({
+            ...t,
+            targetDurationSeconds: null,
+            targetDistanceMeters: null,
+          })) ?? null,
+      },
+      note: item.note,
+      restSeconds: item.restSeconds,
+      supersetId: item.supersetId,
+      supersetRestSeconds: item.supersetRestSeconds,
+    })),
+  });
+}
+export function upgradePersonalLibrary(
+  input: import("./personal-contracts").PersonalLibrary,
+): TypedPersonalLibrary {
+  const legacy = personalLibrarySchema.parse(input);
+  return typedPersonalLibrarySchema.parse({
+    ...legacy,
+    version: 2,
+    routines: legacy.routines.map(upgradePersonalRoutine),
+  });
+}

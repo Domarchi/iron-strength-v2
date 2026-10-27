@@ -78,6 +78,20 @@ export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
         secondary
         onPress={() => router.push({ pathname: "/repeat-recording/[id]", params: { id: w.id } })}
       />
+      <Action
+        label="Guardar como rutina"
+        secondary
+        onPress={() => router.push({ pathname: "/save-routine/[id]", params: { id: w.id } })}
+      />
+      {w.sourceKind === "personal" ? (
+        <Action
+          label="Actualizar mi rutina"
+          quiet
+          onPress={() =>
+            router.push({ pathname: "/save-routine/[id]", params: { id: w.id, mode: "update" } })
+          }
+        />
+      ) : null}
       <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
       <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
       <WorkoutComments workoutId={w.id} />

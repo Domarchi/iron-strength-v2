@@ -5,13 +5,13 @@ import { randomUUID } from "expo-crypto";
 import { router } from "expo-router";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type {
-  PersonalMutation,
-  PersonalRoutine,
-} from "../../../../../src/lib/mobile/personal-contracts";
+  TypedPersonalMutation,
+  TypedPersonalRoutine,
+} from "../../../../../src/lib/mobile/typed-personal-contracts";
 import { Action, Loading, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
 import { MoreButton, PersonalField } from "../../../components/personal-controls";
 import { LibraryAttempt } from "../../../components/library-attempt";
-import type { PersonalDraft } from "../../../lib/library-drafts";
+import type { TypedPersonalDraft } from "../../../lib/typed-library-drafts";
 import { useLibraryDrafts } from "../../../lib/library-context";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
@@ -21,8 +21,8 @@ type LibraryRow = {
   folderId: string | null;
   position: number;
   items: { sets: string | number }[];
-  draft: PersonalDraft | undefined;
-  source: PersonalRoutine | undefined;
+  draft: TypedPersonalDraft | undefined;
+  source: TypedPersonalRoutine | undefined;
 };
 type Menu = { kind: "routine" | "folder"; id: string } | null;
 export default function PersonalLibraryScreen() {
@@ -31,7 +31,7 @@ export default function PersonalLibraryScreen() {
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, library } = useLibraryDrafts();
-  const q = useQuery(useCallback(() => client.personalLibrary(), [client]));
+  const q = useQuery(useCallback(() => client.trainingLibrary(), [client]));
   const [search, setSearch] = useState(""),
     [menu, setMenu] = useState<Menu>(null),
     [confirm, setConfirm] = useState(false),
@@ -63,7 +63,7 @@ export default function PersonalLibraryScreen() {
     setRename(null);
     setMoving(false);
   };
-  async function mutate(input: PersonalMutation) {
+  async function mutate(input: TypedPersonalMutation) {
     setError(null);
     try {
       await controller.mutate(input);
@@ -76,19 +76,19 @@ export default function PersonalLibraryScreen() {
     }
   }
   const operation = (
-    op: PersonalMutation["operation"],
+    op: TypedPersonalMutation["operation"],
     targetId: string,
     expectedRevision: number | null,
     data: unknown,
   ) =>
     mutate({
-      version: 1,
+      version: 2,
       requestId: randomUUID(),
       operation: op,
       targetId,
       expectedRevision,
       data,
-    } as PersonalMutation);
+    } as TypedPersonalMutation);
   async function create() {
     if (opening.current) return;
     opening.current = true;
@@ -144,7 +144,7 @@ export default function PersonalLibraryScreen() {
         name: draft?.name || row.name,
         folderId: row.folderId,
         position: row.position,
-        items: draft?.items ?? row.items,
+        items: draft?.items ?? row.items.map((i) => ({ sets: i.prescribed.sets })),
         draft,
         source: row,
       };
