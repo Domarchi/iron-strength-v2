@@ -1,3 +1,5 @@
+import { createRepeatedTraining } from "./repeat-training";
+import type { RepeatPlan } from "../../../src/domain/workout-repeat";
 import { buildTrainingRecording } from "./recording";
 import { recordingSaveSchema } from "../../../src/lib/mobile/recording-contracts";
 import type { MobileCatalogEntry } from "../../../src/lib/mobile/exercise-contracts";
@@ -450,6 +452,25 @@ export class TrainingController {
       now: this.now(),
     });
     this.publish({ active: { mode: "real", routine, draft, activeIndex: 0 }, error: null });
+    await this.persist();
+  }
+  async startRepeated(plan: RepeatPlan) {
+    this.ensure();
+    if (this.state.busy || this.state.closing)
+      throw Error("Espera a que termine el guardado o envío.");
+    if (this.state.active)
+      throw Error("Ya tienes un entrenamiento. Retómalo o descártalo primero.");
+    const next = createRepeatedTraining(
+      plan,
+      {
+        userId: this.userId,
+        workoutId: this.uuid(),
+        now: this.now(),
+      },
+      this.uuid,
+    );
+    const active = activeSchema.parse({ mode: "real", ...next, activeIndex: 0 });
+    this.publish({ active, error: null });
     await this.persist();
   }
   async appendFreeExercises(entries: MobileCatalogEntry[]) {

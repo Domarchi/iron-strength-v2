@@ -156,6 +156,14 @@ export default function Result() {
                 ))}
               </View>
             ))}
+            {demo !== "1" ? (
+              <Action
+                label="Repetir entrenamiento"
+                secondary
+                disabled={q.loading || !!q.error || w.id !== id}
+                onPress={() => router.push({ pathname: "/repeat/[id]", params: { id: w.id } })}
+              />
+            ) : null}
             {demo !== "1" ? <WorkoutComments key={w.id} workoutId={w.id} /> : null}
           </>
         ) : null}
