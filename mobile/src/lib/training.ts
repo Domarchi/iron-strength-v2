@@ -11,6 +11,7 @@ import {
   type NativeWorkoutPayload,
 } from "./personal-training";
 import { z } from "zod";
+import { changeTrainingStructure, type TrainingStructureChange } from "./training-structure";
 import { AtomicStoreError } from "./atomic-contract";
 import { workoutPayloadSchema } from "../../../src/lib/workout/payload";
 import { mobileRoutineSchema, type MobileRoutine } from "../../../src/lib/mobile/contracts";
@@ -294,16 +295,31 @@ export class TrainingController {
       throw Error("Espera a que termine el guardado o envío.");
     return a;
   }
+  private prepareExtendedFormat() {
+    if (this.formatVersion === 1) {
+      if (!this.raw) throw Error("Protege el registro local antes de modificarlo.");
+      this.previousFormat = this.raw;
+      this.formatVersion = 2;
+    }
+  }
+  async organize(operation: TrainingStructureChange) {
+    this.liveForControls();
+    await this.flush();
+    const active = this.liveForControls();
+    this.assertNotPaused(active);
+    const next = changeTrainingStructure(active, operation, this.now(), this.uuid);
+    if (next === active) return;
+    const checked = activeSchema.parse(next);
+    this.prepareExtendedFormat();
+    this.publish({ active: checked, error: null });
+    await this.persist();
+  }
   async pause() {
     this.liveForControls();
     await this.flush();
     const a = this.liveForControls();
     if (a.pause?.pausedAtMs != null) return;
-    if (this.formatVersion === 1) {
-      if (!this.raw) throw Error("Protege el registro local antes de pausarlo.");
-      this.previousFormat = this.raw;
-      this.formatVersion = 2;
-    }
+    this.prepareExtendedFormat();
     this.publish({
       active: { ...a, pause: pauseSession(a.pause ?? null, this.now().getTime()) },
       error: null,

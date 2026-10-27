@@ -5,7 +5,7 @@
 - [x] T211 · Modelo y mutaciones de biblioteca personal: propiedad, carpetas, rutinas, filas, revisión, recibos, copias y pruebas SQL. API y cliente preparados; validación local completa, aplicación remota pendiente del respaldo/ensayo de publicación.
 - [x] T212 · Editor móvil personal: selección múltiple, prescripciones, grupos, orden, carpetas y borrador recuperable. Verificado localmente; publicación de T211/T212 pendiente y entrenamiento personal real en T213.
 - [x] T213 · Registro libre/personal real: origen explícito, guardado atómico/idempotente, borradores/cola compatibles y resultados visibles al coach. Verificado localmente; migración/publicación pendientes del respaldo y ensayo de T221.
-- [ ] T214 · Adaptación durante la sesión y repetir desde historial sin modificar la base: agregar, reemplazar, quitar, ordenar, grupos y pausa. Pausa conectada/verificada localmente; organización, arrastre, repetición y contratos de snapshot siguen pendientes.
+- [ ] T214 · Adaptación durante la sesión y repetir desde historial sin modificar la base: agregar, reemplazar, quitar, ordenar, grupos y pausa. Pausa, organización y arrastre conectados/verificados localmente; siguen pendientes snapshots SQL/API, repetición y guardado explícito de base.
 - [ ] T215 · Tipos de registro/series, esfuerzo por serie y notas del alumno por ejercicio, de extremo a extremo sin reinterpretar históricos.
 - [ ] T216 · Calculadoras de discos/calentamiento y preferencias de entrenamiento/unidades, con vista previa y confirmación de cambios.
 - [ ] T217 · Ejercicios personales y archivado con permisos propios y conservación de referencias históricas.

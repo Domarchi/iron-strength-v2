@@ -111,7 +111,6 @@ export default function Workout() {
   }
 
   const personal = d.version === 3;
-  const free = d.version === 3 && d.origin.kind === "free";
   const paused = !pending && a.pause?.pausedAtMs != null;
   const pauseControl = !pending ? (
     <IconAction
@@ -152,7 +151,7 @@ export default function Workout() {
           />
         ) : null}
         {error ? <Notice message={error} /> : null}
-        {free ? (
+        {personal ? (
           <Action
             label="Agregar ejercicios"
             icon="plus"
@@ -310,6 +309,19 @@ export default function Workout() {
           </View>
         ) : (
           <>
+            {personal ? (
+              <Action
+                label="Organizar ejercicios"
+                quiet
+                disabled={
+                  paused || training.dirty || training.blocked || training.busy || training.closing
+                }
+                onPress={() => {
+                  Keyboard.dismiss();
+                  router.push({ pathname: "/workout-organize/[id]", params: { id: d.workoutId } });
+                }}
+              />
+            ) : null}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -320,7 +332,7 @@ export default function Workout() {
                 <Pressable
                   key={ex.sessionExerciseId}
                   accessibilityRole="button"
-                  accessibilityLabel={`Ir a ${ex.name}`}
+                  accessibilityLabel={`Ir a ${ex.name}${d.exercises.filter((row) => row.name === ex.name).length > 1 ? `, ejercicio ${i + 1}` : ""}`}
                   accessibilityState={{ selected: i === index }}
                   aria-pressed={i === index}
                   onPress={() => {
@@ -514,7 +526,7 @@ export default function Workout() {
               </View>
             ) : (
               <View style={{ gap: 12 }}>
-                {free ? (
+                {personal ? (
                   <Action
                     label="Agregar ejercicios"
                     secondary

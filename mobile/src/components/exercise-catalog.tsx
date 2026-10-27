@@ -1,4 +1,7 @@
 import { useTraining } from "../lib/training-context";
+import { TrainingChangeNeedsReview, type ExerciseChangeReview } from "../lib/training-structure";
+import type { MobileCatalogEntry } from "../../../src/lib/mobile/exercise-contracts";
+import { TrainingChangeReview } from "./training-change-review";
 import { randomUUID } from "expo-crypto";
 import { addPersonalExercise } from "../../../src/domain/personal-routines";
 import { useLibraryDrafts } from "../lib/library-context";
@@ -23,9 +26,11 @@ const noEquipment = "__none__";
 export function ExerciseCatalog({
   pickFor,
   pickForTraining,
+  replaceId,
 }: {
   pickFor?: string;
   pickForTraining?: string;
+  replaceId?: string;
 }) {
   const p = usePalette(),
     insets = useSafeAreaInsets(),
@@ -36,12 +41,15 @@ export function ExerciseCatalog({
   const picking = !!(pickFor || pickForTraining);
   const trainingTarget =
     training.active?.draft.version === 3 &&
-    training.active.draft.origin.kind === "free" &&
     training.active.draft.workoutId === pickForTraining &&
     training.active.pause?.pausedAtMs == null &&
     training.active.draft.status === "in_progress"
       ? training.active
       : null;
+  const replacing = !!replaceId;
+  const replacement = trainingTarget?.draft.exercises.find(
+    (e) => e.sessionExerciseId === replaceId,
+  );
   const existingCount = pickForTraining
     ? (trainingTarget?.draft.exercises.length ?? 0)
     : (draft?.items.length ?? 0);
@@ -49,6 +57,10 @@ export function ExerciseCatalog({
     [addError, setAddError] = useState<string | null>(null),
     [adding, setAdding] = useState(false),
     [added, setAdded] = useState(false);
+  const [review, setReview] = useState<{
+    entry: MobileCatalogEntry;
+    review: ExerciseChangeReview;
+  } | null>(null);
   const addingRef = useRef(false);
   const offline = state.status === "authenticated" && state.mode === "offline";
   const request = useCallback(() => {
@@ -93,7 +105,7 @@ export function ExerciseCatalog({
             (!equipment || (exercise.equipment ?? noEquipment) === equipment) &&
             exercise.needle.includes(needle),
         );
-  async function add() {
+  async function add(confirmedStamp?: string) {
     if (addingRef.current || (!draft && !trainingTarget)) return;
     addingRef.current = true;
     setAdding(true);
@@ -106,11 +118,31 @@ export function ExerciseCatalog({
         )
           throw Error("Este registro ya no está disponible.");
         if (added) await trainingController.retryStorage();
-        else {
+        else if (replacing) {
+          const entry = review?.entry ?? catalog.find((e) => selected.includes(e.id));
+          if (!entry || !replacement) throw Error("Elige un ejercicio para reemplazar.");
+          try {
+            await trainingController.organize({
+              kind: "replace",
+              id: replaceId!,
+              entry,
+              confirmedStamp,
+            });
+          } finally {
+            const current = trainingController.getSnapshot().active;
+            const changed =
+              current?.draft.workoutId === pickForTraining &&
+              current.draft.exercises.some(
+                (e) => e.sessionExerciseId === replaceId && e.exerciseId === entry.id,
+              );
+            setAdded(!!changed);
+            if (changed) setReview(null);
+          }
+        } else {
           const additions = catalog.filter((e) => selected.includes(e.id));
           const before = new Set(trainingTarget.draft.exercises.map((e) => e.sessionExerciseId));
           try {
-            await trainingController.appendFreeExercises(additions);
+            await trainingController.organize({ kind: "add", entries: additions });
           } finally {
             const active = trainingController.getSnapshot().active;
             setAdded(
@@ -154,12 +186,33 @@ export function ExerciseCatalog({
       }
       router.back();
     } catch (error) {
-      setAddError(error instanceof Error ? error.message : "No pudimos agregar los ejercicios.");
+      if (error instanceof TrainingChangeNeedsReview && replacing) {
+        const entry = catalog.find((e) => selected.includes(e.id));
+        if (entry) setReview({ entry, review: error.review });
+      } else
+        setAddError(error instanceof Error ? error.message : "No pudimos agregar los ejercicios.");
     } finally {
       addingRef.current = false;
       setAdding(false);
     }
   }
+  if (review)
+    return (
+      <TrainingChangeReview
+        review={review.review}
+        action="replace"
+        newName={review.entry.name}
+        busy={adding}
+        error={addError}
+        onConfirm={() => {
+          void add(review.review.stamp);
+        }}
+        onCancel={() => {
+          setReview(null);
+          setAddError(null);
+        }}
+      />
+    );
   return (
     <View style={{ flex: 1, backgroundColor: p.bg, paddingTop: insets.top }}>
       <FlatList
@@ -193,8 +246,25 @@ export function ExerciseCatalog({
               quiet
               onPress={() => (picking ? router.back() : router.navigate("/train"))}
             />
-            <ScreenIntro title={picking ? "Agregar ejercicios" : "Biblioteca"} />
+            <ScreenIntro
+              title={
+                replacing ? "Reemplazar ejercicio" : picking ? "Agregar ejercicios" : "Biblioteca"
+              }
+            />
             {addError ? <Notice message={addError} /> : null}
+            {pickForTraining && training.error && !added && training.dirty ? (
+              <Action
+                label="Reintentar guardado local"
+                secondary
+                disabled={adding}
+                onPress={() => {
+                  void trainingController
+                    .retryStorage()
+                    .then(() => setAddError(null))
+                    .catch(() => {});
+                }}
+              />
+            ) : null}
             <TextInput
               accessibilityLabel="Buscar ejercicios"
               placeholder="Buscar ejercicios"
@@ -302,15 +372,27 @@ export function ExerciseCatalog({
         }
         renderItem={({ item }) => (
           <Pressable
-            accessibilityRole={picking ? "checkbox" : "button"}
-            aria-checked={picking ? selected.includes(item.id) : undefined}
+            accessibilityRole={picking && !replacing ? "checkbox" : "button"}
+            aria-checked={picking && !replacing ? selected.includes(item.id) : undefined}
             accessibilityState={
               picking
-                ? { checked: selected.includes(item.id), disabled: adding || added }
+                ? {
+                    checked: !replacing ? selected.includes(item.id) : undefined,
+                    selected: replacing ? selected.includes(item.id) : undefined,
+                    disabled: adding || added || (replacing && item.id === replacement?.exerciseId),
+                  }
                 : undefined
             }
-            disabled={picking && (adding || added)}
-            accessibilityLabel={picking ? `Seleccionar ${item.name}` : `Ver ejercicio ${item.name}`}
+            disabled={
+              picking && (adding || added || (replacing && item.id === replacement?.exerciseId))
+            }
+            accessibilityLabel={
+              replacing
+                ? `Elegir ${item.name}`
+                : picking
+                  ? `Seleccionar ${item.name}`
+                  : `Ver ejercicio ${item.name}`
+            }
             onPress={() => {
               if (!picking) {
                 router.push({
@@ -320,6 +402,10 @@ export function ExerciseCatalog({
                 return;
               }
               setAddError(null);
+              if (replacing) {
+                setSelected([item.id]);
+                return;
+              }
               if (!selected.includes(item.id) && selected.length + existingCount >= 15) {
                 setAddError("Máximo 15 ejercicios por rutina.");
                 return;
@@ -385,12 +471,18 @@ export function ExerciseCatalog({
             label={
               added
                 ? "Reintentar guardado local"
-                : `Agregar ${selected.length} ${selected.length === 1 ? "ejercicio" : "ejercicios"}`
+                : replacing
+                  ? "Reemplazar ejercicio"
+                  : `Agregar ${selected.length} ${selected.length === 1 ? "ejercicio" : "ejercicios"}`
             }
             busy={adding}
             disabled={
               (pickForTraining
-                ? !trainingTarget || training.blocked || training.busy || training.closing
+                ? !trainingTarget ||
+                  (replacing && !replacement) ||
+                  training.blocked ||
+                  training.busy ||
+                  training.closing
                 : !draft || library.blocked || !!library.pending) ||
               offline ||
               (!added && !selected.length)

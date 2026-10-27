@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { randomUUID } from "expo-crypto";
-import { ScrollView, Text, View } from "react-native";
+import { Keyboard, ScrollView, Text, View } from "react-native";
+import {
+  reorderExerciseBlocks,
+  reorderGroupMembers,
+} from "../../../../../../src/domain/exercise-layout";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   detachPersonalItem,
@@ -23,6 +27,7 @@ import { ConnectionStatus } from "../../../../components/connection-status";
 import { PersonalField, SelectionMark } from "../../../../components/personal-controls";
 import { PersonalEditorRow } from "../../../../components/personal-editor-row";
 import { LibraryAttempt } from "../../../../components/library-attempt";
+import { BlockReorder } from "../../../../components/block-reorder";
 export default function PersonalRoutineEditor() {
   const { id } = useLocalSearchParams<{ id: string }>(),
     p = usePalette(),
@@ -40,7 +45,8 @@ export default function PersonalRoutineEditor() {
     [confirmServer, setConfirmServer] = useState(false),
     [bulk, setBulk] = useState(false),
     [patch, setPatch] = useState<PersonalBulkPatch>({}),
-    [preview, setPreview] = useState<PersonalEditorItem[] | null>(null);
+    [preview, setPreview] = useState<PersonalEditorItem[] | null>(null),
+    [reordering, setReordering] = useState(false);
   useFocusEffect(
     useCallback(() => {
       if (!library.ready || library.blocked || library.busy || !q.value) return;
@@ -64,10 +70,23 @@ export default function PersonalRoutineEditor() {
         },
       );
   }
-  function action(itemId: string, kind: "up" | "down" | "duplicate" | "remove" | "detach") {
+  function action(
+    itemId: string,
+    kind: "up" | "down" | "duplicate" | "remove" | "detach" | "earlier" | "later",
+  ) {
     setMenu(null);
-    update((items) =>
-      kind === "up"
+    update((items) => {
+      if (kind === "earlier" || kind === "later") {
+        const groupId = items.find((item) => item.id === itemId)?.supersetId;
+        if (!groupId) throw Error("Ese ejercicio ya no está en una superserie.");
+        const ids = items.filter((item) => item.supersetId === groupId).map((item) => item.id),
+          from = ids.indexOf(itemId),
+          to = from + (kind === "earlier" ? -1 : 1);
+        if (to < 0 || to >= ids.length) return items;
+        [ids[from], ids[to]] = [ids[to], ids[from]];
+        return [...reorderGroupMembers(items, groupId, ids)];
+      }
+      return kind === "up"
         ? movePersonalBlock(items, itemId, -1)
         : kind === "down"
           ? movePersonalBlock(items, itemId, 1)
@@ -75,8 +94,8 @@ export default function PersonalRoutineEditor() {
             ? duplicatePersonalItem(items, itemId, randomUUID())
             : kind === "detach"
               ? detachPersonalItem(items, itemId)
-              : removePersonalItem(items, itemId),
-    );
+              : removePersonalItem(items, itemId);
+    });
   }
   async function save() {
     setError(null);
@@ -113,6 +132,30 @@ export default function PersonalRoutineEditor() {
       </View>
     );
   const blocks = personalEditorBlocks(draft.items);
+  if (reordering)
+    return (
+      <BlockReorder
+        blocks={blocks.map((block) => ({
+          id: block.id,
+          name: block.name,
+          members: block.supersetId ? block.exercises.map((e) => e.name) : [],
+        }))}
+        stamp={JSON.stringify(draft.items)}
+        disabled={!!disabled || library.dirty}
+        storageError={library.error}
+        retryStorage={() => controller.retryStorage()}
+        onMove={async (from, to) => {
+          await controller.edit(id, (d) => ({
+            ...d,
+            items: [...reorderExerciseBlocks(d.items, from, to)],
+          }));
+          setMenu(null);
+          setSelected([]);
+          setError(null);
+        }}
+        onClose={() => setReordering(false)}
+      />
+    );
   let groupNumber = 0;
   return (
     <View style={{ flex: 1, backgroundColor: p.bg, paddingTop: insets.top }}>
@@ -367,6 +410,15 @@ export default function PersonalRoutineEditor() {
             ) : null}
           </View>
         ) : null}
+        <Action
+          label="Reordenar ejercicios"
+          quiet
+          disabled={disabled || library.dirty || blocks.length < 2}
+          onPress={() => {
+            Keyboard.dismiss();
+            setReordering(true);
+          }}
+        />
         {blocks.map((block, blockIndex) => {
           const number = block.supersetId ? ++groupNumber : 0;
           return (
@@ -426,13 +478,15 @@ export default function PersonalRoutineEditor() {
                   </View>
                 </>
               ) : null}
-              {block.exercises.map((item) => (
+              {block.exercises.map((item, memberIndex) => (
                 <PersonalEditorRow
                   key={item.id}
                   item={item}
                   selected={selectedIds.includes(item.id)}
                   canUp={blockIndex > 0}
                   canDown={blockIndex < blocks.length - 1}
+                  canEarlier={memberIndex > 0}
+                  canLater={memberIndex < block.exercises.length - 1}
                   disabled={disabled}
                   onToggle={() =>
                     setSelected((previous) =>

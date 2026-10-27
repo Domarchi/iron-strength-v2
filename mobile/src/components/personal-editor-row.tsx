@@ -7,7 +7,7 @@ import {
 } from "../../../src/domain/personal-routines";
 import { Action, Notice, s, usePalette } from "./ui";
 import { MoreButton, PersonalField, SelectionMark } from "./personal-controls";
-type ItemAction = "up" | "down" | "duplicate" | "remove" | "detach";
+type ItemAction = "up" | "down" | "duplicate" | "remove" | "detach" | "earlier" | "later";
 export function PersonalEditorRow({
   item,
   selected,
@@ -19,6 +19,8 @@ export function PersonalEditorRow({
   onMenu,
   canUp,
   canDown,
+  canEarlier,
+  canLater,
 }: {
   item: PersonalEditorItem;
   selected: boolean;
@@ -28,6 +30,8 @@ export function PersonalEditorRow({
   disabled: boolean;
   canUp: boolean;
   canDown: boolean;
+  canEarlier: boolean;
+  canLater: boolean;
   menuOpen: boolean;
   onMenu: () => void;
 }) {
@@ -95,6 +99,24 @@ export function PersonalEditorRow({
               onPress={() => onAction("down")}
             />
           </View>
+          {item.supersetId ? (
+            <View style={s.row}>
+              <Action
+                label="Antes"
+                accessibilityLabel="Antes en superserie"
+                quiet
+                disabled={disabled || !canEarlier}
+                onPress={() => onAction("earlier")}
+              />
+              <Action
+                label="Después"
+                accessibilityLabel="Después en superserie"
+                quiet
+                disabled={disabled || !canLater}
+                onPress={() => onAction("later")}
+              />
+            </View>
+          ) : null}
           {item.supersetId ? (
             <Action
               label="Sacar de superserie"

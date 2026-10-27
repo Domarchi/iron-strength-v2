@@ -27,11 +27,11 @@ const clearGroup = (row: Readonly<GroupedExercise>): GroupedExercise => ({
 });
 
 /** Anchors identify whole blocks. A missing drop target cancels without changing their members. */
-export function reorderExerciseBlocks(
-  rows: ExerciseLayout,
+export function reorderExerciseBlocks<T extends Readonly<GroupedExercise>>(
+  rows: readonly T[],
   fromId: string,
   toId: string | null,
-): ExerciseLayout {
+): readonly T[] {
   check(rows);
   if (toId === null) return rows;
   const blocks = exerciseBlocks([...rows]);
@@ -110,11 +110,11 @@ export function setExerciseGroupRest(
   return rows.map((r) => (r.supersetId === groupId ? { ...r, supersetRestSeconds: seconds } : r));
 }
 
-export function reorderGroupMembers(
-  rows: ExerciseLayout,
+export function reorderGroupMembers<T extends Readonly<GroupedExercise>>(
+  rows: readonly T[],
   groupId: string,
   orderedIds: readonly string[],
-): ExerciseLayout {
+): readonly T[] {
   check(rows);
   findGroup(rows, groupId);
   const members = rows.filter((r) => r.supersetId === groupId);
