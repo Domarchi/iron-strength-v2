@@ -9,6 +9,15 @@ import {
   typedRecordingSaveSchema,
   typedWorkoutSchema,
 } from "../src/lib/mobile/typed-recording-contracts";
+import { MobileClient, type Transport } from "../mobile/src/lib/client";
+import {
+  typedContextSchema,
+  typedDraftSchema,
+  createTypedDraft,
+  completeTypedSet,
+  editTypedSet,
+  buildTypedRecording,
+} from "../mobile/src/lib/typed-training";
 const path = "/api/mobile/v1/typed-recordings",
   email = "typed-recording@iron-strength.e2e.test",
   other = "typed-other@iron-strength.e2e.test",
@@ -198,4 +207,105 @@ test("contenido inválido nunca guarda una cabecera parcial ni admite identidad 
     400,
   );
   expect((await admin().from("workouts").select("id").eq("id", p.id)).data).toEqual([]);
+});
+test("núcleo y cliente nativos cierran cada tipo contra SQL real y recuperan una respuesta perdida", async ({
+  baseURL,
+}) => {
+  if (!baseURL) throw Error("Falta el servidor aislado");
+  let credential: string | null = null,
+    loseResponse = true;
+  const transport: Transport = async (url, options) => {
+    const response = await fetch(url, options);
+    if (url.endsWith("/typed-recordings") && response.ok && loseResponse) {
+      loseResponse = false;
+      // The server committed. Simulate losing only its successful reply.
+      throw Error("lost-response");
+    }
+    return response;
+  };
+  const client = new MobileClient(
+    baseURL,
+    {
+      get: async () => credential,
+      set: async (value) => {
+        credential = value;
+      },
+      remove: async () => {
+        credential = null;
+      },
+    },
+    transport,
+    Date.now,
+    true,
+  );
+  await client.login(email, password);
+  const session = client.getSnapshot();
+  if (session.status !== "authenticated") throw Error("Sin identidad");
+  const userId = session.session.profile.id;
+  for (const [index, metrics] of trainingMetricCases.entries()) {
+    const p = payload(index);
+    if (p.source !== "free") throw Error("fixture");
+    const context = typedContextSchema.parse({
+      version: 3,
+      origin: { kind: "free" },
+      title: p.workout.title,
+      sessionLabel: "Libre",
+      exercises: p.structure.exercises.map((r, i) => ({
+        sessionExerciseId: r.id,
+        exerciseId: r.exerciseId,
+        name: `Tipo HTTP ${i ? 0 : index}`,
+        isBodyweight: false,
+        prescribed: r.prescribed,
+        lastMetrics: null,
+        note: r.note,
+        restSeconds: r.restSeconds,
+        supersetId: r.supersetId,
+        supersetRestSeconds: r.supersetRestSeconds,
+        alternatives: [],
+      })),
+    });
+    let draft = createTypedDraft({ context, workoutId: p.id, userId, now: new Date() });
+    const raw = (n: number | null) => (n === null ? "" : String(n).replace(".", ","));
+    for (const [field, value] of [
+      ["weight", raw(metrics.weightKg)],
+      ["reps", raw(metrics.reps)],
+      ["duration", raw(metrics.durationSeconds)],
+      ["distance", raw(metrics.distanceMeters)],
+      ["effort", "8,5"],
+    ] as const)
+      draft = editTypedSet(draft, 0, 0, field, value);
+    draft.exercises[0].sets[0].setType = "drop";
+    draft.exercises[1].athleteNote = "Sin series, con nota";
+    draft = completeTypedSet(draft, 0, 0, new Date(), 0).draft;
+    const restored = typedDraftSchema.parse(JSON.parse(JSON.stringify(draft)));
+    const built = buildTypedRecording(context, restored, new Date());
+    if (!built.ok) throw Error("No se construyó el cierre nativo");
+    const document = built.payload,
+      encoded = JSON.stringify(document);
+    if (index === 0) {
+      await expect(client.saveTypedRecording(document, userId)).rejects.toMatchObject({
+        code: "network",
+      });
+      await client.reconnect();
+    }
+    expect(await client.saveTypedRecording(document, userId)).toMatchObject({
+      version: 3,
+      workoutId: document.id,
+      status: index === 0 ? "duplicate" : "created",
+    });
+    expect(JSON.stringify(document)).toBe(encoded);
+    const read = await client.typedWorkout(document.id);
+    expect(read.workout.exercises[0].sets[0]).toMatchObject({
+      metrics,
+      setType: "drop",
+      effort: 8.5,
+    });
+    expect(read.workout.exercises[1]).toMatchObject({
+      athleteNote: "Sin series, con nota",
+      sets: [],
+    });
+    const rows = await admin().from("workouts").select("id").eq("id", document.id);
+    expect(rows.error).toBeNull();
+    expect(rows.data).toHaveLength(1);
+  }
 });

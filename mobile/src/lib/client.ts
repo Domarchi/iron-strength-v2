@@ -8,6 +8,12 @@ import {
   type RecordingPayload,
 } from "../../../src/lib/mobile/recording-contracts";
 import {
+  typedRecordingPayloadSchema,
+  typedRecordingSaveSchema,
+  typedWorkoutSchema,
+  type TypedRecordingPayload,
+} from "../../../src/lib/mobile/typed-recording-contracts";
+import {
   personalLibrarySchema,
   personalMutationSchema,
   personalMutationResultSchema,
@@ -726,6 +732,43 @@ export class MobileClient {
     this.dataRevision++;
     this.listeners.forEach((fn) => fn());
     return parsed.data;
+  }
+  async typedWorkout(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese entrenamiento no está disponible.", 404);
+    const normalized = id.toLowerCase();
+    const result = typedWorkoutSchema.safeParse(await this.read("typed-recordings/" + normalized));
+    if (!result.success)
+      throw new MobileError("version", "Este resultado necesita una versión compatible de la app.");
+    if (result.data.workout.id !== normalized)
+      throw new MobileError("identity", "El entrenamiento recibido no coincide. Reintenta.");
+    return result.data;
+  }
+  async saveTypedRecording(payload: TypedRecordingPayload, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos el entrenamiento para su cuenta original.",
+      );
+    const input = typedRecordingPayloadSchema.safeParse(payload);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa las métricas y notas antes de enviarlo.", 400);
+    const result = typedRecordingSaveSchema.safeParse(
+      await this.read("typed-recordings", { version: 3, payload: input.data }),
+    );
+    if (!result.success)
+      throw new MobileError(
+        "version",
+        "La confirmación no es compatible. Conservamos tu registro.",
+      );
+    if (result.data.workoutId !== input.data.id)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este entrenamiento. Conservamos el registro.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return result.data;
   }
   async saveWorkout(payload: WorkoutPayload, expectedUserId: string) {
     if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
