@@ -23,6 +23,7 @@ export async function setupPersonalTraining(page: Page) {
   };
   const api = "https://iron-strength-seven.vercel.app/api/mobile/v1";
   const result = (payload: PersonalWorkoutPayload): MobileWorkout => {
+    const origin = payload.origin;
     const groups = new Map<number, MobileWorkout["workout"]["exercises"][number]>();
     payload.sets.forEach((set, i) => {
       const row = groups.get(set.position) ?? {
@@ -48,6 +49,14 @@ export async function setupPersonalTraining(page: Page) {
           ? { structure: control.recordings.get(payload.id)!.structure }
           : {}),
         sourceKind: payload.origin.kind,
+        ...(origin.kind === "personal"
+          ? {
+              personalRoutineId: library.state.value.routines.some((r) => r.id === origin.routineId)
+                ? origin.routineId
+                : null,
+              personalRoutineRevision: origin.revision,
+            }
+          : {}),
         title: payload.title,
         programName: null,
         sessionLabel: null,

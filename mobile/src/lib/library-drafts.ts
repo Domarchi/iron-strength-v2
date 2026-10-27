@@ -205,6 +205,25 @@ export class LibraryDraftController {
     });
     return draft.id;
   }
+  /** Protect an already reviewed, complete proposal; never replace unsaved work. */
+  async stageDraft(input: PersonalDraft) {
+    this.ensure();
+    if (this.state.pending)
+      throw Error("Resuelve el intento pendiente antes de preparar otra rutina.");
+    if (this.state.dirty) throw Error("Protege el borrador local pendiente antes de continuar.");
+    const draft = draftSchema.parse({ ...input, changed: true });
+    personalItemsInput(draft.items);
+    const existing = this.state.drafts.find((d) => d.id === draft.id);
+    if (existing?.changed)
+      throw Error("Ya existe un borrador con cambios. Ábrelo para conservar tu edición.");
+    await this.put({
+      ...this.document(),
+      drafts: existing
+        ? this.state.drafts.map((d) => (d.id === draft.id ? draft : d))
+        : [...this.state.drafts, draft],
+    });
+    return draft.id;
+  }
   async edit(id: string, change: (draft: PersonalDraft) => PersonalDraft) {
     this.ensure();
     if (this.state.pending?.draftId === id)

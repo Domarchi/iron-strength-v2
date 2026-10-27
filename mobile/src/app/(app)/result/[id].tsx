@@ -164,6 +164,29 @@ export default function Result() {
                 onPress={() => router.push({ pathname: "/repeat/[id]", params: { id: w.id } })}
               />
             ) : null}
+            {demo !== "1" ? (
+              <Action
+                label="Guardar como rutina"
+                secondary
+                disabled={q.loading || !!q.error || w.id !== id}
+                onPress={() =>
+                  router.push({ pathname: "/save-routine/[id]", params: { id: w.id } })
+                }
+              />
+            ) : null}
+            {demo !== "1" && w.sourceKind === "personal" && w.personalRoutineId ? (
+              <Action
+                label="Actualizar mi rutina"
+                quiet
+                disabled={q.loading || !!q.error || w.id !== id}
+                onPress={() =>
+                  router.push({
+                    pathname: "/save-routine/[id]",
+                    params: { id: w.id, mode: "update" },
+                  })
+                }
+              />
+            ) : null}
             {demo !== "1" ? <WorkoutComments key={w.id} workoutId={w.id} /> : null}
           </>
         ) : null}

@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { LibraryDraftController } from "./library-drafts";
 import { AtomicStoreError, type AtomicStorage } from "./atomic-contract";
+import { prepareWorkoutRoutine } from "../../../src/domain/workout-routine";
+import { repeatWorkoutFixture } from "../../../src/test/fixtures/repeat-workout";
 import type {
   PersonalMutation,
   PersonalMutationResult,
@@ -36,6 +38,118 @@ function setup() {
   return { map, storage, save, create };
 }
 describe("borradores de rutinas personales", () => {
+  it("sustituye solo una consulta sin cambios y rechaza objetivos inválidos antes de escribir", async () => {
+    const x = setup(),
+      a = x.create();
+    await a.restore();
+    const base = {
+      id: id(640),
+      name: "Consultada",
+      folderId: null,
+      revision: 1,
+      position: 0,
+      createdAt: "2026-10-26T10:00:00Z",
+      updatedAt: "2026-10-26T10:00:00Z",
+      items: [],
+    };
+    await a.createDraft(base);
+    const f = repeatWorkoutFixture(),
+      prepared = prepareWorkoutRoutine(f.workout, f.catalog);
+    if (!prepared.ok) throw Error(prepared.message);
+    const draft = {
+      id: base.id,
+      name: "Revisada",
+      folderId: null,
+      baseRevision: 3,
+      changed: true,
+      items: prepared.items,
+    };
+    const before = x.map.get(key);
+    await expect(
+      a.stageDraft({
+        ...draft,
+        items: draft.items.map((item, i) => (i ? item : { ...item, sets: "11" })),
+      }),
+    ).rejects.toThrow();
+    expect(x.map.get(key)).toBe(before);
+    await a.stageDraft(draft);
+    expect(a.getSnapshot().drafts).toEqual([draft]);
+  });
+  it("protege una propuesta completa en una escritura, la recupera y reintenta el mismo recibo", async () => {
+    const x = setup(),
+      a = x.create();
+    await a.restore();
+    const f = repeatWorkoutFixture(),
+      prepared = prepareWorkoutRoutine(f.workout, f.catalog);
+    if (!prepared.ok) throw Error(prepared.message);
+    const draft = {
+      id: id(600),
+      baseRevision: 4,
+      folderId: id(601),
+      name: prepared.title,
+      items: prepared.items,
+      changed: true,
+    };
+    await a.stageDraft(draft);
+    expect(x.storage.compareAndSet).toHaveBeenCalledOnce();
+    const b = x.create();
+    await b.restore();
+    expect(b.getSnapshot().drafts).toEqual([draft]);
+    x.save.mockRejectedValueOnce(Error("respuesta perdida"));
+    await expect(b.saveDraft(draft.id)).rejects.toThrow("perdida");
+    const c = x.create();
+    await c.restore();
+    await c.retryPending();
+    expect(x.save.mock.calls[0][0]).toMatchObject({
+      operation: "routine_save",
+      expectedRevision: 4,
+    });
+    expect(x.save.mock.calls[1][0]).toEqual(x.save.mock.calls[0][0]);
+  });
+  it("no sustituye un borrador modificado, un pendiente ni datos desconocidos", async () => {
+    const x = setup(),
+      a = x.create();
+    await a.restore();
+    const draftId = await a.createDraft();
+    const original = structuredClone(a.getSnapshot().drafts[0]);
+    await expect(a.stageDraft({ ...original, name: "Reemplazo" })).rejects.toThrow("borrador");
+    expect(a.getSnapshot().drafts[0]).toEqual(original);
+    x.save.mockRejectedValueOnce(Error("red"));
+    await a.edit(draftId, (d) => ({ ...d, name: "Original" }));
+    await expect(a.saveDraft(draftId)).rejects.toThrow();
+    await expect(a.stageDraft({ ...original, id: id(610) })).rejects.toThrow("pendiente");
+    x.map.set(key, '{"version":99}');
+    const b = x.create();
+    await b.restore();
+    await expect(b.stageDraft(original)).rejects.toThrow();
+    expect(x.map.get(key)).toBe('{"version":99}');
+  });
+  it("cuota conserva la propuesta completa en memoria y otra ventana no es sobrescrita", async () => {
+    const x = setup(),
+      a = x.create();
+    await a.restore();
+    const draft = {
+      id: id(620),
+      baseRevision: null,
+      folderId: null,
+      name: "Propuesta",
+      items: [],
+      changed: true,
+    };
+    vi.mocked(x.storage.compareAndSet).mockRejectedValueOnce(Error("quota"));
+    await expect(a.stageDraft(draft)).rejects.toThrow();
+    expect(a.getSnapshot().drafts).toEqual([draft]);
+    await expect(a.stageDraft({ ...draft, id: id(622) })).rejects.toThrow("pendiente");
+    expect(a.getSnapshot().drafts).toEqual([draft]);
+    await a.retryStorage();
+    const b = x.create();
+    await b.restore();
+    await a.edit(draft.id, (d) => ({ ...d, name: "Otra ventana" }));
+    const before = x.map.get(key);
+    await expect(b.stageDraft({ ...draft, id: id(621) })).rejects.toThrow("otra ventana");
+    expect(x.map.get(key)).toBe(before);
+    expect(b.getSnapshot().drafts.at(-1)).toMatchObject({ id: id(621) });
+  });
   it("consultar sin editar no bloquea salida y cambios nunca son sustituidos por revalidación", async () => {
     const x = setup(),
       a = x.create();
