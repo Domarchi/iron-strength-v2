@@ -1,3 +1,10 @@
+import { buildTrainingRecording } from "../mobile/src/lib/recording";
+import {
+  createPersonalTrainingDraft,
+  personalRoutineContext,
+} from "../mobile/src/lib/personal-training";
+import { personalLibrarySchema } from "../src/lib/mobile/personal-contracts";
+import { mobileCatalogSchema } from "../src/lib/mobile/exercise-contracts";
 import { randomUUID } from "node:crypto";
 import { expect, test, type APIRequestContext } from "@playwright/test";
 import { admin, COACH, createUser, resetAll, seedCoach, seedProgram } from "./support/db";
@@ -148,4 +155,81 @@ test("asignada HTTP verifica prescripción completa en SQL antes de confirmar", 
   ).workout;
   expect(result.structure).toEqual(payload.structure);
   expect(result.exercises[0].name).toBe(context.exercises[0].name);
+});
+
+test("el constructor nativo guarda una sesión adaptada y conserva la base personal", async ({
+  request,
+}) => {
+  const headers = await login(request);
+  const catalog = mobileCatalogSchema.parse(
+    await (await request.get("/api/mobile/v1/exercises", { headers })).json(),
+  );
+  const routineId = randomUUID(),
+    groupId = randomUUID();
+  const mutation = await request.post("/api/mobile/v1/library/mutations", {
+    headers,
+    data: {
+      version: 1,
+      requestId: randomUUID(),
+      operation: "routine_create",
+      targetId: routineId,
+      expectedRevision: 0,
+      data: {
+        name: "Superior estructurado",
+        folderId: null,
+        items: catalog.exercises.slice(0, 2).map((e) => ({
+          id: randomUUID(),
+          exerciseId: e.id,
+          sets: 2,
+          repsMin: 8,
+          repsMax: 12,
+          targetWeightKg: 30,
+          note: "Controlado",
+          restSeconds: 90,
+          supersetId: groupId,
+          supersetRestSeconds: 60,
+          series: null,
+        })),
+      },
+    },
+  });
+  expect(mutation.status()).toBe(200);
+  const library = personalLibrarySchema.parse(
+    await (await request.get("/api/mobile/v1/library", { headers })).json(),
+  );
+  const routine = library.routines.find((r) => r.id === routineId)!;
+  expect(routine).toBeDefined();
+  const context = personalRoutineContext(routine);
+  context.exercises.reverse();
+  const now = new Date(),
+    id = randomUUID();
+  const profile = mobileSessionSchema.parse(
+    await (
+      await request.post("/api/mobile/v1/auth/login", { data: { email: emails[0], password } })
+    ).json(),
+  ).profile;
+  const draft = createPersonalTrainingDraft({ context, now, userId: profile.id, workoutId: id });
+  draft.exercises[0].sets[0] = { ...draft.exercises[0].sets[0], reps: "10", done: true };
+  draft.exercises[0].supersetRestSeconds = 120;
+  draft.exercises[1].supersetRestSeconds = 120;
+  const built = buildTrainingRecording(context, draft, now);
+  expect(built.ok).toBe(true);
+  if (!built.ok) throw Error("No se construyó el registro de prueba");
+  const response = await request.post(path, {
+    headers,
+    data: { version: 2, payload: built.payload },
+  });
+  expect(response.status()).toBe(200);
+  expect(recordingSaveSchema.parse(await response.json()).workoutId).toBe(id);
+  const result = mobileWorkoutSchema.parse(
+    await (await request.get(`/api/mobile/v1/workouts/${id}`, { headers })).json(),
+  ).workout;
+  expect(result.structure).toEqual(built.payload.structure);
+  expect(result.exercises[0].exerciseId).toBe(routine.items[1].exerciseId);
+  expect(result.structure!.exercises).toHaveLength(2);
+  expect(result.exercises).toHaveLength(1);
+  const after = personalLibrarySchema.parse(
+    await (await request.get("/api/mobile/v1/library", { headers })).json(),
+  );
+  expect(after.routines.find((r) => r.id === routineId)).toEqual(routine);
 });

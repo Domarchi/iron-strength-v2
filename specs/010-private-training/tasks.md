@@ -10,7 +10,7 @@
 - [ ] T216 · Calculadoras de discos/calentamiento y preferencias de entrenamiento/unidades, con vista previa y confirmación de cambios.
 - [ ] T217 · Ejercicios personales y archivado con permisos propios y conservación de referencias históricas.
 - [ ] T218 · Historial/calendario, edición dentro de ventana, distribución muscular, regularidad y resúmenes con datos reales.
-- [ ] T219 · Planificación/revisión del coach compatible con tipos y métricas nuevos, copias y procedencia preservadas.
+- [ ] T219 · Planificación/revisión del coach compatible con tipos y métricas nuevos, copias, exportación y procedencia preservadas.
 - [ ] T220 · Catálogo/bases personales offline y migración verificada de borradores/paquetes/cola, aislamiento por cuenta.
 - [ ] T221 · Regresión completa, acabado por pantalla, comprobación nativa disponible y publicación del mismo artefacto validado. Aceptación física/tiendas separadas.
 
