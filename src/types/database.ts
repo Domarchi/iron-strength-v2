@@ -117,14 +117,14 @@ isOneToOne: false
                   ]
                 },"exercises": {
                   Row: {
-                    "archived_at": string | null,"coach_id": string | null,"created_at": string,"equipment": string | null,"id": string,"is_bodyweight": boolean,"muscle_group": string,"name": string,"progression_increment_kg": number
+                    "archived_at": string | null,"coach_id": string | null,"created_at": string,"equipment": string | null,"id": string,"is_bodyweight": boolean,"muscle_group": string,"name": string,"progression_increment_kg": number,"record_type": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group": string,"name": string,"progression_increment_kg"?: number
+                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group": string,"name": string,"progression_increment_kg"?: number,"record_type"?: string | null
                   }
                   Update: {
-                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group"?: string,"name"?: string,"progression_increment_kg"?: number
+                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group"?: string,"name"?: string,"progression_increment_kg"?: number,"record_type"?: string | null
                   }
                   Relationships: [
                     {
@@ -595,14 +595,14 @@ isOneToOne: false
                   ]
                 },"workout_sets": {
                   Row: {
-                    "exercise_id": string,"exercise_name": string,"id": string,"is_warmup": boolean,"position": number,"prescribed_exercise_id": string | null,"prescribed_exercise_name": string | null,"reps": number,"session_exercise_id": string | null,"set_number": number,"student_id": string,"weight_kg": number,"workout_id": string
+                    "distance_meters": number | null,"duration_seconds": number | null,"effort": number | null,"exercise_id": string,"exercise_name": string,"id": string,"is_warmup": boolean,"position": number,"prescribed_exercise_id": string | null,"prescribed_exercise_name": string | null,"record_type": string | null,"reps": number | null,"session_exercise_id": string | null,"set_number": number,"set_type": string | null,"student_id": string,"weight_kg": number | null,"workout_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"exercise_name": string,"id"?: string,"is_warmup"?: boolean,"position": number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"reps": number,"session_exercise_id"?: string | null,"set_number": number,"student_id": string,"weight_kg": number,"workout_id": string
+                    "distance_meters"?: number | null,"duration_seconds"?: number | null,"effort"?: number | null,"exercise_id": string,"exercise_name": string,"id"?: string,"is_warmup"?: boolean,"position": number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"record_type"?: string | null,"reps"?: number | null,"session_exercise_id"?: string | null,"set_number": number,"set_type"?: string | null,"student_id": string,"weight_kg"?: number | null,"workout_id": string
                   }
                   Update: {
-                    "exercise_id"?: string,"exercise_name"?: string,"id"?: string,"is_warmup"?: boolean,"position"?: number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"reps"?: number,"session_exercise_id"?: string | null,"set_number"?: number,"student_id"?: string,"weight_kg"?: number,"workout_id"?: string
+                    "distance_meters"?: number | null,"duration_seconds"?: number | null,"effort"?: number | null,"exercise_id"?: string,"exercise_name"?: string,"id"?: string,"is_warmup"?: boolean,"position"?: number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"record_type"?: string | null,"reps"?: number | null,"session_exercise_id"?: string | null,"set_number"?: number,"set_type"?: string | null,"student_id"?: string,"weight_kg"?: number | null,"workout_id"?: string
                   }
                   Relationships: [
                     {
@@ -633,14 +633,14 @@ isOneToOne: false
                   ]
                 },"workouts": {
                   Row: {
-                    "created_at": string,"duration_seconds": number,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"personal_routine_id": string | null,"personal_routine_revision": number | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"source_kind": string,"started_at": string,"structure": Json | null,"student_id": string,"title": string | null,"week_start": string | null
+                    "created_at": string,"duration_seconds": number,"exercise_notes": Json | null,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"personal_routine_id": string | null,"personal_routine_revision": number | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"source_kind": string,"started_at": string,"structure": Json | null,"student_id": string,"title": string | null,"week_start": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"duration_seconds": number,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at": string,"structure"?: Json | null,"student_id": string,"title"?: string | null,"week_start"?: never
+                    "created_at"?: string,"duration_seconds": number,"exercise_notes"?: Json | null,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at": string,"structure"?: Json | null,"student_id": string,"title"?: string | null,"week_start"?: never
                   }
                   Update: {
-                    "created_at"?: string,"duration_seconds"?: number,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at"?: string,"structure"?: Json | null,"student_id"?: string,"title"?: string | null,"week_start"?: never
+                    "created_at"?: string,"duration_seconds"?: number,"exercise_notes"?: Json | null,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at"?: string,"structure"?: Json | null,"student_id"?: string,"title"?: string | null,"week_start"?: never
                   }
                   Relationships: [
                     {
@@ -762,6 +762,9 @@ isOneToOne: false
 "save_personal_workout":
 { Args: { "p_workout": Json }; Returns: Json
                            },
+"save_typed_workout_recording":
+{ Args: { "p_recording": Json }; Returns: Json
+                           },
 "save_workout":
 { Args: { "p_workout": Json }; Returns: Json
                            },
@@ -771,6 +774,9 @@ isOneToOne: false
 "training_metric_dimensions":
 { Args: { "p_kind": string }; Returns: (string)[]
                            },
+"training_structure_legacy":
+{ Args: { "s": Json }; Returns: Json
+                           },
 "unread_comments":
 { Args: Record<PropertyKey, never>; Returns: {
               "last_comment_at": string,"student_id": string,"unread_count": number,"workout_id": string
@@ -778,6 +784,9 @@ isOneToOne: false
                            },
 "valid_prescription_series":
 { Args: { "p_max": number,"p_min": number,"p_series": Json,"p_sets": number,"p_weight": number }; Returns: boolean
+                           },
+"valid_training_exercise_notes":
+{ Args: { "n": Json,"s": Json }; Returns: boolean
                            },
 "valid_training_metrics":
 { Args: { "p_metrics": Json }; Returns: boolean
@@ -796,6 +805,15 @@ isOneToOne: false
                            },
 "valid_training_target":
 { Args: { "p_kind": string,"p_target": Json }; Returns: boolean
+                           },
+"valid_training_uuid":
+{ Args: { "v": Json }; Returns: boolean
+                           },
+"valid_typed_workout_recording":
+{ Args: { "v": Json }; Returns: boolean
+                           },
+"valid_typed_workout_structure":
+{ Args: { "v": Json }; Returns: boolean
                            },
 "valid_workout_recording":
 { Args: { "p_recording": Json }; Returns: boolean

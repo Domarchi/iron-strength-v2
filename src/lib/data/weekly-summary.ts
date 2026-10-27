@@ -1,3 +1,4 @@
+import { repetitionValues } from "./stored-training-set";
 // Resumen semanal del alumno (RF-32; DC-16, DC-29): la semana anterior completa y la semana en curso
 // (parcial), cada una con sus cumplidas, entrenamientos, récords, volumen y variación frente a la
 // semana previa. Se calcula al abrirlo con las reglas del dominio; la RLS limita todo al alumno
@@ -32,7 +33,9 @@ const MAX_WORKOUTS = 1000;
 async function fetchWorkouts(db: Client, studentId: string): Promise<SummaryWorkout[]> {
   const { data, error } = await db
     .from("workouts")
-    .select("id, started_at, performed_on, workout_sets(exercise_id, weight_kg, reps, is_warmup)")
+    .select(
+      "id, started_at, performed_on, workout_sets(exercise_id, weight_kg, reps, is_warmup, record_type)",
+    )
     .eq("student_id", studentId)
     .order("started_at", { ascending: false })
     .limit(MAX_WORKOUTS);
@@ -44,8 +47,7 @@ async function fetchWorkouts(db: Client, studentId: string): Promise<SummaryWork
     performedOn: w.performed_on as string,
     sets: w.workout_sets.map((s) => ({
       exerciseId: s.exercise_id,
-      weightKg: Number(s.weight_kg),
-      reps: s.reps,
+      ...repetitionValues(s),
       isWarmup: s.is_warmup,
     })),
   }));

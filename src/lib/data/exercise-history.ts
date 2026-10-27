@@ -1,3 +1,4 @@
+import { repetitionValues } from "./stored-training-set";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { santiagoDate } from "@/domain/dates";
@@ -39,7 +40,7 @@ export async function listExerciseHistory(
   let query = db
     .from("workouts")
     .select(
-      "id, started_at, performed_on, session_label, workout_sets!inner(id, exercise_id, position, set_number, weight_kg, reps, is_warmup)",
+      "id, started_at, performed_on, session_label, workout_sets!inner(id, exercise_id, position, set_number, weight_kg, reps, is_warmup, record_type)",
     )
     .eq("student_id", studentId)
     .eq("workout_sets.exercise_id", exerciseId)
@@ -66,8 +67,7 @@ export async function listExerciseHistory(
           id: s.id,
           position: s.position,
           setNumber: s.set_number,
-          weightKg: Number(s.weight_kg),
-          reps: s.reps,
+          ...repetitionValues(s),
           isWarmup: s.is_warmup,
         })),
     })),

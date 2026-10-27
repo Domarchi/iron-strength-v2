@@ -1,3 +1,4 @@
+import { repetitionValues } from "./stored-training-set";
 // Contexto de una sesión a entrenar (RF-19, RF-20, RF-15b, DC-9): ejercicios en orden con su
 // prescripción, "última vez", peso previo para precargar y la sugerencia de progresión.
 import { prescribedSeriesSchema, isUniformPrescription } from "@/domain/prescription-series";
@@ -87,7 +88,7 @@ export async function getWorkoutContext(
 
   const { data: recent, error: historyError } = await db
     .from("workouts")
-    .select("id, started_at, workout_sets(exercise_id, weight_kg, reps, is_warmup)")
+    .select("id, started_at, workout_sets(exercise_id, weight_kg, reps, is_warmup, record_type)")
     .eq("student_id", studentId)
     .order("started_at", { ascending: false })
     .order("position", { referencedTable: "workout_sets" })
@@ -101,8 +102,7 @@ export async function getWorkoutContext(
     startedAt: w.started_at,
     sets: w.workout_sets.map((s) => ({
       exerciseId: s.exercise_id,
-      weightKg: Number(s.weight_kg),
-      reps: s.reps,
+      ...repetitionValues(s),
       isWarmup: s.is_warmup,
     })),
   }));

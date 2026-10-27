@@ -1,3 +1,4 @@
+import { repetitionValues } from "./stored-training-set";
 import { workoutSourceKindSchema } from "../mobile/personal-workout-contracts";
 // Historial listo para exportar a CSV (RF-47). La RLS decide quién puede ver al alumno: el propio
 // alumno y su coach. Para cualquier otro, el alumno "no existe" (no se revela que existe).
@@ -26,12 +27,14 @@ export async function getHistoryExport(db: Client, studentId: string): Promise<H
     .from("workouts")
     .select(
       `started_at, performed_on, source_kind, title, session_label, perceived_effort, note,
-       workout_sets ( prescribed_exercise_name, exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
+       workout_sets ( prescribed_exercise_name, exercise_name, position, set_number, weight_kg, reps, is_warmup, record_type, set_type )`,
     )
     .eq("student_id", studentId)
     .order("started_at", { ascending: true })
     .limit(MAX_WORKOUTS);
   if (error) throw new Error(`No se pudo cargar el historial: ${error.message}`);
+  if (data.some((w) => w.workout_sets.some((s) => s.set_type !== null)))
+    throw Error("Este registro requiere la exportación de métricas avanzadas.");
 
   const rows: ExportSet[] = data.flatMap((workout) =>
     [...workout.workout_sets]
@@ -47,8 +50,7 @@ export async function getHistoryExport(db: Client, studentId: string): Promise<H
         prescribedExerciseName: set.prescribed_exercise_name,
         setNumber: set.set_number,
         isWarmup: set.is_warmup,
-        weightKg: Number(set.weight_kg),
-        reps: set.reps,
+        ...repetitionValues(set),
       })),
   );
 

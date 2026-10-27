@@ -1,3 +1,4 @@
+import { repetitionValues } from "./stored-training-set";
 // Progreso por ejercicio, series para los gráficos y récords de un entrenamiento (RF-28, RF-30,
 // DC-6, DC-7). Trae las series con paginación y calcula con el dominio puro (`src/domain`).
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -37,7 +38,7 @@ export async function fetchStudentSets(
     let query = db
       .from("workout_sets")
       .select(
-        "id, workout_id, exercise_id, exercise_name, weight_kg, reps, is_warmup, workouts!inner(started_at)",
+        "id, workout_id, exercise_id, exercise_name, weight_kg, reps, is_warmup, record_type, workouts!inner(started_at)",
       )
       .eq("student_id", studentId)
       .order("id")
@@ -54,8 +55,7 @@ export async function fetchStudentSets(
         workoutId: r.workout_id,
         exerciseId: r.exercise_id,
         name: r.exercise_name,
-        weightKg: Number(r.weight_kg),
-        reps: r.reps,
+        ...repetitionValues(r),
         isWarmup: r.is_warmup,
         startedAt: (r.workouts as unknown as { started_at: string }).started_at,
       });
@@ -152,7 +152,7 @@ export async function getWorkoutRecords(db: Client, workoutId: string): Promise<
   const { data: workout, error } = await db
     .from("workouts")
     .select(
-      "student_id, started_at, workout_sets(exercise_id, exercise_name, weight_kg, reps, is_warmup)",
+      "student_id, started_at, workout_sets(exercise_id, exercise_name, weight_kg, reps, is_warmup, record_type)",
     )
     .eq("id", workoutId)
     .maybeSingle();
@@ -161,8 +161,7 @@ export async function getWorkoutRecords(db: Client, workoutId: string): Promise<
 
   const current: SetRecord[] = workout.workout_sets.map((s) => ({
     exerciseId: s.exercise_id,
-    weightKg: Number(s.weight_kg),
-    reps: s.reps,
+    ...repetitionValues(s),
     isWarmup: s.is_warmup,
   }));
   const names = new Map(workout.workout_sets.map((s) => [s.exercise_id, s.exercise_name]));

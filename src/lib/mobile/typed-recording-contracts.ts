@@ -10,8 +10,9 @@ import { workoutPayloadSchema } from "../workout/payload";
 import {
   personalWorkoutOriginSchema,
   personalWorkoutReceiptSchema,
+  workoutSourceKindSchema,
 } from "./personal-workout-contracts";
-const uuid = z.uuid();
+const uuid = z.uuid().transform((value) => value.toLowerCase());
 const rest = z.number().int().nullable().refine(validRestSeconds);
 const row = z
   .object({
@@ -47,6 +48,10 @@ const assignedSet = set.extend({
   prescribedExerciseId: uuid,
   exerciseName: z.string().min(1).max(100),
 });
+export const trainingExerciseNotesSchema = z
+  .array(z.object({ sessionExerciseId: uuid, note: athleteNoteSchema }).strict())
+  .min(1)
+  .max(15);
 const header = workoutPayloadSchema
   .pick({
     id: true,
@@ -57,11 +62,9 @@ const header = workoutPayloadSchema
     note: true,
   })
   .extend({
+    id: uuid,
     version: z.literal(2),
-    exerciseNotes: z
-      .array(z.object({ sessionExerciseId: uuid, note: athleteNoteSchema }).strict())
-      .min(1)
-      .max(15),
+    exerciseNotes: trainingExerciseNotesSchema,
   });
 const ownWorkout = header
   .extend({
@@ -144,3 +147,68 @@ export const typedRecordingSaveSchema = z
     workoutId: uuid,
   })
   .strict();
+
+const resultSet = z
+  .object({
+    id: uuid,
+    setNumber: z.number().int().min(1).max(20),
+    metrics: trainingMetricsSchema,
+    ...trainingSetDetailsSchema.shape,
+  })
+  .strict();
+export const typedWorkoutSchema = z
+  .object({
+    version: z.literal(3),
+    workout: z
+      .object({
+        id: uuid,
+        sourceKind: workoutSourceKindSchema,
+        title: z.string().nullable(),
+        personalRoutineId: uuid.nullable(),
+        personalRoutineRevision: z.number().int().nonnegative().nullable(),
+        programName: z.string().nullable(),
+        sessionLabel: z.string().nullable(),
+        startedAt: z.iso.datetime({ offset: true }),
+        performedOn: z.iso.date(),
+        durationSeconds: z.number().int().nonnegative(),
+        perceivedEffort: z.number().nullable(),
+        note: z.string().nullable(),
+        structure: typedWorkoutStructureSchema,
+        exercises: z
+          .array(
+            row.extend({
+              position: z.number().int().min(0).max(14),
+              name: z.string(),
+              prescribedExerciseName: z.string().nullable(),
+              athleteNote: athleteNoteSchema,
+              sets: z.array(resultSet).max(20),
+            }),
+          )
+          .min(1)
+          .max(15),
+        summary: z
+          .object({
+            workingSets: z.number().int().nonnegative(),
+            volumeKg: z.number().nonnegative(),
+            bodyweightReps: z.number().int().nonnegative(),
+            exerciseCount: z.number().int().nonnegative(),
+            recordedSeconds: z.number().int().nonnegative(),
+            distanceMeters: z.number().nonnegative(),
+          })
+          .strict(),
+      })
+      .strict(),
+  })
+  .strict()
+  .refine(
+    ({ workout: w }) =>
+      w.exercises.length === w.structure.exercises.length &&
+      w.exercises.every(
+        (r, i) =>
+          r.position === i &&
+          r.id === w.structure.exercises[i].id &&
+          r.exerciseId === w.structure.exercises[i].exerciseId &&
+          r.sets.every((s) => s.metrics.recordType === r.prescribed.recordType),
+      ),
+  );
+export type TypedWorkout = z.infer<typeof typedWorkoutSchema>;

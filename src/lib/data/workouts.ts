@@ -7,6 +7,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { setVolume } from "../../domain/volume.ts";
 import type { DateString } from "../../domain/dates.ts";
 import type { Database } from "../../types/database.ts";
+import { repetitionValues, storedTrainingSet } from "./stored-training-set";
+import { trainingTotals } from "../../domain/training-metrics";
 
 type Client = SupabaseClient<Database>;
 
@@ -15,6 +17,8 @@ export type WorkoutSummary = {
   volumeKg: number;
   bodyweightReps: number;
   exerciseCount: number;
+  recordedSeconds?: number;
+  distanceMeters?: number;
 };
 
 export type WorkoutSetRow = {
@@ -60,16 +64,30 @@ type RawSet = {
   exercise_name: string;
   position: number;
   set_number: number;
-  weight_kg: number | string;
-  reps: number;
+  weight_kg: number | string | null;
+  reps: number | null;
   is_warmup: boolean;
+  record_type: string | null;
+  duration_seconds: number | null;
+  distance_meters: number | null;
+  set_type: string | null;
+  effort: number | null;
 };
 
-function summarize(
-  sets: Pick<RawSet, "weight_kg" | "reps" | "is_warmup" | "exercise_id">[],
-): WorkoutSummary {
+function summarize(sets: Omit<RawSet, "id" | "exercise_name" | "set_number">[]): WorkoutSummary {
+  if (sets.some((s) => s.set_type !== null)) {
+    const totals = trainingTotals(sets.map(storedTrainingSet));
+    return {
+      workingSets: totals.workingSets,
+      volumeKg: totals.externalVolumeKg,
+      bodyweightReps: totals.bodyweightReps,
+      exerciseCount: new Set(sets.map((s) => s.position)).size,
+      recordedSeconds: totals.durationSeconds,
+      distanceMeters: totals.distanceMeters,
+    };
+  }
   const { loadKg, bodyweightReps } = setVolume(
-    sets.map((s) => ({ weightKg: Number(s.weight_kg), reps: s.reps, isWarmup: s.is_warmup })),
+    sets.map((s) => ({ ...repetitionValues(s), isWarmup: s.is_warmup })),
   );
   return {
     workingSets: sets.filter((s) => !s.is_warmup).length,
@@ -89,13 +107,15 @@ export async function getWorkoutDetail(
     .select(
       `id, student_id, program_id, source_kind, title, personal_routine_id, personal_routine_revision, session_label, started_at, duration_seconds, performed_on, perceived_effort, note, structure,
        programs ( name ),
-       workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
+       workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup, record_type,duration_seconds,distance_meters,set_type,effort )`,
     )
     .eq("id", id);
   if (ownerId) query = query.eq("student_id", ownerId);
   const { data, error } = await query.maybeSingle();
   if (error) throw new Error(`No se pudo cargar el entrenamiento: ${error.message}`);
   if (!data) return null;
+  // Older result consumers must not reinterpret a new document as weight/repetitions.
+  const structure = data.structure == null ? null : workoutStructureSchema.parse(data.structure);
 
   const grouped = new Map<number, WorkoutExerciseRow>();
   for (const s of [...data.workout_sets].sort(
@@ -112,15 +132,14 @@ export async function getWorkoutDetail(
     row.sets.push({
       id: s.id,
       setNumber: s.set_number,
-      weightKg: Number(s.weight_kg),
-      reps: s.reps,
+      ...repetitionValues(s),
       isWarmup: s.is_warmup,
     });
     grouped.set(s.position, row);
   }
 
   return {
-    ...(data.structure == null ? {} : { structure: workoutStructureSchema.parse(data.structure) }),
+    ...(structure == null ? {} : { structure }),
     id: data.id,
     studentId: data.student_id,
     sourceKind: workoutSourceKindSchema.parse(data.source_kind),
@@ -161,7 +180,7 @@ export async function listWorkouts(
   let query = db
     .from("workouts")
     .select(
-      "id, source_kind, title, session_label, started_at, performed_on, duration_seconds, perceived_effort, note, workout_sets(exercise_id, weight_kg, reps, is_warmup)",
+      "id, source_kind, title, session_label, started_at, performed_on, duration_seconds, perceived_effort, note, workout_sets(exercise_id,position,weight_kg,reps,is_warmup,record_type,duration_seconds,distance_meters,set_type,effort)",
     )
     .eq("student_id", studentId)
     .order("started_at", { ascending: false })
