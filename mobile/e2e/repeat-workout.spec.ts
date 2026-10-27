@@ -40,6 +40,39 @@ async function setup(page: Page, structured = true, missing = false) {
   await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
   return { ...fixture, doc };
 }
+test("descanso habitual de grupo incompleto anterior se conserva al repetir y registrar", async ({
+  page,
+}) => {
+  const { doc, control } = await setup(page);
+  doc.structure.exercises.forEach((e) => {
+    e.supersetRestSeconds = null;
+    e.restSeconds = 0;
+  });
+  doc.workout.sets = doc.workout.sets.filter((s) => s.position === 0);
+  control.records.set(doc.id, doc.workout);
+  await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
+  await expect(
+    page.getByText("Una superserie queda individual y conserva el descanso de la ronda.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
+  await page.getByRole("checkbox", { name: "Completar serie 2", exact: true }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (k) => JSON.parse(localStorage.getItem(k)!).active.draft.rest?.totalSeconds,
+        key,
+      ),
+    )
+    .toBe(90);
+  const row = await page.evaluate(
+    (k) => JSON.parse(localStorage.getItem(k)!).active.routine.exercises[0],
+    key,
+  );
+  expect(row.supersetId).toBeNull();
+  expect(row.restSeconds).toBe(90);
+});
 for (const theme of ["light", "dark"] as const) {
   test(`repetir con estructura ${theme}: vista previa sin iniciar y copia con valores/grupos independientes`, async ({
     page,

@@ -28,6 +28,7 @@ import { elapsedSessionSeconds } from "../../../src/domain/session-timer";
 import { Action, IconAction, Notice, Page, s, usePalette } from "./ui";
 import { RestControls } from "./rest-controls";
 import { SetCheck } from "./set-check";
+import { formatTrainingTarget } from "../lib/training-labels";
 const classes = {
   working: "Trabajo",
   warmup: "Calentamiento",
@@ -267,16 +268,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                 >
                   {target ? (
                     <Text style={[s.caption, { color: p.muted }]}>
-                      {target.repsMin !== null
-                        ? `${target.repsMin}${target.repsMax !== target.repsMin ? `–${target.repsMax}` : ""} reps`
-                        : ""}
-                      {target.targetWeightKg !== null ? ` · ${target.targetWeightKg} kg` : ""}
-                      {target.targetDurationSeconds !== null
-                        ? `${target.targetDurationSeconds} s`
-                        : ""}
-                      {target.targetDistanceMeters !== null
-                        ? ` · ${target.targetDistanceMeters} m`
-                        : ""}
+                      {formatTrainingTarget(target)}
                     </Text>
                   ) : null}
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>

@@ -8,6 +8,13 @@ import {
 } from "../src/lib/mobile/typed-exercise-contracts";
 import { typedRecordingFixture } from "../src/test/fixtures/typed-recording";
 import { trainingMetricCases } from "../src/test/fixtures/training-metrics";
+import { MobileClient } from "../mobile/src/lib/client";
+import { TrainingController } from "../mobile/src/lib/training";
+import { freeRoutineContext } from "../mobile/src/lib/personal-training";
+import { sendQueuedRecording } from "../mobile/src/lib/queued-recording";
+import { NativeWorkoutQueue } from "../mobile/src/lib/sync-queue";
+import { handoffPending } from "../mobile/src/lib/queue-transfer";
+import { prepareTypedWorkoutRepeat } from "../src/domain/typed-workout-repeat";
 const path = "/api/mobile/v1/training-catalog",
   email = "typed-catalog@iron-strength.e2e.test",
   other = "typed-catalog-other@iron-strength.e2e.test",
@@ -53,11 +60,13 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => {
   await resetAll();
-  if (ids?.length)
-    await admin()
+  if (ids?.length) {
+    const removed = await admin()
       .from("exercises")
       .delete()
       .in("id", [...ids, archived]);
+    if (removed.error) throw removed.error;
+  }
 });
 async function login(request: APIRequestContext, address = email) {
   const r = await request.post("/api/mobile/v1/auth/login", {
@@ -157,6 +166,153 @@ test("ficha2 pagina entrenamientos propios completos y conserva cada dimensión/
     }
   }
   expect((await request.get(path + "/" + archived, { headers })).status()).toBe(404);
+});
+test("catálogo real → selección nativa → registro3 → cola recuperada → SQL e historial sin duplicados", async ({
+  baseURL,
+}) => {
+  if (!baseURL) throw Error("Sin servidor aislado");
+  let credential: string | null = null,
+    lose = true;
+  const client = new MobileClient(
+    baseURL,
+    {
+      get: async () => credential,
+      set: async (value) => {
+        credential = value;
+      },
+      remove: async () => {
+        credential = null;
+      },
+    },
+    async (url, options) => {
+      const response = await fetch(url, options);
+      if (url.endsWith("/typed-recordings") && response.ok && lose) {
+        lose = false;
+        throw Error("lost after commit");
+      }
+      return response;
+    },
+    Date.now,
+    true,
+  );
+  await client.login(email, password);
+  const session = client.getSnapshot();
+  if (session.status !== "authenticated") throw Error("Sin identidad");
+  const userId = session.session.profile.id,
+    catalog = await client.trainingCatalog();
+  const entries = ids.map((id, i) => {
+    const entry = catalog.exercises.find((e) => e.id === id);
+    if (!entry || entry.recordType !== trainingMetricCases[i].recordType)
+      throw Error("Catálogo incompleto");
+    return entry;
+  });
+  const data = new Map<string, string>(),
+    storage = {
+      get: async (k: string) => data.get(k) ?? null,
+      set: async (k: string, v: string) => {
+        data.set(k, v);
+      },
+      remove: async (k: string) => {
+        data.delete(k);
+      },
+      compareAndSet: async (k: string, before: string | null, next: string) => {
+        if ((data.get(k) ?? null) !== before) throw Error("conflict");
+        data.set(k, next);
+      },
+    },
+    send = (p: Parameters<typeof sendQueuedRecording>[1]) => sendQueuedRecording(client, p, userId);
+  const create = () => new TrainingController(userId, storage, send, () => new Date(), randomUUID);
+  const controller = create();
+  await controller.restore();
+  await controller.startPersonal(freeRoutineContext());
+  const original = controller.getSnapshot().active!;
+  await controller.organizeCatalog({ kind: "add", entries });
+  expect(controller.getSnapshot().active?.draft.workoutId).toBe(original.draft.workoutId);
+  controller.editTyped((d) => ({
+    ...d,
+    exercises: d.exercises.map((e, i) => {
+      const m = trainingMetricCases[i];
+      return {
+        ...e,
+        athleteNote: `Nota ${i}`,
+        sets: e.sets.map((s, j) =>
+          j
+            ? s
+            : {
+                ...s,
+                weight: m.weightKg === null ? "" : String(m.weightKg),
+                reps: m.reps === null ? "" : String(m.reps),
+                duration: m.durationSeconds === null ? "" : String(m.durationSeconds),
+                distance: m.distanceMeters === null ? "" : String(m.distanceMeters),
+                setType: i === 0 ? "failure" : "drop",
+                effort: "8,5",
+              },
+        ),
+      };
+    }),
+  }));
+  await controller.flush();
+  for (let i = 0; i < entries.length; i++) await controller.complete(i, 0);
+  await expect(controller.finish(8, "Circuito desde catálogo")).rejects.toMatchObject({
+    code: "network",
+  });
+  const document = controller.getSnapshot().active?.payload;
+  if (!document || document.version !== 3) throw Error("Sin documento3");
+  expect(document.workout.sets.map((s) => s.metrics)).toEqual(
+    trainingMetricCases.map((m) => ({ ...m })),
+  );
+  const restored = create();
+  await restored.restore();
+  expect(restored.getSnapshot().active?.payload).toEqual(document);
+  const queue = new NativeWorkoutQueue(userId, storage, send);
+  await queue.restore();
+  await handoffPending(restored, queue);
+  expect(restored.getSnapshot().active).toBeNull();
+  await client.reconnect();
+  expect(await queue.sync({ manual: true })).toEqual({ confirmed: 1, failed: 0 });
+  const result = await client.typedWorkout(document.id);
+  expect(result.workout.exercises.map((e) => e.name)).toEqual(entries.map((e) => e.name));
+  for (const [i, entry] of entries.entries()) {
+    expect(result.workout.exercises[i].sets[0]).toMatchObject({
+      metrics: trainingMetricCases[i],
+      effort: 8.5,
+      setType: i === 0 ? "failure" : "drop",
+    });
+    const detail = await client.trainingExerciseDetail(entry.id);
+    if (detail.version !== 2) throw Error("Sin ficha2");
+    const recorded = detail.history.items.find((w) => w.id === document.id);
+    expect(recorded?.exerciseNotes).toContainEqual({ position: i, note: `Nota ${i}` });
+    expect(recorded?.sets[0].metrics).toEqual(trainingMetricCases[i]);
+  }
+  const workouts = await admin().from("workouts").select("id").eq("id", document.id);
+  expect(workouts.error).toBeNull();
+  expect(workouts.data).toHaveLength(1);
+  const sets = await admin().from("workout_sets").select("id").eq("workout_id", document.id);
+  expect(sets.error).toBeNull();
+  expect(sets.data).toHaveLength(9);
+  const prepared = prepareTypedWorkoutRepeat(result.workout, entries);
+  if (!prepared.ok) throw Error(prepared.message);
+  const repeated = create();
+  await repeated.restore();
+  await repeated.startRepeated(prepared.plan);
+  const copy = repeated.getSnapshot().active!;
+  expect(copy.draft.workoutId).not.toBe(document.id);
+  expect(copy.draft.exercises.every((e) => e.sets.every((s) => !s.done))).toBe(true);
+  for (let i = 0; i < 9; i++) await repeated.complete(i, 0);
+  expect(await repeated.finish(null, null)).toEqual({ mode: "real", id: copy.draft.workoutId });
+  const copied = await client.typedWorkout(copy.draft.workoutId);
+  expect(copied.workout.sourceKind).toBe("free");
+  expect(copied.workout.exercises.flatMap((e) => e.sets.map((s) => s.metrics))).toEqual(
+    trainingMetricCases.map((m) => ({ ...m })),
+  );
+  expect(
+    copied.workout.exercises.every(
+      (e) => e.athleteNote === null && e.sets.every((s) => s.effort === null),
+    ),
+  ).toBe(true);
+  expect(copied.workout.note).toBeNull();
+  expect(copied.workout.perceivedEffort).toBeNull();
+  expect((await client.typedWorkout(document.id)).workout).toEqual(result.workout);
 });
 test("queries/UUID/cursors inválidos no pasan a datos y token de un usuario desactivado deja de autorizar", async ({
   request,

@@ -9,17 +9,55 @@ import {
   ungroupExerciseLayout,
   type ExerciseLayout,
 } from "../../../src/domain/exercise-layout";
+import { mobileCatalogEntrySchema } from "../../../src/lib/mobile/exercise-contracts";
 import {
-  mobileCatalogEntrySchema,
-  type MobileCatalogEntry,
-} from "../../../src/lib/mobile/exercise-contracts";
+  typedCatalogEntrySchema,
+  type TypedCatalogEntry,
+} from "../../../src/lib/mobile/typed-exercise-contracts";
 import { createTypedDraft, typedContextSchema, typedDraftSchema } from "./typed-training";
 import { TrainingChangeNeedsReview, type TrainingStructureChange } from "./training-structure";
 import type { TypedActiveTraining } from "./training";
 
+export type TypedTrainingStructureChange =
+  | Exclude<TrainingStructureChange, { kind: "add" | "replace" }>
+  | { kind: "add"; entries: TypedCatalogEntry[] }
+  | { kind: "replace"; id: string; entry: TypedCatalogEntry; confirmedStamp?: string };
+export const catalogSelectionSchema = z.discriminatedUnion("kind", [
+  z
+    .object({ kind: z.literal("add"), entries: z.array(typedCatalogEntrySchema).min(1).max(15) })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("replace"),
+      id: z.uuid(),
+      entry: typedCatalogEntrySchema,
+      confirmedStamp: z.string().optional(),
+    })
+    .strict(),
+]);
+export type CatalogSelection = z.infer<typeof catalogSelectionSchema>;
+/** An older caller must explicitly retain legacy interpretation, never strip a modern type. */
+export function legacyStructureOperation(
+  op: TrainingStructureChange,
+): TypedTrainingStructureChange {
+  const entry = (value: unknown) => {
+    if (value && typeof value === "object" && "recordType" in value && value.recordType !== null)
+      throw Error("Ese ejercicio requiere sus métricas de registro.");
+    return typedCatalogEntrySchema.parse({
+      ...mobileCatalogEntrySchema.parse(value),
+      recordType: null,
+    });
+  };
+  return op.kind === "add"
+    ? { ...op, entries: op.entries.map(entry) }
+    : op.kind === "replace"
+      ? { ...op, entry: entry(op.entry) }
+      : op;
+}
+
 export function changeTypedTrainingStructure(
   a: TypedActiveTraining,
-  op: TrainingStructureChange,
+  op: TypedTrainingStructureChange,
   now: Date,
   uuid: () => string,
 ): TypedActiveTraining {
@@ -57,7 +95,7 @@ export function changeTypedTrainingStructure(
     if (review.completedSets && stamp === undefined) throw new TrainingChangeNeedsReview(review);
   };
   const choice = (
-    entry: MobileCatalogEntry,
+    entry: TypedCatalogEntry,
     id: string,
     old?: (typeof a.routine.exercises)[number],
   ) => ({
@@ -66,11 +104,27 @@ export function changeTypedTrainingStructure(
     name: entry.name,
     isBodyweight: entry.isBodyweight,
     prescribed: {
-      recordType: null,
+      recordType: entry.recordType,
       sets: 3,
       target: {
-        repsMin: 8,
-        repsMax: 12,
+        repsMin: [
+          null,
+          "weight_reps",
+          "bodyweight_reps",
+          "weighted_bodyweight",
+          "assisted_bodyweight",
+        ].includes(entry.recordType)
+          ? 8
+          : null,
+        repsMax: [
+          null,
+          "weight_reps",
+          "bodyweight_reps",
+          "weighted_bodyweight",
+          "assisted_bodyweight",
+        ].includes(entry.recordType)
+          ? 12
+          : null,
         targetWeightKg: null,
         targetDurationSeconds: null,
         targetDistanceMeters: null,
@@ -85,7 +139,7 @@ export function changeTypedTrainingStructure(
     alternatives: [],
   });
   if (op.kind === "add") {
-    const entries = z.array(mobileCatalogEntrySchema).min(1).parse(op.entries);
+    const entries = z.array(typedCatalogEntrySchema).min(1).parse(op.entries);
     if (a.draft.exercises.length + entries.length > 15)
       throw Error("Máximo 15 ejercicios por entrenamiento.");
     const additions = entries.map((entry) => choice(entry, uuid()));
@@ -105,7 +159,7 @@ export function changeTypedTrainingStructure(
     });
   }
   if (op.kind === "replace") {
-    const entry = mobileCatalogEntrySchema.parse(op.entry),
+    const entry = typedCatalogEntrySchema.parse(op.entry),
       i = a.draft.exercises.findIndex((e) => e.sessionExerciseId === op.id);
     if (i < 0) throw Error("Ese ejercicio ya no está en el registro.");
     if (a.draft.exercises[i].exerciseId === entry.id) return a;

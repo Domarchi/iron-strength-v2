@@ -73,6 +73,11 @@ export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
           ) : null}
         </View>
       ))}
+      <Action
+        label="Repetir entrenamiento"
+        secondary
+        onPress={() => router.push({ pathname: "/repeat-recording/[id]", params: { id: w.id } })}
+      />
       <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
       <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
       <WorkoutComments workoutId={w.id} />

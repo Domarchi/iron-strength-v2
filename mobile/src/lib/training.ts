@@ -1,4 +1,9 @@
-import { changeTypedTrainingStructure } from "./typed-training-structure";
+import {
+  changeTypedTrainingStructure,
+  legacyStructureOperation,
+  catalogSelectionSchema,
+  type CatalogSelection,
+} from "./typed-training-structure";
 import { typedRecordingPayloadSchema } from "../../../src/lib/mobile/typed-recording-contracts";
 import {
   typedContextSchema,
@@ -16,6 +21,8 @@ import {
   type QueuedSaveReply,
 } from "./queued-recording";
 import { createRepeatedTraining } from "./repeat-training";
+import { createTypedRepeatedTraining } from "./typed-repeat-training";
+import type { TypedRepeatPlan } from "../../../src/domain/typed-workout-repeat";
 import type { RepeatPlan } from "../../../src/domain/workout-repeat";
 import { buildTrainingRecording } from "./recording";
 import type { MobileCatalogEntry } from "../../../src/lib/mobile/exercise-contracts";
@@ -485,7 +492,12 @@ export class TrainingController {
     const active = this.liveForControls();
     this.assertNotPaused(active);
     if (isTypedTraining(active)) {
-      const next = changeTypedTrainingStructure(active, operation, this.now(), this.uuid);
+      const next = changeTypedTrainingStructure(
+        active,
+        legacyStructureOperation(operation),
+        this.now(),
+        this.uuid,
+      );
       this.publish({ active: typedActiveSchema.parse(next), error: null });
       await this.persist();
       return;
@@ -495,6 +507,59 @@ export class TrainingController {
     const checked = activeSchema.parse(next);
     this.prepareExtendedFormat();
     this.publish({ active: checked, error: null });
+    await this.persist();
+  }
+  async organizeCatalog(value: CatalogSelection) {
+    const initial = this.liveForControls();
+    const operation = catalogSelectionSchema.parse(value);
+    await this.flush();
+    const active = this.liveForControls();
+    this.assertNotPaused(active);
+    if (active.draft.workoutId !== initial.draft.workoutId)
+      throw Error(
+        "El entrenamiento cambió. Conservamos la selección sin aplicarla a otro registro.",
+      );
+    if (
+      !isTypedTraining(active) &&
+      (active.mode !== "real" || active.routine.version !== 2 || active.draft.version !== 3)
+    )
+      throw Error("Solo puedes organizar un entrenamiento personal o libre en curso.");
+    const entries = operation.kind === "add" ? operation.entries : [operation.entry];
+    if (!isTypedTraining(active) && entries.every((e) => e.recordType === null)) {
+      const legacy = (e: (typeof entries)[number]) => ({
+        id: e.id,
+        name: e.name,
+        muscleGroup: e.muscleGroup,
+        equipment: e.equipment,
+        isBodyweight: e.isBodyweight,
+        progressionIncrementKg: e.progressionIncrementKg,
+      });
+      const op =
+        operation.kind === "add"
+          ? { ...operation, entries: operation.entries.map(legacy) }
+          : { ...operation, entry: legacy(operation.entry) };
+      const next = changeTrainingStructure(active, op, this.now(), this.uuid);
+      if (next === active) return;
+      this.prepareExtendedFormat();
+      this.publish({ active: activeSchema.parse(next), error: null });
+      await this.persist();
+      return;
+    }
+    const typed = isTypedTraining(active)
+      ? active
+      : (() => {
+          const converted = upgradeLegacyTraining(active.routine, active.draft);
+          return typedActiveSchema.parse({
+            ...active,
+            routine: converted.context,
+            draft: converted.draft,
+          });
+        })();
+    const next = typedActiveSchema.parse(
+      changeTypedTrainingStructure(typed, operation, this.now(), this.uuid),
+    );
+    this.prepareTypedFormat();
+    this.publish({ active: next, error: null });
     await this.persist();
   }
   async pause() {
@@ -577,12 +642,28 @@ export class TrainingController {
     this.publish({ active: { mode: "real", routine, draft, activeIndex: 0 }, error: null });
     await this.persist();
   }
-  async startRepeated(plan: RepeatPlan) {
+  async startRepeated(plan: RepeatPlan | TypedRepeatPlan) {
     this.ensure();
     if (this.state.busy || this.state.closing)
       throw Error("Espera a que termine el guardado o envío.");
     if (this.state.active)
       throw Error("Ya tienes un entrenamiento. Retómalo o descártalo primero.");
+    if ("version" in plan) {
+      const next = createTypedRepeatedTraining(
+        plan,
+        {
+          userId: this.userId,
+          workoutId: this.uuid(),
+          now: this.now(),
+        },
+        this.uuid,
+      );
+      const active = typedActiveSchema.parse({ mode: "real", ...next, activeIndex: 0 });
+      this.prepareTypedFormat();
+      this.publish({ active, error: null });
+      await this.persist();
+      return;
+    }
     const next = createRepeatedTraining(
       plan,
       {

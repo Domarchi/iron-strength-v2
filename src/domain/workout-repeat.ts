@@ -148,7 +148,7 @@ export function prepareWorkoutRepeat(
         note: stored?.note ?? null,
         restSeconds: stored
           ? orphan
-            ? (stored.supersetRestSeconds ?? stored.restSeconds)
+            ? (stored.supersetRestSeconds ?? defaultRestSeconds)
             : stored.restSeconds
           : defaultRestSeconds,
         supersetId: orphan ? null : (stored?.supersetId ?? null),

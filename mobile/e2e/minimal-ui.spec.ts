@@ -22,6 +22,7 @@ test("cambiar tema y movimiento entre pestañas conserva series y descanso", asy
   await page.screenshot({ path: test.info().outputPath("account-dark.png") });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Entrenar", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Retomar entrenamiento", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Peso serie 1", exact: true })).toHaveValue(
     "27,5",

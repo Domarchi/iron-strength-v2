@@ -67,6 +67,19 @@ describe("repetir un resultado propio sin reinterpretar su base", () => {
     expect(result.plan.exercises.map((e) => e.sourcePosition)).toEqual([0, 2]);
     expect(result.plan.exercises[0].supersetId).toBe(result.plan.exercises[1].supersetId);
   });
+  it("al disolver un grupo sin descanso prescrito conserva el habitual, aunque el individual sea cero", () => {
+    const { workout, catalog } = fixture();
+    workout.exercises.pop();
+    workout.structure!.exercises.forEach((e) => {
+      e.supersetRestSeconds = null;
+      e.restSeconds = 0;
+    });
+    const prepared = prepareWorkoutRepeat(workout, catalog),
+      custom = prepareWorkoutRepeat(workout, catalog, 120);
+    if (!prepared.ok || !custom.ok) throw Error("Debía preparar completo");
+    expect(prepared.plan.exercises[0].restSeconds).toBe(90);
+    expect(custom.plan.exercises[0].restSeconds).toBe(120);
+  });
   it("sin snapshot deriva objetivos de valores reales, sin notas/grupos del programa actual", () => {
     const { workout, catalog } = fixture();
     delete workout.structure;

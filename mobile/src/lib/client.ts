@@ -25,6 +25,10 @@ import {
   mobileExerciseDetailSchema,
   parseExerciseHistoryCursor,
 } from "../../../src/lib/mobile/exercise-contracts";
+import {
+  typedCatalogSchema,
+  typedExerciseDetailSchema,
+} from "../../../src/lib/mobile/typed-exercise-contracts";
 import { z } from "zod";
 import {
   mobileErrorSchema,
@@ -634,6 +638,60 @@ export class MobileClient {
         "La biblioteca recibida no es compatible. Actualiza la app y reintenta.",
       );
     return parsed.data;
+  }
+  async trainingCatalog() {
+    const generation = this.generation;
+    try {
+      const result = typedCatalogSchema.safeParse(await this.read("training-catalog"));
+      this.current(generation);
+      if (!result.success)
+        throw new MobileError(
+          "version",
+          "La biblioteca recibida necesita una versión compatible de la app.",
+        );
+      return result.data;
+    } catch (error) {
+      if (!(error instanceof MobileError) || ![404, 503].includes(error.status)) throw error;
+      this.current(generation);
+      const legacy = await this.exerciseCatalog();
+      this.current(generation);
+      return typedCatalogSchema.parse({
+        version: 2,
+        exercises: legacy.exercises.map((e) => ({ ...e, recordType: null })),
+      });
+    }
+  }
+  async trainingExerciseDetail(id: string, cursor?: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese ejercicio no está disponible.", 404);
+    if (cursor !== undefined && !parseExerciseHistoryCursor(cursor))
+      throw new MobileError("invalid_input", "El filtro de historial no es válido.", 400);
+    const generation = this.generation,
+      normalized = id.toLowerCase();
+    try {
+      const result = typedExerciseDetailSchema.safeParse(
+        await this.read(
+          "training-catalog/" +
+            normalized +
+            (cursor ? "?cursor=" + encodeURIComponent(cursor) : ""),
+        ),
+      );
+      this.current(generation);
+      if (!result.success)
+        throw new MobileError(
+          "version",
+          "La ficha recibida necesita una versión compatible de la app.",
+        );
+      if (result.data.exercise.id !== normalized)
+        throw new MobileError("identity", "El ejercicio recibido no coincide. Reintenta.");
+      return result.data;
+    } catch (error) {
+      if (!(error instanceof MobileError) || ![404, 503].includes(error.status)) throw error;
+      this.current(generation);
+      const legacy = await this.exerciseDetail(normalized, cursor);
+      this.current(generation);
+      return legacy;
+    }
   }
   async exerciseDetail(id: string, cursor?: string) {
     if (!z.uuid().safeParse(id).success)

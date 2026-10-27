@@ -1,7 +1,8 @@
+import type { TypedCatalogEntry } from "../../../src/lib/mobile/typed-exercise-contracts";
+import { RECORD_TYPE_LABELS } from "../lib/training-labels";
 import { isTypedTraining } from "../lib/training";
 import { useTraining } from "../lib/training-context";
 import { TrainingChangeNeedsReview, type ExerciseChangeReview } from "../lib/training-structure";
-import type { MobileCatalogEntry } from "../../../src/lib/mobile/exercise-contracts";
 import { TrainingChangeReview } from "./training-change-review";
 import { randomUUID } from "expo-crypto";
 import { addPersonalExercise } from "../../../src/domain/personal-routines";
@@ -61,16 +62,20 @@ export function ExerciseCatalog({
     [adding, setAdding] = useState(false),
     [added, setAdded] = useState(false);
   const [review, setReview] = useState<{
-    entry: MobileCatalogEntry;
+    entry: TypedCatalogEntry;
     review: ExerciseChangeReview;
   } | null>(null);
   const addingRef = useRef(false);
   const offline = state.status === "authenticated" && state.mode === "offline";
-  const request = useCallback(() => {
-    if (offline)
-      return Promise.reject(new Error("Necesitas conexión para consultar la biblioteca."));
-    return client.exerciseCatalog();
-  }, [client, offline]);
+  const request = useCallback(async (): Promise<{ exercises: TypedCatalogEntry[] }> => {
+    if (offline) throw Error("Necesitas conexión para consultar la biblioteca.");
+    // Personal bases keep their existing contract until their typed prescription editor is ready.
+    if (pickFor) {
+      const legacy = await client.exerciseCatalog();
+      return { exercises: legacy.exercises.map((e) => ({ ...e, recordType: null })) };
+    }
+    return client.trainingCatalog();
+  }, [client, offline, pickFor]);
   const q = useQuery(request);
   const [search, setSearch] = useState(""),
     [muscle, setMuscle] = useState(""),
@@ -80,6 +85,7 @@ export function ExerciseCatalog({
     () =>
       (q.value?.exercises ?? []).map((exercise) => ({
         ...exercise,
+        source: exercise,
         needle: normalize(`${exercise.name} ${exercise.muscleGroup} ${exercise.equipment ?? ""}`),
       })),
     [q.value],
@@ -122,10 +128,10 @@ export function ExerciseCatalog({
           throw Error("Este registro ya no está disponible.");
         if (added) await trainingController.retryStorage();
         else if (replacing) {
-          const entry = review?.entry ?? catalog.find((e) => selected.includes(e.id));
+          const entry = review?.entry ?? catalog.find((e) => selected.includes(e.id))?.source;
           if (!entry || !replacement) throw Error("Elige un ejercicio para reemplazar.");
           try {
-            await trainingController.organize({
+            await trainingController.organizeCatalog({
               kind: "replace",
               id: replaceId!,
               entry,
@@ -142,10 +148,10 @@ export function ExerciseCatalog({
             if (changed) setReview(null);
           }
         } else {
-          const additions = catalog.filter((e) => selected.includes(e.id));
+          const additions = catalog.filter((e) => selected.includes(e.id)).map((e) => e.source);
           const before = new Set(trainingTarget.draft.exercises.map((e) => e.sessionExerciseId));
           try {
-            await trainingController.organize({ kind: "add", entries: additions });
+            await trainingController.organizeCatalog({ kind: "add", entries: additions });
           } finally {
             const active = trainingController.getSnapshot().active;
             setAdded(
@@ -190,7 +196,7 @@ export function ExerciseCatalog({
       router.back();
     } catch (error) {
       if (error instanceof TrainingChangeNeedsReview && replacing) {
-        const entry = catalog.find((e) => selected.includes(e.id));
+        const entry = catalog.find((e) => selected.includes(e.id))?.source;
         if (entry) setReview({ entry, review: error.review });
       } else
         setAddError(error instanceof Error ? error.message : "No pudimos agregar los ejercicios.");
@@ -435,6 +441,7 @@ export function ExerciseCatalog({
               <Text style={[s.label, { color: p.ink }]}>{item.name}</Text>
               <Text style={[s.caption, { color: p.muted }]}>
                 {item.muscleGroup} · {item.equipment ?? "Sin equipo indicado"}
+                {item.recordType !== null ? ` · ${RECORD_TYPE_LABELS[item.recordType]}` : ""}
               </Text>
             </View>
             {picking ? (
