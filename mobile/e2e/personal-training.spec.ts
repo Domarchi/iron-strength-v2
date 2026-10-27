@@ -48,6 +48,12 @@ for (const theme of ["light", "dark"] as const) {
     expect(control.calls[0]).not.toHaveProperty("programId");
     expect(control.calls[0].sets).toHaveLength(1);
     expect(control.calls[0].origin).toEqual({ kind: "free" });
+    expect(control.recordingCalls[0]).toMatchObject({
+      version: 2,
+      source: "free",
+      structure: { version: 1 },
+    });
+    expect(control.recordingCalls[0].structure.exercises).toHaveLength(2);
   });
 }
 
@@ -152,6 +158,11 @@ test("rutina personal → ronda recuperada → respuesta perdida → resultado �
   expect(control.records.size).toBe(1);
   expect(control.calls).toHaveLength(2);
   expect(control.calls[1]).toEqual(control.calls[0]);
+  expect(control.recordingCalls).toHaveLength(2);
+  expect(control.recordingCalls[1]).toEqual(control.recordingCalls[0]);
+  expect(control.recordingCalls[0].structure.exercises.map((e) => e.supersetId)).toEqual(
+    base.items.map((e) => e.supersetId),
+  );
   expect(control.calls[0].origin).toEqual({
     kind: "personal",
     routineId: base.id,

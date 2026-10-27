@@ -1,3 +1,4 @@
+import { nativeWorkoutBody } from "./personal-training";
 import { describe, expect, it, vi } from "vitest";
 import { NativeWorkoutQueue, nativeSyncKey } from "./sync-queue";
 import { MobileError } from "./client";
@@ -51,7 +52,7 @@ function fixture() {
     }),
   };
   const send = vi.fn(async (p: NativeWorkoutPayload): Promise<SaveReply> => ({
-    version: 1 as const,
+    version: (p.version === 2 ? 2 : 1) as 1 | 2,
     ok: true as const,
     status: "created" as const,
     workoutId: p.id,
@@ -351,6 +352,8 @@ it("un cierre legado de borrador v1 sin payload migra a la cola antes de retirar
   await source.finish(8, "Nota antigua", { localOnly: true });
   const key = `is:native-training:v1:${user}`,
     old = JSON.parse(x.map.get(key)!);
+  old.version = 1;
+  delete old.previousFormat;
   old.active.draft.version = 1;
   for (const e of old.active.draft.exercises)
     for (const c of [e, ...(e.original ? [e.original] : []), ...(e.alternatives ?? [])])
@@ -375,7 +378,10 @@ it("un cierre legado de borrador v1 sin payload migra a la cola antes de retirar
     perceivedEffort: 8,
     finishedAt: old.active.draft.finishedAt,
   });
-  expect(q.getSnapshot().entries[0].payload.sets[0]).toMatchObject({ weightKg: 20, reps: 8 });
+  expect(nativeWorkoutBody(q.getSnapshot().entries[0].payload).sets[0]).toMatchObject({
+    weightKg: 20,
+    reps: 8,
+  });
   expect(x.send).not.toHaveBeenCalled();
 });
 it("perder la relectura de la copia o cambiar de sesión no retira el cierre original", async () => {

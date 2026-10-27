@@ -1,3 +1,4 @@
+import { nativeWorkoutBody } from "./personal-training";
 import { describe, expect, it, vi } from "vitest";
 import { TrainingController } from "./training";
 import type { AtomicStorage } from "./atomic-contract";
@@ -24,7 +25,7 @@ function setup() {
     }),
   };
   const send = vi.fn(async (p: NativeWorkoutPayload) => ({
-    version: 1 as const,
+    version: (p.version === 2 ? 2 : 1) as 1 | 2,
     ok: true as const,
     status: "created" as const,
     workoutId: p.id,
@@ -80,7 +81,7 @@ describe("pausa nativa protege duración y formato anterior", () => {
       expect(b.getSnapshot().active?.draft.rest).toEqual(rest);
       await b.finish(null, null, { localOnly: true });
       const frozen = b.getSnapshot().active!.payload!;
-      expect(frozen).toMatchObject({
+      expect(nativeWorkoutBody(frozen)).toMatchObject({
         startedAt,
         durationSeconds: 15,
         finishedAt: new Date(x.clock.now).toISOString(),

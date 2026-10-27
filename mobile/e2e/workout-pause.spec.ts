@@ -87,7 +87,8 @@ test("pausa sin conexión: descanso vence, cierre conserva duración neta y sinc
     (key) => JSON.parse(localStorage.getItem(key)!).entries[0].payload,
     queueKey,
   );
-  expect(payload).toMatchObject({
+  expect(payload).toMatchObject({ version: 2, source: "assigned" });
+  expect(payload.workout).toMatchObject({
     startedAt,
     durationSeconds: 10,
     finishedAt: new Date(start + 100000).toISOString(),

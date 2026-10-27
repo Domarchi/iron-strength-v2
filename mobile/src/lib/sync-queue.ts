@@ -1,5 +1,10 @@
+import { recordingSaveSchema } from "../../../src/lib/mobile/recording-contracts";
 import { z } from "zod";
-import { nativeWorkoutPayloadSchema, type NativeWorkoutPayload } from "./personal-training";
+import {
+  nativeWorkoutPayloadSchema,
+  isRecordingPayload,
+  type NativeWorkoutPayload,
+} from "./personal-training";
 import { mobileSaveSchema } from "../../../src/lib/mobile/contracts";
 import type { SaveReply, TrainingStorage } from "./training";
 export type QueueStorage = TrainingStorage & {
@@ -29,6 +34,29 @@ const recordSchema = z
       r.entries.filter((e) => e.phase === "pending").length <= 50 &&
       r.entries.filter((e) => e.phase === "confirmed").length <= 20,
   );
+const legacyRecordSchema = recordSchema.refine((r) =>
+  r.entries.every((e) => !isRecordingPayload(e.payload)),
+);
+const recordingRecordSchema = z
+  .object({
+    ...recordSchema.shape,
+    version: z.literal(2),
+    previousFormat: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine(
+    (r) => recordSchema.safeParse({ version: 1, userId: r.userId, entries: r.entries }).success,
+  )
+  .refine((r) => {
+    if (!r.previousFormat) return true;
+    try {
+      const old = legacyRecordSchema.safeParse(JSON.parse(r.previousFormat));
+      return old.success && old.data.userId === r.userId;
+    } catch {
+      return false;
+    }
+  });
+const queueRecordSchema = z.union([legacyRecordSchema, recordingRecordSchema]);
 export const nativeSyncKey = (userId: string) => `is:native-sync:v1:${userId}`;
 export const samePayload = (a: NativeWorkoutPayload, b: NativeWorkoutPayload) =>
   JSON.stringify(nativeWorkoutPayloadSchema.parse(a)) ===
@@ -78,6 +106,8 @@ export class NativeWorkoutQueue {
     error: null,
   };
   private raw: string | null = null;
+  private formatVersion: 1 | 2 = 1;
+  private previousFormat: string | null = null;
   private disposed = false;
   private epoch = 0;
   private listeners = new Set<() => void>();
@@ -127,9 +157,11 @@ export class NativeWorkoutQueue {
       const record =
         raw === null
           ? { version: 1 as const, userId: this.userId, entries: [] }
-          : recordSchema.parse(JSON.parse(raw));
+          : queueRecordSchema.parse(JSON.parse(raw));
       if (record.userId !== this.userId) throw Error("Cuenta distinta");
       this.raw = raw;
+      this.formatVersion = record.version;
+      this.previousFormat = record.version === 2 ? (record.previousFormat ?? null) : null;
       this.publish({ entries: record.entries, verified: true, blocked: false, error: null });
     } catch {
       if (!this.disposed && epoch === this.epoch)
@@ -145,10 +177,15 @@ export class NativeWorkoutQueue {
   }
   private async commit(entries: QueueEntry[]) {
     const epoch = this.epoch;
-    const record = recordSchema.parse({
-        version: 1,
+    if (this.formatVersion === 1 && entries.some((e) => isRecordingPayload(e.payload))) {
+      this.previousFormat = this.raw;
+      this.formatVersion = 2;
+    }
+    const record = queueRecordSchema.parse({
+        version: this.formatVersion,
         userId: this.userId,
         entries: bounded(entries),
+        ...(entries.length && this.previousFormat ? { previousFormat: this.previousFormat } : {}),
       }),
       encoded = JSON.stringify(record);
     try {
@@ -157,6 +194,7 @@ export class NativeWorkoutQueue {
       if ((await this.storage.get(this.key)) !== encoded) throw Error("readback");
       if (!this.isCurrent(epoch)) return;
       this.raw = encoded;
+      if (!record.entries.length) this.previousFormat = null;
       this.publish({ entries: record.entries, verified: true, blocked: false, error: null });
     } catch {
       const message =
@@ -232,7 +270,9 @@ export class NativeWorkoutQueue {
         if (options.canContinue?.() === false) break;
         let error: z.infer<typeof failureSchema> | null = null;
         try {
-          const reply = mobileSaveSchema.safeParse(await this.send(entry.payload));
+          const reply = (
+            isRecordingPayload(entry.payload) ? recordingSaveSchema : mobileSaveSchema
+          ).safeParse(await this.send(entry.payload));
           if (!reply.success)
             error = {
               code: "version",

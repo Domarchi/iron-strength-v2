@@ -31,7 +31,7 @@ function setup() {
     }),
   };
   const send = vi.fn(async (p: NativeWorkoutPayload) => ({
-    version: 1 as const,
+    version: (p.version === 2 ? 2 : 1) as 1 | 2,
     ok: true as const,
     status: "created" as const,
     workoutId: p.id,

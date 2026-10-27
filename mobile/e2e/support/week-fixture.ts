@@ -1,3 +1,8 @@
+import {
+  recordingRequestSchema,
+  type RecordingPayload,
+} from "../../../src/lib/mobile/recording-contracts";
+import type { NativeWorkoutPayload } from "../../src/lib/personal-training";
 import { expect, type Page } from "@playwright/test";
 import { santiagoDate } from "../../../src/domain/dates";
 import { downloadId, weekDownloadFixture } from "../../../src/test/fixtures/week-download";
@@ -21,7 +26,8 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
     requests: 0,
     pack: weekDownloadFixture(userId, timestamp),
     saved: new Map<string, WorkoutPayload>(),
-    saveRequests: [] as WorkoutPayload[],
+    saveRequests: [] as NativeWorkoutPayload[],
+    recordings: new Map<string, RecordingPayload>(),
     calls: [] as string[],
   };
   function result(payload: WorkoutPayload): MobileWorkout {
@@ -50,6 +56,9 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
       version: 1,
       workout: {
         id: payload.id,
+        ...(control.recordings.has(payload.id)
+          ? { structure: control.recordings.get(payload.id)!.structure }
+          : {}),
         programName: control.pack.program.name,
         sessionLabel: payload.sessionLabel,
         startedAt: payload.startedAt,
@@ -127,9 +136,19 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
       );
       if (found) json = { version: 1, ...found.context };
     } else if (path.endsWith("auth/logout")) json = { version: 1, ok: true };
-    else if (path.endsWith("/workouts") && req.method() === "POST") {
-      const payload = req.postDataJSON().payload as WorkoutPayload;
-      control.saveRequests.push(payload);
+    else if (
+      (path.endsWith("/workouts") || path.endsWith("/recordings")) &&
+      req.method() === "POST"
+    ) {
+      const recording = path.endsWith("/recordings")
+        ? recordingRequestSchema.parse(req.postDataJSON()).payload
+        : null;
+      if (recording && recording.source !== "assigned") return route.fallback();
+      const payload = recording
+        ? (recording.workout as WorkoutPayload)
+        : (req.postDataJSON().payload as WorkoutPayload);
+      control.saveRequests.push(recording ?? payload);
+      if (recording) control.recordings.set(recording.id, recording);
       const duplicate = control.saved.has(payload.id);
       if (!duplicate) control.saved.set(payload.id, payload);
       if (control.saveLost) {
@@ -138,7 +157,7 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
         return;
       }
       json = {
-        version: 1,
+        version: recording ? 2 : 1,
         ok: true,
         status: duplicate ? "duplicate" : "created",
         workoutId: payload.id,

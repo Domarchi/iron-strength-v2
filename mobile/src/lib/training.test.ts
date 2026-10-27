@@ -1,3 +1,4 @@
+import type { NativeWorkoutPayload } from "./personal-training";
 import { describe, expect, it, vi } from "vitest";
 import { DEMO_ROUTINES } from "./demo";
 import { TrainingController, type TrainingStorage } from "./training";
@@ -22,8 +23,8 @@ function fixture() {
       await store.set(key, next);
     }),
   };
-  const save = vi.fn(async () => ({
-    version: 1 as const,
+  const save = vi.fn(async (payload: NativeWorkoutPayload) => ({
+    version: (payload.version === 2 ? 2 : 1) as 1 | 2,
     ok: true as const,
     status: "created" as const,
     workoutId: user,
@@ -63,6 +64,8 @@ describe("registro nativo, persistencia y separación de la demo", () => {
     await a.finish(null, null, { localOnly: true });
     const key = `is:native-training:v1:${user}`,
       raw = JSON.parse(x.map.get(key)!);
+    raw.version = 1;
+    delete raw.previousFormat;
     delete raw.active.payload;
     x.map.set(key, JSON.stringify(raw));
     const b = x.create();
@@ -233,7 +236,7 @@ describe("registro nativo, persistencia y separación de la demo", () => {
     const finishing = a.finish(null, null);
     await vi.waitFor(() => expect(x.save).toHaveBeenCalled());
     a.dispose();
-    resolve({ version: 1, ok: true, status: "created", workoutId: user });
+    resolve({ version: 2, ok: true, status: "created", workoutId: user });
     await finishing;
     const b = x.create();
     await b.restore();

@@ -71,7 +71,16 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
     (k) => JSON.parse(localStorage.getItem(k)!).entries[0].payload,
     queueKey,
   );
-  expect(local.sets[0]).toMatchObject({
+  expect(local.version).toBe(2);
+  expect(local.source).toBe("assigned");
+  expect(local.structure.exercises[0]).toMatchObject({
+    exerciseId: downloadId(6),
+    prescribedExerciseId: downloadId(5),
+    supersetId: downloadId(8),
+    supersetRestSeconds: 60,
+    prescribed: { targetWeightKg: 60 },
+  });
+  expect(local.workout.sets[0]).toMatchObject({
     exerciseId: downloadId(6),
     prescribedExerciseId: downloadId(5),
   });
@@ -92,6 +101,8 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
   expect(control.saved.size).toBe(1);
   expect(control.saveRequests).toHaveLength(2);
   expect(control.saveRequests[0]).toEqual(control.saveRequests[1]);
+  expect(control.saveRequests[0]).toEqual(local);
+  expect(control.recordings.get(local.id)?.structure).toEqual(local.structure);
   expect(control.saveRequests[0].id).toBe(local.id);
 });
 test("copia vencida se consulta sin iniciar; un borrador previo sigue recuperable", async ({

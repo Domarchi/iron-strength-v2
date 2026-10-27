@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { setupDownloadedWeek } from "./support/week-fixture";
+import { setupDownloadedWeek, enterWeekUser } from "./support/week-fixture";
 import { downloadId } from "../../src/test/fixtures/week-download";
 import { parseWeekPackage } from "../../src/lib/offline/package";
 const queueKey = `is:native-sync:v1:${downloadId(1)}`,
@@ -155,7 +155,8 @@ test("sin espacio en la cola conserva el cierre original; comprobar permite tran
     (k) => JSON.parse(localStorage.getItem(k)!).active.payload,
     trainingKey,
   );
-  expect(original.sets).toHaveLength(1);
+  expect(original.version).toBe(2);
+  expect(original.workout.sets).toHaveLength(1);
   expect(await page.evaluate((k) => localStorage.getItem(k), queueKey)).toBeNull();
   expect(control.saveRequests).toHaveLength(0);
   await page.evaluate(() => localStorage.setItem("allow-sync-write", "1"));
@@ -196,7 +197,7 @@ test("rechazo del servidor conserva el cierre, detiene el reintento automático 
   let posts = 0,
     permit = false;
   await page.route(
-    "https://iron-strength-seven.vercel.app/api/mobile/v1/workouts",
+    "https://iron-strength-seven.vercel.app/api/mobile/v1/recordings",
     async (route) => {
       if (route.request().method() !== "POST") return route.fallback();
       posts++;
@@ -298,3 +299,43 @@ for (const theme of ["light", "dark"] as const)
     });
     expect(control.saveRequests).toHaveLength(0);
   });
+
+test("una cola anterior conserva su cuerpo y usa el guardado legado al recuperar la app", async ({
+  page,
+}) => {
+  const control = await prepareOffline(page);
+  await closeLocal(page);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (k) => JSON.parse(localStorage.getItem(k) ?? '{"entries":[]}').entries.length,
+        queueKey,
+      ),
+    )
+    .toBe(1);
+  await expect
+    .poll(() => page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).active, trainingKey))
+    .toBeNull();
+  const legacy = await page.evaluate((k) => {
+    const raw = JSON.parse(localStorage.getItem(k)!);
+    const body = raw.entries[0].payload.workout;
+    raw.version = 1;
+    delete raw.previousFormat;
+    raw.entries[0].payload = body;
+    localStorage.setItem(k, JSON.stringify(raw));
+    return body;
+  }, queueKey);
+  await page.reload();
+  control.offline = false;
+  await enterWeekUser(page);
+  await expect.poll(() => control.saved.size).toBe(1);
+  expect(control.saveRequests).toEqual([legacy]);
+  expect(control.calls).toContain("POST /api/mobile/v1/workouts");
+  expect(control.calls).not.toContain("POST /api/mobile/v1/recordings");
+  expect(control.recordings.size).toBe(0);
+  await expect
+    .poll(() =>
+      page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).entries[0].phase, queueKey),
+    )
+    .toBe("confirmed");
+});

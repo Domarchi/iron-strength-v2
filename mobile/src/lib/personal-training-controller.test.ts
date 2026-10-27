@@ -28,7 +28,7 @@ function setup() {
     }),
   };
   const send = vi.fn(async (payload: NativeWorkoutPayload) => ({
-    version: 1 as const,
+    version: (payload.version === 2 ? 2 : 1) as 1 | 2,
     ok: true as const,
     status: "created" as const,
     workoutId: payload.id,
@@ -78,7 +78,11 @@ describe("controlador personal conserva registro y cola", () => {
     expect(b.getSnapshot().active?.draft.rest?.endsAt).toBe(Date.parse("2026-10-26T12:01:00Z"));
     await b.finish(7, "Controlado", { localOnly: true });
     const first = await b.pendingForQueue();
-    expect(first?.payload).toMatchObject({ version: 1, origin: { kind: "personal" } });
+    expect(first?.payload).toMatchObject({
+      version: 2,
+      source: "personal",
+      workout: { origin: { kind: "personal" } },
+    });
     x.send.mockRejectedValueOnce(Error("respuesta perdida"));
     await expect(b.retry()).rejects.toThrow();
     const c = x.create();
@@ -104,8 +108,9 @@ describe("controlador personal conserva registro y cola", () => {
     await handoffPending(a, q);
     expect(a.getSnapshot().active).toBeNull();
     expect(q.getSnapshot().entries[0].payload).toMatchObject({
-      version: 1,
-      origin: { kind: "personal" },
+      version: 2,
+      source: "personal",
+      workout: { origin: { kind: "personal" } },
     });
     await q.sync({ manual: true });
     expect(q.getSnapshot().entries[0].phase).toBe("confirmed");
@@ -122,10 +127,10 @@ describe("controlador personal conserva registro y cola", () => {
       await a.finish(null, null, { localOnly: true });
       const key = `is:native-training:v1:${id(1)}`,
         raw = JSON.parse(x.data.get(key)!);
-      if (field === "title") raw.active.payload.title = "Otro entrenamiento";
-      if (field === "kind") raw.active.payload.origin = { kind: "free" };
-      if (field === "routineId") raw.active.payload.origin.routineId = id(999);
-      if (field === "revision") raw.active.payload.origin.revision += 1;
+      if (field === "title") raw.active.payload.workout.title = "Otro entrenamiento";
+      if (field === "kind") raw.active.payload.workout.origin = { kind: "free" };
+      if (field === "routineId") raw.active.payload.workout.origin.routineId = id(999);
+      if (field === "revision") raw.active.payload.workout.origin.revision += 1;
       const altered = JSON.stringify(raw);
       x.data.set(key, altered);
       const b = x.create();

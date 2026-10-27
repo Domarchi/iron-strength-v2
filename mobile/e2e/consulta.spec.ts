@@ -1,3 +1,4 @@
+import type { RecordingPayload } from "../../src/lib/mobile/recording-contracts";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import { fulfillEmptyCommentReads } from "./support/comment-fixture";
@@ -298,20 +299,16 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
     const request = route.request(),
       path = new URL(request.url()).pathname;
     if (await fulfillEmptyCommentReads(route)) return;
-    if (path.endsWith("workouts") && request.method() === "POST") {
+    if (path.endsWith("recordings") && request.method() === "POST") {
       const body = request.postDataJSON();
       sent.push(body);
       if (sent.length === 1) return route.abort("internetdisconnected");
       return route.fulfill({
-        json: { version: 1, ok: true, status: "duplicate", workoutId: body.payload.id },
+        json: { version: 2, ok: true, status: "duplicate", workoutId: body.payload.id },
         headers: { "Access-Control-Allow-Origin": "*" },
       });
     }
-    const payload = (
-      sent[0] as
-        | { payload: { id: string; startedAt: string; sets: { weightKg: number; reps: number }[] } }
-        | undefined
-    )?.payload;
+    const payload = (sent[0] as { payload: RecordingPayload } | undefined)?.payload.workout;
     const data = /auth\/(login|refresh)$/.test(path)
       ? session
       : path.endsWith("week")

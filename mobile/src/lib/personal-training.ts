@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  recordingPayloadSchema,
+  type RecordingPayload,
+} from "../../../src/lib/mobile/recording-contracts";
 import { mobileRoutineSchema } from "../../../src/lib/mobile/contracts";
 import type { PersonalRoutine } from "../../../src/lib/mobile/personal-contracts";
 import {
@@ -39,11 +43,19 @@ export type NativeWorkoutDraft = z.infer<typeof nativeWorkoutDraftSchema>;
 export type PersonalTrainingContext = z.infer<typeof personalContextSchema>;
 export type PersonalTrainingDraft = z.infer<typeof personalTrainingDraftSchema>;
 // A tagged payload, including an unknown future version, can never fall through to legacy parsing.
-export const nativeWorkoutPayloadSchema = z.union([
+export const legacyNativeWorkoutPayloadSchema = z.union([
   personalWorkoutPayloadSchema,
   workoutPayloadSchema.extend({ version: z.never().optional(), origin: z.never().optional() }),
 ]);
+export const nativeWorkoutPayloadSchema = z.union([
+  recordingPayloadSchema,
+  legacyNativeWorkoutPayloadSchema,
+]);
 export type NativeWorkoutPayload = z.infer<typeof nativeWorkoutPayloadSchema>;
+export const isRecordingPayload = (payload: NativeWorkoutPayload): payload is RecordingPayload =>
+  payload.version === 2;
+export const nativeWorkoutBody = (payload: NativeWorkoutPayload) =>
+  isRecordingPayload(payload) ? payload.workout : payload;
 export const isPersonalWorkoutPayload = (
   payload: NativeWorkoutPayload,
 ): payload is z.infer<typeof personalWorkoutPayloadSchema> => payload.version === 1;

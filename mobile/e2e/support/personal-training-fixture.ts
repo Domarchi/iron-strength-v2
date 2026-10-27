@@ -1,3 +1,7 @@
+import {
+  recordingRequestSchema,
+  type RecordingPayload,
+} from "../../../src/lib/mobile/recording-contracts";
 import type { Page } from "@playwright/test";
 import { setupPersonalLibrary, libraryExercises } from "./library-fixture";
 import {
@@ -10,7 +14,13 @@ import type { MobileWorkout } from "../../../src/lib/mobile/contracts";
 export async function setupPersonalTraining(page: Page) {
   const library = await setupPersonalLibrary(page),
     records = new Map<string, PersonalWorkoutPayload>();
-  const control = { records, calls: [] as PersonalWorkoutPayload[], loseResponse: false };
+  const control = {
+    records,
+    calls: [] as PersonalWorkoutPayload[],
+    recordingCalls: [] as RecordingPayload[],
+    recordings: new Map<string, RecordingPayload>(),
+    loseResponse: false,
+  };
   const api = "https://iron-strength-seven.vercel.app/api/mobile/v1";
   const result = (payload: PersonalWorkoutPayload): MobileWorkout => {
     const groups = new Map<number, MobileWorkout["workout"]["exercises"][number]>();
@@ -34,6 +44,9 @@ export async function setupPersonalTraining(page: Page) {
       version: 1,
       workout: {
         id: payload.id,
+        ...(control.recordings.has(payload.id)
+          ? { structure: control.recordings.get(payload.id)!.structure }
+          : {}),
         sourceKind: payload.origin.kind,
         title: payload.title,
         programName: null,
@@ -55,31 +68,45 @@ export async function setupPersonalTraining(page: Page) {
       },
     };
   };
-  await page.route(api + "/personal-workouts", async (route) => {
-    const body = route.request().postDataJSON(),
-      payload = personalWorkoutPayloadSchema.parse(body.payload);
-    control.calls.push(payload);
-    const duplicate = records.has(payload.id);
-    records.set(payload.id, payload);
-    if (control.loseResponse) {
-      control.loseResponse = false;
+  await page.route(
+    (url) =>
+      url.toString() === api + "/personal-workouts" || url.toString() === api + "/recordings",
+    async (route) => {
+      const body = route.request().postDataJSON();
+      const recording = route.request().url().endsWith("/recordings")
+        ? recordingRequestSchema.parse(body).payload
+        : null;
+      if (recording?.source === "assigned") return route.fallback();
+      const payload = personalWorkoutPayloadSchema.parse(
+        recording ? recording.workout : body.payload,
+      );
+      if (recording) {
+        control.recordingCalls.push(recording);
+        control.recordings.set(recording.id, recording);
+      }
+      control.calls.push(payload);
+      const duplicate = records.has(payload.id);
+      records.set(payload.id, payload);
+      if (control.loseResponse) {
+        control.loseResponse = false;
+        return route.fulfill({
+          status: 503,
+          json: {
+            version: 1,
+            error: { code: "unavailable", message: "Respuesta perdida; conservamos el registro." },
+          },
+        });
+      }
       return route.fulfill({
-        status: 503,
         json: {
-          version: 1,
-          error: { code: "unavailable", message: "Respuesta perdida; conservamos el registro." },
+          version: recording ? 2 : 1,
+          ok: true,
+          status: duplicate ? "duplicate" : "created",
+          workoutId: payload.id,
         },
       });
-    }
-    return route.fulfill({
-      json: {
-        version: 1,
-        ok: true,
-        status: duplicate ? "duplicate" : "created",
-        workoutId: payload.id,
-      },
-    });
-  });
+    },
+  );
   await page.route(api + "/workouts/*", async (route) => {
     const id = new URL(route.request().url()).pathname.split("/").at(-1)!,
       payload = records.get(id);
