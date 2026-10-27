@@ -1,3 +1,4 @@
+import { fulfillLegacyTypedResult } from "./support/legacy-result";
 import type { RecordingPayload } from "../../src/lib/mobile/recording-contracts";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
@@ -79,6 +80,7 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
 }) => {
   const seen: string[] = [];
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    if (await fulfillLegacyTypedResult(route)) return;
     const path = new URL(route.request().url()).pathname;
     seen.push(route.request().method() + " " + path);
     if (await fulfillEmptyCommentReads(route)) return;
@@ -149,6 +151,7 @@ test("error de red conserva el recorrido y permite reintentar; estados vacíos y
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   let attempt = 0;
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    if (await fulfillLegacyTypedResult(route)) return;
     if (await fulfillEmptyCommentReads(route)) return;
     if (/auth\/(login|refresh)$/.test(route.request().url()))
       return route.fulfill({ json: session, headers: { "Access-Control-Allow-Origin": "*" } });
@@ -175,6 +178,7 @@ test("error de red conserva el recorrido y permite reintentar; estados vacíos y
 
 async function emptyAccount(page: Page, seen: string[] = []) {
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    if (await fulfillLegacyTypedResult(route)) return;
     const path = new URL(route.request().url()).pathname;
     seen.push(route.request().method() + " " + path);
     if (await fulfillEmptyCommentReads(route)) return;
@@ -296,6 +300,7 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
       ],
     };
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    if (await fulfillLegacyTypedResult(route)) return;
     const request = route.request(),
       path = new URL(request.url()).pathname;
     if (await fulfillEmptyCommentReads(route)) return;
@@ -693,6 +698,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
     const writes: string[] = [];
     await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+      if (await fulfillLegacyTypedResult(route)) return;
       const path = new URL(route.request().url()).pathname;
       if (await fulfillEmptyCommentReads(route)) return;
       if (route.request().method() === "POST") writes.push(path);

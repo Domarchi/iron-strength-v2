@@ -1,3 +1,5 @@
+import { TypedResult } from "../../../components/typed-result";
+import type { TypedWorkout } from "../../../../../src/lib/mobile/typed-recording-contracts";
 import { workoutTitle } from "../../../../../src/domain/workout-title";
 import { progressReturn } from "../../../lib/progress-view";
 import { useCallback } from "react";
@@ -25,8 +27,8 @@ export default function Result() {
     { client } = useSession(),
     { training } = useTraining();
   const sample = demo === "1" ? training.demos.find((x) => x.id === id) : null;
-  const request = useCallback(async (): Promise<MobileWorkout> => {
-    if (demo !== "1") return client.workout(id);
+  const request = useCallback(async (): Promise<MobileWorkout | TypedWorkout> => {
+    if (demo !== "1") return client.workoutResult(id);
     if (!sample) throw Error("El resultado demo no está disponible en este dispositivo.");
     const payload = sample.payload,
       volume = setVolume(payload.sets),
@@ -70,7 +72,7 @@ export default function Result() {
     };
   }, [client, id, demo, sample]);
   const q = useQuery(request),
-    w = q.value?.workout,
+    w = q.value?.version === 1 ? q.value.workout : null,
     back =
       demo !== "1" && w
         ? progressReturn(
@@ -78,6 +80,7 @@ export default function Result() {
             w.exercises.map((e) => e.exerciseId),
           )
         : null;
+  if (q.value?.version === 3) return <TypedResult workout={q.value.workout} />;
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: p.bg }}

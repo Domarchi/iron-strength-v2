@@ -64,6 +64,7 @@ const header = workoutPayloadSchema
   .extend({
     id: uuid,
     version: z.literal(2),
+    note: athleteNoteSchema.optional(),
     exerciseNotes: trainingExerciseNotesSchema,
   });
 const ownWorkout = header

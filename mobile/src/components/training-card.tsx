@@ -1,3 +1,4 @@
+import { trainingTitle } from "../lib/training";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
 import { Action, Notice, s, usePalette } from "./ui";
@@ -44,10 +45,11 @@ function ActiveTrainingCard() {
             : "ENTRENAMIENTO EN CURSO"}
       </Text>
       <Text style={[s.heading, { color: p.ink, fontSize: 24, lineHeight: 30 }]}>
-        {a.routine.session.title ?? `Sesión ${a.routine.session.label}`}
+        {trainingTitle(a)}
       </Text>
       <Text style={[s.body, { color: p.muted }]}>
-        {a.draft.exercises.flatMap((e) => e.sets).filter((x) => x.done).length} series registradas ·{" "}
+        {a.draft.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0)} series
+        registradas ·{" "}
         {training.blocked
           ? "Guardado local sin verificar"
           : training.dirty

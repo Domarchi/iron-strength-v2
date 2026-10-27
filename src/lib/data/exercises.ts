@@ -77,6 +77,7 @@ export async function listMobileExercises(db: Client): Promise<Exercise[]> {
     .from("exercises")
     .select(COLUMNS, { count: "exact" })
     .is("archived_at", null)
+    .is("record_type", null)
     .order("name")
     .order("id")
     .range(0, MOBILE_CATALOG_LIMIT - 1);

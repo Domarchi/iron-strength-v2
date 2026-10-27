@@ -1,3 +1,4 @@
+import { isTypedTraining } from "../../../lib/training";
 import { useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { Keyboard, Text, View } from "react-native";
@@ -27,8 +28,9 @@ export default function OrganizeWorkout() {
   const inFlight = useRef(false);
   const active = training.active;
   const personal =
-    active?.draft.version === 3 &&
-    active.routine.version === 2 &&
+    active &&
+    ((active.draft.version === 3 && active.routine.version === 2) ||
+      (isTypedTraining(active) && active.routine.origin.kind !== "assigned")) &&
     active.draft.workoutId === id &&
     active.draft.status === "in_progress";
   const disabled =

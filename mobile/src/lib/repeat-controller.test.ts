@@ -1,3 +1,4 @@
+import { legacySender } from "../test/fixtures/legacy-sender";
 import { describe, it, expect, vi } from "vitest";
 import { TrainingController, type SaveReply } from "./training";
 import type { NativeWorkoutPayload } from "./personal-training";
@@ -33,7 +34,8 @@ function setup() {
   }));
   const uuid = vi.fn(() => id(n++)),
     clock = new Date("2026-10-27T14:00:00Z");
-  const create = () => new TrainingController(id(9000), storage, send, () => clock, uuid);
+  const create = () =>
+    new TrainingController(id(9000), storage, legacySender(send), () => clock, uuid);
   return { workout, catalog, plan: prepared.plan, data, storage, send, uuid, clock, create };
 }
 describe("confirmar una repetición sin modificar el resultado original", () => {

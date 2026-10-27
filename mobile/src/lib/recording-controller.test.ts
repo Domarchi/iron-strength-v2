@@ -1,3 +1,4 @@
+import { legacySender, legacyActive } from "../test/fixtures/legacy-sender";
 import { nativeWorkoutBody } from "./personal-training";
 import { describe, expect, it, vi } from "vitest";
 import { TrainingController, type SaveReply } from "./training";
@@ -36,7 +37,7 @@ function setup() {
     new TrainingController(
       id(1),
       storage,
-      send,
+      legacySender(send),
       () => now,
       () => id(n++),
     );
@@ -89,7 +90,7 @@ describe("cierre nativo estructurado y recuperación compatible", () => {
       c = await x.start();
     x.send.mockRejectedValueOnce(Error("respuesta perdida"));
     await expect(c.finish(null, null)).rejects.toThrow("respuesta perdida");
-    const frozen = c.getSnapshot().active!.payload;
+    const frozen = legacyActive(c.getSnapshot().active).payload;
     expect(frozen).toMatchObject({ version: 2 });
     const b = x.create();
     await b.restore();
@@ -105,7 +106,7 @@ describe("cierre nativo estructurado y recuperación compatible", () => {
     const old = x.data.get(nativeSyncKey(id(1)))!;
     const c = await x.start();
     await c.finish(null, null, { localOnly: true });
-    const payload = c.getSnapshot().active!.payload;
+    const payload = legacyActive(c.getSnapshot().active).payload;
     await handoffPending(c, q);
     expect(c.getSnapshot().active).toBeNull();
     expect(JSON.parse(x.data.get(nativeSyncKey(id(1)))!)).toMatchObject({
@@ -211,7 +212,7 @@ describe("cierre nativo estructurado y recuperación compatible", () => {
       }
       await c.finish(7, "Legado", { localOnly: true });
       const raw = JSON.parse(x.data.get(key)!);
-      const legacy = nativeWorkoutBody(c.getSnapshot().active!.payload!);
+      const legacy = nativeWorkoutBody(legacyActive(c.getSnapshot().active).payload!);
       raw.version = 1;
       delete raw.previousFormat;
       raw.active.payload = legacy;
@@ -230,7 +231,7 @@ describe("cierre nativo estructurado y recuperación compatible", () => {
     const x = setup(),
       c = await x.start();
     await c.finish(null, null, { localOnly: true });
-    const document = c.getSnapshot().active!.payload!;
+    const document = legacyActive(c.getSnapshot().active).payload!;
     const legacy = { ...nativeWorkoutBody(document), id: id(900) };
     const q = x.queue();
     await q.restore();
@@ -338,7 +339,9 @@ describe("cierre nativo estructurado y recuperación compatible", () => {
     await recovered.restore();
     expect(recovered.getSnapshot().active?.review?.note).toBe(note);
     await recovered.finish(null, note, { localOnly: true });
-    expect(nativeWorkoutBody(recovered.getSnapshot().active!.payload!).note).toBe(note);
+    expect(nativeWorkoutBody(legacyActive(recovered.getSnapshot().active).payload!).note).toBe(
+      note,
+    );
   });
   it("más de500 caracteres de nota no congela un cierre ni envía datos", async () => {
     const x = setup(),

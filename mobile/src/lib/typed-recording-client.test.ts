@@ -158,3 +158,42 @@ it("un404, rechazo o respuesta perdida conserva el documento y no lo reenvía a 
   expect(x.client.getDataRevision()).toBe(0);
   expect(x.fetcher.mock.calls.slice(1).every((c) => c[0].includes("/typed-recordings"))).toBe(true);
 });
+it("resultado mixto prefiere3 y usa lectura anterior solo si la ruta tipada no está disponible", async () => {
+  const x = await setup(),
+    d = detail();
+  x.fetcher.mockResolvedValueOnce(Response.json(d));
+  expect(await x.client.workoutResult(d.workout.id)).toEqual(d);
+  x.fetcher.mockResolvedValueOnce(
+    Response.json(
+      { version: 1, error: { code: "not_found", message: "Anterior" } },
+      { status: 404 },
+    ),
+  );
+  const old = {
+    version: 1,
+    workout: {
+      ...d.workout,
+      structure: undefined,
+      exercises: d.workout.exercises.map((e) => ({
+        ...e,
+        sets: e.sets.map((s) => ({
+          id: s.id,
+          setNumber: s.setNumber,
+          weightKg: s.metrics.weightKg,
+          reps: s.metrics.reps,
+          isWarmup: s.setType === "warmup",
+        })),
+      })),
+    },
+  };
+  x.fetcher.mockResolvedValueOnce(Response.json(old));
+  expect((await x.client.workoutResult(d.workout.id)).version).toBe(1);
+  expect(x.fetcher.mock.calls.at(-1)?.[0]).toContain("/workouts/");
+});
+it("no degrada un resultado3 malformado ni intenta otras rutas ante una sesión rechazada", async () => {
+  const x = await setup(),
+    d = detail();
+  x.fetcher.mockResolvedValueOnce(Response.json({ ...d, version: 4 }));
+  await expect(x.client.workoutResult(d.workout.id)).rejects.toMatchObject({ code: "version" });
+  expect(x.fetcher).toHaveBeenCalledTimes(2);
+});

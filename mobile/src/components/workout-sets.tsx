@@ -1,3 +1,4 @@
+import { isTypedTraining } from "../lib/training";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Action, s, usePalette } from "./ui";
@@ -31,7 +32,8 @@ export function WorkoutSets({
     { width, fontScale } = useWindowDimensions();
   const [options, showOptions] = useState<string | null>(null);
   const [error, setError] = useState<{ setId: string; message: string } | null>(null);
-  const exercise = training.active?.draft.exercises[index];
+  const a = training.active;
+  const exercise = a && !isTypedTraining(a) ? a.draft.exercises[index] : undefined;
   const blocked =
     training.busy ||
     training.closing ||

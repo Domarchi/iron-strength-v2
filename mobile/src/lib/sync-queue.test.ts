@@ -1,3 +1,4 @@
+import { legacySender } from "../test/fixtures/legacy-sender";
 import { queuedPayloadBody as nativeWorkoutBody } from "./queued-recording";
 import { describe, expect, it, vi } from "vitest";
 import { NativeWorkoutQueue, nativeSyncKey } from "./sync-queue";
@@ -287,7 +288,7 @@ it("la transferencia interrumpida conserva el origen hasta la confirmación de l
     training = new TrainingController(
       user,
       x.storage,
-      x.send,
+      legacySender(x.send),
       () => new Date("2026-10-24T15:00:00Z"),
       () => id(1),
     );
@@ -313,7 +314,7 @@ it("retirar el origen impide iniciar otra sesión hasta confirmar su escritura",
     training = new TrainingController(
       user,
       x.storage,
-      x.send,
+      legacySender(x.send),
       () => new Date("2026-10-24T15:00:00Z"),
       () => id(1),
     );
@@ -349,7 +350,7 @@ it("un cierre legado de borrador v1 sin payload migra a la cola antes de retirar
     source = new TrainingController(
       user,
       x.storage,
-      x.send,
+      legacySender(x.send),
       () => new Date("2026-10-24T15:00:00Z"),
       () => id(1),
     );
@@ -371,7 +372,7 @@ it("un cierre legado de borrador v1 sin payload migra a la cola antes de retirar
   const recovered = new TrainingController(
     user,
     x.storage,
-    x.send,
+    legacySender(x.send),
     () => new Date("2026-10-25T17:00:00Z"),
     () => id(2),
   );
@@ -398,7 +399,7 @@ it("perder la relectura de la copia o cambiar de sesión no retira el cierre ori
     source = new TrainingController(
       user,
       x.storage,
-      x.send,
+      legacySender(x.send),
       () => new Date("2026-10-24T15:00:00Z"),
       () => id(1),
     );

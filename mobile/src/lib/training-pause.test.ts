@@ -1,4 +1,5 @@
-import { nativeWorkoutBody } from "./personal-training";
+import { legacySender } from "../test/fixtures/legacy-sender";
+import { queuedPayloadBody as nativeWorkoutBody } from "./queued-recording";
 import { describe, expect, it, vi } from "vitest";
 import { TrainingController } from "./training";
 import type { AtomicStorage } from "./atomic-contract";
@@ -34,7 +35,7 @@ function setup() {
     new TrainingController(
       user,
       storage,
-      send,
+      legacySender(send),
       () => new Date(clock.now),
       () => user,
     );

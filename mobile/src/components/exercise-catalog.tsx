@@ -1,3 +1,4 @@
+import { isTypedTraining } from "../lib/training";
 import { useTraining } from "../lib/training-context";
 import { TrainingChangeNeedsReview, type ExerciseChangeReview } from "../lib/training-structure";
 import type { MobileCatalogEntry } from "../../../src/lib/mobile/exercise-contracts";
@@ -40,7 +41,9 @@ export function ExerciseCatalog({
   const draft = library.drafts.find((d) => d.id === pickFor);
   const picking = !!(pickFor || pickForTraining);
   const trainingTarget =
-    training.active?.draft.version === 3 &&
+    training.active &&
+    (training.active.draft.version === 3 ||
+      (isTypedTraining(training.active) && training.active.routine.origin.kind !== "assigned")) &&
     training.active.draft.workoutId === pickForTraining &&
     training.active.pause?.pausedAtMs == null &&
     training.active.draft.status === "in_progress"

@@ -1,3 +1,4 @@
+import { legacySender, legacyActive } from "../test/fixtures/legacy-sender";
 import { describe, expect, it, vi } from "vitest";
 import { TrainingController } from "./training";
 import { TrainingChangeNeedsReview, reviewTrainingExercise } from "./training-structure";
@@ -40,7 +41,7 @@ function setup() {
     new TrainingController(
       id(1),
       storage,
-      send,
+      legacySender(send),
       () => new Date("2026-10-26T12:00:00Z"),
       () => id(n++),
     );
@@ -57,14 +58,14 @@ describe("organización protegida del entrenamiento", () => {
     const x = setup(),
       a = await x.start();
     await a.complete(0, 0);
-    const active = a.getSnapshot().active!,
+    const active = legacyActive(a.getSnapshot().active),
       target = active.draft.exercises[0].sessionExerciseId;
     const before = x.data.get(key)!;
     await expect(a.organize({ kind: "remove", id: target })).rejects.toThrow(
       TrainingChangeNeedsReview,
     );
     expect(x.data.get(key)).toBe(before);
-    const review = reviewTrainingExercise(a.getSnapshot().active!, target);
+    const review = reviewTrainingExercise(legacyActive(a.getSnapshot().active), target);
     await a.organize({ kind: "remove", id: target, confirmedStamp: review.stamp });
     const raw = JSON.parse(x.data.get(key)!);
     expect(raw).toMatchObject({ version: 2, previousFormat: before });
@@ -97,7 +98,7 @@ describe("organización protegida del entrenamiento", () => {
       a = await x.start(),
       b = x.create();
     await b.restore();
-    const group = a.getSnapshot().active!.draft.exercises[0].supersetId!;
+    const group = legacyActive(a.getSnapshot().active).draft.exercises[0].supersetId!;
     await a.organize({ kind: "groupRest", groupId: group, seconds: 45 });
     const saved = x.data.get(key);
     await expect(b.organize({ kind: "groupRest", groupId: group, seconds: 0 })).rejects.toThrow(
@@ -114,7 +115,7 @@ describe("organización protegida del entrenamiento", () => {
       calls = x.storage.compareAndSet.mock.calls.length;
     await a.organize({
       kind: "reorder",
-      fromId: a.getSnapshot().active!.draft.exercises[0].sessionExerciseId,
+      fromId: legacyActive(a.getSnapshot().active).draft.exercises[0].sessionExerciseId,
       toId: null,
     });
     expect(x.data.get(key)).toBe(before);

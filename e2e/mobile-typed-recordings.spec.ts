@@ -13,6 +13,7 @@ import { MobileClient, type Transport } from "../mobile/src/lib/client";
 import { NativeWorkoutQueue, nativeSyncKey } from "../mobile/src/lib/sync-queue";
 import { sendQueuedRecording } from "../mobile/src/lib/queued-recording";
 import { handoffPending } from "../mobile/src/lib/queue-transfer";
+import { TrainingController } from "../mobile/src/lib/training";
 import { recordingFixture } from "../src/test/fixtures/workout-recording";
 import { recordingPayloadSchema } from "../src/lib/mobile/recording-contracts";
 import {
@@ -73,6 +74,7 @@ function payload(index: number) {
   p.workout.startedAt = new Date().toISOString();
   p.workout.finishedAt = p.workout.startedAt;
   p.workout.durationSeconds = 0;
+  if (index === 5) p.workout.note = "💪".repeat(500);
   const m = trainingMetricCases[index];
   p.structure.exercises.forEach((r, i) => {
     r.id = randomUUID();
@@ -138,6 +140,7 @@ test("JWT real, cierre completo de cada tipo, reintento y lectura sin cookies/ca
     expect(detail.status()).toBe(200);
     const saved = typedWorkoutSchema.parse(await detail.json());
     expect(saved.workout.structure).toEqual(p.structure);
+    expect(saved.workout.note).toBe(p.workout.note ?? null);
     expect(saved.workout.exercises[0].sets[0]).toMatchObject({
       metrics: mPayload(p),
       setType: "drop",
@@ -410,4 +413,127 @@ test("cola3 mixta protege el destino y reintenta documento3 sin convertir el cie
   const rows = await admin().from("workouts").select("id").in("id", [old.id, p.id]);
   expect(rows.error).toBeNull();
   expect(rows.data).toHaveLength(2);
+});
+test("controlador activo4 recupera su cierre3 y lo transfiere a cola después de respuesta perdida real", async ({
+  baseURL,
+}) => {
+  if (!baseURL) throw Error("Sin servidor aislado");
+  let credential: string | null = null,
+    lose = true;
+  const client = new MobileClient(
+    baseURL,
+    {
+      get: async () => credential,
+      set: async (v) => {
+        credential = v;
+      },
+      remove: async () => {
+        credential = null;
+      },
+    },
+    async (url, options) => {
+      const response = await fetch(url, options);
+      if (url.endsWith("/typed-recordings") && response.ok && lose) {
+        lose = false;
+        throw Error("lost");
+      }
+      return response;
+    },
+    Date.now,
+    true,
+  );
+  await client.login(email, password);
+  const session = client.getSnapshot();
+  if (session.status !== "authenticated") throw Error("Sin identidad");
+  const userId = session.session.profile.id,
+    input = payload(5),
+    initialTime = new Date();
+  let clock = initialTime;
+  const context = typedContextSchema.parse({
+    version: 3,
+    origin: { kind: "free" },
+    title: "Tiempo",
+    sessionLabel: "Libre",
+    exercises: input.structure.exercises.map((r, i) => ({
+      sessionExerciseId: r.id,
+      exerciseId: r.exerciseId,
+      name: `Tipo HTTP ${i ? 0 : 5}`,
+      isBodyweight: false,
+      prescribed: r.prescribed,
+      lastMetrics: null,
+      note: r.note,
+      restSeconds: r.restSeconds,
+      supersetId: r.supersetId,
+      supersetRestSeconds: r.supersetRestSeconds,
+      alternatives: [],
+    })),
+  });
+  const map = new Map<string, string>();
+  const storage = {
+    get: async (k: string) => map.get(k) ?? null,
+    set: async (k: string, v: string) => {
+      map.set(k, v);
+    },
+    remove: async (k: string) => {
+      map.delete(k);
+    },
+    compareAndSet: async (k: string, before: string | null, next: string) => {
+      if ((map.get(k) ?? null) !== before) throw Error("conflict");
+      map.set(k, next);
+    },
+  };
+  const send = (p: Parameters<typeof sendQueuedRecording>[1]) =>
+    sendQueuedRecording(client, p, userId);
+  const create = () => new TrainingController(userId, storage, send, () => clock, randomUUID);
+  const controller = create();
+  await controller.restore();
+  await controller.startTyped(context);
+  controller.editTyped((d) => ({
+    ...d,
+    exercises: d.exercises.map((e, i) =>
+      i
+        ? { ...e, athleteNote: "Nota sin series" }
+        : {
+            ...e,
+            athleteNote: "Propia",
+            sets: e.sets.map((s, j) =>
+              j ? s : { ...s, duration: "60", effort: "9,5", setType: "drop" },
+            ),
+          },
+    ),
+  }));
+  await controller.flush();
+  await controller.complete(0, 0);
+  clock = new Date(initialTime.getTime() + 30000);
+  await controller.pause();
+  clock = new Date(initialTime.getTime() + 60000);
+  await expect(controller.finish(8, "💪".repeat(500))).rejects.toMatchObject({ code: "network" });
+  const document = controller.getSnapshot().active?.payload;
+  if (!document || document.version !== 3) throw Error("Sin cierre3");
+  const restored = create();
+  await restored.restore();
+  expect(restored.getSnapshot().blocked).toBe(false);
+  expect(restored.getSnapshot().active?.payload).toEqual(document);
+  const queue = new NativeWorkoutQueue(userId, storage, send);
+  await queue.restore();
+  await handoffPending(restored, queue);
+  expect(restored.getSnapshot().active).toBeNull();
+  await client.reconnect();
+  expect(await queue.sync({ manual: true })).toEqual({ confirmed: 1, failed: 0 });
+  const read = await client.typedWorkout(document.id);
+  expect(read.workout).toMatchObject({
+    durationSeconds: 30,
+    perceivedEffort: 8,
+    note: "💪".repeat(500),
+  });
+  expect(read.workout.exercises[0]).toMatchObject({
+    athleteNote: "Propia",
+    sets: [
+      { metrics: { recordType: "duration", durationSeconds: 60 }, setType: "drop", effort: 9.5 },
+    ],
+  });
+  expect(read.workout.exercises[1]).toMatchObject({ athleteNote: "Nota sin series", sets: [] });
+  const rows = await admin().from("workouts").select("id").eq("id", document.id);
+  expect(rows.error).toBeNull();
+  expect(rows.data).toHaveLength(1);
 });

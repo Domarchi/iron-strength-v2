@@ -1,3 +1,5 @@
+import { isTypedTraining } from "../../../lib/training";
+import { TypedWorkout } from "../../../components/typed-workout";
 import { useSession } from "../../../lib/session";
 import { useWorkoutSyncQueue } from "../../../lib/sync-context";
 import { QueuedWorkout } from "../../../components/queued-workout";
@@ -58,7 +60,8 @@ export default function Workout() {
     [closing, setClosing] = useState(false),
     [discard, setDiscard] = useState(false),
     [details, showDetails] = useState<string | null>(null);
-  const a = training.active,
+  const current = training.active;
+  const a = current && !isTypedTraining(current) ? current : null,
     d = a?.draft,
     effort = a?.review?.effort ?? "",
     note = a?.review?.note ?? "";
@@ -79,6 +82,8 @@ export default function Workout() {
         <Notice message="Recuperando tu entrenamiento…" />
       </Page>
     );
+  if (current && isTypedTraining(current) && current.draft.workoutId === id)
+    return <TypedWorkout active={current} />;
   if (!a || !d || d.workoutId !== id) return <QueuedWorkout id={id} />;
   const index = Math.min(a.activeIndex, d.exercises.length - 1),
     exercise = d.exercises[index],
@@ -421,6 +426,16 @@ export default function Workout() {
               </Pressable>
               {details === exercise.sessionExerciseId ? (
                 <View style={{ gap: 12 }}>
+                  {a.mode === "real" && !pending ? (
+                    <Action
+                      label="Añadir esfuerzo por serie y notas"
+                      quiet
+                      disabled={training.dirty || training.busy || training.closing}
+                      onPress={() => {
+                        void act(() => controller.upgradeRecording());
+                      }}
+                    />
+                  ) : null}
                   {a.mode === "real" ? (
                     <DownloadedHistory exerciseId={exercise.exerciseId} personal={personal} />
                   ) : null}

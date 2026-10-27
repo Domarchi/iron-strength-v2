@@ -121,3 +121,14 @@ describe("cierre3 separado de los documentos anteriores", () => {
     ).toBe(false);
   });
 });
+it("nota global3 cuenta caracteres Unicode, sin cambiar el contrato anterior", () => {
+  const p = fixture();
+  p.workout.note = "💪".repeat(500);
+  expect(typedRecordingPayloadSchema.parse(p).workout.note).toBe(p.workout.note);
+  expect(
+    typedRecordingPayloadSchema.safeParse({
+      ...p,
+      workout: { ...p.workout, note: p.workout.note + "x" },
+    }).success,
+  ).toBe(false);
+});

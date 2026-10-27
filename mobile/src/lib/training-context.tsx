@@ -1,4 +1,4 @@
-import { isPersonalWorkoutPayload, isRecordingPayload } from "./personal-training";
+import { sendQueuedRecording } from "./queued-recording";
 import {
   createContext,
   useContext,
@@ -19,12 +19,7 @@ export function TrainingProvider({ userId, children }: PropsWithChildren<{ userI
       new TrainingController(
         userId,
         atomicStorage,
-        (p) =>
-          isRecordingPayload(p)
-            ? client.saveRecording(p, userId)
-            : isPersonalWorkoutPayload(p)
-              ? client.savePersonalWorkout(p, userId)
-              : client.saveWorkout(p, userId),
+        (p) => sendQueuedRecording(client, p, userId),
         () => new Date(),
         randomUUID,
       ),

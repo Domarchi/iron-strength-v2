@@ -1,3 +1,9 @@
+import { createTypedExerciseApi } from "./typed-exercise-api";
+import {
+  getTypedActiveExercise,
+  listTypedExerciseHistory,
+  listTypedExercises,
+} from "../data/typed-exercises";
 import { createPersonalWorkoutApi } from "./personal-workout-api";
 import { createRecordingApi } from "./recording-api";
 import { createTypedRecordingApi } from "./typed-recording-api";
@@ -8,7 +14,7 @@ import { createMobilePersonalApi } from "./personal-api";
 import { readPersonalLibrary, mutatePersonalLibrary } from "../data/personal-library";
 import { createMobileProgressApi } from "./progress-api";
 import { createMobileExerciseApi } from "./exercise-api";
-import { getActiveExercise, listMobileExercises } from "../data/exercises";
+import { listMobileExercises } from "../data/exercises";
 import { listExerciseHistory } from "../data/exercise-history";
 import { exerciseHistoryCursorString } from "./exercise-contracts";
 import "server-only";
@@ -287,8 +293,8 @@ export function mobileExerciseApi() {
       return {
         catalog: () => listMobileExercises(db),
         detail: async (id, cursor) => {
-          const exercise = await getActiveExercise(db, id);
-          if (!exercise) return null;
+          const exercise = await getTypedActiveExercise(db, id);
+          if (!exercise || exercise.recordType !== null) return null;
           const history = await listExerciseHistory(db, identity.profile.id, id, { cursor });
           return {
             exercise,
@@ -373,6 +379,27 @@ export function mobileTypedRecordingApi() {
       return {
         save: (payload) => saveTypedWorkoutRecording(db, payload),
         read: (id) => getTypedWorkoutDetail(db, id, identity.profile.id),
+      };
+    },
+  });
+}
+
+export function mobileTypedExerciseApi() {
+  return createTypedExerciseApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        catalog: () => listTypedExercises(db),
+        detail: async (id, cursor) => {
+          const exercise = await getTypedActiveExercise(db, id);
+          if (!exercise) return null;
+          return {
+            exercise,
+            history: await listTypedExerciseHistory(db, identity.profile.id, id, { cursor }),
+          };
+        },
       };
     },
   });

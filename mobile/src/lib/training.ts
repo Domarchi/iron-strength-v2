@@ -1,7 +1,23 @@
+import { changeTypedTrainingStructure } from "./typed-training-structure";
+import { typedRecordingPayloadSchema } from "../../../src/lib/mobile/typed-recording-contracts";
+import {
+  typedContextSchema,
+  typedDraftSchema,
+  createTypedDraft,
+  upgradeLegacyTraining,
+  buildTypedRecording,
+  completeTypedSet,
+  type TypedTrainingDraft,
+  type TypedTrainingContext,
+} from "./typed-training";
+import {
+  queuedReceiptSchema,
+  type QueuedWorkoutPayload,
+  type QueuedSaveReply,
+} from "./queued-recording";
 import { createRepeatedTraining } from "./repeat-training";
 import type { RepeatPlan } from "../../../src/domain/workout-repeat";
 import { buildTrainingRecording } from "./recording";
-import { recordingSaveSchema } from "../../../src/lib/mobile/recording-contracts";
 import type { MobileCatalogEntry } from "../../../src/lib/mobile/exercise-contracts";
 import {
   personalContextSchema,
@@ -13,17 +29,12 @@ import {
   isRecordingPayload,
   type PersonalTrainingContext,
   type NativeWorkoutDraft,
-  type NativeWorkoutPayload,
 } from "./personal-training";
 import { z } from "zod";
 import { changeTrainingStructure, type TrainingStructureChange } from "./training-structure";
 import { AtomicStoreError } from "./atomic-contract";
 import { workoutPayloadSchema } from "../../../src/lib/workout/payload";
-import {
-  mobileRoutineSchema,
-  mobileSaveSchema,
-  type MobileRoutine,
-} from "../../../src/lib/mobile/contracts";
+import { mobileRoutineSchema, type MobileRoutine } from "../../../src/lib/mobile/contracts";
 import {
   buildPayload,
   completeSet,
@@ -47,12 +58,7 @@ export interface TrainingStorage {
   remove(key: string): Promise<void>;
   compareAndSet?(key: string, before: string | null, next: string): Promise<void>;
 }
-export type SaveReply = {
-  version: 1 | 2;
-  ok: true;
-  status: "created" | "duplicate";
-  workoutId: string;
-};
+export type SaveReply = QueuedSaveReply;
 const activeSchema = z
   .object({
     mode: z.enum(["demo", "real"]),
@@ -106,6 +112,39 @@ const activeSchema = z
     );
   });
 export type ActiveTraining = z.infer<typeof activeSchema>;
+const typedActiveSchema = z
+  .object({
+    ...activeSchema.shape,
+    mode: z.literal("real"),
+    routine: typedContextSchema,
+    draft: typedDraftSchema,
+    payload: typedRecordingPayloadSchema.optional(),
+    review: z
+      .object({
+        effort: z.string().max(2),
+        note: z.string().refine((v) => Array.from(v).length <= 500),
+      })
+      .optional(),
+  })
+  .strict()
+  .refine((a) => {
+    const built = buildTypedRecording(
+      a.routine,
+      a.draft,
+      new Date(a.draft.finishedAt ?? a.draft.updatedAt),
+    );
+    if (a.draft.status === "in_progress")
+      return !a.payload && (built.ok || built.reason === "no_sets");
+    return !!a.payload && built.ok && JSON.stringify(built.payload) === JSON.stringify(a.payload);
+  });
+export type TypedActiveTraining = z.infer<typeof typedActiveSchema>;
+export type CurrentTraining = ActiveTraining | TypedActiveTraining;
+export const isTypedTraining = (a: CurrentTraining): a is TypedActiveTraining =>
+  a.draft.version === 4;
+export const trainingTitle = (a: CurrentTraining) =>
+  isTypedTraining(a)
+    ? (a.routine.title ?? `Sesión ${a.routine.sessionLabel}`)
+    : (a.routine.session.title ?? `Sesión ${a.routine.session.label}`);
 export type DemoResult = { id: string; title: string; payload: WorkoutPayload };
 const envelopeBase = z.object({
   version: z.literal(1),
@@ -164,10 +203,35 @@ const recordingEnvelopeSchema = z
       return false;
     }
   });
-const envelopeSchema = z.union([previousEnvelopeSchema, recordingEnvelopeSchema]);
+const oldEnvelopeSchema = z.union([previousEnvelopeSchema, recordingEnvelopeSchema]);
+const typedEnvelopeSchema = z
+  .object({
+    ...envelopeBase.shape,
+    version: z.literal(4),
+    active: z.union([activeSchema, typedActiveSchema]).nullable(),
+    previousFormat: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine((r) => {
+    if (!r.previousFormat) return true;
+    try {
+      const previous = oldEnvelopeSchema.safeParse(JSON.parse(r.previousFormat));
+      return (
+        previous.success &&
+        previous.data.userId === r.userId &&
+        (!previous.data.active ||
+          (previous.data.active.draft.userId === r.userId &&
+            previous.data.active.draft.workoutId === r.active?.draft.workoutId))
+      );
+    } catch {
+      return false;
+    }
+  });
+const envelopeSchema = z.union([oldEnvelopeSchema, typedEnvelopeSchema]);
+const currentActiveSchema = z.union([activeSchema, typedActiveSchema]);
 export type TrainingState = {
   ready: boolean;
-  active: ActiveTraining | null;
+  active: CurrentTraining | null;
   demos: DemoResult[];
   dirty: boolean;
   busy: boolean;
@@ -194,13 +258,13 @@ export class TrainingController {
   private revision = 0;
   private disposed = false;
   private epoch = 0;
-  private formatVersion: 1 | 2 | 3 = 1;
+  private formatVersion: 1 | 2 | 3 | 4 = 1;
   private previousFormat: string | null = null;
   private readonly key: string;
   constructor(
     private userId: string,
     private storage: TrainingStorage,
-    private send: (payload: NativeWorkoutPayload) => Promise<SaveReply>,
+    private send: (payload: QueuedWorkoutPayload) => Promise<SaveReply>,
     private now = () => new Date(),
     private uuid: () => string = () => globalThis.crypto.randomUUID(),
   ) {
@@ -330,7 +394,7 @@ export class TrainingController {
       throw Error("Espera a que termine el guardado o envío.");
     await this.persist();
   }
-  private assertNotPaused(active: ActiveTraining | null) {
+  private assertNotPaused(active: CurrentTraining | null) {
     if (active?.pause?.pausedAtMs != null)
       throw Error(
         "El entrenamiento está en pausa. Reanuda antes de registrar o modificar ejercicios.",
@@ -353,16 +417,79 @@ export class TrainingController {
     }
   }
   private prepareRecordingFormat() {
-    if (this.formatVersion === 3) return;
+    if (this.formatVersion >= 3) return;
     if (!this.raw) throw Error("Protege el registro local antes de finalizarlo.");
     this.previousFormat = this.raw;
     this.formatVersion = 3;
+  }
+  private prepareTypedFormat() {
+    if (this.formatVersion === 4) return;
+    this.previousFormat = this.raw;
+    this.formatVersion = 4;
+  }
+  async startTyped(value: TypedTrainingContext) {
+    this.ensure();
+    if (this.state.active || this.state.busy || this.state.closing)
+      throw Error("Retoma o resuelve primero el entrenamiento actual.");
+    const routine = typedContextSchema.parse(value);
+    const draft = createTypedDraft({
+      context: routine,
+      userId: this.userId,
+      workoutId: this.uuid(),
+      now: this.now(),
+    });
+    this.prepareTypedFormat();
+    this.publish({
+      active: typedActiveSchema.parse({ mode: "real", routine, draft, activeIndex: 0 }),
+      error: null,
+    });
+    await this.persist();
+  }
+  async upgradeRecording() {
+    this.liveForControls();
+    await this.flush();
+    const a = this.liveForControls();
+    if (isTypedTraining(a)) return;
+    if (a.mode !== "real" || a.payload)
+      throw Error("Un cierre pendiente o una demo conserva su formato original.");
+    const converted = upgradeLegacyTraining(a.routine, a.draft);
+    this.prepareTypedFormat();
+    this.publish({
+      active: typedActiveSchema.parse({ ...a, routine: converted.context, draft: converted.draft }),
+      error: null,
+    });
+    await this.persist();
+  }
+  editTyped(change: (draft: TypedTrainingDraft) => TypedTrainingDraft) {
+    this.ensure();
+    const a = this.state.active;
+    if (
+      !a ||
+      !isTypedTraining(a) ||
+      a.draft.status !== "in_progress" ||
+      this.state.busy ||
+      this.state.closing
+    )
+      return;
+    this.assertNotPaused(a);
+    const draft = typedDraftSchema.parse({
+      ...change(a.draft),
+      updatedAt: this.now().toISOString(),
+    });
+    this.publish({ active: typedActiveSchema.parse({ ...a, draft }) });
+    void this.persist().catch(() => {});
   }
   async organize(operation: TrainingStructureChange) {
     this.liveForControls();
     await this.flush();
     const active = this.liveForControls();
     this.assertNotPaused(active);
+    if (isTypedTraining(active)) {
+      const next = changeTypedTrainingStructure(active, operation, this.now(), this.uuid);
+      this.publish({ active: typedActiveSchema.parse(next), error: null });
+      await this.persist();
+      return;
+    }
     const next = changeTrainingStructure(active, operation, this.now(), this.uuid);
     if (next === active) return;
     const checked = activeSchema.parse(next);
@@ -400,19 +527,15 @@ export class TrainingController {
     if (this.state.busy || this.state.closing)
       throw Error("Espera a que termine el guardado o envío.");
     const now = this.now();
-    this.publish({
-      active: {
-        ...a,
-        draft: {
-          ...a.draft,
-          updatedAt: now.toISOString(),
-          rest:
-            deltaSeconds === null || !a.draft.rest
-              ? null
-              : adjustRest(a.draft.rest, now.getTime(), deltaSeconds),
-        },
-      },
-    });
+    const draft = {
+      ...a.draft,
+      updatedAt: now.toISOString(),
+      rest:
+        deltaSeconds === null || !a.draft.rest
+          ? null
+          : adjustRest(a.draft.rest, now.getTime(), deltaSeconds),
+    };
+    this.publish({ active: currentActiveSchema.parse({ ...a, draft }) });
     await this.persist();
   }
   async start(routine: MobileRoutine, mode: "demo" | "real") {
@@ -519,6 +642,7 @@ export class TrainingController {
     const a = this.state.active;
     if (!a || a.draft.status !== "in_progress" || this.state.busy || this.state.closing) return;
     this.assertNotPaused(a);
+    if (isTypedTraining(a)) throw Error("Usa los campos del registro avanzado.");
     const draft = { ...change(a.draft), updatedAt: this.now().toISOString() };
     this.publish({ active: { ...a, draft } });
     void this.persist().catch(() => {});
@@ -547,6 +671,12 @@ export class TrainingController {
     const a = this.state.active;
     if (!a || a.draft.status !== "in_progress" || this.state.busy || this.state.closing) return;
     this.assertNotPaused(a);
+    if (isTypedTraining(a)) {
+      const completed = completeTypedSet(a.draft, ex, set, this.now(), a.activeIndex);
+      this.publish({ active: { ...a, ...completed } });
+      await this.persist();
+      return;
+    }
     const previous = a.draft,
       exercise = previous.exercises[ex];
     if (!exercise) return;
@@ -596,17 +726,26 @@ export class TrainingController {
           throw Error("Revisa esfuerzo (1–10) y nota (máximo 500 caracteres).");
         const finishedAt = this.now();
         const draft = {
-          ...finishDraft({ ...a.draft, perceivedEffort: effort, note }, finishedAt),
+          ...(isTypedTraining(a)
+            ? {
+                ...a.draft,
+                status: "pending_save" as const,
+                finishedAt: finishedAt.toISOString(),
+                perceivedEffort: effort,
+                note,
+              }
+            : finishDraft({ ...a.draft, perceivedEffort: effort, note }, finishedAt)),
           durationSeconds: elapsedSessionSeconds(
             Date.parse(a.draft.startedAt),
             finishedAt.getTime(),
             a.pause ?? null,
           ),
         };
-        const built =
-          a.mode === "real"
-            ? buildTrainingRecording(a.routine, draft, this.now())
-            : buildNativePayload(draft, this.now());
+        const built = isTypedTraining(a)
+          ? buildTypedRecording(a.routine, typedDraftSchema.parse(draft), this.now())
+          : a.mode === "real"
+            ? buildTrainingRecording(a.routine, nativeWorkoutDraftSchema.parse(draft), this.now())
+            : buildNativePayload(nativeWorkoutDraftSchema.parse(draft), this.now());
         if (!built.ok)
           throw Error(
             built.reason === "no_sets"
@@ -614,7 +753,10 @@ export class TrainingController {
               : "Revisa las series completadas antes de finalizar.",
           );
         if (a.mode === "real") this.prepareRecordingFormat();
-        this.publish({ active: { ...a, draft, payload: built.payload }, error: null });
+        const active = isTypedTraining(a)
+          ? typedActiveSchema.parse({ ...a, draft, payload: built.payload })
+          : activeSchema.parse({ ...a, draft, payload: built.payload });
+        this.publish({ active, error: null });
         await this.persist();
       }
       if (options.localOnly && this.state.active?.mode === "real") {
@@ -626,7 +768,10 @@ export class TrainingController {
       this.publish({ closing: false });
     }
   }
-  private async pendingPayload() {
+  private async pendingPayload(): Promise<{
+    active: CurrentTraining;
+    payload: QueuedWorkoutPayload;
+  } | null> {
     this.ensure();
     await this.flush();
     this.ensure();
@@ -634,18 +779,24 @@ export class TrainingController {
     if (!a || a.draft.status !== "pending_save" || this.state.busy) return null;
     const built = a.payload
       ? { ok: true as const, payload: a.payload }
-      : buildNativePayload(a.draft, this.now());
+      : isTypedTraining(a)
+        ? buildTypedRecording(a.routine, a.draft, this.now())
+        : buildNativePayload(a.draft, this.now());
     if (!built.ok) throw Error("No hay series válidas para guardar.");
     if (built.payload.id !== a.draft.workoutId)
       throw Error(
         "El envío no corresponde a este entrenamiento. Conservamos el registro para revisarlo.",
       );
-    const active = a.payload ? a : { ...a, payload: built.payload };
+    const active = a.payload
+      ? a
+      : isTypedTraining(a)
+        ? typedActiveSchema.parse({ ...a, payload: built.payload })
+        : activeSchema.parse({ ...a, payload: built.payload });
     if (!a.payload) {
       this.publish({ active });
       await this.persist();
     }
-    return { active, payload: built.payload };
+    return { active, payload: active.payload ?? built.payload };
   }
   async retry() {
     if (this.state.closing) return null;
@@ -657,12 +808,11 @@ export class TrainingController {
     if (!pending || pending.active.mode !== "real") return null;
     return {
       userId: pending.active.draft.userId,
-      title:
-        pending.active.routine.session.title ?? `Sesión ${pending.active.routine.session.label}`,
+      title: trainingTitle(pending.active),
       payload: pending.payload,
     };
   }
-  async releaseQueued(id: string, payload: NativeWorkoutPayload) {
+  async releaseQueued(id: string, payload: QueuedWorkoutPayload) {
     this.ensure();
     await this.flush();
     this.ensure();
@@ -702,23 +852,21 @@ export class TrainingController {
     try {
       if (a.mode === "real") {
         const response = await this.send(payload);
-        const reply = (
-          isRecordingPayload(payload) ? recordingSaveSchema : mobileSaveSchema
-        ).safeParse(response);
+        const reply = queuedReceiptSchema(payload).safeParse(response);
         if (!reply.success)
           throw Error("La confirmación requiere una versión compatible. Conservamos el registro.");
         if (reply.data.workoutId !== payload.id)
           throw Error("El servidor confirmó otro entrenamiento. Conservamos el registro.");
       }
       if (this.disposed || epoch !== this.epoch) return null;
-      if (a.mode === "demo" && isPersonalWorkoutPayload(payload))
+      if (a.mode === "demo" && (payload.version === 3 || isPersonalWorkoutPayload(payload)))
         throw Error("Una demo no puede guardar un registro personal.");
       const demos =
         a.mode === "demo"
           ? [
               {
                 id: a.draft.workoutId,
-                title: a.routine.session.title ?? `Rutina ${a.routine.session.label}`,
+                title: trainingTitle(a),
                 payload: workoutPayloadSchema.parse(payload),
               },
               ...this.state.demos.filter((d) => d.id !== a.draft.workoutId),

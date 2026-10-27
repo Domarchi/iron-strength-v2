@@ -1,3 +1,4 @@
+import { legacySender } from "../test/fixtures/legacy-sender";
 import { describe, expect, it, vi } from "vitest";
 import { TrainingController } from "./training";
 import {
@@ -37,7 +38,7 @@ function setup() {
     new TrainingController(
       id(1),
       storage,
-      send,
+      legacySender(send),
       () => new Date("2026-10-26T12:00:00Z"),
       () => id(n++),
     );

@@ -744,6 +744,16 @@ export class MobileClient {
       throw new MobileError("identity", "El entrenamiento recibido no coincide. Reintenta.");
     return result.data;
   }
+  async workoutResult(id: string) {
+    try {
+      return await this.typedWorkout(id);
+    } catch (error) {
+      // Legacy results and an older server have no typed endpoint. A malformed
+      // typed result, identity mismatch or expired session must never fall back.
+      if (!(error instanceof MobileError) || ![404, 503].includes(error.status)) throw error;
+      return this.workout(id);
+    }
+  }
   async saveTypedRecording(payload: TypedRecordingPayload, expectedUserId: string) {
     if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
       throw new MobileError(
