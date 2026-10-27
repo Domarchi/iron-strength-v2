@@ -1,39 +1,44 @@
-import { recordingSaveSchema } from "../../../src/lib/mobile/recording-contracts";
 import { z } from "zod";
+import { nativeWorkoutPayloadSchema, isRecordingPayload } from "./personal-training";
 import {
-  nativeWorkoutPayloadSchema,
-  isRecordingPayload,
-  type NativeWorkoutPayload,
-} from "./personal-training";
-import { mobileSaveSchema } from "../../../src/lib/mobile/contracts";
-import type { SaveReply, TrainingStorage } from "./training";
+  queuedWorkoutPayloadSchema,
+  queuedReceiptSchema,
+  isTypedRecording,
+  type QueuedWorkoutPayload,
+  type QueuedSaveReply,
+} from "./queued-recording";
+import type { TrainingStorage } from "./training";
 export type QueueStorage = TrainingStorage & {
   compareAndSet(key: string, before: string | null, next: string): Promise<void>;
 };
 const failureSchema = z
   .object({ code: z.string().max(64), message: z.string().max(300), blocked: z.boolean() })
   .strict();
-const entrySchema = z
+const entryBase = z
   .object({
     title: z.string().min(1).max(140),
-    payload: nativeWorkoutPayloadSchema,
+    payload: queuedWorkoutPayloadSchema,
     queuedAt: z.iso.datetime(),
     phase: z.enum(["pending", "confirmed"]),
     confirmedAt: z.iso.datetime().nullable(),
     error: failureSchema.nullable(),
   })
-  .strict()
-  .refine((e) => (e.phase === "confirmed") === (e.confirmedAt !== null));
+  .strict();
+const validEntry = (e: { phase: "pending" | "confirmed"; confirmedAt: string | null }) =>
+  (e.phase === "confirmed") === (e.confirmedAt !== null);
+const entrySchema = entryBase.refine(validEntry);
+const oldEntrySchema = entryBase.extend({ payload: nativeWorkoutPayloadSchema }).refine(validEntry);
 export type QueueEntry = z.infer<typeof entrySchema>;
+const validRecord = (r: {
+  entries: { payload: { id: string }; phase: "pending" | "confirmed" }[];
+}) =>
+  new Set(r.entries.map((e) => e.payload.id.toLowerCase())).size === r.entries.length &&
+  r.entries.filter((e) => e.phase === "pending").length <= 50 &&
+  r.entries.filter((e) => e.phase === "confirmed").length <= 20;
 const recordSchema = z
-  .object({ version: z.literal(1), userId: z.uuid(), entries: z.array(entrySchema).max(70) })
+  .object({ version: z.literal(1), userId: z.uuid(), entries: z.array(oldEntrySchema).max(70) })
   .strict()
-  .refine(
-    (r) =>
-      new Set(r.entries.map((e) => e.payload.id)).size === r.entries.length &&
-      r.entries.filter((e) => e.phase === "pending").length <= 50 &&
-      r.entries.filter((e) => e.phase === "confirmed").length <= 20,
-  );
+  .refine(validRecord);
 const legacyRecordSchema = recordSchema.refine((r) =>
   r.entries.every((e) => !isRecordingPayload(e.payload)),
 );
@@ -56,11 +61,30 @@ const recordingRecordSchema = z
       return false;
     }
   });
-const queueRecordSchema = z.union([legacyRecordSchema, recordingRecordSchema]);
+const previousRecordSchema = z.union([legacyRecordSchema, recordingRecordSchema]);
+const typedRecordSchema = z
+  .object({
+    version: z.literal(3),
+    userId: z.uuid(),
+    entries: z.array(entrySchema).max(70),
+    previousFormat: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine(validRecord)
+  .refine((r) => {
+    if (!r.previousFormat) return true;
+    try {
+      const previous = previousRecordSchema.safeParse(JSON.parse(r.previousFormat));
+      return previous.success && previous.data.userId === r.userId;
+    } catch {
+      return false;
+    }
+  });
+const queueRecordSchema = z.union([previousRecordSchema, typedRecordSchema]);
 export const nativeSyncKey = (userId: string) => `is:native-sync:v1:${userId}`;
-export const samePayload = (a: NativeWorkoutPayload, b: NativeWorkoutPayload) =>
-  JSON.stringify(nativeWorkoutPayloadSchema.parse(a)) ===
-  JSON.stringify(nativeWorkoutPayloadSchema.parse(b));
+export const samePayload = (a: QueuedWorkoutPayload, b: QueuedWorkoutPayload) =>
+  JSON.stringify(queuedWorkoutPayloadSchema.parse(a)) ===
+  JSON.stringify(queuedWorkoutPayloadSchema.parse(b));
 type State = {
   ready: boolean;
   busy: boolean;
@@ -106,7 +130,7 @@ export class NativeWorkoutQueue {
     error: null,
   };
   private raw: string | null = null;
-  private formatVersion: 1 | 2 = 1;
+  private formatVersion: 1 | 2 | 3 = 1;
   private previousFormat: string | null = null;
   private disposed = false;
   private epoch = 0;
@@ -116,7 +140,7 @@ export class NativeWorkoutQueue {
   constructor(
     readonly userId: string,
     private storage: QueueStorage,
-    private send: (payload: NativeWorkoutPayload) => Promise<SaveReply>,
+    private send: (payload: QueuedWorkoutPayload) => Promise<QueuedSaveReply>,
     private now = () => new Date(),
   ) {
     if (!z.uuid().safeParse(userId).success) throw Error("Identidad de cola inválida.");
@@ -161,7 +185,7 @@ export class NativeWorkoutQueue {
       if (record.userId !== this.userId) throw Error("Cuenta distinta");
       this.raw = raw;
       this.formatVersion = record.version;
-      this.previousFormat = record.version === 2 ? (record.previousFormat ?? null) : null;
+      this.previousFormat = record.version !== 1 ? (record.previousFormat ?? null) : null;
       this.publish({ entries: record.entries, verified: true, blocked: false, error: null });
     } catch {
       if (!this.disposed && epoch === this.epoch)
@@ -177,7 +201,13 @@ export class NativeWorkoutQueue {
   }
   private async commit(entries: QueueEntry[]) {
     const epoch = this.epoch;
-    if (this.formatVersion === 1 && entries.some((e) => isRecordingPayload(e.payload))) {
+    if (this.formatVersion !== 3 && entries.some((e) => isTypedRecording(e.payload))) {
+      this.previousFormat = this.raw;
+      this.formatVersion = 3;
+    } else if (
+      this.formatVersion === 1 &&
+      entries.some((e) => !isTypedRecording(e.payload) && isRecordingPayload(e.payload))
+    ) {
       this.previousFormat = this.raw;
       this.formatVersion = 2;
     }
@@ -219,12 +249,14 @@ export class NativeWorkoutQueue {
       if (epoch === this.epoch) this.publish({ busy: false });
     }
   }
-  async enqueue(input: { userId: string; title: string; payload: NativeWorkoutPayload }) {
+  async enqueue(input: { userId: string; title: string; payload: QueuedWorkoutPayload }) {
     return this.run(async () => {
       if (input.userId !== this.userId)
         throw Error("La cuenta del registro no corresponde a esta cola.");
-      const payload = nativeWorkoutPayloadSchema.parse(input.payload),
-        existing = this.state.entries.find((e) => e.payload.id === payload.id);
+      const payload = queuedWorkoutPayloadSchema.parse(input.payload),
+        existing = this.state.entries.find(
+          (e) => e.payload.id.toLowerCase() === payload.id.toLowerCase(),
+        );
       if (existing) {
         if (!samePayload(existing.payload, payload)) {
           const error = {
@@ -270,9 +302,9 @@ export class NativeWorkoutQueue {
         if (options.canContinue?.() === false) break;
         let error: z.infer<typeof failureSchema> | null = null;
         try {
-          const reply = (
-            isRecordingPayload(entry.payload) ? recordingSaveSchema : mobileSaveSchema
-          ).safeParse(await this.send(entry.payload));
+          const reply = queuedReceiptSchema(entry.payload).safeParse(
+            await this.send(entry.payload),
+          );
           if (!reply.success)
             error = {
               code: "version",

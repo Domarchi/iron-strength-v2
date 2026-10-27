@@ -10,6 +10,11 @@ import {
   typedWorkoutSchema,
 } from "../src/lib/mobile/typed-recording-contracts";
 import { MobileClient, type Transport } from "../mobile/src/lib/client";
+import { NativeWorkoutQueue, nativeSyncKey } from "../mobile/src/lib/sync-queue";
+import { sendQueuedRecording } from "../mobile/src/lib/queued-recording";
+import { handoffPending } from "../mobile/src/lib/queue-transfer";
+import { recordingFixture } from "../src/test/fixtures/workout-recording";
+import { recordingPayloadSchema } from "../src/lib/mobile/recording-contracts";
 import {
   typedContextSchema,
   typedDraftSchema,
@@ -308,4 +313,101 @@ test("núcleo y cliente nativos cierran cada tipo contra SQL real y recuperan un
     expect(rows.error).toBeNull();
     expect(rows.data).toHaveLength(1);
   }
+});
+test("cola3 mixta protege el destino y reintenta documento3 sin convertir el cierre2 anterior", async ({
+  baseURL,
+}) => {
+  if (!baseURL) throw Error("Sin servidor aislado");
+  let credential: string | null = null,
+    lose = true;
+  const client = new MobileClient(
+    baseURL,
+    {
+      get: async () => credential,
+      set: async (v) => {
+        credential = v;
+      },
+      remove: async () => {
+        credential = null;
+      },
+    },
+    async (url, options) => {
+      const response = await fetch(url, options);
+      if (url.endsWith("/typed-recordings") && response.ok && lose) {
+        lose = false;
+        throw Error("lost-response");
+      }
+      return response;
+    },
+    Date.now,
+    true,
+  );
+  await client.login(email, password);
+  const session = client.getSnapshot();
+  if (session.status !== "authenticated") throw Error("Sin identidad");
+  const userId = session.session.profile.id;
+  const old = recordingPayloadSchema.parse(recordingFixture());
+  old.id = randomUUID();
+  old.workout.id = old.id;
+  old.workout.startedAt = new Date().toISOString();
+  old.workout.finishedAt = old.workout.startedAt;
+  old.workout.durationSeconds = 0;
+  old.structure.exercises.forEach((e) => {
+    e.exerciseId = exercises[0];
+  });
+  old.workout.sets.forEach((s) => {
+    s.exerciseId = exercises[0];
+  });
+  const map = new Map<string, string>();
+  const storage = {
+    get: async (key: string) => map.get(key) ?? null,
+    set: async (key: string, value: string) => {
+      map.set(key, value);
+    },
+    remove: async (key: string) => {
+      map.delete(key);
+    },
+    compareAndSet: async (key: string, before: string | null, next: string) => {
+      if ((map.get(key) ?? null) !== before) throw Error("conflict");
+      map.set(key, next);
+    },
+  };
+  const queue = () =>
+    new NativeWorkoutQueue(userId, storage, (p) => sendQueuedRecording(client, p, userId));
+  const q = queue();
+  await q.restore();
+  await q.enqueue({ userId, title: "Anterior", payload: old });
+  const before = map.get(nativeSyncKey(userId))!;
+  const p = payload(7);
+  let released = false;
+  await handoffPending(
+    {
+      pendingForQueue: async () => ({ userId, title: "Distancia y tiempo", payload: p }),
+      releaseQueued: async (id, document) => {
+        const record = JSON.parse(map.get(nativeSyncKey(userId))!);
+        expect(record.version).toBe(3);
+        expect(record.previousFormat).toBe(before);
+        expect(record.entries[1].payload).toEqual(document);
+        expect(document.id).toBe(id);
+        released = true;
+      },
+    },
+    q,
+  );
+  expect(released).toBe(true);
+  expect(await q.sync({ manual: true })).toEqual({ confirmed: 1, failed: 1 });
+  const restored = queue();
+  await restored.restore();
+  expect(restored.getSnapshot().entries[0]).toMatchObject({ payload: old, phase: "confirmed" });
+  expect(restored.getSnapshot().entries[1]).toMatchObject({ payload: p, phase: "pending" });
+  await client.reconnect();
+  expect(await restored.sync({ manual: true })).toEqual({ confirmed: 1, failed: 0 });
+  expect(restored.getSnapshot().entries.every((e) => e.phase === "confirmed")).toBe(true);
+  expect((await client.workout(old.id)).workout.structure).toEqual(old.structure);
+  expect((await client.typedWorkout(p.id)).workout.exercises[0].sets[0].metrics).toEqual(
+    p.workout.sets[0].metrics,
+  );
+  const rows = await admin().from("workouts").select("id").in("id", [old.id, p.id]);
+  expect(rows.error).toBeNull();
+  expect(rows.data).toHaveLength(2);
 });

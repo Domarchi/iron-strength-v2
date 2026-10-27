@@ -1,4 +1,4 @@
-import { nativeWorkoutBody } from "./personal-training";
+import { queuedPayloadBody as nativeWorkoutBody } from "./queued-recording";
 import { describe, expect, it, vi } from "vitest";
 import { NativeWorkoutQueue, nativeSyncKey } from "./sync-queue";
 import { MobileError } from "./client";
@@ -58,7 +58,15 @@ function fixture() {
     workoutId: p.id,
   }));
   const create = (owner = user) =>
-    new NativeWorkoutQueue(owner, storage, send, () => new Date("2026-10-24T16:00:00Z"));
+    new NativeWorkoutQueue(
+      owner,
+      storage,
+      (p) => {
+        if (p.version === 3) throw Error("Este fixture anterior no envía documento3");
+        return send(p);
+      },
+      () => new Date("2026-10-24T16:00:00Z"),
+    );
   return { map, storage, send, create };
 }
 describe("cola nativa, contrato y durabilidad", () => {

@@ -47,7 +47,16 @@ function setup() {
     await c.complete(0, 0);
     return c;
   };
-  const queue = () => new NativeWorkoutQueue(id(1), storage, send, () => now);
+  const queue = () =>
+    new NativeWorkoutQueue(
+      id(1),
+      storage,
+      (p) => {
+        if (p.version === 3) throw Error("Este fixture anterior no envía documento3");
+        return send(p);
+      },
+      () => now,
+    );
   return { data, storage, send, create, start, queue };
 }
 describe("cierre nativo estructurado y recuperación compatible", () => {

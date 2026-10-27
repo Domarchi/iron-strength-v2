@@ -1,4 +1,4 @@
-import { nativeWorkoutBody } from "../lib/personal-training";
+import { queuedPayloadBody } from "../lib/queued-recording";
 import { useCallback, useState } from "react";
 import { santiagoDate } from "../../../src/domain/dates";
 import { router, useFocusEffect } from "expo-router";
@@ -56,7 +56,7 @@ function QueuedEntry({ id }: { id: string }) {
         <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
       </Page>
     );
-  const payload = nativeWorkoutBody(entry.payload);
+  const payload = queuedPayloadBody(entry.payload);
   const confirmed = entry.phase === "confirmed" && queue.verified;
   return (
     <Page>

@@ -101,7 +101,10 @@ describe("controlador personal conserva registro y cola", () => {
     const q = new NativeWorkoutQueue(
       id(1),
       x.storage,
-      x.send,
+      (p) => {
+        if (p.version === 3) throw Error("Este fixture anterior no envía documento3");
+        return x.send(p);
+      },
       () => new Date("2026-10-26T12:00:00Z"),
     );
     await q.restore();

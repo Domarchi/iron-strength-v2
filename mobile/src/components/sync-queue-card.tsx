@@ -1,4 +1,4 @@
-import { nativeWorkoutBody } from "../lib/personal-training";
+import { queuedPayloadBody } from "../lib/queued-recording";
 import { useState } from "react";
 import { santiagoDate } from "../../../src/domain/dates";
 import { router } from "expo-router";
@@ -74,7 +74,7 @@ export function SyncQueueCard() {
             <View key={entry.payload.id} style={{ gap: 6 }}>
               <Text style={[s.label, { color: p.ink }]}>
                 {entry.title} ·{" "}
-                {day(santiagoDate(new Date(nativeWorkoutBody(entry.payload).startedAt)))}
+                {day(santiagoDate(new Date(queuedPayloadBody(entry.payload).startedAt)))}
               </Text>
               {entry.error ? (
                 <Text style={[s.body, { color: p.danger }]}>
@@ -108,7 +108,7 @@ export function SyncQueueCard() {
         <View style={{ gap: 6 }}>
           <Text style={[s.caption, { color: p.blue }]}>ÚLTIMO ENVÍO CONFIRMADO</Text>
           <Text style={[s.label, { color: p.ink }]}>
-            {last.title} · {day(santiagoDate(new Date(nativeWorkoutBody(last.payload).startedAt)))}
+            {last.title} · {day(santiagoDate(new Date(queuedPayloadBody(last.payload).startedAt)))}
           </Text>
           <Action
             label="Ver resultado del último envío"
