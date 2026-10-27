@@ -3,6 +3,11 @@ import {
   type PersonalWorkoutPayload,
 } from "../../../src/lib/mobile/personal-workout-contracts";
 import {
+  recordingPayloadSchema,
+  recordingSaveSchema,
+  type RecordingPayload,
+} from "../../../src/lib/mobile/recording-contracts";
+import {
   personalLibrarySchema,
   personalMutationSchema,
   personalMutationResultSchema,
@@ -677,6 +682,36 @@ export class MobileClient {
       throw new MobileError("invalid_input", "Revisa el entrenamiento antes de enviarlo.", 400);
     const parsed = mobileSaveSchema.safeParse(
       await this.read("personal-workouts", { version: 1, payload: input.data }),
+    );
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La confirmación no es compatible. Conservamos tu registro.",
+      );
+    if (parsed.data.workoutId !== input.data.id)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este entrenamiento. Conservamos el registro.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return parsed.data;
+  }
+  async saveRecording(payload: RecordingPayload, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos el entrenamiento para su cuenta original.",
+      );
+    const input = recordingPayloadSchema.safeParse(payload);
+    if (!input.success)
+      throw new MobileError(
+        "invalid_input",
+        "Revisa el entrenamiento y su estructura antes de enviarlo.",
+        400,
+      );
+    const parsed = recordingSaveSchema.safeParse(
+      await this.read("recordings", { version: 2, payload: input.data }),
     );
     if (!parsed.success)
       throw new MobileError(

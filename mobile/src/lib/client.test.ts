@@ -1,4 +1,6 @@
 import { weekDownloadFixture } from "../../../src/test/fixtures/week-download";
+import { recordingFixture } from "../../../src/test/fixtures/workout-recording";
+import { recordingPayloadSchema } from "../../../src/lib/mobile/recording-contracts";
 import { describe, it, expect, vi } from "vitest";
 import { MobileClient, validateApiOrigin, type Transport, type CredentialStore } from "./client";
 const profile = {
@@ -40,6 +42,34 @@ function setup(fetcher: Transport) {
   };
 }
 describe("sesión móvil segura", () => {
+  it("cierre con estructura envía el documento completo y exige confirmación versión2 de esa cuenta e ID", async () => {
+    const input = recordingPayloadSchema.parse(recordingFixture()),
+      reply = { version: 2, ok: true, status: "created", workoutId: input.id };
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(reply))
+      .mockResolvedValueOnce(Response.json({ ...reply, version: 1 }))
+      .mockResolvedValueOnce(Response.json({ ...reply, workoutId: profile.id }));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    await expect(x.client.saveRecording(input, input.id)).rejects.toMatchObject({
+      code: "identity",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(await x.client.saveRecording(input, profile.id)).toEqual(reply);
+    expect(fetcher.mock.calls[1][0]).toContain("/api/mobile/v1/recordings");
+    expect(JSON.parse(String(fetcher.mock.calls[1][1]!.body))).toEqual({
+      version: 2,
+      payload: input,
+    });
+    await expect(x.client.saveRecording(input, profile.id)).rejects.toMatchObject({
+      code: "version",
+    });
+    await expect(x.client.saveRecording(input, profile.id)).rejects.toMatchObject({
+      code: "identity",
+    });
+  });
   it("registro libre valida cuenta y confirmación del ID sin inventar programa", async () => {
     const workoutId = "22222222-2222-4222-8222-222222222222";
     const input = {

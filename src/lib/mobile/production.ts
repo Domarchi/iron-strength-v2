@@ -1,4 +1,6 @@
 import { createPersonalWorkoutApi } from "./personal-workout-api";
+import { createRecordingApi } from "./recording-api";
+import { saveWorkoutRecording } from "../data/save-workout-recording";
 import { savePersonalWorkout } from "../data/save-personal-workout";
 import { createMobilePersonalApi } from "./personal-api";
 import { readPersonalLibrary, mutatePersonalLibrary } from "../data/personal-library";
@@ -325,6 +327,28 @@ export function mobilePersonalWorkoutApi() {
       return {
         save: async (payload) => {
           const receipt = await savePersonalWorkout(db, payload);
+          if (receipt.status !== "removed")
+            await syncAchievements({
+              db,
+              studentId: identity.profile.id,
+              workoutId: payload.id,
+            }).catch(() => []);
+          return receipt;
+        },
+      };
+    },
+  });
+}
+
+export function mobileRecordingApi() {
+  return createRecordingApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        save: async (payload) => {
+          const receipt = await saveWorkoutRecording(db, payload);
           if (receipt.status !== "removed")
             await syncAchievements({
               db,

@@ -1,4 +1,5 @@
 import { workoutSourceKindSchema } from "./personal-workout-contracts";
+import { workoutStructureSchema } from "./recording-contracts";
 import { z } from "zod";
 import {
   coherentPrescriptionSeries,
@@ -127,6 +128,7 @@ export const mobileHistorySchema = z.object({
 export const mobileWorkoutSchema = z.object({
   version: z.literal(1),
   workout: z.object({
+    structure: workoutStructureSchema.nullish(),
     ...workoutOriginFields,
     id: z.uuid(),
     programName: z.string().nullable(),

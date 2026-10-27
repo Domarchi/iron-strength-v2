@@ -1,4 +1,5 @@
 import { workoutSourceKindSchema } from "../mobile/personal-workout-contracts";
+import { workoutStructureSchema, type WorkoutStructure } from "../mobile/recording-contracts";
 import type { WorkoutSourceKind } from "../../domain/workout-title";
 // Entrenamientos realizados: detalle y lista paginada (RF-34, RF-77). La RLS decide quién ve qué:
 // el alumno sus entrenamientos, el coach los de sus alumnos.
@@ -34,6 +35,7 @@ export type WorkoutExerciseRow = {
 };
 
 export type WorkoutDetail = {
+  structure?: WorkoutStructure | null;
   sourceKind?: WorkoutSourceKind;
   title?: string | null;
   personalRoutineId?: string | null;
@@ -85,7 +87,7 @@ export async function getWorkoutDetail(
   let query = db
     .from("workouts")
     .select(
-      `id, student_id, program_id, source_kind, title, personal_routine_id, personal_routine_revision, session_label, started_at, duration_seconds, performed_on, perceived_effort, note,
+      `id, student_id, program_id, source_kind, title, personal_routine_id, personal_routine_revision, session_label, started_at, duration_seconds, performed_on, perceived_effort, note, structure,
        programs ( name ),
        workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
     )
@@ -118,6 +120,7 @@ export async function getWorkoutDetail(
   }
 
   return {
+    ...(data.structure == null ? {} : { structure: workoutStructureSchema.parse(data.structure) }),
     id: data.id,
     studentId: data.student_id,
     sourceKind: workoutSourceKindSchema.parse(data.source_kind),
