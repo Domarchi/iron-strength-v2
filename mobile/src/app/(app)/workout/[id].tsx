@@ -1,3 +1,6 @@
+import { WorkoutTools } from "../../../components/workout-tools";
+import { useTrainingPreferences } from "../../../lib/training-preferences-context";
+import { formatWeight } from "../../../../../src/domain/training-tools";
 import { isTypedTraining } from "../../../lib/training";
 import { TypedWorkout } from "../../../components/typed-workout";
 import { useSession } from "../../../lib/session";
@@ -50,6 +53,8 @@ function useClock() {
   return now;
 }
 export default function Workout() {
+  const { preferences } = useTrainingPreferences();
+  const [tools, setTools] = useState(false);
   const p = usePalette(),
     { id } = useLocalSearchParams<{ id: string }>(),
     { controller, training } = useTraining(),
@@ -244,7 +249,7 @@ export default function Workout() {
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={[s.caption, { color: p.muted }]}>Volumen</Text>
             <Text style={[s.number, { color: p.ink, fontSize: 17 }]}>
-              {volume.loadKg.toLocaleString("es-CL")} kg
+              {formatWeight(volume.loadKg, preferences.value.weightUnit)}
             </Text>
           </View>
           <View style={{ flex: 1, gap: 4 }}>
@@ -384,6 +389,22 @@ export default function Workout() {
                     : `Descanso entre series: ${exercise.restSeconds ?? 90} s`}
                 </Text>
               </View>
+              <Action
+                label="Herramientas del ejercicio"
+                quiet
+                disabled={
+                  paused || training.dirty || training.busy || training.closing || training.blocked
+                }
+                onPress={() => setTools((v) => !v)}
+              />
+              {tools ? (
+                <WorkoutTools
+                  key={`${d.workoutId}:${exercise.sessionExerciseId}:${exercise.exerciseId}`}
+                  active={a}
+                  index={index}
+                  onClose={() => setTools(false)}
+                />
+              ) : null}
               <WorkoutSets
                 index={index}
                 onComplete={(si) => {
@@ -485,7 +506,7 @@ export default function Workout() {
               <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
                 <Text style={[s.subheading, { color: p.ink }]}>Revisa antes de terminar</Text>
                 <Text style={[s.caption, { color: p.muted }]}>
-                  {volume.loadKg.toLocaleString("es-CL")} kg de volumen registrado
+                  {formatWeight(volume.loadKg, preferences.value.weightUnit)} de volumen registrado
                 </Text>
                 <Text style={[s.body, { color: p.muted }]}>
                   {summary.doneSets} series realizadas · {summary.totalSets - summary.doneSets}{" "}

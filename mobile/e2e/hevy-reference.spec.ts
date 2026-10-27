@@ -39,7 +39,7 @@ for (const theme of ["light", "dark"] as const) {
     const weight = page.getByRole("textbox", { name: "Peso serie 1", exact: true });
     await expect(weight).toHaveValue("55");
     const copy = page.getByRole("button", { name: "Copiar anterior a serie 1", exact: true });
-    await expect(copy).toContainText("47,5 × 7");
+    await expect(copy).toContainText("47,5 kg × 7");
     await weight.fill("no");
     await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
     await expect(page.getByRole("alert")).toContainText("Serie 1");
@@ -53,14 +53,14 @@ for (const theme of ["light", "dark"] as const) {
     await page
       .getByRole("button", { name: "Usar como calentamiento serie 1", exact: true })
       .click();
-    await expect(copy).toContainText("20 × 12");
+    await expect(copy).toContainText("20 kg × 12");
     await copy.click();
     await expect(weight).toHaveValue("20");
     await page.getByRole("button", { name: "Usar como trabajo serie 1", exact: true }).click();
-    await expect(copy).toContainText("47,5 × 7");
+    await expect(copy).toContainText("47,5 kg × 7");
     await expect(
       page.getByRole("button", { name: "Copiar anterior a serie 2", exact: true }),
-    ).toContainText("45 × 9");
+    ).toContainText("45 kg × 9");
     await copy.click();
     await page.getByRole("button", { name: "Opciones de serie 1", exact: true }).click();
     await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
@@ -95,7 +95,7 @@ for (const theme of ["light", "dark"] as const) {
     expect((await copy.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     // La misma composición apilada se utiliza con texto ampliado.
     await page.setViewportSize({ width: 320, height: 800 });
-    await expect(copy).toContainText("Anterior · 47,5 × 7");
+    await expect(copy).toContainText("Anterior · 47,5 kg × 7");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       320,
     );

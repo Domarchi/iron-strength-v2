@@ -44,6 +44,8 @@ describe("eliminación recuperable del dispositivo", () => {
     x.values.set(`is:native-week:v1:${other}`, "otra descarga");
     x.values.set(`is:native-sync:v1:${id}`, "cola pendiente");
     x.values.set(`is:native-sync:v1:${other}`, "otra cola");
+    x.values.set(`is:native-training-preferences:v1:${id}`, "preferencias");
+    x.values.set(`is:native-training-preferences:v1:${other}`, "otras preferencias");
     x.values.set(`is:native-library:v1:${id}`, "borradores");
     x.values.set(`is:native-library:v1:${other}`, "otros borradores");
     await x.controller.restore();
@@ -61,6 +63,8 @@ describe("eliminación recuperable del dispositivo", () => {
     expect(x.values.get(`is:native-week:v1:${other}`)).toBe("otra descarga");
     expect(x.values.has(`is:native-sync:v1:${id}`)).toBe(false);
     expect(x.values.get(`is:native-sync:v1:${other}`)).toBe("otra cola");
+    expect(x.values.has(`is:native-training-preferences:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:native-training-preferences:v1:${other}`)).toBe("otras preferencias");
     expect(x.values.has(`is:native-library:v1:${id}`)).toBe(false);
     expect(x.values.get(`is:native-library:v1:${other}`)).toBe("otros borradores");
     expect(x.controller.getSnapshot().completion).toBe("server_deleted");

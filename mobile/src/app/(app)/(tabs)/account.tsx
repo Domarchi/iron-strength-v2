@@ -1,3 +1,4 @@
+import { TrainingPreferencesEditor } from "../../../components/training-preferences-editor";
 import { useLibraryDrafts } from "../../../lib/library-context";
 import { LibraryDraftCard } from "../../../components/library-draft-card";
 import { WeekDownloadCard } from "../../../components/week-download-card";
@@ -60,6 +61,7 @@ export default function Account() {
         </Text>
       </View>
       <AppearanceSelect />
+      <TrainingPreferencesEditor />
       <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
       <TrainingCard />
       <CommentDraftCard allowDiscard />

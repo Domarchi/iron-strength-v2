@@ -1,3 +1,5 @@
+import { useTrainingPreferences } from "../lib/training-preferences-context";
+import { formatWeight } from "../../../src/domain/training-tools";
 import { isTypedTraining } from "../lib/training";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View, useWindowDimensions } from "react-native";
@@ -25,6 +27,7 @@ export function WorkoutSets({
   index: number;
   onComplete: (setIndex: number) => Promise<unknown>;
 }) {
+  const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     { controller, training } = useTraining(),
     { download } = useWeekDownload(),
@@ -49,7 +52,7 @@ export function WorkoutSets({
           )
         : null,
     last = history?.items[0] ?? null,
-    previousColumn = width >= 360 && fontScale <= 1.15;
+    previousColumn = preferences.value.showPrevious && width >= 360 && fontScale <= 1.15;
   async function complete(setId: string, si: number) {
     setError(null);
     try {
@@ -63,7 +66,7 @@ export function WorkoutSets({
   }
   return (
     <View style={{ gap: 2 }}>
-      {!exercise.prescribed.series ? (
+      {preferences.value.showTargets && !exercise.prescribed.series ? (
         <Text style={[s.caption, { color: p.muted, marginBottom: 8 }]}>
           Objetivo{" "}
           {exercise.prescribed.repsMin === exercise.prescribed.repsMax
@@ -71,11 +74,11 @@ export function WorkoutSets({
             : `${exercise.prescribed.repsMin}–${exercise.prescribed.repsMax}`}{" "}
           reps
           {exercise.prescribed.targetWeightKg != null
-            ? ` · ${exercise.prescribed.targetWeightKg.toLocaleString("es-CL")} kg`
+            ? ` · ${formatWeight(exercise.prescribed.targetWeightKg, preferences.value.weightUnit)}`
             : ""}
         </Text>
       ) : null}
-      {last ? (
+      {last && preferences.value.showPrevious ? (
         <Text style={[s.caption, { color: p.muted, marginBottom: 8 }]}>
           Anterior · {last.date.split("-").reverse().slice(0, 2).join("/")} · copia descargada
         </Text>
@@ -126,7 +129,7 @@ export function WorkoutSets({
             >
               <Text style={[s.caption, s.number, { color: p.muted, fontSize: 12 }]}>
                 {previousColumn ? "" : "Anterior · "}
-                {previous.weightKg.toLocaleString("es-CL")} × {previous.reps}
+                {formatWeight(previous.weightKg, preferences.value.weightUnit)} × {previous.reps}
               </Text>
             </Pressable>
           ) : (
@@ -252,8 +255,16 @@ export function WorkoutSets({
                 }}
               />
             </View>
-            {!previousColumn ? <View style={{ paddingLeft: 48 }}>{previousValue}</View> : null}
-            {set.isWarmup || exercise.prescribed.series || !target ? (
+            {preferences.value.weightUnit !== "kg" && /^\d+(?:[.,]\d+)?$/.test(set.weight) ? (
+              <Text style={[s.caption, { color: p.muted, paddingLeft: 48 }]}>
+                ≈ {formatWeight(Number(set.weight.replace(",", ".")), preferences.value.weightUnit)}
+              </Text>
+            ) : null}
+            {preferences.value.showPrevious && !previousColumn ? (
+              <View style={{ paddingLeft: 48 }}>{previousValue}</View>
+            ) : null}
+            {set.isWarmup ||
+            (preferences.value.showTargets && (exercise.prescribed.series || !target)) ? (
               <Text
                 style={[
                   s.caption,
@@ -263,7 +274,7 @@ export function WorkoutSets({
                 {set.isWarmup
                   ? "Calentamiento · no avanza la ronda"
                   : target
-                    ? `Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${target.targetWeightKg.toLocaleString("es-CL")} kg` : ""}`
+                    ? `Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${formatWeight(target.targetWeightKg, preferences.value.weightUnit)}` : ""}`
                     : "Serie adicional"}
               </Text>
             ) : null}

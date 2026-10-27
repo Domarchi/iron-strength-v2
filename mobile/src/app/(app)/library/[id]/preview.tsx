@@ -1,3 +1,4 @@
+import { useTrainingPreferences } from "../../../../lib/training-preferences-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
@@ -23,6 +24,7 @@ export default function PersonalRoutinePreviewRoute() {
   return <PersonalRoutinePreview key={`${userId}:${id}`} id={id} />;
 }
 function PersonalRoutinePreview({ id }: { id: string }) {
+  const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
@@ -36,9 +38,10 @@ function PersonalRoutinePreview({ id }: { id: string }) {
     focusEpoch = useRef(0);
   useEffect(() => {
     mounted.current = true;
+    const epoch = focusEpoch;
     return () => {
       mounted.current = false;
-      focusEpoch.current++;
+      epoch.current++;
     };
   }, []);
   useFocusEffect(
@@ -168,7 +171,8 @@ function PersonalRoutinePreview({ id }: { id: string }) {
               <Text style={[s.subheading, { color: p.ink }]}>{item.name}</Text>
               <Text style={[s.body, { color: p.muted }]}>
                 {item.prescribed.sets} ×{" "}
-                {formatTrainingTarget(item.prescribed.target) || "Objetivo libre"}
+                {formatTrainingTarget(item.prescribed.target, preferences.value) ||
+                  "Objetivo libre"}
                 {item.prescribed.series ? " · Por serie" : ""}
               </Text>
               {!item.supersetId ? (
@@ -188,7 +192,8 @@ function PersonalRoutinePreview({ id }: { id: string }) {
                   {item.note ? <Text style={[s.body, { color: p.muted }]}>{item.note}</Text> : null}
                   {item.prescribed.series?.map((target, i) => (
                     <Text key={i} style={[s.caption, { color: p.ink }]}>
-                      Serie {i + 1} · {formatTrainingTarget(target) || "Objetivo libre"}
+                      Serie {i + 1} ·{" "}
+                      {formatTrainingTarget(target, preferences.value) || "Objetivo libre"}
                     </Text>
                   ))}
                 </>

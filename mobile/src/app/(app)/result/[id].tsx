@@ -1,3 +1,5 @@
+import { useTrainingPreferences } from "../../../lib/training-preferences-context";
+import { formatWeight } from "../../../../../src/domain/training-tools";
 import { TypedResult } from "../../../components/typed-result";
 import type { TypedWorkout } from "../../../../../src/lib/mobile/typed-recording-contracts";
 import { workoutTitle } from "../../../../../src/domain/workout-title";
@@ -15,6 +17,7 @@ import type { MobileWorkout } from "../../../../../src/lib/mobile/contracts";
 import { santiagoDate } from "../../../../../src/domain/dates";
 import { setVolume } from "../../../../../src/domain/volume";
 export default function Result() {
+  const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     params = useLocalSearchParams<{
       id: string;
@@ -128,7 +131,7 @@ export default function Result() {
                 {w.summary.workingSets} series · {w.summary.exerciseCount} ejercicios
               </Text>
               <Text style={[s.body, { color: p.muted }]}>
-                {w.summary.volumeKg.toLocaleString("es-CL")} kg de volumen ·{" "}
+                {formatWeight(w.summary.volumeKg, preferences.value.weightUnit)} de volumen ·{" "}
                 {Math.max(1, Math.round(w.durationSeconds / 60))} min
               </Text>
               {w.perceivedEffort ? (
@@ -153,7 +156,7 @@ export default function Result() {
                       {set.isWarmup ? "Calentamiento" : `Serie ${i + 1}`}
                     </Text>
                     <Text style={[s.label, { color: p.ink }]}>
-                      {set.weightKg.toLocaleString("es-CL")} kg × {set.reps} reps
+                      {formatWeight(set.weightKg, preferences.value.weightUnit)} × {set.reps} reps
                     </Text>
                   </View>
                 ))}

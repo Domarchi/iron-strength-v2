@@ -1,3 +1,7 @@
+import { WorkoutTools } from "./workout-tools";
+import { useTrainingPreferences } from "../lib/training-preferences-context";
+import { trainingFields } from "../lib/training-fields";
+import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
 import { useEffect, useState } from "react";
 import {
   AppState,
@@ -20,8 +24,11 @@ import {
   typedSetTarget,
   chooseTypedAlternative,
 } from "../lib/typed-training";
-import { trainingTotals, type RecordType } from "../../../src/domain/training-metrics";
-import { parseTrainingSetInput, type TrainingInputField } from "../../../src/domain/training-input";
+import {
+  trainingTotals,
+  formatPresentedTrainingMetrics as formatTrainingMetrics,
+} from "../../../src/domain/training-metrics";
+import { parseTrainingSetInput } from "../../../src/domain/training-input";
 import { formatClock, remainingSeconds } from "../../../src/domain/rest-timer";
 import { nextSupersetSet } from "../../../src/domain/superset-rounds";
 import { elapsedSessionSeconds } from "../../../src/domain/session-timer";
@@ -35,42 +42,9 @@ const classes = {
   failure: "Al fallo",
   drop: "Descendente",
 } as const;
-const fields = (
-  kind: RecordType,
-): { field: TrainingInputField; label: string; integer?: boolean }[] => {
-  switch (kind) {
-    case "bodyweight_reps":
-      return [{ field: "reps", label: "REPS", integer: true }];
-    case "duration":
-      return [{ field: "duration", label: "SEGUNDOS", integer: true }];
-    case "weight_duration":
-      return [
-        { field: "weight", label: "KG" },
-        { field: "duration", label: "SEGUNDOS", integer: true },
-      ];
-    case "distance_duration":
-      return [
-        { field: "distance", label: "METROS" },
-        { field: "duration", label: "SEGUNDOS", integer: true },
-      ];
-    case "weight_distance":
-      return [
-        { field: "weight", label: "KG" },
-        { field: "distance", label: "METROS" },
-      ];
-    case "assisted_bodyweight":
-      return [
-        { field: "weight", label: "ASIST. KG" },
-        { field: "reps", label: "REPS", integer: true },
-      ];
-    default:
-      return [
-        { field: "weight", label: kind === "weighted_bodyweight" ? "KG EXTRA" : "KG" },
-        { field: "reps", label: "REPS", integer: true },
-      ];
-  }
-};
 export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
+  const { preferences } = useTrainingPreferences();
+  const [tools, setTools] = useState(false);
   const p = usePalette(),
     { controller, training } = useTraining(),
     { state } = useSession(),
@@ -215,6 +189,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
               accessibilityState={{ selected: index === i }}
               aria-pressed={index === i}
               onPress={() => {
+                setTools(false);
                 setDetails(false);
                 setOptions(null);
                 void act(() => controller.focus(i));
@@ -252,6 +227,11 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                   : "Todas las rondas completadas"}
               </Text>
             ) : null}
+            {preferences.value.showPrevious && exercise.lastMetrics ? (
+              <Text style={[s.caption, { color: p.muted }]}>
+                Anterior · {formatTrainingMetrics(exercise.lastMetrics, preferences.value)}
+              </Text>
+            ) : null}
             {exercise.sets.map((set, si) => {
               const target = typedSetTarget(exercise, si);
               return (
@@ -266,9 +246,9 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                     borderRadius: 6,
                   }}
                 >
-                  {target ? (
+                  {target && preferences.value.showTargets ? (
                     <Text style={[s.caption, { color: p.muted }]}>
-                      {formatTrainingTarget(target)}
+                      {formatTrainingTarget(target, preferences.value)}
                     </Text>
                   ) : null}
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -295,7 +275,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                               : "D"}
                       </Text>
                     </Pressable>
-                    {fields(exercise.prescribed.recordType).map((f) => (
+                    {trainingFields(exercise.prescribed.recordType).map((f) => (
                       <View key={f.field} style={{ flex: 1, gap: 2 }}>
                         <Text
                           style={[s.caption, { color: p.muted, fontSize: 10, textAlign: "center" }]}
@@ -325,6 +305,28 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                             },
                           ]}
                         />
+                        {f.field === "weight" &&
+                        preferences.value.weightUnit !== "kg" &&
+                        /^\d+(?:[.,]\d+)?$/.test(set.weight) ? (
+                          <Text style={[s.caption, { color: p.muted, textAlign: "center" }]}>
+                            ≈{" "}
+                            {formatWeight(
+                              Number(set.weight.replace(",", ".")),
+                              preferences.value.weightUnit,
+                            )}
+                          </Text>
+                        ) : null}
+                        {f.field === "distance" &&
+                        preferences.value.distanceUnit !== "m" &&
+                        /^\d+(?:[.,]\d+)?$/.test(set.distance) ? (
+                          <Text style={[s.caption, { color: p.muted, textAlign: "center" }]}>
+                            ≈{" "}
+                            {formatDistance(
+                              Number(set.distance.replace(",", ".")),
+                              preferences.value.distanceUnit,
+                            )}
+                          </Text>
+                        ) : null}
                       </View>
                     ))}
                     <SetCheck
@@ -409,6 +411,22 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                 }))
               }
             />
+            {!pending ? (
+              <Action
+                label="Herramientas del ejercicio"
+                quiet
+                disabled={locked || training.dirty}
+                onPress={() => setTools((v) => !v)}
+              />
+            ) : null}
+            {tools ? (
+              <WorkoutTools
+                key={`${d.workoutId}:${exercise.sessionExerciseId}:${exercise.exerciseId}`}
+                active={a}
+                index={index}
+                onClose={() => setTools(false)}
+              />
+            ) : null}
             <Action label="Detalles del ejercicio" quiet onPress={() => setDetails((v) => !v)} />
             {details ? (
               <View style={{ gap: 10 }}>
@@ -522,8 +540,9 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
               {done} series realizadas · {total - done} pendientes
             </Text>
             <Text style={[s.caption, { color: p.muted }]}>
-              {totals.externalVolumeKg.toLocaleString("es-CL")} kg de volumen ·{" "}
-              {totals.durationSeconds} s registrados · {totals.distanceMeters} m
+              {formatWeight(totals.externalVolumeKg, preferences.value.weightUnit)} de volumen ·{" "}
+              {totals.durationSeconds} s registrados ·{" "}
+              {formatDistance(totals.distanceMeters, preferences.value.distanceUnit)}
             </Text>
             <TextInput
               accessibilityLabel="Esfuerzo percibido"

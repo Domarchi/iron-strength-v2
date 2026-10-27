@@ -1,3 +1,5 @@
+import { useTrainingPreferences } from "../../../lib/training-preferences-context";
+import { formatWeight } from "../../../../../src/domain/training-tools";
 import { useCallback, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
@@ -12,9 +14,10 @@ import { santiagoDate } from "../../../../../src/domain/dates";
 import type { MobileRoutine } from "../../../lib/client";
 type Exercise = MobileRoutine["exercises"][number];
 function Targets({ prescribed }: { prescribed: Exercise["prescribed"] }) {
+  const { preferences } = useTrainingPreferences();
   const p = usePalette();
   const line = (t: { repsMin: number; repsMax: number; targetWeightKg: number | null }) =>
-    `${t.repsMin === t.repsMax ? t.repsMin : `${t.repsMin}–${t.repsMax}`} reps · ${t.targetWeightKg == null ? "Sin peso indicado" : `${String(t.targetWeightKg).replace(".", ",")} kg`}`;
+    `${t.repsMin === t.repsMax ? t.repsMin : `${t.repsMin}–${t.repsMax}`} reps · ${t.targetWeightKg == null ? "Sin peso indicado" : formatWeight(t.targetWeightKg, preferences.value.weightUnit)}`;
   return prescribed.series ? (
     <View style={{ gap: 5 }}>
       {prescribed.series.map((target, index) => (

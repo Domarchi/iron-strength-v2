@@ -1,4 +1,10 @@
 import {
+  applyWarmupProposal,
+  applySessionRest,
+  captureRestPreference,
+  type WarmupProposal,
+} from "./workout-tools";
+import {
   changeTypedTrainingStructure,
   legacyStructureOperation,
   catalogSelectionSchema,
@@ -274,6 +280,7 @@ export class TrainingController {
     private send: (payload: QueuedWorkoutPayload) => Promise<SaveReply>,
     private now = () => new Date(),
     private uuid: () => string = () => globalThis.crypto.randomUUID(),
+    private defaultRestSeconds: () => number = () => 90,
   ) {
     this.key = `is:native-training:v1:${userId}`;
   }
@@ -439,17 +446,57 @@ export class TrainingController {
     if (this.state.active || this.state.busy || this.state.closing)
       throw Error("Retoma o resuelve primero el entrenamiento actual.");
     const routine = typedContextSchema.parse(value);
-    const draft = createTypedDraft({
-      context: routine,
-      userId: this.userId,
-      workoutId: this.uuid(),
-      now: this.now(),
-    });
+    const draft = captureRestPreference(
+      createTypedDraft({
+        context: routine,
+        userId: this.userId,
+        workoutId: this.uuid(),
+        now: this.now(),
+      }),
+      this.defaultRestSeconds(),
+    );
     this.prepareTypedFormat();
     this.publish({
       active: typedActiveSchema.parse({ mode: "real", routine, draft, activeIndex: 0 }),
       error: null,
     });
+    await this.persist();
+  }
+  async setSessionRest(proposal: {
+    workoutId: string;
+    rowId: string;
+    expectedDraft: string;
+    seconds: number;
+  }) {
+    this.liveForControls();
+    await this.flush();
+    const active = this.liveForControls();
+    this.assertNotPaused(active);
+    const index = active.draft.exercises.findIndex((e) => e.sessionExerciseId === proposal.rowId);
+    if (
+      active.draft.workoutId !== proposal.workoutId ||
+      index < 0 ||
+      JSON.stringify(active.draft) !== proposal.expectedDraft
+    )
+      throw Error("El registro cambió. Revisa nuevamente el descanso antes de confirmar.");
+    const draft = applySessionRest(active.draft, index, proposal.seconds);
+    this.publish({
+      active: currentActiveSchema.parse({
+        ...active,
+        draft: { ...draft, updatedAt: this.now().toISOString() },
+      }),
+      error: null,
+    });
+    await this.persist();
+  }
+  async addWarmups(proposal: WarmupProposal) {
+    this.liveForControls();
+    await this.flush();
+    const active = this.liveForControls();
+    this.assertNotPaused(active);
+    const next = applyWarmupProposal(active, proposal, this.now());
+    if (next === active) return;
+    this.publish({ active: currentActiveSchema.parse(next), error: null });
     await this.persist();
   }
   async upgradeRecording() {
@@ -609,17 +656,23 @@ export class TrainingController {
       throw Error("Espera a que termine el guardado o envío.");
     if (this.state.active)
       throw Error("Ya tienes un entrenamiento. Retómalo o descártalo primero.");
-    const draft = createDraft({
-      workoutId: this.uuid(),
-      userId: this.userId,
-      plannedSession: routine.session,
-      exercises: routine.exercises.map((e) => ({
-        ...e,
-        lastWeightKg: e.lastWeightKg ?? null,
-        alternatives: e.alternatives?.map((a) => ({ ...a, lastWeightKg: a.lastWeightKg ?? null })),
-      })),
-      now: this.now(),
-    });
+    const draft = captureRestPreference(
+      createDraft({
+        workoutId: this.uuid(),
+        userId: this.userId,
+        plannedSession: routine.session,
+        exercises: routine.exercises.map((e) => ({
+          ...e,
+          lastWeightKg: e.lastWeightKg ?? null,
+          alternatives: e.alternatives?.map((a) => ({
+            ...a,
+            lastWeightKg: a.lastWeightKg ?? null,
+          })),
+        })),
+        now: this.now(),
+      }),
+      this.defaultRestSeconds(),
+    );
     const active = { mode, routine, draft, activeIndex: 0 };
     this.publish({ active, error: null });
     await this.persist();
@@ -633,12 +686,15 @@ export class TrainingController {
     const routine = personalContextSchema.parse(value);
     if (routine.origin.kind === "personal" && !routine.exercises.length)
       throw Error("Agrega ejercicios a la rutina antes de empezar.");
-    const draft = createPersonalTrainingDraft({
-      context: routine,
-      userId: this.userId,
-      workoutId: this.uuid(),
-      now: this.now(),
-    });
+    const draft = captureRestPreference(
+      createPersonalTrainingDraft({
+        context: routine,
+        userId: this.userId,
+        workoutId: this.uuid(),
+        now: this.now(),
+      }),
+      this.defaultRestSeconds(),
+    );
     this.publish({ active: { mode: "real", routine, draft, activeIndex: 0 }, error: null });
     await this.persist();
   }

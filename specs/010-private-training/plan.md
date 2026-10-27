@@ -27,3 +27,12 @@ Antes de migraciones remotas: verificar el Supabase exclusivo udwhjcnlfqlggblnpc
 Dominio puro: búsqueda, orden/copia, prescripción, rondas, tipos, métricas, discos/calientamiento, unidades y fechas. API: Bearer, validación cerrada, identidad derivada, sin cookies/caché pública y errores sin detalles privados. SQL: permisos entre tres alumnos/coach, atomicidad, revisiones, idempotencia, restricciones directas, borrado/exportación y compatibilidad histórica.
 
 Interfaz: empezar/retomar/repetir, biblioteca y editor, teclado/arrastre, claro/oscuro, 360 px, texto ampliado, respuestas perdidas, recarga, dos ventanas, cuota, sesión expirada, cierre y sincronización única. Chromium y WebKit; Hermes Android/iOS. Emulación, exportación y entrega por túnel son evidencias separadas de aceptación física y publicación en tiendas.
+
+### T216 · Secuencia local
+
+1. Especificación y pruebas de cálculo exacto/inventario, conversiones, calentamientos y preferencias CAS.
+2. Dominio puro para discos/unidades; controlador local por cuenta para preferencias; operación completa de calentamientos sobre ambos formatos sin migrar ni tocar cierres.
+3. Panel compacto del ejercicio y preferencias en Cuenta; objetivos/referencias/resultados con unidades visuales, campos canónicos explícitos. Capturar descanso sin prescripción solo al empezar.
+4. Regresión móvil completa ambos motores, checks raíz/móvil, cobertura/Hermes y evidencia de fallos corregidos; documentación y commit T216 local. Sin push/PR/publicación/cambios remotos ni T217.
+
+T216 completada localmente el 27 de octubre de 2026: herramientas y preferencias conectadas a los formatos anteriores/tipados, cálculos exactos y unidades solo de presentación. Coordinación con eliminación de cuenta y cancelación de la preparación al cambiar ejercicio verificadas después de la regresión extensa, con sus baterías focalizadas diferenciadas. Evidencia y límites en validation.md; guía en docs/native-training-tools.md. Esta continuación no autoriza iniciar T217–T221 ni publicar.

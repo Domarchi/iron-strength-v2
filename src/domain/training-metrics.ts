@@ -1,3 +1,4 @@
+import { formatWeight, formatDistance, type WeightUnit, type DistanceUnit } from "./training-tools";
 import { z } from "zod";
 
 export const RECORD_TYPES = [
@@ -177,25 +178,36 @@ export function trainingTotals(input: TrainingRecordedSet[]) {
   result.distanceMeters = Math.round(result.distanceMeters * 100) / 100;
   return result;
 }
-export function formatTrainingMetrics(input: TrainingMetrics): string {
+export function formatPresentedTrainingMetrics(
+  input: TrainingMetrics,
+  units: { weightUnit: WeightUnit; distanceUnit: DistanceUnit } = {
+    weightUnit: "kg",
+    distanceUnit: "m",
+  },
+): string {
   const row = trainingMetricsSchema.parse(input);
   const n = (value: number | null) => value!.toLocaleString("es-CL", { maximumFractionDigits: 2 });
   switch (row.recordType) {
     case "bodyweight_reps":
       return `${n(row.reps)} reps`;
     case "weighted_bodyweight":
-      return `+${n(row.weightKg)} kg × ${n(row.reps)} reps`;
+      return `+${formatWeight(row.weightKg!, units.weightUnit)} × ${n(row.reps)} reps`;
     case "assisted_bodyweight":
-      return `${n(row.weightKg)} kg de asistencia × ${n(row.reps)} reps`;
+      return `${formatWeight(row.weightKg!, units.weightUnit)} de asistencia × ${n(row.reps)} reps`;
     case "duration":
       return `${n(row.durationSeconds)} s`;
     case "weight_duration":
-      return `${n(row.weightKg)} kg × ${n(row.durationSeconds)} s`;
+      return `${formatWeight(row.weightKg!, units.weightUnit)} × ${n(row.durationSeconds)} s`;
     case "distance_duration":
-      return `${n(row.distanceMeters)} m · ${n(row.durationSeconds)} s`;
+      return `${formatDistance(row.distanceMeters!, units.distanceUnit)} · ${n(row.durationSeconds)} s`;
     case "weight_distance":
-      return `${n(row.weightKg)} kg × ${n(row.distanceMeters)} m`;
+      return `${formatWeight(row.weightKg!, units.weightUnit)} × ${formatDistance(row.distanceMeters!, units.distanceUnit)}`;
     default:
-      return `${n(row.weightKg)} kg × ${n(row.reps)} reps`;
+      return `${formatWeight(row.weightKg!, units.weightUnit)} × ${n(row.reps)} reps`;
   }
+}
+
+/** Preserve the original single-argument formatter, including Array.map consumers. */
+export function formatTrainingMetrics(input: TrainingMetrics): string {
+  return formatPresentedTrainingMetrics(input);
 }

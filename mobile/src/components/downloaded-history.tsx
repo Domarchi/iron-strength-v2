@@ -1,3 +1,5 @@
+import { useTrainingPreferences } from "../lib/training-preferences-context";
+import { formatWeight } from "../../../src/domain/training-tools";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
 import { useWeekDownload } from "../lib/week-context";
@@ -11,6 +13,7 @@ export function DownloadedHistory({
   exerciseId: string;
   personal?: boolean;
 }) {
+  const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     { state } = useSession(),
     { download } = useWeekDownload();
@@ -47,7 +50,7 @@ export function DownloadedHistory({
           {item.sets.map((set) => (
             <Text key={set.id} style={[s.body, s.number, { color: p.muted }]}>
               {set.isWarmup ? "Calentamiento · " : ""}
-              {set.weightKg.toLocaleString("es-CL")} kg × {set.reps} reps
+              {formatWeight(set.weightKg, preferences.value.weightUnit)} × {set.reps} reps
             </Text>
           ))}
           {state.mode === "online" ? (

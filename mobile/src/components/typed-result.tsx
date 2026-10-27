@@ -1,9 +1,11 @@
+import { useTrainingPreferences } from "../lib/training-preferences-context";
+import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
 import { Action, Brand, Page, s, usePalette, day } from "./ui";
 import { WorkoutComments } from "./workout-comments";
 import type { TypedWorkout as Result } from "../../../src/lib/mobile/typed-recording-contracts";
-import { formatTrainingMetrics } from "../../../src/domain/training-metrics";
+import { formatPresentedTrainingMetrics as formatTrainingMetrics } from "../../../src/domain/training-metrics";
 const kind = {
   working: "Serie",
   warmup: "Calentamiento",
@@ -11,6 +13,7 @@ const kind = {
   drop: "Descendente",
 };
 export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
+  const { preferences } = useTrainingPreferences();
   const p = usePalette();
   return (
     <Page>
@@ -26,7 +29,7 @@ export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
       <View style={{ gap: 6 }}>
         {w.summary.volumeKg > 0 ? (
           <Text style={[s.body, { color: p.ink }]}>
-            {w.summary.volumeKg.toLocaleString("es-CL")} kg de volumen
+            {formatWeight(w.summary.volumeKg, preferences.value.weightUnit)} de volumen
           </Text>
         ) : null}
         {w.summary.recordedSeconds > 0 ? (
@@ -34,7 +37,7 @@ export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
         ) : null}
         {w.summary.distanceMeters > 0 ? (
           <Text style={[s.body, { color: p.ink }]}>
-            {w.summary.distanceMeters.toLocaleString("es-CL")} m registrados
+            {formatDistance(w.summary.distanceMeters, preferences.value.distanceUnit)} registrados
           </Text>
         ) : null}
         {w.perceivedEffort != null ? (
@@ -58,7 +61,7 @@ export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
                   {kind[set.setType]} {i + 1}
                 </Text>
                 <Text style={[s.label, { color: p.ink, flex: 1, textAlign: "right" }]}>
-                  {formatTrainingMetrics(set.metrics)}
+                  {formatTrainingMetrics(set.metrics, preferences.value)}
                 </Text>
               </View>
               {set.effort !== null ? (

@@ -1,3 +1,4 @@
+import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { useLibraryDrafts } from "../lib/library-context";
 import { useWeekDownload } from "../lib/week-context";
 import { useState } from "react";
@@ -10,6 +11,7 @@ import { useAccountRemoval } from "../lib/account-removal-context";
 import { useCommentDraft } from "../lib/comment-context";
 import { useWorkoutSyncQueue } from "../lib/sync-context";
 export function DeleteAccount() {
+  const { controller: preferencesController, preferences } = useTrainingPreferences();
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
@@ -42,6 +44,9 @@ export function DeleteAccount() {
       sync.syncing ||
       sync.transferring ||
       sync.paused ||
+      preferences.busy ||
+      preferences.paused ||
+      !preferences.ready ||
       library.busy ||
       !library.ready ||
       draft.busy ||
@@ -52,7 +57,9 @@ export function DeleteAccount() {
     setBusy(true);
     setError(null);
     let resume: (() => void) | undefined;
+    let resumePreferences: (() => void) | undefined;
     try {
+      resumePreferences = preferencesController.pauseWrites();
       resume = sync.pause();
       // Flush valid drafts before unmounting the training provider. Unknown formats stay until explicit deletion.
       await downloads.flush();
@@ -65,6 +72,7 @@ export function DeleteAccount() {
       setError(e instanceof Error ? e.message : "No pudimos completar la eliminación.");
     } finally {
       resume?.();
+      resumePreferences?.();
       setBusy(false);
     }
   }
@@ -77,6 +85,11 @@ export function DeleteAccount() {
         registros, mensajes pendientes y demos y descargas de esta cuenta en este dispositivo. No se
         puede deshacer. Antes puedes exportar tu historial desde Cuenta en la web.
       </Text>
+      {preferences.busy ? (
+        <Text style={[s.caption, { color: p.muted }]}>
+          Espera a que se guarden tus preferencias antes de borrar la cuenta.
+        </Text>
+      ) : null}
       {offline ? (
         <Text style={[s.body, { color: p.muted }]}>
           Conecta para borrar tu cuenta. Tus datos locales se conservan.
@@ -101,6 +114,9 @@ export function DeleteAccount() {
             disabled={
               !isDeleteConfirmation(confirmation) ||
               !training.ready ||
+              preferences.busy ||
+              preferences.paused ||
+              !preferences.ready ||
               library.busy ||
               !library.ready ||
               training.busy ||
@@ -137,6 +153,9 @@ export function DeleteAccount() {
           label="Quiero borrar mi cuenta"
           secondary
           disabled={
+            preferences.busy ||
+            preferences.paused ||
+            !preferences.ready ||
             library.busy ||
             !library.ready ||
             training.busy ||
