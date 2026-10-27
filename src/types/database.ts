@@ -223,14 +223,14 @@ isOneToOne: false
                   ]
                 },"personal_routine_items": {
                   Row: {
-                    "exercise_id": string,"id": string,"note": string | null,"owner_id": string,"position": number,"prescription_sets": Json | null,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"routine_id": string,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"note": string | null,"owner_id": string,"position": number,"prescription_sets": Json | null,"reps_max": number | null,"reps_min": number | null,"rest_seconds": number | null,"routine_id": string,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null,"typed_prescription": Json | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id": string,"note"?: string | null,"owner_id": string,"position": number,"prescription_sets"?: Json | null,"reps_max": number,"reps_min": number,"rest_seconds"?: number | null,"routine_id": string,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id": string,"note"?: string | null,"owner_id": string,"position": number,"prescription_sets"?: Json | null,"reps_max"?: number | null,"reps_min"?: number | null,"rest_seconds"?: number | null,"routine_id": string,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"owner_id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number,"reps_min"?: number,"rest_seconds"?: number | null,"routine_id"?: string,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"owner_id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number | null,"reps_min"?: number | null,"rest_seconds"?: number | null,"routine_id"?: string,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Relationships: [
                     {
@@ -723,6 +723,9 @@ isOneToOne: false
 "get_personal_library":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"get_training_library":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "is_active_member":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -741,8 +744,14 @@ isOneToOne: false
 "mutate_routine_session":
 { Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string,"p_title"?: string,"p_weekday"?: number }; Returns: number
                            },
+"mutate_training_library":
+{ Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string,"p_version": number }; Returns: Json
+                           },
 "patch_prescription_series":
 { Args: { "p_fields": (string)[],"p_row": Json,"p_series": Json }; Returns: Json
+                           },
+"personal_training_prescription":
+{ Args: { "p_item": Json }; Returns: Json
                            },
 "planning_assignment_snapshot":
 { Args: { "p_end_date": string,"p_start_date": string,"p_student_id": string }; Returns: Json
