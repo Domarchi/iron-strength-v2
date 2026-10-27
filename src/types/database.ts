@@ -768,6 +768,9 @@ isOneToOne: false
 "save_workout_recording":
 { Args: { "p_recording": Json }; Returns: Json
                            },
+"training_metric_dimensions":
+{ Args: { "p_kind": string }; Returns: (string)[]
+                           },
 "unread_comments":
 { Args: Record<PropertyKey, never>; Returns: {
               "last_comment_at": string,"student_id": string,"unread_count": number,"workout_id": string
@@ -775,6 +778,24 @@ isOneToOne: false
                            },
 "valid_prescription_series":
 { Args: { "p_max": number,"p_min": number,"p_series": Json,"p_sets": number,"p_weight": number }; Returns: boolean
+                           },
+"valid_training_metrics":
+{ Args: { "p_metrics": Json }; Returns: boolean
+                           },
+"valid_training_note":
+{ Args: { "p_note": Json }; Returns: boolean
+                           },
+"valid_training_number":
+{ Args: { "p_max": number,"p_min": number,"p_step": number,"p_value": Json }; Returns: boolean
+                           },
+"valid_training_prescription":
+{ Args: { "p_prescription": Json }; Returns: boolean
+                           },
+"valid_training_set_details":
+{ Args: { "p_details": Json }; Returns: boolean
+                           },
+"valid_training_target":
+{ Args: { "p_kind": string,"p_target": Json }; Returns: boolean
                            },
 "valid_workout_recording":
 { Args: { "p_recording": Json }; Returns: boolean
