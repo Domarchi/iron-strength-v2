@@ -51,3 +51,13 @@ El propietario reanuda el objetivo completo. La limitación de la continuación 
 Estado de integración T218: completa localmente. Consulta/corrección/eliminación nativas y puente web atómico/recuperable conectados; retirado el bucle parcial conservando sus7regresiones.450E2E nativas/Hermes Android+iOS y323E2E web/1omisión CDP prevista, ambas secuencias terminales0 con huellas iguales.977raíz/353móvil,1038pgTAP/388integración del backend y19integración actuales del retorno tipado, con sus fases diferenciadas en validation.md. Capturas360 claro/oscuro revisadas. Continuar T219, despuésT220 yT221, sin reducir planificación/CSV/offline/publicación/aceptación; no confundir software local con disponibilidad publicada, SQLite físico o binario firmado.
 
 Las pasadas anteriores y fallos/interrupciones corregidos permanecen en validation.md con su fuente y alcance. Todas las secuencias citadas de T218 ya terminaron; no volver a iniciarlas como si estuvieran pendientes. La nueva tarea debe especificar y probar sus cambios antes de implementarlos.
+
+### T219 · Secuencia de implementación
+
+1. Especificación/contratos y núcleo puro de entrada de prescripciones: todos los tipos/null, forma uniforme/detalle cerrada, texto parcial y resumen derivado, sin modificar aún SQL o pantallas.
+2. Modelo SQL compatible, validaciones/RLS/permisos y operaciones atómicas/versionadas de edición, alternativas, agregado y copias/asignación; conservar replays anteriores y restricciones de semanas.
+3. Datos/acciones, catálogo y creación de ejercicios compartidos tipados; borrador del coach versionado y edición simple/detallada/múltiple, con recuperación y comparación completas.
+4. Contexto asignado y ejecución móvil/web de las dimensiones nuevas, comprobación SQL de la fuente, alternativas y recibos/cierres anteriores conservados.
+5. Ficha/revisión/gráficos/evidencia del coach y CSV completos, sin truncamiento o proyección de métricas. Mantener el retorno web tipado de T218.
+6. Compatibilidad explícita de formatos descargados/iniciados y contratos para T220; no anunciar disponibilidad offline desde datos incompletos.
+7. Comprobaciones de permisos/SQL/HTTP reales, checks y regresiones Chromium/WebKit/Hermes pertinentes; documentación y commit por fase verificable, manteniendo T219 abierta hasta completar su aceptación. Después T220 y T221 íntegros.
