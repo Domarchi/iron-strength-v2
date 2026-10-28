@@ -24,6 +24,7 @@ export function isMobileEndpointPath(path: string): boolean {
       "/api/mobile/v1/progress",
       "/api/mobile/v1/training-progress",
       "/api/mobile/v1/workout-corrections",
+      "/api/mobile/v1/workout-removals",
       "/api/mobile/v1/exercises",
       "/api/mobile/v1/training-catalog",
       "/api/mobile/v1/personal-exercises",
@@ -39,6 +40,9 @@ export function isMobileEndpointPath(path: string): boolean {
     SESSION.test(path) ||
     WORKOUT.test(path) ||
     /^\/api\/mobile\/v1\/workout-corrections\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+      path,
+    ) ||
+    /^\/api\/mobile\/v1\/workout-removals\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
       path,
     ) ||
     COMMENTS.test(path) ||

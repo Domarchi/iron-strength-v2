@@ -775,6 +775,9 @@ isOneToOne: false
 "get_own_workout_correction":
 { Args: { "p_workout_id": string }; Returns: Json
                            },
+"get_own_workout_removal":
+{ Args: { "p_workout_id": string }; Returns: Json
+                           },
 "get_personal_exercises":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -822,6 +825,9 @@ isOneToOne: false
                            },
 "record_login_failure":
 { Args: { "p_email_hash": string }; Returns: undefined
+                           },
+"remove_own_workout":
+{ Args: { "p_removal": Json }; Returns: Json
                            },
 "routine_program_snapshot":
 { Args: { "p_program_id": string }; Returns: Json

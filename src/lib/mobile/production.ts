@@ -1,3 +1,5 @@
+import { createWorkoutRemovalApi } from "./workout-removal-api";
+import { readOwnWorkoutRemoval, removeOwnWorkout } from "../data/workout-removals";
 import { createTrainingProgressApi } from "./training-progress-api";
 import { createWorkoutCorrectionApi } from "./workout-correction-api";
 import { correctOwnWorkout, readOwnWorkoutCorrection } from "../data/workout-corrections";
@@ -467,6 +469,21 @@ export function mobileWorkoutCorrectionApi() {
         userId: identity.profile.id,
         read: (id) => readOwnWorkoutCorrection(db, id, identity.profile.id),
         correct: (input) => correctOwnWorkout(db, input),
+      };
+    },
+  });
+}
+
+export function mobileWorkoutRemovalApi() {
+  return createWorkoutRemovalApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: (id) => readOwnWorkoutRemoval(db, id, identity.profile.id),
+        remove: (input) => removeOwnWorkout(db, input),
       };
     },
   });
