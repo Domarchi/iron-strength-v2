@@ -40,3 +40,10 @@ T216 completada localmente el 27 de octubre de 2026: herramientas y preferencias
 ### Continuación del objetivo completo · 28 de octubre de 2026
 
 El propietario reanuda el objetivo completo. La limitación de la continuación anterior de T216 describe aquella entrega; no impide continuar ahora. T217 sigue especificación → pruebas → migración/contratos/datos/API → cliente/borrador/interfaz → verificación → commit. Puede separar backend e interfaz en commits verificables sin marcar la tarea completa ni mostrar controles desconectados. Mantener T218–T221, publicación, respaldo y aceptación final sin reducir su alcance; accesos/cuentas/pruebas físicas aplazadas no se inventan ni acreditan como realizadas.
+
+### T218 · Secuencia completa
+
+1. Snapshot propio coherente SQL/invoker, cálculos puros por contrato y evidencia, API2 y cliente; pruebas primero y commit preparatorio. No modifica los lectores1 ni muestra controles desconectados.
+2. Calendario y búsqueda de historial, resúmenes mensuales/anuales, regularidad y distribución muscular; progreso4/8/12 por tipo, marcas y enlaces a resultados. Conservar contexto de navegación, demos separadas, diseño compacto/temas y accesibilidad.
+3. Edición de resultados dentro de la ventana SQL vigente: especificar operaciones completas, revisión/idempotencia/recibos y borrador propio recuperable, independiente del registro activo. Conservar origen, restricciones asignadas, métricas tipadas/legadas, recibos de cierres anteriores y evidencias. Las respuestas perdidas y conflictos nunca sobrescriben a ciegas ni repiten un cierre como si fuera una edición.
+4. Verificar recorrido real, permisos, recarga/conflictos/cuota y compatibilidad; checks, integración/pgTAP cuando corresponda, E2E Chromium/WebKit, Hermes y commit de cierre. T219–T221 y publicación/aceptación final conservan su alcance.

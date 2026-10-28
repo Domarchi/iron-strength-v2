@@ -1,3 +1,5 @@
+import { createTrainingProgressApi } from "./training-progress-api";
+import { readOwnTrainingProgress } from "../data/training-progress";
 import { createTypedPersonalApi } from "./typed-personal-api";
 import { readTrainingLibrary, mutateTrainingLibrary } from "../data/typed-personal-library";
 import { createTypedExerciseApi } from "./typed-exercise-api";
@@ -434,6 +436,20 @@ export function mobilePersonalExerciseApi() {
         userId: identity.profile.id,
         read: () => readPersonalExercises(db),
         mutate: (input) => mutatePersonalExercise(db, input),
+      };
+    },
+  });
+}
+
+export function mobileTrainingProgressApi() {
+  return createTrainingProgressApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: () => readOwnTrainingProgress(db, identity.profile.id),
       };
     },
   });

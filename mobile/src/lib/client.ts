@@ -1,3 +1,4 @@
+import { trainingProgressSchema } from "../../../src/lib/mobile/training-progress-contracts";
 import {
   personalExerciseLibrarySchema,
   personalExerciseMutationSchema,
@@ -855,6 +856,22 @@ export class MobileClient {
     if (value.exercise.exerciseId !== id)
       throw new MobileError("identity", "El ejercicio recibido no coincide. Reintenta.");
     return value;
+  }
+  async trainingProgress() {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id,
+      generation = this.generation;
+    const result = trainingProgressSchema.safeParse(await this.read("training-progress"));
+    this.current(generation);
+    if (!result.success)
+      throw new MobileError(
+        "version",
+        "El progreso necesita una versión compatible. Actualiza la app.",
+      );
+    if (result.data.userId !== userId)
+      throw new MobileError("identity", "El historial recibido no corresponde a tu cuenta.");
+    return result.data;
   }
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
