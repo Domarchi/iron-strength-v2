@@ -1,4 +1,6 @@
 import { createTrainingProgressApi } from "./training-progress-api";
+import { createWorkoutCorrectionApi } from "./workout-correction-api";
+import { correctOwnWorkout, readOwnWorkoutCorrection } from "../data/workout-corrections";
 import { readOwnTrainingProgress } from "../data/training-progress";
 import { createTypedPersonalApi } from "./typed-personal-api";
 import { readTrainingLibrary, mutateTrainingLibrary } from "../data/typed-personal-library";
@@ -450,6 +452,21 @@ export function mobileTrainingProgressApi() {
       return {
         userId: identity.profile.id,
         read: () => readOwnTrainingProgress(db, identity.profile.id),
+      };
+    },
+  });
+}
+
+export function mobileWorkoutCorrectionApi() {
+  return createWorkoutCorrectionApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: (id) => readOwnWorkoutCorrection(db, id, identity.profile.id),
+        correct: (input) => correctOwnWorkout(db, input),
       };
     },
   });
