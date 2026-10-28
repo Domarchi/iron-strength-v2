@@ -599,6 +599,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"workout_correction_receipts": {
+                  Row: {
+                    "created_at": string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"workout_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"workout_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"owner_id"?: string,"payload_hash"?: string,"request_id"?: string,"revision"?: number,"workout_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_correction_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"workout_recording_receipts": {
                   Row: {
                     "created_at": string,"owner_id": string,"payload_hash": string,"workout_id": string
@@ -659,14 +679,14 @@ isOneToOne: false
                   ]
                 },"workouts": {
                   Row: {
-                    "created_at": string,"duration_seconds": number,"exercise_notes": Json | null,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"personal_routine_id": string | null,"personal_routine_revision": number | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"source_kind": string,"started_at": string,"structure": Json | null,"student_id": string,"title": string | null,"week_start": string | null
+                    "created_at": string,"duration_seconds": number,"edit_revision": number,"exercise_notes": Json | null,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"personal_routine_id": string | null,"personal_routine_revision": number | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"source_kind": string,"started_at": string,"structure": Json | null,"student_id": string,"title": string | null,"week_start": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"duration_seconds": number,"exercise_notes"?: Json | null,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at": string,"structure"?: Json | null,"student_id": string,"title"?: string | null,"week_start"?: never
+                    "created_at"?: string,"duration_seconds": number,"edit_revision"?: number,"exercise_notes"?: Json | null,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at": string,"structure"?: Json | null,"student_id": string,"title"?: string | null,"week_start"?: never
                   }
                   Update: {
-                    "created_at"?: string,"duration_seconds"?: number,"exercise_notes"?: Json | null,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at"?: string,"structure"?: Json | null,"student_id"?: string,"title"?: string | null,"week_start"?: never
+                    "created_at"?: string,"duration_seconds"?: number,"edit_revision"?: number,"exercise_notes"?: Json | null,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at"?: string,"structure"?: Json | null,"student_id"?: string,"title"?: string | null,"week_start"?: never
                   }
                   Relationships: [
                     {
@@ -731,6 +751,9 @@ isOneToOne: false
 "copy_program_weeks":
 { Args: { "p_program_id": string,"p_request": Json,"p_request_id": string }; Returns: number
                            },
+"correct_own_workout":
+{ Args: { "p_correction": Json }; Returns: Json
+                           },
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -748,6 +771,9 @@ isOneToOne: false
                            },
 "get_own_training_progress":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"get_own_workout_correction":
+{ Args: { "p_workout_id": string }; Returns: Json
                            },
 "get_personal_exercises":
 { Args: Record<PropertyKey, never>; Returns: Json
@@ -857,6 +883,9 @@ isOneToOne: false
 { Args: { "v": Json }; Returns: boolean
                            },
 "valid_typed_workout_structure":
+{ Args: { "v": Json }; Returns: boolean
+                           },
+"valid_workout_correction":
 { Args: { "v": Json }; Returns: boolean
                            },
 "valid_workout_recording":

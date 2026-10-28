@@ -1,6 +1,6 @@
 -- T126 · Borrar la propia cuenta (RF-48; DC-4, DC-32).
 begin;
-select plan(32);
+select plan(34);
 
 select tests.setup_basic();
 
@@ -61,6 +61,9 @@ select public.save_personal_workout(jsonb_build_object('version',1,'id','b213000
 reset role;
 
 -- ===== Quien no puede =====
+insert into public.workout_correction_receipts(owner_id,request_id,workout_id,payload_hash,revision) values
+ (tests.student_a_id(),'71000000-0000-4000-8000-000000000001','d0000000-0000-0000-0000-0000000000a1',repeat('a',64),1),
+ (tests.student_b_id(),'71000000-0000-4000-8000-000000000002','d0000000-0000-0000-0000-0000000000b1',repeat('b',64),1);
 select tests.authenticate_as_anon();
 select throws_ok($$ select public.delete_my_account() $$, '42501', null, 'sin sesión no se borra nada');
 
@@ -107,6 +110,8 @@ select is((select count(*)::int from public.personal_training_receipts where own
 
 select is((select count(*)::int from public.personal_workout_receipts where owner_id=tests.student_a_id()),0,'recibos de entrenamientos propios desaparecen');
 select is((select count(*)::int from public.personal_workout_receipts where owner_id=tests.student_b_id()),1,'recibo de B se conserva');
+select is((select count(*)::int from public.workout_correction_receipts where owner_id=tests.student_a_id()),0,'recibos de correcciones de A desaparecen');
+select is((select count(*)::int from public.workout_correction_receipts where owner_id=tests.student_b_id()),1,'recibos de correcciones de B se conservan');
 
 -- ===== Lo de los demás sigue intacto =====
 select is((select count(*)::int from public.workouts where student_id = tests.student_b_id()), 2, 'ambos entrenamientos de B siguen');
