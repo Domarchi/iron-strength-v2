@@ -36,3 +36,7 @@ Interfaz: empezar/retomar/repetir, biblioteca y editor, teclado/arrastre, claro/
 4. Regresión móvil completa ambos motores, checks raíz/móvil, cobertura/Hermes y evidencia de fallos corregidos; documentación y commit T216 local. Sin push/PR/publicación/cambios remotos ni T217.
 
 T216 completada localmente el 27 de octubre de 2026: herramientas y preferencias conectadas a los formatos anteriores/tipados, cálculos exactos y unidades solo de presentación. Coordinación con eliminación de cuenta y cancelación de la preparación al cambiar ejercicio verificadas después de la regresión extensa, con sus baterías focalizadas diferenciadas. Evidencia y límites en validation.md; guía en docs/native-training-tools.md. Esta continuación no autoriza iniciar T217–T221 ni publicar.
+
+### Continuación del objetivo completo · 28 de octubre de 2026
+
+El propietario reanuda el objetivo completo. La limitación de la continuación anterior de T216 describe aquella entrega; no impide continuar ahora. T217 sigue especificación → pruebas → migración/contratos/datos/API → cliente/borrador/interfaz → verificación → commit. Puede separar backend e interfaz en commits verificables sin marcar la tarea completa ni mostrar controles desconectados. Mantener T218–T221, publicación, respaldo y aceptación final sin reducir su alcance; accesos/cuentas/pruebas físicas aplazadas no se inventan ni acreditan como realizadas.

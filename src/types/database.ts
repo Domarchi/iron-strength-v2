@@ -117,19 +117,25 @@ isOneToOne: false
                   ]
                 },"exercises": {
                   Row: {
-                    "archived_at": string | null,"coach_id": string | null,"created_at": string,"equipment": string | null,"id": string,"is_bodyweight": boolean,"muscle_group": string,"name": string,"progression_increment_kg": number,"record_type": string | null
+                    "archived_at": string | null,"coach_id": string | null,"created_at": string,"equipment": string | null,"id": string,"is_bodyweight": boolean,"muscle_group": string,"name": string,"personal_owner_id": string | null,"personal_revision": number,"progression_increment_kg": number,"record_type": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group": string,"name": string,"progression_increment_kg"?: number,"record_type"?: string | null
+                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group": string,"name": string,"personal_owner_id"?: string | null,"personal_revision"?: number,"progression_increment_kg"?: number,"record_type"?: string | null
                   }
                   Update: {
-                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group"?: string,"name"?: string,"progression_increment_kg"?: number,"record_type"?: string | null
+                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group"?: string,"name"?: string,"personal_owner_id"?: string | null,"personal_revision"?: number,"progression_increment_kg"?: number,"record_type"?: string | null
                   }
                   Relationships: [
                     {
       foreignKeyName: "exercises_coach_id_fkey"
       columns: ["coach_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "exercises_personal_owner_id_fkey"
+      columns: ["personal_owner_id"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
@@ -198,6 +204,26 @@ isOneToOne: false
       columns: ["workout_id"]
 isOneToOne: false
       referencedRelation: "workouts"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"personal_exercise_receipts": {
+                  Row: {
+                    "created_at": string,"operation": string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"target_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"operation": string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"target_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"operation"?: string,"owner_id"?: string,"payload_hash"?: string,"request_id"?: string,"revision"?: number,"target_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "personal_exercise_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -720,6 +746,9 @@ isOneToOne: false
 "edit_window_start":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"get_personal_exercises":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "get_personal_library":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -737,6 +766,9 @@ isOneToOne: false
                            },
 "mark_comments_read":
 { Args: { "p_workout_id": string }; Returns: undefined
+                           },
+"mutate_personal_exercise":
+{ Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string }; Returns: Json
                            },
 "mutate_personal_library":
 { Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string }; Returns: Json

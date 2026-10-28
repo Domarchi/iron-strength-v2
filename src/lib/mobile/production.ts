@@ -1,6 +1,8 @@
 import { createTypedPersonalApi } from "./typed-personal-api";
 import { readTrainingLibrary, mutateTrainingLibrary } from "../data/typed-personal-library";
 import { createTypedExerciseApi } from "./typed-exercise-api";
+import { createPersonalExerciseApi } from "./personal-exercise-api";
+import { readPersonalExercises, mutatePersonalExercise } from "../data/personal-exercises";
 import {
   getTypedActiveExercise,
   listTypedExerciseHistory,
@@ -417,6 +419,21 @@ export function mobileTypedExerciseApi() {
             history: await listTypedExerciseHistory(db, identity.profile.id, id, { cursor }),
           };
         },
+      };
+    },
+  });
+}
+
+export function mobilePersonalExerciseApi() {
+  return createPersonalExerciseApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: () => readPersonalExercises(db),
+        mutate: (input) => mutatePersonalExercise(db, input),
       };
     },
   });

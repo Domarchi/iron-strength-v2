@@ -1,4 +1,10 @@
 import {
+  personalExerciseLibrarySchema,
+  personalExerciseMutationSchema,
+  personalExerciseResultSchema,
+  type PersonalExerciseMutation,
+} from "../../../src/lib/mobile/personal-exercise-contracts";
+import {
   typedPersonalLibrarySchema,
   upgradePersonalLibrary,
   typedPersonalMutationSchema,
@@ -666,6 +672,55 @@ export class MobileClient {
   }
   async trainingLibrary() {
     return this.readTrainingLibrary("training-library");
+  }
+  private async readPersonalExercises(path: "personal-exercises" | "personal-exercises/export") {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id;
+    const parsed = personalExerciseLibrarySchema.safeParse(await this.read(path));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tus ejercicios necesitan una versión compatible. Conserva tus cambios y actualiza la app.",
+      );
+    if (parsed.data.userId !== userId)
+      throw new MobileError("identity", "Los ejercicios recibidos no corresponden a tu cuenta.");
+    return parsed.data;
+  }
+  async personalExercises() {
+    return this.readPersonalExercises("personal-exercises");
+  }
+  async exportPersonalExercises() {
+    return this.readPersonalExercises("personal-exercises/export");
+  }
+  async mutatePersonalExercise(value: PersonalExerciseMutation, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos los cambios para su cuenta original.",
+      );
+    const input = personalExerciseMutationSchema.safeParse(value);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa los datos del ejercicio.", 400);
+    const result = personalExerciseResultSchema.safeParse(
+      await this.read("personal-exercises/mutations", input.data),
+    );
+    if (!result.success)
+      throw new MobileError(
+        "version",
+        "No pudimos interpretar la confirmación. Conserva tus cambios y reintenta.",
+      );
+    if (
+      result.data.requestId !== input.data.requestId ||
+      result.data.targetId !== input.data.targetId
+    )
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este intento. Conservamos tus cambios.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return result.data;
   }
   async exportTrainingLibrary() {
     return this.readTrainingLibrary("training-library/export");
