@@ -12,6 +12,10 @@ import {
 } from "../src/lib/mobile/workout-correction-contracts";
 import { addDays, santiagoDate } from "../src/domain/dates";
 import type { Database } from "../src/types/database";
+import {
+  WorkoutCorrectionController,
+  type CorrectionStorage,
+} from "../src/lib/workout/correction-draft";
 const endpoint = "/api/mobile/v1/workout-corrections",
   password = "Corrections-local-only-2026!";
 let people: { id: string; email: string }[], ids: string[];
@@ -357,3 +361,87 @@ test("ventana Santiago7/8, replay fuera de ventana y resultado eliminado mantien
   expect((await c.correctWorkout(removalInput, people[1].id)).status).toBe("removed");
   await expect(c.workoutCorrection(removedId)).rejects.toMatchObject({ status: 404 });
 });
+for (const modern of [false, true])
+  test(`borrador compartido real recupera commit incierto y limpia solo su documento · ${modern ? "tipado" : "legado"}`, async ({
+    baseURL,
+  }) => {
+    if (!baseURL) throw Error("baseURL");
+    let lose = true;
+    const sent: string[] = [];
+    const transport: Transport = async (url, init) => {
+      const response = await fetch(url, init);
+      if (String(url).endsWith(endpoint) && init?.method === "POST") sent.push(String(init.body));
+      if (
+        lose &&
+        String(url).endsWith(endpoint) &&
+        init?.method === "POST" &&
+        response.status === 200
+      ) {
+        lose = false;
+        await response.arrayBuffer();
+        throw Error("synthetic lost correction response");
+      }
+      return response;
+    };
+    const c = await client(baseURL, people[1], transport);
+    let id: string;
+    if (modern) {
+      const p = payload();
+      await c.saveTypedRecording(p, people[1].id);
+      id = p.id;
+    } else id = await legacy();
+    const values = new Map([
+      ["active-training", "preserve series and rest"],
+      ["another-account", "preserve"],
+    ]);
+    const storage: CorrectionStorage = {
+      get: async (key) => values.get(key) ?? null,
+      compareAndSet: async (key, before, next) => {
+        if ((values.get(key) ?? null) !== before)
+          throw Object.assign(Error("conflict"), { reason: "conflict" });
+        values.set(key, next);
+      },
+    };
+    const send = (input: Parameters<typeof c.correctWorkout>[0]) =>
+      c.correctWorkout(input, people[1].id);
+    const draft = new WorkoutCorrectionController(people[1].id, storage, send, randomUUID);
+    await draft.restore();
+    await draft.open(await c.workoutCorrection(id, people[1].id));
+    const form = structuredClone(draft.getSnapshot().draft!.form);
+    form.sets[0].weightKg = "42,5";
+    form.note = "Texto protegido";
+    if (modern) {
+      form.sets[5].durationSeconds = "75";
+      form.sets[8].distanceMeters = "45,75";
+      form.exerciseNotes![9].note = "Nota de fila sin series";
+    }
+    await draft.change(form);
+    await expect(draft.submit()).rejects.toThrow();
+    const frozen = structuredClone(draft.getSnapshot().pending!.request);
+    draft.dispose();
+    await c.reconnect();
+    const recovered = new WorkoutCorrectionController(people[1].id, storage, send, randomUUID);
+    await recovered.restore();
+    expect(recovered.getSnapshot().pending?.request).toEqual(frozen);
+    const result = await recovered.submit();
+    expect(result.status).toBe("duplicate");
+    expect(sent).toEqual([JSON.stringify(frozen), JSON.stringify(frozen)]);
+    expect(recovered.getSnapshot()).toMatchObject({
+      draft: null,
+      pending: null,
+      confirmation: result,
+    });
+    const saved = await c.workoutCorrection(id);
+    expect(saved.workout.note).toBe("Texto protegido");
+    expect(saved.workout.sets[0].metrics.weightKg).toBe(42.5);
+    if (modern) {
+      expect(saved.workout.sets[5].metrics.durationSeconds).toBe(75);
+      expect(saved.workout.sets[8].metrics.distanceMeters).toBe(45.75);
+      expect(saved.workout.exerciseNotes![9].note).toBe("Nota de fila sin series");
+    }
+    const fresh = new WorkoutCorrectionController(people[1].id, storage, send, randomUUID);
+    await fresh.restore();
+    expect(fresh.getSnapshot().draft).toBeNull();
+    expect(values.get("active-training")).toBe("preserve series and rest");
+    expect(values.get("another-account")).toBe("preserve");
+  });
