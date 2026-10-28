@@ -3,6 +3,8 @@ import { expect, test, type APIRequestContext } from "@playwright/test";
 import { admin, COACH, createUser, resetAll, seedCoach } from "./support/db";
 import { login as loginWeb } from "./support/ui";
 import { MobileClient } from "../mobile/src/lib/client";
+import { PersonalExerciseDraftController } from "../mobile/src/lib/personal-exercise-drafts";
+import { AtomicStoreError } from "../mobile/src/lib/atomic-contract";
 import {
   personalExerciseLibrarySchema,
   personalExerciseResultSchema,
@@ -218,4 +220,102 @@ test("cliente móvil real → HTTP → SQL recupera respuesta perdida y reintent
     personal_owner_id: owner,
     record_type: "duration",
   });
+});
+test("borrador real recupera alta incierta y revisión del editor contra HTTP/SQL sin sustituir el intento", async ({
+  baseURL,
+}) => {
+  if (!baseURL) throw Error("Sin servidor aislado");
+  let credential: string | null = null,
+    lose = true;
+  const client = new MobileClient(
+    baseURL,
+    {
+      get: async () => credential,
+      set: async (v) => {
+        credential = v;
+      },
+      remove: async () => {
+        credential = null;
+      },
+    },
+    async (url, options) => {
+      const response = await fetch(url, options);
+      if (url.endsWith("/personal-exercises/mutations") && response.ok && lose) {
+        lose = false;
+        throw Error("lost after commit");
+      }
+      return response;
+    },
+    Date.now,
+    true,
+  );
+  await client.login(emails[0], password);
+  const session = client.getSnapshot();
+  if (session.status !== "authenticated") throw Error("Sin identidad");
+  const owner = session.session.profile.id,
+    values = new Map<string, string>();
+  const storage = {
+    get: async (k: string) => values.get(k) ?? null,
+    set: async (k: string, v: string) => {
+      values.set(k, v);
+    },
+    remove: async (k: string) => {
+      values.delete(k);
+    },
+    compareAndSet: async (k: string, b: string | null, v: string) => {
+      if ((values.get(k) ?? null) !== b) throw new AtomicStoreError("conflict");
+      values.set(k, v);
+    },
+  };
+  const controller = () =>
+    new PersonalExerciseDraftController(
+      owner,
+      storage,
+      (input) => client.mutatePersonalExercise(input, owner),
+      randomUUID,
+    );
+  const first = controller();
+  await first.restore();
+  await first.open();
+  await first.edit({ name: "Editor real privado", recordType: "duration" });
+  await expect(first.save()).rejects.toMatchObject({ code: "network" });
+  const request = first.getSnapshot().pending!.request;
+  await client.reconnect();
+  const again = controller();
+  await again.restore();
+  expect(again.getSnapshot().pending?.request).toEqual(request);
+  expect(await again.retryPending()).toMatchObject({ duplicate: true, targetId: request.targetId });
+  let row = (await client.personalExercises()).exercises.find((e) => e.id === request.targetId)!;
+  await again.open(row);
+  await again.edit({ name: "Mi edición real" });
+  await client.mutatePersonalExercise(
+    {
+      version: 1,
+      requestId: randomUUID(),
+      targetId: row.id,
+      expectedRevision: row.revision,
+      operation: "update",
+      data: {
+        name: "Otra ventana real",
+        muscleGroup: row.muscleGroup,
+        equipment: row.equipment,
+        isBodyweight: row.isBodyweight,
+        progressionIncrementKg: row.progressionIncrementKg,
+        recordType: row.recordType,
+      },
+    },
+    owner,
+  );
+  await expect(again.save()).rejects.toMatchObject({ code: "conflict" });
+  expect(again.getSnapshot().draft?.values.name).toBe("Mi edición real");
+  await again.resolveConflict(await client.personalExercises());
+  expect(again.getSnapshot().draft?.baseRevision).toBe(2);
+  await again.save();
+  row = (await client.personalExercises()).exercises.find((e) => e.id === request.targetId)!;
+  expect(row).toMatchObject({ name: "Mi edición real", revision: 3, recordType: "duration" });
+  await again.archive(row, false);
+  expect((await client.trainingCatalog()).exercises.some((e) => e.id === row.id)).toBe(false);
+  expect(
+    (await client.exportPersonalExercises()).exercises.find((e) => e.id === row.id)?.archivedAt,
+  ).not.toBeNull();
 });

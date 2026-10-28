@@ -1,4 +1,6 @@
 import { TrainingPreferencesEditor } from "../../../components/training-preferences-editor";
+import { PersonalExerciseDraftCard } from "../../../components/personal-exercise-draft-card";
+import { usePersonalExerciseDraft } from "../../../lib/personal-exercise-context";
 import { useLibraryDrafts } from "../../../lib/library-context";
 import { LibraryDraftCard } from "../../../components/library-draft-card";
 import { WeekDownloadCard } from "../../../components/week-download-card";
@@ -21,6 +23,7 @@ export default function Account() {
     { controller, training } = useTraining(),
     { controller: comments, draft } = useCommentDraft(),
     { controller: routines, library } = useLibraryDrafts(),
+    { controller: ownExercises, exercises } = usePersonalExerciseDraft(),
     { controller: downloads, download } = useWeekDownload(),
     sync = useWorkoutSyncQueue();
   const [error, setError] = useState<string | null>(null),
@@ -36,18 +39,22 @@ export default function Account() {
   }
   async function logout() {
     let resume: (() => void) | undefined;
+    let releaseExercises: (() => void) | undefined;
     try {
+      releaseExercises = ownExercises.pauseWrites();
       resume = sync.pause();
       await downloads.flush();
       await sync.clearForLogout();
       await comments.clearForLogout();
       await routines.clearForLogout();
+      await ownExercises.clearForLogout();
       await controller.clearForLogout();
       await client.logout(person.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos salir. Reintenta.");
     } finally {
       resume?.();
+      releaseExercises?.();
     }
   }
   return (
@@ -66,6 +73,8 @@ export default function Account() {
       <TrainingCard />
       <CommentDraftCard allowDiscard />
       <LibraryDraftCard />
+      <PersonalExerciseDraftCard />
+      <Action label="Mis ejercicios" secondary onPress={() => router.navigate("/my-exercises")} />
       <WeekDownloadCard />
       {error ? <Notice message={error} /> : null}
       {training.error ? <Notice message={training.error} /> : null}
@@ -144,6 +153,13 @@ export default function Account() {
         label="Salir"
         secondary
         disabled={
+          !exercises.ready ||
+          exercises.busy ||
+          exercises.paused ||
+          exercises.blocked ||
+          exercises.dirty ||
+          !!exercises.pending ||
+          !!exercises.draft?.changed ||
           !library.ready ||
           library.blocked ||
           library.busy ||

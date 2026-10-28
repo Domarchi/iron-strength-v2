@@ -243,6 +243,13 @@ export function ExerciseCatalog({
                 replacing ? "Reemplazar ejercicio" : picking ? "Agregar ejercicios" : "Biblioteca"
               }
             />
+            {!picking ? (
+              <Action
+                label="Mis ejercicios"
+                secondary
+                onPress={() => router.navigate("/my-exercises")}
+              />
+            ) : null}
             {addError ? <Notice message={addError} /> : null}
             {pickForTraining && training.error && !added && training.dirty ? (
               <Action

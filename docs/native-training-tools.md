@@ -1,6 +1,16 @@
-# Herramientas de entrenamiento · T216
+# Herramientas y ejercicios propios · T216–T217
 
 Implementación local del cliente Expo. No implica publicación en la web, entrega por Expo Go ni aceptación en un teléfono físico.
+
+## Mis ejercicios
+
+Abre **Entrenar → Biblioteca de ejercicios → Mis ejercicios**, o el acceso **Mis ejercicios** de Cuenta. Puedes buscar, crear y editar tus ejercicios. El tipo de registro se elige al crear; para usar otro tipo, crea otro ejercicio. Los ajustes de carga aparecen cuando corresponden al tipo. Los ejercicios propios pertenecen solo a tu cuenta; el coach conserva el acceso a los entrenamientos que puede revisar.
+
+**Guardar ejercicio** confirma el servidor. **Guardado en este dispositivo** protege únicamente el borrador: puedes volver a la lista y retomarlo después de recargar. Si falla el espacio local, conserva el texto y usa el reintento local antes de enviar. Una respuesta perdida ofrece reintentar el mismo intento; no crees el ejercicio de nuevo para recuperarlo.
+
+Un conflicto ofrece **Revisar versión actual del ejercicio**. Compara los datos y elige **Conservar mi edición** antes de guardar sobre la nueva revisión. Si se eliminó, **Conservar como ejercicio nuevo** prepara una copia independiente. Un conflicto de archivo requiere revisar y elegir otra vez la acción; no reutiliza la confirmación anterior.
+
+En **Opciones**, archivar pide confirmación y conserva tus rutinas e historial; la pestaña **Archivados** permite restaurar. **Exportar mis ejercicios** prepara tus metadatos activos y archivados como JSON: descarga en web y hoja de compartir en Android/iPhone. No incluye credenciales ni recibos internos. Cuenta muestra los cambios pendientes y exige guardarlos o descartarlos antes de salir. Borrar la cuenta por el recorrido confirmado elimina también estos datos de esa cuenta en el dispositivo, conservando las otras cuentas.
 
 ## Discos por lado
 

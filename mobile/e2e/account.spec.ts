@@ -78,6 +78,11 @@ test("borrado nativo exige confirmación, limpia su cuenta y conserva tema/otras
       localStorage.setItem(`is:native-sync:v1:${id}`, "cola para borrado explícito");
       localStorage.setItem(`is:native-sync:v1:${other}`, "otra cola");
       localStorage.setItem(
+        `is:native-personal-exercises:v1:${id}`,
+        "formato futuro para borrado explícito",
+      );
+      localStorage.setItem(`is:native-personal-exercises:v1:${other}`, "otros ejercicios privados");
+      localStorage.setItem(
         "is:native-appearance:v1",
         JSON.stringify({ version: 1, preference: "dark" }),
       );
@@ -103,6 +108,15 @@ test("borrado nativo exige confirmación, limpia su cuenta y conserva tema/otras
   expect(calls.filter((c) => c.endsWith("account/delete"))).toHaveLength(1);
   expect(await page.evaluate((key) => localStorage.getItem(key), trainingKey)).toBeNull();
   expect(await page.evaluate((key) => localStorage.getItem(key), receiptKey)).toBeNull();
+  expect(
+    await page.evaluate((id) => localStorage.getItem(`is:native-personal-exercises:v1:${id}`), id),
+  ).toBeNull();
+  expect(
+    await page.evaluate(
+      (id) => localStorage.getItem(`is:native-personal-exercises:v1:${id}`),
+      other,
+    ),
+  ).toBe("otros ejercicios privados");
   expect(
     await page.evaluate((id) => localStorage.getItem(`is:native-sync:v1:${id}`), id),
   ).toBeNull();

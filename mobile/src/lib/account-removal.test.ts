@@ -48,6 +48,8 @@ describe("eliminación recuperable del dispositivo", () => {
     x.values.set(`is:native-training-preferences:v1:${other}`, "otras preferencias");
     x.values.set(`is:native-library:v1:${id}`, "borradores");
     x.values.set(`is:native-library:v1:${other}`, "otros borradores");
+    x.values.set(`is:native-personal-exercises:v1:${id}`, "ejercicios pendientes");
+    x.values.set(`is:native-personal-exercises:v1:${other}`, "otros ejercicios");
     await x.controller.restore();
     const remove = vi.fn(async () => {
       expect(JSON.parse(x.values.get(REMOVAL_KEY)!).phase).toBe("requested");
@@ -67,6 +69,8 @@ describe("eliminación recuperable del dispositivo", () => {
     expect(x.values.get(`is:native-training-preferences:v1:${other}`)).toBe("otras preferencias");
     expect(x.values.has(`is:native-library:v1:${id}`)).toBe(false);
     expect(x.values.get(`is:native-library:v1:${other}`)).toBe("otros borradores");
+    expect(x.values.has(`is:native-personal-exercises:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:native-personal-exercises:v1:${other}`)).toBe("otros ejercicios");
     expect(x.controller.getSnapshot().completion).toBe("server_deleted");
   });
   it("no envía si no puede confirmar el recibo y conserva registros ante respuesta perdida", async () => {

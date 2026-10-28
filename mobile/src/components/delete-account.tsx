@@ -1,4 +1,5 @@
 import { useTrainingPreferences } from "../lib/training-preferences-context";
+import { usePersonalExerciseDraft } from "../lib/personal-exercise-context";
 import { useLibraryDrafts } from "../lib/library-context";
 import { useWeekDownload } from "../lib/week-context";
 import { useState } from "react";
@@ -12,6 +13,7 @@ import { useCommentDraft } from "../lib/comment-context";
 import { useWorkoutSyncQueue } from "../lib/sync-context";
 export function DeleteAccount() {
   const { controller: preferencesController, preferences } = useTrainingPreferences();
+  const { controller: exerciseController, exercises } = usePersonalExerciseDraft();
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
@@ -47,6 +49,9 @@ export function DeleteAccount() {
       preferences.busy ||
       preferences.paused ||
       !preferences.ready ||
+      !exercises.ready ||
+      exercises.busy ||
+      exercises.paused ||
       library.busy ||
       !library.ready ||
       draft.busy ||
@@ -58,7 +63,9 @@ export function DeleteAccount() {
     setError(null);
     let resume: (() => void) | undefined;
     let resumePreferences: (() => void) | undefined;
+    let resumeExercises: (() => void) | undefined;
     try {
+      resumeExercises = exerciseController.pauseWrites();
       resumePreferences = preferencesController.pauseWrites();
       resume = sync.pause();
       // Flush valid drafts before unmounting the training provider. Unknown formats stay until explicit deletion.
@@ -67,12 +74,14 @@ export function DeleteAccount() {
       if (!training.blocked) await controller.flush();
       if (!draft.blocked) await comments.flush();
       if (!library.blocked) await routines.flush();
+      if (!exercises.blocked) await exerciseController.flush();
       await removalController.request(userId, () => client.deleteAccount(confirmation, userId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos completar la eliminación.");
     } finally {
       resume?.();
       resumePreferences?.();
+      resumeExercises?.();
       setBusy(false);
     }
   }
@@ -80,10 +89,11 @@ export function DeleteAccount() {
     <View style={[s.divider, { borderColor: p.border }]}>
       <Text style={[s.subheading, { color: p.ink }]}>Borrar mi cuenta</Text>
       <Text style={[s.body, { color: p.muted }]}>
-        Se borran para siempre tu cuenta, rutinas personales, planes asignados, entrenamientos,
-        medidas, fotos, logros y comentarios de tus entrenamientos. También se descartan los
-        registros, mensajes pendientes y demos y descargas de esta cuenta en este dispositivo. No se
-        puede deshacer. Antes puedes exportar tu historial desde Cuenta en la web.
+        Se borran para siempre tu cuenta, ejercicios propios, rutinas personales, planes asignados,
+        entrenamientos, medidas, fotos, logros y comentarios de tus entrenamientos. También se
+        descartan los registros, mensajes pendientes y demos y descargas de esta cuenta en este
+        dispositivo. No se puede deshacer. Antes puedes exportar tu historial desde Cuenta en la
+        web.
       </Text>
       {preferences.busy ? (
         <Text style={[s.caption, { color: p.muted }]}>
@@ -117,6 +127,9 @@ export function DeleteAccount() {
               preferences.busy ||
               preferences.paused ||
               !preferences.ready ||
+              !exercises.ready ||
+              exercises.busy ||
+              exercises.paused ||
               library.busy ||
               !library.ready ||
               training.busy ||
@@ -156,6 +169,9 @@ export function DeleteAccount() {
             preferences.busy ||
             preferences.paused ||
             !preferences.ready ||
+            !exercises.ready ||
+            exercises.busy ||
+            exercises.paused ||
             library.busy ||
             !library.ready ||
             training.busy ||

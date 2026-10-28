@@ -147,6 +147,9 @@ test("histórico anterior prepara desde sus series, sin inventar la agrupación 
     page.getByText("Este resultado no guarda objetivos ni descansos.", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
+  // The click starts an asynchronous catalog check and protected local write.
+  // Navigation happens only after that write is verified; keep every persisted-data assertion.
+  await expect(page).toHaveURL(/\/workout\/[a-f0-9-]+$/);
   const active = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).active, key);
   expect(active.routine.exercises[0].supersetId).toBeNull();
   expect(active.draft.exercises[0].restSeconds).toBe(90);
