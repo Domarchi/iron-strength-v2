@@ -1,3 +1,4 @@
+import { useCorrectionDraft } from "../lib/correction-context";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { usePersonalExerciseDraft } from "../lib/personal-exercise-context";
 import { useLibraryDrafts } from "../lib/library-context";
@@ -12,6 +13,7 @@ import { useAccountRemoval } from "../lib/account-removal-context";
 import { useCommentDraft } from "../lib/comment-context";
 import { useWorkoutSyncQueue } from "../lib/sync-context";
 export function DeleteAccount() {
+  const { controller: correctionController, correction } = useCorrectionDraft();
   const { controller: preferencesController, preferences } = useTrainingPreferences();
   const { controller: exerciseController, exercises } = usePersonalExerciseDraft();
   const p = usePalette(),
@@ -49,6 +51,9 @@ export function DeleteAccount() {
       preferences.busy ||
       preferences.paused ||
       !preferences.ready ||
+      !correction.ready ||
+      correction.busy ||
+      correction.paused ||
       !exercises.ready ||
       exercises.busy ||
       exercises.paused ||
@@ -63,8 +68,10 @@ export function DeleteAccount() {
     setError(null);
     let resume: (() => void) | undefined;
     let resumePreferences: (() => void) | undefined;
+    let resumeCorrection: (() => void) | undefined;
     let resumeExercises: (() => void) | undefined;
     try {
+      resumeCorrection = correctionController.pauseWrites();
       resumeExercises = exerciseController.pauseWrites();
       resumePreferences = preferencesController.pauseWrites();
       resume = sync.pause();
@@ -75,6 +82,7 @@ export function DeleteAccount() {
       if (!draft.blocked) await comments.flush();
       if (!library.blocked) await routines.flush();
       if (!exercises.blocked) await exerciseController.flush();
+      if (!correction.blocked) await correctionController.flush();
       await removalController.request(userId, () => client.deleteAccount(confirmation, userId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos completar la eliminación.");
@@ -82,6 +90,7 @@ export function DeleteAccount() {
       resume?.();
       resumePreferences?.();
       resumeExercises?.();
+      resumeCorrection?.();
       setBusy(false);
     }
   }
@@ -127,6 +136,9 @@ export function DeleteAccount() {
               preferences.busy ||
               preferences.paused ||
               !preferences.ready ||
+              !correction.ready ||
+              correction.busy ||
+              correction.paused ||
               !exercises.ready ||
               exercises.busy ||
               exercises.paused ||
@@ -169,6 +181,9 @@ export function DeleteAccount() {
             preferences.busy ||
             preferences.paused ||
             !preferences.ready ||
+            !correction.ready ||
+            correction.busy ||
+            correction.paused ||
             !exercises.ready ||
             exercises.busy ||
             exercises.paused ||

@@ -3,7 +3,7 @@ import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
 import { router, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
-import { Action, Brand, Page, s, usePalette, day } from "./ui";
+import { Action, Brand, Notice, Page, s, usePalette, day } from "./ui";
 import { WorkoutComments } from "./workout-comments";
 import type { TypedWorkout as Result } from "../../../src/lib/mobile/typed-recording-contracts";
 import { formatPresentedTrainingMetrics as formatTrainingMetrics } from "../../../src/domain/training-metrics";
@@ -13,7 +13,17 @@ const kind = {
   failure: "Al fallo",
   drop: "Descendente",
 };
-export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
+export function TypedResult({
+  workout: w,
+  loading = false,
+  error = null,
+  retry,
+}: {
+  workout: Result["workout"];
+  loading?: boolean;
+  error?: string | null;
+  retry?: () => void;
+}) {
   const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     params = useLocalSearchParams<{
@@ -33,6 +43,7 @@ export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
   return (
     <Page>
       <Brand />
+      {error ? <Notice message={error} retry={retry} /> : null}
       {back ? (
         <Action
           label="Volver al progreso"
@@ -124,6 +135,12 @@ export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
           ) : null}
         </View>
       ))}
+      <Action
+        label="Corregir entrenamiento"
+        secondary
+        disabled={loading || !!error}
+        onPress={() => router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })}
+      />
       <Action
         label="Repetir entrenamiento"
         secondary

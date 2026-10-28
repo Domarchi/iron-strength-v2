@@ -1,3 +1,4 @@
+import { CorrectionDraftCard } from "./correction-draft-card";
 import { ProgressRefresh } from "./progress-refresh";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { router } from "expo-router";
@@ -52,6 +53,7 @@ export function TrainingHistory() {
       <ConnectionStatus />
       <ScreenIntro title="Historial" />
       <CommentDraftCard />
+      <CorrectionDraftCard />
       {q.error ? (
         <>
           <Notice message={q.error} retry={q.retry} />

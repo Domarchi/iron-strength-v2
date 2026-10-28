@@ -101,6 +101,9 @@ const issues: Record<Issue, string> = {
   edit_locked: "Terminó el plazo para corregir este entrenamiento. Conservamos tu propuesta.",
   removed: "Este entrenamiento fue eliminado. Conservamos la propuesta hasta que la descartes.",
 };
+export function workoutCorrectionIssueMessage(issue: Issue | null) {
+  return issue === null ? null : issues[issue];
+}
 export function correctionDraftKey(userId: string) {
   return `is:workout-correction:v1:${z.uuid().parse(userId).toLowerCase()}`;
 }

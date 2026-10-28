@@ -94,7 +94,10 @@ export default function Result() {
           w.exercises.map((e) => ({ exerciseId: e.exerciseId, recordType: null })),
         )
       : null;
-  if (q.value?.version === 3) return <TypedResult workout={q.value.workout} />;
+  if (q.value?.version === 3)
+    return (
+      <TypedResult workout={q.value.workout} loading={q.loading} error={q.error} retry={q.retry} />
+    );
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: p.bg }}
@@ -206,6 +209,16 @@ export default function Result() {
                 ))}
               </View>
             ))}
+            {demo !== "1" ? (
+              <Action
+                label="Corregir entrenamiento"
+                secondary
+                disabled={q.loading || !!q.error || w.id !== id}
+                onPress={() =>
+                  router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })
+                }
+              />
+            ) : null}
             {demo !== "1" ? (
               <Action
                 label="Repetir entrenamiento"

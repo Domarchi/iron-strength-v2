@@ -1,3 +1,4 @@
+import { CorrectionProvider } from "../../lib/correction-context";
 import { TrainingPreferencesProvider } from "../../lib/training-preferences-context";
 import { PersonalExerciseProvider } from "../../lib/personal-exercise-context";
 import { LibraryProvider } from "../../lib/library-context";
@@ -28,20 +29,26 @@ export default function AppLayout() {
                   key={state.session.profile.id}
                   userId={state.session.profile.id}
                 >
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                      animation: reduced ? "none" : "slide_from_right",
-                      animationDuration: reduced ? 0 : 240,
-                      contentStyle: { backgroundColor: p.bg },
-                    }}
+                  <CorrectionProvider
+                    key={state.session.profile.id}
+                    userId={state.session.profile.id}
                   >
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="routine/[id]" />
-                    <Stack.Screen name="workout/[id]" />
-                    <Stack.Screen name="result/[id]" />
-                    <Stack.Screen name="progress/[id]" />
-                  </Stack>
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                        animation: reduced ? "none" : "slide_from_right",
+                        animationDuration: reduced ? 0 : 240,
+                        contentStyle: { backgroundColor: p.bg },
+                      }}
+                    >
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="routine/[id]" />
+                      <Stack.Screen name="workout/[id]" />
+                      <Stack.Screen name="result/[id]" />
+                      <Stack.Screen name="correct-result/[id]" />
+                      <Stack.Screen name="progress/[id]" />
+                    </Stack>
+                  </CorrectionProvider>
                 </WorkoutSyncProvider>
               </WeekDownloadProvider>
             </CommentProvider>

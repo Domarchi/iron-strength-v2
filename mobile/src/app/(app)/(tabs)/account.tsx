@@ -1,3 +1,5 @@
+import { useCorrectionDraft } from "../../../lib/correction-context";
+import { CorrectionDraftCard } from "../../../components/correction-draft-card";
 import { TrainingPreferencesEditor } from "../../../components/training-preferences-editor";
 import { PersonalExerciseDraftCard } from "../../../components/personal-exercise-draft-card";
 import { usePersonalExerciseDraft } from "../../../lib/personal-exercise-context";
@@ -24,6 +26,7 @@ export default function Account() {
     { controller: comments, draft } = useCommentDraft(),
     { controller: routines, library } = useLibraryDrafts(),
     { controller: ownExercises, exercises } = usePersonalExerciseDraft(),
+    { controller: corrections, correction } = useCorrectionDraft(),
     { controller: downloads, download } = useWeekDownload(),
     sync = useWorkoutSyncQueue();
   const [error, setError] = useState<string | null>(null),
@@ -39,8 +42,10 @@ export default function Account() {
   }
   async function logout() {
     let resume: (() => void) | undefined;
+    let releaseCorrection: (() => void) | undefined;
     let releaseExercises: (() => void) | undefined;
     try {
+      releaseCorrection = corrections.pauseWrites();
       releaseExercises = ownExercises.pauseWrites();
       resume = sync.pause();
       await downloads.flush();
@@ -48,6 +53,7 @@ export default function Account() {
       await comments.clearForLogout();
       await routines.clearForLogout();
       await ownExercises.clearForLogout();
+      await corrections.clearForLogout();
       await controller.clearForLogout();
       await client.logout(person.id);
     } catch (e) {
@@ -55,6 +61,7 @@ export default function Account() {
     } finally {
       resume?.();
       releaseExercises?.();
+      releaseCorrection?.();
     }
   }
   return (
@@ -74,6 +81,7 @@ export default function Account() {
       <CommentDraftCard allowDiscard />
       <LibraryDraftCard />
       <PersonalExerciseDraftCard />
+      <CorrectionDraftCard />
       <Action label="Mis ejercicios" secondary onPress={() => router.navigate("/my-exercises")} />
       <WeekDownloadCard />
       {error ? <Notice message={error} /> : null}
@@ -153,6 +161,13 @@ export default function Account() {
         label="Salir"
         secondary
         disabled={
+          !correction.ready ||
+          correction.busy ||
+          correction.paused ||
+          correction.blocked ||
+          correction.dirty ||
+          !!correction.pending ||
+          !!correction.draft?.changed ||
           !exercises.ready ||
           exercises.busy ||
           exercises.paused ||
