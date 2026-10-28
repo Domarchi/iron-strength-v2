@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useWorkoutChanges } from "@/components/workout-changes/provider";
 import { useRouter } from "next/navigation";
 import { clearLocalAccount } from "@/lib/offline/local-account";
 import { setOfflineAccount } from "@/lib/offline/account";
@@ -14,12 +15,13 @@ import { deleteAccountAction, type DeleteAccountState } from "./actions";
 // Borrar mi cuenta (RF-48): zona separada, con lo que se pierde a la vista y una confirmación escrita.
 export function DeleteAccount({ userId }: { userId: string }) {
   const router = useRouter();
+  const changes = useWorkoutChanges();
   const [cleanupError, setCleanupError] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState(false);
   async function finishCleanup() {
     setCleaning(true);
     try {
-      await clearLocalAccount(userId);
+      await clearLocalAccount(userId, { afterAccountDeletion: true });
       if (!setOfflineAccount(null)) throw new Error("No se pudo ocultar la cuenta local.");
       router.replace("/login?motivo=cuenta-borrada");
       router.refresh();
@@ -35,9 +37,21 @@ export function DeleteAccount({ userId }: { userId: string }) {
   const [text, setText] = useState("");
   const [state, action, pending] = useActionState<DeleteAccountState, FormData>(
     async (previous, form) => {
-      const result = await deleteAccountAction(previous, form);
-      if (result.status === "deleted") await finishCleanup();
-      return result;
+      let release: (() => void) | undefined;
+      try {
+        release = await changes.reserveAccountDeletion();
+        const result = await deleteAccountAction(previous, form);
+        if (result.status === "deleted") await finishCleanup();
+        return result;
+      } catch (error) {
+        return {
+          status: "error",
+          message:
+            error instanceof Error ? error.message : "No pudimos reservar tus cambios locales.",
+        };
+      } finally {
+        release?.();
+      }
     },
     { status: "idle" },
   );

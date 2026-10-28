@@ -1,3 +1,4 @@
+import { PendingWorkoutChanges } from "@/components/workout-changes/pending";
 import { workoutTitle } from "@/domain/workout-title";
 import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeading } from "@/components/layout/page-heading";
@@ -84,6 +85,7 @@ export default async function HistoryPage({
         eyebrow="Tu recorrido"
         description="Tus entrenamientos guardados."
       />
+      <PendingWorkoutChanges />
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
         <WorkoutList cursor={antes} />
       </Suspense>

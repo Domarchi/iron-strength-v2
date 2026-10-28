@@ -1,3 +1,4 @@
+import { useWorkoutRemoval } from "../lib/workout-removal-context";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { router, useIsFocused } from "expo-router";
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from "react-native";
@@ -44,6 +45,8 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, correction: c } = useCorrectionDraft();
+  const { removal } = useWorkoutRemoval();
+  const removalPending = removal.pending?.request.workoutId === id;
   const focused = useIsFocused();
   const userId = state.status === "authenticated" ? state.session.profile.id : "";
   const request = useCallback(() => client.workoutCorrection(id, userId), [client, id, userId]),
@@ -60,6 +63,8 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
   useEffect(() => {
     if (
       !focused ||
+      removalPending ||
+      removal.busy ||
       !c.ready ||
       c.busy ||
       c.paused ||
@@ -83,9 +88,20 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
       .finally(() => {
         opening.current = false;
       });
-  }, [c, controller, q.value, q.loading, id, finished, confirmationAtEntry, focused]);
+  }, [
+    c,
+    controller,
+    q.value,
+    q.loading,
+    id,
+    finished,
+    confirmationAtEntry,
+    focused,
+    removalPending,
+    removal.busy,
+  ]);
   const own = c.draft?.base.workout.id === id ? c.draft : null,
-    disabled = c.busy || c.paused || c.blocked || fetching,
+    disabled = c.busy || c.paused || c.blocked || fetching || removalPending || removal.busy,
     pendingCause = workoutCorrectionIssueMessage(c.pending?.issue ?? null),
     protectedMemory = !!(c.dirty || c.draft?.changed || c.pending);
   async function run(action: () => Promise<unknown>) {
@@ -97,6 +113,7 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
     }
   }
   function change(form: WorkoutCorrectionForm) {
+    if (removalPending || removal.busy) return;
     setReview(false);
     setError(null);
     void controller.change(form).catch((e) => setError(problem(e)));
@@ -170,6 +187,9 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
     >
       <Page compact>
         <ScreenIntro title="Corregir entrenamiento" />
+        {removalPending ? (
+          <Notice message="Hay una eliminación pendiente de este entrenamiento. Resuélvela desde Cuenta antes de corregirlo." />
+        ) : null}
         {content}
         <Action label="Volver sin descartar" secondary onPress={back} />
       </Page>
@@ -670,7 +690,7 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
           <Notice message="Se descarta solo esta propuesta local. El entrenamiento guardado en tu cuenta se conserva." />
           <Action
             label="Confirmar descarte de corrección"
-            disabled={disabled}
+            disabled={c.busy || c.paused || c.blocked || fetching}
             onPress={() => {
               void run(async () => {
                 await controller.discard();
@@ -681,7 +701,7 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
           <Action
             label="Conservar corrección"
             secondary
-            disabled={disabled}
+            disabled={c.busy || c.paused || c.blocked || fetching}
             onPress={() => setDiscard(false)}
           />
         </>
@@ -689,7 +709,7 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
         <Action
           label="Descartar corrección"
           quiet
-          disabled={disabled}
+          disabled={c.busy || c.paused || c.blocked || fetching}
           onPress={() => setDiscard(true)}
         />
       )}

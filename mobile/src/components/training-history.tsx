@@ -1,3 +1,4 @@
+import { WorkoutRemovalCard } from "./workout-removal-card";
 import { CorrectionDraftCard } from "./correction-draft-card";
 import { ProgressRefresh } from "./progress-refresh";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
@@ -54,6 +55,7 @@ export function TrainingHistory() {
       <ScreenIntro title="Historial" />
       <CommentDraftCard />
       <CorrectionDraftCard />
+      <WorkoutRemovalCard />
       {q.error ? (
         <>
           <Notice message={q.error} retry={q.retry} />

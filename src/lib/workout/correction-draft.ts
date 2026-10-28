@@ -336,6 +336,35 @@ export class WorkoutCorrectionController {
       }
     };
   }
+  reserveForWorkoutRemoval(workoutId: string) {
+    const id = z.uuid().parse(workoutId).toLowerCase(),
+      release = this.pauseWrites();
+    if (
+      this.state.blocked ||
+      (this.state.draft?.base.workout.id === id && (this.state.draft.changed || this.state.pending))
+    ) {
+      release();
+      throw Error("Retoma o descarta la corrección de este entrenamiento antes de eliminarlo.");
+    }
+    return release;
+  }
+  async clearRemovedWorkout(workoutId: string) {
+    const id = z.uuid().parse(workoutId).toLowerCase(),
+      epoch = this.epoch;
+    this.current(epoch);
+    if (!this.state.paused || this.state.blocked)
+      throw Error("Reserva la corrección antes de completar la eliminación.");
+    await this.flush();
+    this.current(epoch);
+    if (this.state.draft?.base.workout.id === id) {
+      if (this.state.draft.changed || this.state.pending)
+        throw Error("Conservamos la corrección pendiente del entrenamiento eliminado.");
+      await this.write(this.empty(), epoch);
+      this.current(epoch);
+      this.reviewed = null;
+      this.publish({ ...this.empty(), comparison: null, confirmation: null });
+    } else if (this.state.confirmation?.workoutId === id) this.publish({ confirmation: null });
+  }
   async clearForLogout() {
     const epoch = this.epoch;
     this.current(epoch);

@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Text, View } from "react-native";
 import { useCorrectionDraft } from "../lib/correction-context";
 import { Action, Notice, s, usePalette } from "./ui";
+import { EmptyChangeRecovery } from "./empty-change-recovery";
 export function CorrectionDraftCard() {
   const { controller, correction: c } = useCorrectionDraft(),
     p = usePalette(),
@@ -40,6 +41,13 @@ export function CorrectionDraftCard() {
             ? "Pendiente de confirmar en el servidor"
             : "Guardado en este dispositivo"}
       </Text>
+      {!c.draft && (c.dirty || c.blocked) ? (
+        <EmptyChangeRecovery
+          kind="corrección"
+          disabled={c.busy || c.paused}
+          onReload={() => controller.reloadLocal(true)}
+        />
+      ) : null}
       {c.draft ? (
         <Action
           label="Retomar corrección"

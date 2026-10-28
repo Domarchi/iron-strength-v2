@@ -1,3 +1,5 @@
+import { useWorkoutRemoval } from "../../../lib/workout-removal-context";
+import { WorkoutRemovalCard } from "../../../components/workout-removal-card";
 import { useCorrectionDraft } from "../../../lib/correction-context";
 import { CorrectionDraftCard } from "../../../components/correction-draft-card";
 import { TrainingPreferencesEditor } from "../../../components/training-preferences-editor";
@@ -27,6 +29,7 @@ export default function Account() {
     { controller: routines, library } = useLibraryDrafts(),
     { controller: ownExercises, exercises } = usePersonalExerciseDraft(),
     { controller: corrections, correction } = useCorrectionDraft(),
+    { controller: removals, removal } = useWorkoutRemoval(),
     { controller: downloads, download } = useWeekDownload(),
     sync = useWorkoutSyncQueue();
   const [error, setError] = useState<string | null>(null),
@@ -42,9 +45,11 @@ export default function Account() {
   }
   async function logout() {
     let resume: (() => void) | undefined;
+    let releaseRemoval: (() => void) | undefined;
     let releaseCorrection: (() => void) | undefined;
     let releaseExercises: (() => void) | undefined;
     try {
+      releaseRemoval = removals.pauseWrites();
       releaseCorrection = corrections.pauseWrites();
       releaseExercises = ownExercises.pauseWrites();
       resume = sync.pause();
@@ -54,6 +59,7 @@ export default function Account() {
       await routines.clearForLogout();
       await ownExercises.clearForLogout();
       await corrections.clearForLogout();
+      await removals.clearForLogout();
       await controller.clearForLogout();
       await client.logout(person.id);
     } catch (e) {
@@ -62,6 +68,7 @@ export default function Account() {
       resume?.();
       releaseExercises?.();
       releaseCorrection?.();
+      releaseRemoval?.();
     }
   }
   return (
@@ -82,6 +89,7 @@ export default function Account() {
       <LibraryDraftCard />
       <PersonalExerciseDraftCard />
       <CorrectionDraftCard />
+      <WorkoutRemovalCard />
       <Action label="Mis ejercicios" secondary onPress={() => router.navigate("/my-exercises")} />
       <WeekDownloadCard />
       {error ? <Notice message={error} /> : null}
@@ -161,6 +169,12 @@ export default function Account() {
         label="Salir"
         secondary
         disabled={
+          !removal.ready ||
+          removal.busy ||
+          removal.paused ||
+          removal.blocked ||
+          removal.dirty ||
+          !!removal.pending ||
           !correction.ready ||
           correction.busy ||
           correction.paused ||

@@ -32,3 +32,17 @@ it("los borradores de otra cuenta y los formatos ilegibles también aplazan la a
   localStorage.setItem("is:draft:v99:b:s", "unknown");
   expect(hasLocalTraining(localStorage)).toBe(true);
 });
+it("reconoce sobres de corrección/eliminación propios de cualquier versión sin confundir cuentas", () => {
+  for (const key of [
+    "is:workout-correction:v1:a",
+    "is:workout-removal:v1:a",
+    "is:workout-removal:v99:a",
+    "is:workout-removal:v1:ab",
+  ])
+    localStorage.setItem(key, "future");
+  expect(accountStorageKeys(localStorage, "a")).toEqual([
+    "is:workout-correction:v1:a",
+    "is:workout-removal:v1:a",
+    "is:workout-removal:v99:a",
+  ]);
+});

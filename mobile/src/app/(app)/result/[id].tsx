@@ -1,3 +1,4 @@
+import { useWorkoutRemoval } from "../../../lib/workout-removal-context";
 import { trainingProgressReturn } from "../../../lib/training-progress-view";
 import { useTrainingPreferences } from "../../../lib/training-preferences-context";
 import { formatWeight } from "../../../../../src/domain/training-tools";
@@ -19,6 +20,7 @@ import { santiagoDate } from "../../../../../src/domain/dates";
 import { setVolume } from "../../../../../src/domain/volume";
 export default function Result() {
   const { preferences } = useTrainingPreferences();
+  const { removal } = useWorkoutRemoval();
   const p = usePalette(),
     params = useLocalSearchParams<{
       id: string;
@@ -213,9 +215,25 @@ export default function Result() {
               <Action
                 label="Corregir entrenamiento"
                 secondary
-                disabled={q.loading || !!q.error || w.id !== id}
+                disabled={
+                  q.loading ||
+                  !!q.error ||
+                  w.id !== id ||
+                  removal.busy ||
+                  removal.pending?.request.workoutId === w.id
+                }
                 onPress={() =>
                   router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })
+                }
+              />
+            ) : null}
+            {demo !== "1" ? (
+              <Action
+                label="Eliminar entrenamiento"
+                quiet
+                disabled={q.loading || !!q.error || w.id !== id || removal.busy}
+                onPress={() =>
+                  router.push({ pathname: "/remove-result/[id]", params: { id: w.id } })
                 }
               />
             ) : null}

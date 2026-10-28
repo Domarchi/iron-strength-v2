@@ -1,3 +1,4 @@
+import { useWorkoutRemoval } from "../lib/workout-removal-context";
 import { useCorrectionDraft } from "../lib/correction-context";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { usePersonalExerciseDraft } from "../lib/personal-exercise-context";
@@ -14,6 +15,7 @@ import { useCommentDraft } from "../lib/comment-context";
 import { useWorkoutSyncQueue } from "../lib/sync-context";
 export function DeleteAccount() {
   const { controller: correctionController, correction } = useCorrectionDraft();
+  const { controller: workoutRemovals, removal: workoutRemoval } = useWorkoutRemoval();
   const { controller: preferencesController, preferences } = useTrainingPreferences();
   const { controller: exerciseController, exercises } = usePersonalExerciseDraft();
   const p = usePalette(),
@@ -51,6 +53,9 @@ export function DeleteAccount() {
       preferences.busy ||
       preferences.paused ||
       !preferences.ready ||
+      !workoutRemoval.ready ||
+      workoutRemoval.busy ||
+      workoutRemoval.paused ||
       !correction.ready ||
       correction.busy ||
       correction.paused ||
@@ -68,9 +73,11 @@ export function DeleteAccount() {
     setError(null);
     let resume: (() => void) | undefined;
     let resumePreferences: (() => void) | undefined;
+    let resumeWorkoutRemoval: (() => void) | undefined;
     let resumeCorrection: (() => void) | undefined;
     let resumeExercises: (() => void) | undefined;
     try {
+      resumeWorkoutRemoval = workoutRemovals.pauseWrites();
       resumeCorrection = correctionController.pauseWrites();
       resumeExercises = exerciseController.pauseWrites();
       resumePreferences = preferencesController.pauseWrites();
@@ -83,6 +90,7 @@ export function DeleteAccount() {
       if (!library.blocked) await routines.flush();
       if (!exercises.blocked) await exerciseController.flush();
       if (!correction.blocked) await correctionController.flush();
+      if (!workoutRemoval.blocked) await workoutRemovals.flush();
       await removalController.request(userId, () => client.deleteAccount(confirmation, userId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos completar la eliminación.");
@@ -91,6 +99,7 @@ export function DeleteAccount() {
       resumePreferences?.();
       resumeExercises?.();
       resumeCorrection?.();
+      resumeWorkoutRemoval?.();
       setBusy(false);
     }
   }
@@ -136,6 +145,9 @@ export function DeleteAccount() {
               preferences.busy ||
               preferences.paused ||
               !preferences.ready ||
+              !workoutRemoval.ready ||
+              workoutRemoval.busy ||
+              workoutRemoval.paused ||
               !correction.ready ||
               correction.busy ||
               correction.paused ||
@@ -181,6 +193,9 @@ export function DeleteAccount() {
             preferences.busy ||
             preferences.paused ||
             !preferences.ready ||
+            !workoutRemoval.ready ||
+            workoutRemoval.busy ||
+            workoutRemoval.paused ||
             !correction.ready ||
             correction.busy ||
             correction.paused ||

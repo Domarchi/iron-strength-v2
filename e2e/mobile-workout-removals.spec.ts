@@ -342,3 +342,87 @@ test("ventana7/8 y revisión bloquean borrados antiguos sin dejar recibos", asyn
     }
   }
 });
+
+test("controlador recuperado elimina con respuesta perdida, limpia solo corrección intacta y conserva otras claves", async ({
+  baseURL,
+}) => {
+  if (!baseURL) throw Error("baseURL");
+  const { WorkoutRemovalController } = await import("../src/lib/workout/removal-draft");
+  const { WorkoutCorrectionController } = await import("../src/lib/workout/correction-draft");
+  const data = new Map<string, string>([
+    ["active-training", "series-and-rest"],
+    ["another-account", "untouched"],
+  ]);
+  let lose = true;
+  const bodies: string[] = [];
+  const transport: Transport = async (url, init) => {
+    const response = await fetch(url, init);
+    if (String(url).endsWith(endpoint) && init?.method === "POST") {
+      bodies.push(String(init.body));
+      if (lose && response.status === 200) {
+        lose = false;
+        await response.arrayBuffer();
+        throw Error("response lost after commit");
+      }
+    }
+    return response;
+  };
+  const c = await client(baseURL, people[1], transport),
+    p = payload();
+  await c.saveTypedRecording(p, people[1].id);
+  const storage = {
+    get: async (k: string) => data.get(k) ?? null,
+    compareAndSet: async (k: string, before: string | null, next: string) => {
+      if ((data.get(k) ?? null) !== before)
+        throw Object.assign(Error("conflict"), { reason: "conflict" });
+      data.set(k, next);
+    },
+  };
+  const correction = new WorkoutCorrectionController(
+    people[1].id,
+    storage,
+    (input) => c.correctWorkout(input, people[1].id),
+    randomUUID,
+  );
+  await correction.restore();
+  await correction.open(await c.workoutCorrection(p.id, people[1].id));
+  const ports = {
+    uuid: randomUUID,
+    send: (input: Parameters<MobileClient["removeWorkout"]>[0]) =>
+      c.removeWorkout(input, people[1].id),
+    reserve: async (id: string) => {
+      const release = correction.reserveForWorkoutRemoval(id);
+      try {
+        await correction.flush();
+        return release;
+      } catch (error) {
+        release();
+        throw error;
+      }
+    },
+    onRemoved: (id: string) => correction.clearRemovedWorkout(id),
+  };
+  const removal = new WorkoutRemovalController(people[1].id, storage, ports);
+  await removal.restore();
+  await expect(removal.confirm(await c.workoutRemoval(p.id, people[1].id))).rejects.toThrow();
+  expect(removal.getSnapshot().pending).not.toBeNull();
+  expect(correction.getSnapshot().draft).not.toBeNull();
+  removal.dispose();
+  const recovered = new WorkoutRemovalController(people[1].id, storage, ports);
+  await recovered.restore();
+  await c.reconnect();
+  await recovered.retry();
+  expect(recovered.getSnapshot().confirmation?.status).toBe("duplicate");
+  expect(recovered.getSnapshot().pending).toBeNull();
+  expect(correction.getSnapshot().draft).toBeNull();
+  expect(correction.getSnapshot().paused).toBe(false);
+  expect(bodies).toHaveLength(2);
+  expect(bodies[0]).toBe(bodies[1]);
+  expect(data.get("active-training")).toBe("series-and-rest");
+  expect(data.get("another-account")).toBe("untouched");
+  expect((await admin().from("workouts").select("id").eq("id", p.id)).data).toEqual([]);
+  expect(
+    (await admin().from("workout_correction_receipts").select("request_id").eq("workout_id", p.id))
+      .data,
+  ).toHaveLength(1);
+});

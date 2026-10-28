@@ -13,6 +13,7 @@ import { trainingMetricCases } from "../../test/fixtures/training-metrics";
 import { typedRecordingPayloadSchema } from "../mobile/typed-recording-contracts";
 import { saveTypedWorkoutRecording, getTypedWorkoutDetail } from "./typed-recordings";
 import { listWorkouts } from "./workouts";
+import { getWorkoutResult } from "./workout-result";
 import { mutatePersonalLibrary } from "./personal-library";
 import { mondayOf, santiagoDate } from "../../domain/dates";
 import type { Database } from "../../types/database";
@@ -132,6 +133,18 @@ describe("persistencia de métricas y notas, sin datos inventados", () => {
       );
       expect((await getTypedWorkoutDetail(coach, p.id))?.workout).toEqual(own?.workout);
       for (const db of students.slice(1)) expect(await getTypedWorkoutDetail(db, p.id)).toBeNull();
+      expect(await getWorkoutResult(students[0], p.id)).toEqual({
+        kind: "typed",
+        studentId: people[0],
+        workout: own!.workout,
+      });
+      expect(await getWorkoutResult(coach, p.id)).toEqual({
+        kind: "typed",
+        studentId: people[0],
+        workout: own!.workout,
+      });
+      for (const db of [...students.slice(1), anonClient()])
+        expect(await getWorkoutResult(db, p.id)).toBeNull();
       const stored = await students[0]
         .from("workout_sets")
         .select("weight_kg,reps,duration_seconds,distance_meters,record_type,effort,set_type")
@@ -194,6 +207,11 @@ describe("persistencia de métricas y notas, sin datos inventados", () => {
     });
     const saved = await students[0].rpc("save_personal_workout", { p_workout: old });
     expect(saved.error).toBeNull();
+    expect(await getWorkoutResult(students[0], old.id)).toMatchObject({
+      kind: "legacy",
+      studentId: people[0],
+      workout: { id: old.id },
+    });
     const removed = await students[0].from("workouts").delete().eq("id", old.id);
     expect(removed.error).toBeNull();
     const p = payload();

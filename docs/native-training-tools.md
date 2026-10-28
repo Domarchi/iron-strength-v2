@@ -1,4 +1,4 @@
-# Herramientas y ejercicios propios · T216–T217
+# Entrenamiento, herramientas e historial · T216–T218
 
 Implementación local del cliente Expo. No implica publicación en la web, entrega por Expo Go ni aceptación en un teléfono físico.
 
@@ -64,14 +64,32 @@ En **Progreso → Ejercicios**, cada tipo de registro tiene sus propias métrica
 
 En **Progreso → Resumen**, alterna Mes/Año y navega por periodos. La regularidad muestra semanas con trabajo frente a semanas observadas hasta hoy; no equivale al cumplimiento de la planificación. Toca un músculo para ver sus entrenamientos. La clasificación procede del catálogo visible actual; lo que no esté disponible aparece Sin clasificar. Los calentamientos no suman actividad de trabajo. Cómo se calcula mantiene el detalle fuera de la vista principal.
 
-Actualizar consulta el servidor; un fallo conserva la última vista con Datos sin actualizar. Esta consulta necesita conexión y la API2 correspondiente; no anuncia una descarga ni cambia el entrenamiento o descanso activo. Esta parte de T218 no incluye todavía la edición recuperable de resultados terminados. Publicación, offline ampliado y aceptación en teléfonos se verifican por separado.
+Actualizar consulta el servidor; un fallo conserva la última vista con Datos sin actualizar. Esta consulta necesita conexión y la API2 correspondiente; no anuncia una descarga ni cambia el entrenamiento o descanso activo. La edición y eliminación recuperables se describen a continuación; su validación y publicación se acreditan por separado. Publicación, offline ampliado y aceptación en teléfonos se verifican por separado.
 
-## Corregir un resultado · T218 en validación local
+## Corregir un resultado · T218 verificado localmente
 
 Abre un resultado propio real y elige **Corregir entrenamiento**. Cambia entre ejercicios para corregir sus valores registrados; los campos indican kg, repeticiones, segundos o metros. Las notas y el esfuerzo son opcionales. **Retirar serie** conserva sus valores para restaurarla antes de confirmar; debe quedar al menos una. Revisa la propuesta y pulsa **Confirmar corrección**. El plazo se comprueba también en el servidor. La corrección conserva el origen, los objetivos y la estructura del entrenamiento.
 
 **Guardado en este dispositivo** protege el borrador; **Corrección confirmada** acredita la respuesta del servidor y la limpieza local verificada. Si se perdió la respuesta, **Reintentar el mismo envío** conserva el mismo intento. Si otra ventana cambió el entrenamiento, compara su versión y acepta la propuesta revisada antes de enviar. Los cambios de series eliminadas se muestran y requieren aceptar expresamente su omisión. Historial y Cuenta permiten retomar la corrección después de volver a entrar.
 
-Si falla el almacenamiento, el texto permanece en memoria y no se envía. Reintenta el guardado; **Releer corrección local** pide confirmar antes de reemplazar esos cambios por la versión del dispositivo. **Descartar corrección** pide confirmación y conserva el entrenamiento remoto. Salir exige resolver la propuesta pendiente. Eliminar la cuenta por el recorrido confirmado incluye este borrador, conservando las otras cuentas. Esta integración no acredita todavía una publicación, prueba física ni el control de eliminación de un entrenamiento completo.
+Si falla el almacenamiento, el texto permanece en memoria y no se envía. Reintenta el guardado; **Releer corrección local** pide confirmar antes de reemplazar esos cambios por la versión del dispositivo. **Descartar corrección** pide confirmación y conserva el entrenamiento remoto. Salir exige resolver la propuesta pendiente. Eliminar la cuenta por el recorrido confirmado incluye este borrador, conservando las otras cuentas. Esta integración no acredita todavía una publicación, prueba física ni la disponibilidad en producción de las funciones nuevas.
 
 Después de volver a entrar, una corrección rechazada conserva su explicación y los pasos para resolverla. Si una relectura falla, puedes consultar la propuesta que permanece en memoria y confirmar otra relectura cuando el almacenamiento vuelva a contener una versión compatible. No se reemplaza esa propuesta ni el documento desconocido automáticamente. Si el servidor ya confirmó y solo falla la limpieza local, el reintento completa la limpieza sin reenviar mientras se conserve esa confirmación.
+
+## Eliminar un resultado · T218 verificado localmente
+
+Desde un resultado real propio, abre **Eliminar entrenamiento**. Revisa nombre, fecha y cantidad de series y comentarios. Abrir o cancelar esta vista no crea un intento. **Eliminar para siempre** retira el entrenamiento y sus comentarios; no modifica tu rutina ni otro registro en curso. Si existe una corrección pendiente de ese resultado, primero retómala o descártala. El servidor comprueba el plazo de siete días y la versión revisada.
+
+Si no llega la respuesta, el intento queda en **Cuenta** e **Historial**. **Revisar eliminación → Reintentar la misma eliminación** conserva el intento; reconecta la misma cuenta si es necesario. Si otra ventana cambió el entrenamiento, consulta y acepta su versión actual antes de volver a confirmar. **Completar limpieza local** no vuelve a enviar una eliminación ya confirmada en memoria. Tras reiniciar, se consulta su recibo mediante el mismo intento.
+
+**Descartar intento local** no restaura un entrenamiento que el servidor ya eliminó. Si cambia el documento local desde otra ventana, **Releer eliminación local** exige confirmar el reemplazo de la memoria; un formato desconocido se conserva. Nunca se muestra **Ver resultado** después de confirmar la eliminación.
+
+## Correcciones desde la web · T218 verificado localmente
+
+En un resultado propio, **Editar** conserva el texto de los campos al recargar. Revisa la propuesta antes de confirmarla. Para eliminar el entrenamiento completo usa su acción separada, revisa el resumen y confirma. **Cuenta** e **Historial** permiten recuperar las operaciones pendientes, incluso si el resultado ya no está disponible después de perder una respuesta.
+
+Cerrar sesión no descarta estas propuestas desde el botón general: primero retómalas o descártalas en su recorrido. Sincronizar entrenamientos terminados no envía correcciones. Borrar la cuenta es otra operación y requiere su confirmación escrita; después se limpian solo los datos locales de esa cuenta.
+
+Estos recorridos están verificados localmente. No confundir sus pruebas con una actualización ya publicada, una comprobación de SQLite en el teléfono o una aceptación física.
+
+Después de confirmar una corrección desde la web, **Ver resultado** abre el detalle correspondiente al formato guardado. Los registros por tiempo o distancia conservan sus dimensiones, clases, esfuerzo, notas propias y comentarios; las notas de un ejercicio sin series también se muestran. El resumen distingue el tiempo registrado por serie de la duración del entrenamiento. Esta vista está verificada localmente y su publicación sigue pendiente.

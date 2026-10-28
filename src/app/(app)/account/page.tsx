@@ -1,3 +1,4 @@
+import { PendingWorkoutChanges } from "@/components/workout-changes/pending";
 import { PublicInfoLinks } from "@/components/layout/public-info-links";
 import { ThemeSelect } from "@/components/layout/theme-select";
 import { PageHeading } from "@/components/layout/page-heading";
@@ -35,6 +36,7 @@ export default async function AccountPage() {
         </dl>
       </section>
 
+      <PendingWorkoutChanges />
       <ThemeSelect />
 
       <section aria-labelledby="export-heading" className="flex flex-col gap-2">

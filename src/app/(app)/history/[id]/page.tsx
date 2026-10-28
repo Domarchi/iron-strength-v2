@@ -16,7 +16,8 @@ import { listAchievements } from "@/lib/data/achievements";
 import { listComments } from "@/lib/data/comments";
 import { getUnreadSummary } from "@/lib/data/unread";
 import { getWorkoutRecords } from "@/lib/data/progress";
-import { getWorkoutDetail } from "@/lib/data/workouts";
+import { getWorkoutResult } from "@/lib/data/workout-result";
+import { TypedWorkoutResult } from "@/components/workout/typed-result";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/session";
 
@@ -46,8 +47,18 @@ export default async function WorkoutDetailPage({
   const [{ id }, query, user] = await Promise.all([params, searchParams, requireUser()]);
   const { nuevo, logros } = query;
   const db = await createClient();
-  const workout = await getWorkoutDetail(db, id);
-  if (!workout) notFound();
+  const result = await getWorkoutResult(db, id);
+  if (!result) notFound();
+  if (result.kind === "typed")
+    return (
+      <TypedWorkoutResult
+        workout={result.workout}
+        studentId={result.studentId}
+        user={user}
+        query={query}
+      />
+    );
+  const workout = result.workout;
   const [records, comments, unread] = await Promise.all([
     getWorkoutRecords(db, id),
     listComments({ db, workoutId: id, viewerId: user.id, studentId: workout.studentId }),
@@ -195,9 +206,14 @@ export default async function WorkoutDetailPage({
           {back.label}
         </Button>
         {own && isWorkoutEditable(workout.performedOn, santiagoDate(new Date())) ? (
-          <Button variant="secondary" render={<Link href={`/history/${workout.id}/edit`} />}>
-            Editar
-          </Button>
+          <>
+            <Button variant="secondary" render={<Link href={`/history/${workout.id}/edit`} />}>
+              Editar
+            </Button>
+            <Button variant="outline" render={<Link href={`/history/${workout.id}/remove`} />}>
+              Eliminar entrenamiento
+            </Button>
+          </>
         ) : null}
       </div>
     </div>

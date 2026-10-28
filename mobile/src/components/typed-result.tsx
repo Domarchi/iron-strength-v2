@@ -1,3 +1,4 @@
+import { useWorkoutRemoval } from "../lib/workout-removal-context";
 import { trainingProgressReturn } from "../lib/training-progress-view";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
@@ -25,6 +26,7 @@ export function TypedResult({
   retry?: () => void;
 }) {
   const { preferences } = useTrainingPreferences();
+  const { removal } = useWorkoutRemoval();
   const p = usePalette(),
     params = useLocalSearchParams<{
       exercise?: string;
@@ -138,8 +140,14 @@ export function TypedResult({
       <Action
         label="Corregir entrenamiento"
         secondary
-        disabled={loading || !!error}
+        disabled={loading || !!error || removal.busy || removal.pending?.request.workoutId === w.id}
         onPress={() => router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })}
+      />
+      <Action
+        label="Eliminar entrenamiento"
+        quiet
+        disabled={loading || !!error || removal.busy}
+        onPress={() => router.push({ pathname: "/remove-result/[id]", params: { id: w.id } })}
       />
       <Action
         label="Repetir entrenamiento"

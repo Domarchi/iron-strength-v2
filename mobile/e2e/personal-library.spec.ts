@@ -140,14 +140,19 @@ test("carpetas, copia independiente, orden y borrado confirmado", async ({ page 
   expect(state.value.routines[0].id).not.toBe(state.value.routines[1].id);
   await page.getByRole("button", { name: "Acciones de rutina Base (copia)", exact: true }).click();
   await page.getByRole("button", { name: "Subir", exact: true }).click();
-  expect(state.value.routines.find((r) => r.name === "Base (copia)")!.position).toBe(0);
+  await expect
+    .poll(() => state.value.routines.find((r) => r.name === "Base (copia)")!.position)
+    .toBe(0);
+  await expect(
+    page.getByRole("button", { name: /^Ver rutina Base(?: \(copia\))?$/ }).first(),
+  ).toHaveAccessibleName("Ver rutina Base (copia)");
   await page.getByRole("button", { name: "Acciones de rutina Base (copia)", exact: true }).click();
   await page.getByRole("button", { name: "Mover a carpeta", exact: true }).click();
   await expect(page.getByRole("button", { name: "Sin carpeta", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Mover a Fuerza", exact: true }).click();
-  expect(state.value.routines.find((r) => r.name === "Base (copia)")!.folderId).toBe(
-    state.value.folders[0].id,
-  );
+  await expect
+    .poll(() => state.value.routines.find((r) => r.name === "Base (copia)")!.folderId)
+    .toBe(state.value.folders[0].id);
   await page.getByRole("button", { name: "Acciones de carpeta Fuerza", exact: true }).click();
   await page.getByRole("button", { name: "Renombrar carpeta", exact: true }).click();
   await page.getByLabel("Nuevo nombre de carpeta", { exact: true }).fill("Mi fuerza");
@@ -164,7 +169,7 @@ test("carpetas, copia independiente, orden y borrado confirmado", async ({ page 
     page.getByRole("button", { name: "Acciones de carpeta Mi fuerza", exact: true }),
   ).toHaveCount(0);
   expect(state.value.routines).toHaveLength(2);
-  expect(state.value.routines.every((r) => r.folderId === null)).toBe(true);
+  await expect.poll(() => state.value.routines.every((r) => r.folderId === null)).toBe(true);
   await page.getByRole("button", { name: "Acciones de rutina Base (copia)", exact: true }).click();
   await page.getByRole("button", { name: "Eliminar rutina", exact: true }).click();
   await page.getByRole("button", { name: "Confirmar eliminación de rutina", exact: true }).click();

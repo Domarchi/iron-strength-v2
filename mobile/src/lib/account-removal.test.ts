@@ -50,6 +50,8 @@ describe("eliminación recuperable del dispositivo", () => {
     x.values.set(`is:native-library:v1:${other}`, "otros borradores");
     x.values.set(`is:native-personal-exercises:v1:${id}`, "ejercicios pendientes");
     x.values.set(`is:native-personal-exercises:v1:${other}`, "otros ejercicios");
+    x.values.set(`is:workout-removal:v1:${id}`, "eliminación pendiente");
+    x.values.set(`is:workout-removal:v1:${other}`, "otra eliminación");
     x.values.set(`is:workout-correction:v1:${id}`, "corrección pendiente");
     x.values.set(`is:workout-correction:v1:${other}`, "otra corrección");
     await x.controller.restore();
@@ -73,6 +75,8 @@ describe("eliminación recuperable del dispositivo", () => {
     expect(x.values.get(`is:native-library:v1:${other}`)).toBe("otros borradores");
     expect(x.values.has(`is:native-personal-exercises:v1:${id}`)).toBe(false);
     expect(x.values.get(`is:native-personal-exercises:v1:${other}`)).toBe("otros ejercicios");
+    expect(x.values.has(`is:workout-removal:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:workout-removal:v1:${other}`)).toBe("otra eliminación");
     expect(x.values.has(`is:workout-correction:v1:${id}`)).toBe(false);
     expect(x.values.get(`is:workout-correction:v1:${other}`)).toBe("otra corrección");
     expect(x.controller.getSnapshot().completion).toBe("server_deleted");
