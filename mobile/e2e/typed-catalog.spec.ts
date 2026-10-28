@@ -1,3 +1,7 @@
+import {
+  buildTrainingProgress,
+  type TrainingProgressSource,
+} from "../../src/domain/training-progress";
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupPersonalTraining } from "./support/personal-training-fixture";
@@ -327,6 +331,45 @@ for (const theme of ["light", "dark"] as const)
         }),
       });
     });
+    const progressSource: TrainingProgressSource = {
+      version: 1,
+      userId: downloadId(1),
+      today: "2026-10-28",
+      workouts: [1, 2].map((n) => ({
+        id: downloadId(2600 + n),
+        startedAt: `2026-10-0${n}T12:00:00Z`,
+        date: `2026-10-0${n}`,
+        sourceKind: "free",
+        title: "Carrera",
+        sessionLabel: null,
+        durationSeconds: 600,
+        perceivedEffort: null,
+        note: null,
+        sets: [
+          {
+            id: downloadId(2700 + n),
+            exerciseId: entry.id,
+            name: entry.name,
+            muscleGroup: "Core",
+            position: 0,
+            setNumber: 1,
+            metrics: trainingMetricCases[7],
+            setType: "drop",
+            effort: 8.5,
+          },
+        ],
+      })),
+    };
+    await page.route(api + "/training-progress", (route) =>
+      route.fulfill({
+        json: {
+          version: 2,
+          userId: downloadId(1),
+          today: progressSource.today,
+          ...buildTrainingProgress(progressSource),
+        },
+      }),
+    );
     await page.getByRole("button", { name: "Biblioteca de ejercicios", exact: true }).click();
     await page.getByRole("button", { name: "Ver ejercicio Movimiento 7", exact: true }).click();
     await expect(page.getByText("Distancia y tiempo", { exact: true })).toBeVisible();
@@ -339,7 +382,7 @@ for (const theme of ["light", "dark"] as const)
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Ver progreso de este ejercicio", exact: true }),
-    ).toHaveCount(0);
+    ).toHaveCount(1);
     await page.getByRole("button", { name: "Más entrenamientos", exact: true }).click();
     await expect(page.getByText("Segunda sesión", { exact: true })).toBeVisible();
     expect(requests).toHaveLength(2);
@@ -354,4 +397,9 @@ for (const theme of ["light", "dark"] as const)
       path: test.info().outputPath(`typed-catalog-history-${theme}-360.png`),
       fullPage: true,
     });
+    await page.getByRole("button", { name: "Ver progreso de este ejercicio", exact: true }).click();
+    await expect(page.getByLabel("Valor del periodo")).toHaveText("1.000 m");
+    await expect(page.getByRole("button", { name: "1RM estimado", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Volver a la ficha", exact: true }).click();
+    await expect(page.getByText("Ritmo sostenido", { exact: true })).toBeVisible();
   });

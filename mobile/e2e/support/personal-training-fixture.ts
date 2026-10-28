@@ -1,3 +1,4 @@
+import { progressFromResults, fixtureTrainingSetId } from "./training-progress-results";
 import {
   recordingRequestSchema,
   type RecordingPayload,
@@ -33,7 +34,7 @@ export async function setupPersonalTraining(page: Page) {
         sets: [],
       };
       row.sets.push({
-        id: downloadId(950 + i),
+        id: fixtureTrainingSetId(payload.id, i),
         setNumber: set.setNumber,
         weightKg: set.weightKg,
         reps: set.reps,
@@ -122,6 +123,15 @@ export async function setupPersonalTraining(page: Page) {
     if (!payload) return route.fallback();
     return route.fulfill({ json: result(payload) });
   });
+  await page.route(api + "/training-progress", (route) =>
+    route.fulfill({
+      json: progressFromResults(
+        downloadId(1),
+        [...records.values()].map(result),
+        santiagoDate(new Date()),
+      ),
+    }),
+  );
   await page.route(api + "/workouts", (route) =>
     route.fulfill({
       json: {

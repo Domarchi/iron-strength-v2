@@ -1,3 +1,4 @@
+import { trainingProgressReturn } from "../../../lib/training-progress-view";
 import { useTrainingPreferences } from "../../../lib/training-preferences-context";
 import { formatWeight } from "../../../../../src/domain/training-tools";
 import { TypedResult } from "../../../components/typed-result";
@@ -25,6 +26,9 @@ export default function Result() {
       exercise?: string;
       weeks?: string;
       metric?: string;
+      progressVersion?: string;
+      recordType?: string;
+      from?: string;
     }>(),
     { id, demo } = params,
     { client } = useSession(),
@@ -83,6 +87,13 @@ export default function Result() {
             w.exercises.map((e) => e.exerciseId),
           )
         : null;
+  const trainingBack =
+    w && demo !== "1"
+      ? trainingProgressReturn(
+          params,
+          w.exercises.map((e) => ({ exerciseId: e.exerciseId, recordType: null })),
+        )
+      : null;
   if (q.value?.version === 3) return <TypedResult workout={q.value.workout} />;
   return (
     <KeyboardAvoidingView
@@ -94,6 +105,39 @@ export default function Result() {
         {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
         {q.loading && !q.value ? (
           <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text>
+        ) : null}
+        {trainingBack ? (
+          <Action
+            label="Volver al progreso"
+            secondary
+            onPress={() =>
+              router.canGoBack()
+                ? router.back()
+                : router.replace({
+                    pathname: "/progress/[id]",
+                    params: {
+                      id: trainingBack.exercise,
+                      progressVersion: "2",
+                      recordType: trainingBack.recordType,
+                      weeks: String(trainingBack.weeks),
+                      metric: trainingBack.metric,
+                    },
+                  })
+            }
+          />
+        ) : null}
+        {params.from === "history" ? (
+          <Action
+            label="Volver al historial"
+            secondary
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/history"))}
+          />
+        ) : params.from === "summary" ? (
+          <Action
+            label="Volver al resumen"
+            secondary
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/progress"))}
+          />
         ) : null}
         {w ? (
           <>
@@ -196,7 +240,7 @@ export default function Result() {
             {demo !== "1" ? <WorkoutComments key={w.id} workoutId={w.id} /> : null}
           </>
         ) : null}
-        {back ? (
+        {back && !trainingBack ? (
           <Action
             label="Volver al progreso"
             onPress={() =>

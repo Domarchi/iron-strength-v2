@@ -1,3 +1,4 @@
+import { progressFromResults } from "./support/training-progress-results";
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupTypedPersonalLibrary } from "./support/typed-library-fixture";
@@ -51,6 +52,9 @@ async function setup(page: Page) {
   await page.route(api + "/typed-recordings/" + w.id, (route) =>
     route.fulfill({ json: fixture.result }),
   );
+  await page.route(api + "/training-progress", (route) =>
+    route.fulfill({ json: progressFromResults(downloadId(1), [fixture.result], "2026-10-27") }),
+  );
   await page.route(api + "/workouts", (route) =>
     route.fulfill({
       json: {
@@ -78,7 +82,12 @@ async function setup(page: Page) {
   );
   await page.getByRole("button", { name: "Volver a Entrenar", exact: true }).click();
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
-  await page.getByRole("button", { name: "Ver entrenamiento del 27/10", exact: true }).click();
+  await page
+    .getByRole("button", {
+      name: "Ver entrenamiento del 27/10 · Registro de todos los tipos",
+      exact: true,
+    })
+    .click();
   await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
   return { state, fixture, base };
 }

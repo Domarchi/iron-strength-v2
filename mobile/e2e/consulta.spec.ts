@@ -1,3 +1,8 @@
+import {
+  buildTrainingProgress,
+  type TrainingProgressSource,
+} from "../../src/domain/training-progress";
+import { downloadId } from "../../src/test/fixtures/week-download";
 import { fulfillLegacyTypedResult } from "./support/legacy-result";
 import type { RecordingPayload } from "../../src/lib/mobile/recording-contracts";
 import AxeBuilder from "@axe-core/playwright";
@@ -176,12 +181,61 @@ test("error de red conserva el recorrido y permite reintentar; estados vacíos y
   expect(rects.every((h) => h >= 44)).toBe(true);
 });
 
+function consultationProgress() {
+  const rows = [
+    { date: "2026-10-19", exerciseId: id, name: "Sentadilla", weightKg: 50, reps: 6 },
+    { date: "2026-10-21", exerciseId: id, name: "Sentadilla", weightKg: 50, reps: 6 },
+    { date: "2026-10-23", exerciseId: id, name: "Sentadilla", weightKg: 52.5, reps: 6 },
+    { date: "2026-10-20", exerciseId: exercise, name: "Dominadas", weightKg: 0, reps: 8 },
+    { date: "2026-10-22", exerciseId: exercise, name: "Dominadas", weightKg: 0, reps: 12 },
+  ];
+  const source: TrainingProgressSource = {
+    version: 1,
+    userId: id,
+    today: "2026-10-24",
+    workouts: rows.map((r, i) => ({
+      id: downloadId(8900 + i),
+      startedAt: `${r.date}T12:00:00Z`,
+      date: r.date,
+      sourceKind: "assigned",
+      title: null,
+      sessionLabel: "A",
+      durationSeconds: 1800,
+      perceivedEffort: 7,
+      note: "Carga controlada en la última serie",
+      sets: [
+        {
+          id: downloadId(8950 + i),
+          exerciseId: r.exerciseId,
+          name: r.name,
+          muscleGroup: null,
+          position: 0,
+          setNumber: 1,
+          metrics: {
+            recordType: null,
+            weightKg: r.weightKg,
+            reps: r.reps,
+            durationSeconds: null,
+            distanceMeters: null,
+          },
+          setType: "working",
+          effort: null,
+        },
+      ],
+    })),
+  };
+  return { version: 2, userId: id, today: source.today, ...buildTrainingProgress(source) };
+}
 async function emptyAccount(page: Page, seen: string[] = []) {
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
     if (await fulfillLegacyTypedResult(route)) return;
     const path = new URL(route.request().url()).pathname;
     seen.push(route.request().method() + " " + path);
     if (await fulfillEmptyCommentReads(route)) return;
+    if (path.endsWith("/training-progress"))
+      return route.fulfill({
+        json: { version: 2, userId: id, today: "2026-10-24", activity: [], exercises: [] },
+      });
     const data = path.endsWith("auth/login")
       ? session
       : path.endsWith("workouts")
@@ -702,6 +756,8 @@ for (const theme of ["light", "dark"] as const) {
       const path = new URL(route.request().url()).pathname;
       if (await fulfillEmptyCommentReads(route)) return;
       if (route.request().method() === "POST") writes.push(path);
+      if (path.endsWith("/training-progress"))
+        return route.fulfill({ json: consultationProgress() });
       const data = path.endsWith("auth/login")
         ? session
         : path.endsWith("week")
@@ -786,7 +842,10 @@ for (const theme of ["light", "dark"] as const) {
       }
       if (name === "Historial")
         await expect(
-          page.getByText("Carga controlada en la última serie", { exact: true }),
+          page
+            .getByText("Carga controlada en la última serie", { exact: true })
+            .filter({ visible: true })
+            .first(),
         ).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         360,

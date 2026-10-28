@@ -55,3 +55,13 @@ Usa **Entrenar → Ver demo A → Probar entrenamiento demo** para comprobar con
 5. En preferencias, cambia un valor y cancela. Vuelve a abrirlas: deben conservar la última configuración confirmada.
 
 Registra por separado dispositivo, sistema, versión del cliente y resultado observado. Esta lista no acredita que esa prueba física ya se haya realizado.
+
+## Historial y progreso · Consulta T218
+
+**Historial** permite buscar por rutina o ejercicio, elegir el origen y alternar Lista/Calendario. La búsqueda incluye todo el historial consultado, no solo la primera página. En el calendario puedes cambiar de mes, elegir un día y volver a ver todo el mes. Abrir un resultado y usar Volver al historial conserva los filtros y la posición. Las demos permanecen separadas de los registros reales.
+
+En **Progreso → Ejercicios**, cada tipo de registro tiene sus propias métricas y evidencias. Tiempo, distancia y asistencia no se convierten en volumen ni 1RM. Los datos anteriores siguen identificados como Registro anterior. Puedes elegir 4, 8 o 12 semanas, consultar Marcas históricas y abrir el entrenamiento que produjo el valor; Volver al progreso conserva periodo y métrica. Las unidades elegidas en Cuenta cambian solo la presentación.
+
+En **Progreso → Resumen**, alterna Mes/Año y navega por periodos. La regularidad muestra semanas con trabajo frente a semanas observadas hasta hoy; no equivale al cumplimiento de la planificación. Toca un músculo para ver sus entrenamientos. La clasificación procede del catálogo visible actual; lo que no esté disponible aparece Sin clasificar. Los calentamientos no suman actividad de trabajo. Cómo se calcula mantiene el detalle fuera de la vista principal.
+
+Actualizar consulta el servidor; un fallo conserva la última vista con Datos sin actualizar. Esta consulta necesita conexión y la API2 correspondiente; no anuncia una descarga ni cambia el entrenamiento o descanso activo. Esta parte de T218 no incluye todavía la edición recuperable de resultados terminados. Publicación, offline ampliado y aceptación en teléfonos se verifican por separado.

@@ -36,7 +36,9 @@ async function setup(page: Page, structured = true, missing = false) {
   fixture.control.records.set(doc.id, doc.workout);
   if (structured) fixture.control.recordings.set(doc.id, doc);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
-  await page.getByRole("button", { name: "Ver entrenamiento del 23/10", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Ver entrenamiento del 23/10 · Superior", exact: true })
+    .click();
   await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
   return { ...fixture, doc };
 }
@@ -180,7 +182,9 @@ test("otro entrenamiento en curso ofrece retomar y no permite sobrescribirlo", a
   const before = await page.evaluate((k) => localStorage.getItem(k), key);
   await page.getByRole("button", { name: "Volver a Inicio", exact: true }).click();
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
-  await page.getByRole("button", { name: "Ver entrenamiento del 23/10", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Ver entrenamiento del 23/10 · Superior", exact: true })
+    .click();
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Empezar entrenamiento", exact: true }),

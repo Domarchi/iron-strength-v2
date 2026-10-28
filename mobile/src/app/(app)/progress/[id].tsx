@@ -1,3 +1,4 @@
+import { TrainingProgressDetail } from "../../../components/training-progress-detail";
 import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { Text } from "react-native";
@@ -7,6 +8,17 @@ import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 export default function ExerciseProgress() {
+  const params = useLocalSearchParams<{ progressVersion?: string }>();
+  if (params.progressVersion !== undefined && params.progressVersion !== "2")
+    return (
+      <Page>
+        <Notice message="Esta versión del progreso no es compatible." />
+        <Action label="Volver a mis ejercicios" onPress={() => router.replace("/progress")} />
+      </Page>
+    );
+  return params.progressVersion === "2" ? <TrainingProgressDetail /> : <LegacyExerciseProgress />;
+}
+function LegacyExerciseProgress() {
   const p = usePalette(),
     { client } = useSession(),
     params = useLocalSearchParams<{ id: string; weeks?: string; metric?: string }>();

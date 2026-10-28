@@ -69,7 +69,9 @@ async function setup(page: Page, draft = false) {
   f.control.records.set(doc.id, doc.workout);
   f.control.recordings.set(doc.id, doc);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
-  await page.getByRole("button", { name: "Ver entrenamiento del 23/10", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Ver entrenamiento del 23/10 · Superior", exact: true })
+    .click();
   await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
   return { ...f, doc, base };
 }

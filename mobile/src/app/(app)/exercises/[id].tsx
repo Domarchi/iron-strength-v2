@@ -57,6 +57,11 @@ function ExerciseDetail({ id, fromCatalog }: { id: string; fromCatalog: boolean 
     (row, i, all) => all.findIndex((other) => other.id === row.id) === i,
   );
   const cursor = more.base === detail ? more.nextCursor : detail?.history.nextCursor;
+  const progressTypes = [
+    ...new Set(
+      rows.flatMap((w) => w.sets.map((set) => ("metrics" in set ? set.metrics.recordType : null))),
+    ),
+  ];
   async function loadMore() {
     if (!detail || !cursor || loadingMore || offline) return;
     const base = detail;
@@ -124,13 +129,28 @@ function ExerciseDetail({ id, fromCatalog }: { id: string; fromCatalog: boolean 
           {!rows.length ? (
             <Text style={[s.body, { color: p.muted }]}>Aún no has registrado este ejercicio.</Text>
           ) : null}
-          {rows.length && (detail.version === 1 || detail.exercise.recordType === null) ? (
+          {progressTypes.map((kind) => (
             <Action
-              label="Ver progreso de este ejercicio"
+              key={kind ?? "legacy"}
+              label={
+                progressTypes.length === 1
+                  ? "Ver progreso de este ejercicio"
+                  : `Ver progreso · ${kind === null ? "Registro anterior" : RECORD_TYPE_LABELS[kind]}`
+              }
               secondary
-              onPress={() => router.push({ pathname: "/progress/[id]", params: { id } })}
+              onPress={() =>
+                router.push({
+                  pathname: "/progress/[id]",
+                  params: {
+                    id,
+                    progressVersion: "2",
+                    recordType: kind ?? "legacy",
+                    from: "exercise",
+                  },
+                })
+              }
             />
-          ) : null}
+          ))}
           {rows.map((workout) => (
             <View key={workout.id} style={[s.divider, { borderColor: p.border }]}>
               <Text style={[s.label, { color: p.ink }]}>

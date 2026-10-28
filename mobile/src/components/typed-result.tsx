@@ -1,6 +1,7 @@
+import { trainingProgressReturn } from "../lib/training-progress-view";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 import { Action, Brand, Page, s, usePalette, day } from "./ui";
 import { WorkoutComments } from "./workout-comments";
@@ -14,10 +15,57 @@ const kind = {
 };
 export function TypedResult({ workout: w }: { workout: Result["workout"] }) {
   const { preferences } = useTrainingPreferences();
-  const p = usePalette();
+  const p = usePalette(),
+    params = useLocalSearchParams<{
+      exercise?: string;
+      weeks?: string;
+      metric?: string;
+      progressVersion?: string;
+      recordType?: string;
+      from?: string;
+    }>();
+  const back = trainingProgressReturn(
+    params,
+    w.exercises.flatMap((e) =>
+      e.sets.length ? [{ exerciseId: e.exerciseId, recordType: e.prescribed.recordType }] : [],
+    ),
+  );
   return (
     <Page>
       <Brand />
+      {back ? (
+        <Action
+          label="Volver al progreso"
+          secondary
+          onPress={() =>
+            router.canGoBack()
+              ? router.back()
+              : router.replace({
+                  pathname: "/progress/[id]",
+                  params: {
+                    id: back.exercise,
+                    progressVersion: "2",
+                    recordType: back.recordType,
+                    weeks: String(back.weeks),
+                    metric: back.metric,
+                  },
+                })
+          }
+        />
+      ) : null}
+      {params.from === "history" ? (
+        <Action
+          label="Volver al historial"
+          secondary
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/history"))}
+        />
+      ) : params.from === "summary" ? (
+        <Action
+          label="Volver al resumen"
+          secondary
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/progress"))}
+        />
+      ) : null}
       <Text style={[s.caption, { color: p.success }]}>ENTRENAMIENTO CONFIRMADO</Text>
       <Text style={[s.heading, { color: p.ink }]}>
         {w.title ?? w.programName ?? "Entrenamiento"}

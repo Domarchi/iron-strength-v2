@@ -16,6 +16,7 @@ const paths = {
   grip: "M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01",
   plus: "M5 12h14M12 5v14",
   minus: "M5 12h14",
+  refresh: "M20 7v5h-5M4 17v-5h5M6.5 7a7 7 0 0 1 11-1L20 9M4 15l2.5 3a7 7 0 0 0 11-1",
   clock: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM12 7v5l3 2",
   pause: "M8 5v14M16 5v14",
   play: "m8 5 11 7-11 7Z",

@@ -1,3 +1,4 @@
+import { progressFromResults, fixtureTrainingSetId } from "./training-progress-results";
 import {
   recordingRequestSchema,
   type RecordingPayload,
@@ -43,7 +44,7 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
         sets: [],
       };
       row.sets.push({
-        id: downloadId(200 + i),
+        id: fixtureTrainingSetId(payload.id, i),
         setNumber: set.setNumber,
         weightKg: set.weightKg,
         reps: set.reps,
@@ -93,6 +94,12 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
         expiresAt: 4000000000,
         profile: { id: userId, fullName: "Ana Prueba", email: "ana@example.test", role: "student" },
       };
+    else if (path.endsWith("/training-progress"))
+      json = progressFromResults(
+        userId,
+        [...control.saved.values()].map(result),
+        santiagoDate(new Date()),
+      );
     else if (path.endsWith("comments/unread")) json = { version: 1, items: [] };
     else if (path.endsWith("/comments") && req.method() === "GET")
       json = {
