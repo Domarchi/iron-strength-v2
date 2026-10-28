@@ -549,14 +549,14 @@ isOneToOne: false
                   ]
                 },"session_exercise_alternatives": {
                   Row: {
-                    "exercise_id": string,"id": string,"position": number,"prescription_sets": Json | null,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"position": number,"prescription_sets": Json | null,"reps_max": number | null,"reps_min": number | null,"session_exercise_id": string,"sets": number,"target_weight_kg": number | null,"typed_prescription": Json | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id"?: string,"position": number,"prescription_sets"?: Json | null,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id"?: string,"position": number,"prescription_sets"?: Json | null,"reps_max"?: number | null,"reps_min"?: number | null,"session_exercise_id": string,"sets": number,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number,"reps_min"?: number,"session_exercise_id"?: string,"sets"?: number,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number | null,"reps_min"?: number | null,"session_exercise_id"?: string,"sets"?: number,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Relationships: [
                     {
@@ -575,14 +575,14 @@ isOneToOne: false
                   ]
                 },"session_exercises": {
                   Row: {
-                    "exercise_id": string,"id": string,"note": string | null,"position": number,"prescription_sets": Json | null,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"note": string | null,"position": number,"prescription_sets": Json | null,"program_session_id": string,"reps_max": number | null,"reps_min": number | null,"rest_seconds": number | null,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null,"typed_prescription": Json | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds"?: number | null,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id": string,"reps_max"?: number | null,"reps_min"?: number | null,"rest_seconds"?: number | null,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id"?: string,"reps_max"?: number,"reps_min"?: number,"rest_seconds"?: number | null,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id"?: string,"reps_max"?: number | null,"reps_min"?: number | null,"rest_seconds"?: number | null,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Relationships: [
                     {
@@ -831,6 +831,9 @@ isOneToOne: false
                            },
 "routine_program_snapshot":
 { Args: { "p_program_id": string }; Returns: Json
+                           },
+"routine_training_prescription":
+{ Args: { "p_item": Json }; Returns: Json
                            },
 "routine_week_snapshot":
 { Args: { "p_program_id": string,"p_week": number }; Returns: Json

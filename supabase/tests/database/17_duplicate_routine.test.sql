@@ -56,8 +56,13 @@ update public.exercises set archived_at=null;
 update public.programs set student_id=tests.student_a_id(), start_date=tests.current_monday()-7, ends_on=tests.current_monday()+6;
 select tests.authenticate_as(tests.coach_id());
 select throws_ok($$select public.duplicate_routine_item('a2000000-0000-0000-0000-000000000001', gen_random_uuid())$$,'55000',null,'bloquea semana pasada');
+select throws_ok($$insert into public.program_sessions(program_id,week_number,label) values
+  ('a1000000-0000-0000-0000-000000000001',2,'A')$$,'55000',null,'tampoco crea una sesión directamente en semana actual');
+-- Fixture existente de semana actual, fuera de la identidad autenticada.
+reset role;
 insert into public.program_sessions(id,program_id,week_number,label) values
   ('a2000000-0000-0000-0000-000000000004','a1000000-0000-0000-0000-000000000001',2,'A');
+select tests.authenticate_as(tests.coach_id());
 select throws_ok($$select public.duplicate_routine_item('a2000000-0000-0000-0000-000000000004', gen_random_uuid())$$,'55000',null,'bloquea semana actual según RF-17');
 reset role;
 select tests.authenticate_as(tests.student_a_id());

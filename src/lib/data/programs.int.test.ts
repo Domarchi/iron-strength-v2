@@ -28,6 +28,7 @@ const admin = adminClient();
 describe("programas (RF-12 a RF-18, DC-10, DC-13)", () => {
   let coachId: string;
   let studentId: string;
+  let planningStudentId: string;
   let coachDb: AdminClient;
   let studentDb: AdminClient;
   let squatId: string;
@@ -59,6 +60,13 @@ describe("programas (RF-12 a RF-18, DC-10, DC-13)", () => {
     });
     coachId = coach.id;
     studentId = student.id;
+    const planningStudent = await createProfileUser(admin, {
+      role: "student",
+      name: "Alumno calendario",
+      email: "calendario@test.local",
+      coachId: coach.id,
+    });
+    planningStudentId = planningStudent.id;
     coachDb = await signedInClient(coach.email, coach.password);
     studentDb = await signedInClient(student.email, student.password);
 
@@ -533,22 +541,23 @@ describe("programas (RF-12 a RF-18, DC-10, DC-13)", () => {
   });
 
   describe("semanas bloqueadas en programas asignados (T66, RF-17)", () => {
-    // Programa asignado de 3 semanas que empieza el lunes 2025-03-03, creado a mano con fechas fijas
-    // (en el pasado, para no chocar con los programas asignados con fechas relativas a hoy).
-    async function assignedProgram() {
+    // Programa de tres semanas: la segunda coincide con la semana real de la base.
+    // Alumno separado para no solapar las asignaciones probadas antes en este archivo.
+    async function assignedProgram(startDate = addDays(mondayOf(santiagoDate(new Date())), -7)) {
       await admin.from("programs").delete().eq("name", "Asignado fijo");
-      const { data: program } = await admin
+      const { data: program, error } = await admin
         .from("programs")
         .insert({
           coach_id: coachId,
-          student_id: studentId,
+          student_id: planningStudentId,
           name: "Asignado fijo",
           weeks_count: 3,
-          start_date: "2025-03-03",
-          ends_on: "2025-03-23",
+          start_date: startDate,
+          ends_on: addDays(startDate, 20),
         })
         .select("id")
         .single();
+      expect(error).toBeNull();
       const { data: s1 } = await admin
         .from("program_sessions")
         .insert({ program_id: program!.id, week_number: 1, label: "A" })
@@ -564,7 +573,7 @@ describe("programas (RF-12 a RF-18, DC-10, DC-13)", () => {
 
     it("en la semana en curso no se agregan sesiones ni ejercicios, pero sí en las siguientes", async () => {
       const program = await assignedProgram();
-      const today = "2025-03-12"; // semana 2
+      const today = santiagoDate(new Date()); // semana 2
       expect(
         await addSession({ db: coachDb, programId: program.id, weekNumber: 1, today }),
       ).toEqual({ ok: false, reason: "week_locked" });
@@ -597,7 +606,7 @@ describe("programas (RF-12 a RF-18, DC-10, DC-13)", () => {
 
     it("tampoco se quitan ni se copian semanas hacia una semana bloqueada", async () => {
       const program = await assignedProgram();
-      const today = "2025-03-12";
+      const today = santiagoDate(new Date());
       expect(await removeSession({ db: coachDb, sessionId: program.week1Session, today })).toEqual({
         ok: false,
         reason: "week_locked",
@@ -627,27 +636,39 @@ describe("programas (RF-12 a RF-18, DC-10, DC-13)", () => {
     });
 
     it("un programa que aún no empezó se edita entero", async () => {
-      const program = await assignedProgram();
+      const program = await assignedProgram(addDays(mondayOf(santiagoDate(new Date())), 7));
       expect(
         (
           await addSession({
             db: coachDb,
             programId: program.id,
             weekNumber: 1,
-            today: "2025-02-26",
+            today: santiagoDate(new Date()),
           })
         ).ok,
       ).toBe(true);
     });
 
     it("un programa terminado no se edita", async () => {
-      const program = await assignedProgram();
+      const program = await assignedProgram(addDays(mondayOf(santiagoDate(new Date())), -28));
       expect(
         await addSession({
           db: coachDb,
           programId: program.id,
           weekNumber: 3,
-          today: "2025-03-24",
+          today: santiagoDate(new Date()),
+        }),
+      ).toEqual({ ok: false, reason: "week_locked" });
+    });
+
+    it("la base bloquea la semana vigente aunque el cliente use una fecha desactualizada", async () => {
+      const program = await assignedProgram();
+      expect(
+        await addSession({
+          db: coachDb,
+          programId: program.id,
+          weekNumber: 2,
+          today: addDays(santiagoDate(new Date()), -14),
         }),
       ).toEqual({ ok: false, reason: "week_locked" });
     });
