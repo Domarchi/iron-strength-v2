@@ -6,23 +6,34 @@ import { useWebTraining } from "@/components/training/provider";
 import { useRouter } from "next/navigation";
 import { clearLocalAccount } from "@/lib/offline/local-account";
 import { setOfflineAccount } from "@/lib/offline/account";
+import { useWebTrainingDownload } from "@/components/offline/training-download-provider";
+import { reserveWebDownloadAccount } from "@/lib/offline/web-download-account";
+import { reserveTrainingAccount } from "@/lib/workout/training-browser";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DELETE_CONFIRMATION, isDeleteConfirmation } from "@/domain/account";
-import { deleteAccountAction, type DeleteAccountState } from "./actions";
+import type { DeleteAccountState } from "./actions";
+import { deleteWebAccount } from "@/lib/offline/web-account-delete";
 
 // Borrar mi cuenta (RF-48): zona separada, con lo que se pierde a la vista y una confirmación escrita.
 export function DeleteAccount({ userId }: { userId: string }) {
   const router = useRouter();
   const changes = useWorkoutChanges();
   const { bridge } = useWebTraining();
+  const { bridge: downloads, download } = useWebTrainingDownload();
   const [cleanupError, setCleanupError] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState(false);
-  async function finishCleanup() {
+  async function finishCleanup(reservationHeld = false) {
     setCleaning(true);
+    let release: (() => void) | undefined;
     try {
+      if (!reservationHeld)
+        release = await reserveWebDownloadAccount(downloads.controller, () =>
+          reserveTrainingAccount(userId),
+        );
+      await downloads.clearReserved(true);
       await clearLocalAccount(userId, { afterAccountDeletion: true });
       if (!setOfflineAccount(null)) throw new Error("No se pudo ocultar la cuenta local.");
       router.replace("/login?motivo=cuenta-borrada");
@@ -32,20 +43,23 @@ export function DeleteAccount({ userId }: { userId: string }) {
         "La cuenta ya fue borrada del servidor, pero no se pudo completar la limpieza de este dispositivo. Reintenta para eliminar sus descargas y borradores locales.",
       );
     } finally {
+      release?.();
       setCleaning(false);
     }
   }
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [state, action, pending] = useActionState<DeleteAccountState, FormData>(
-    async (previous, form) => {
+    async (_previous, form) => {
       let release: (() => void) | undefined;
       let releaseTraining: (() => void) | undefined;
       try {
         release = await changes.reserveAccountDeletion();
-        releaseTraining = await bridge.reserve("delete");
-        const result = await deleteAccountAction(previous, form);
-        if (result.status === "deleted") await finishCleanup();
+        releaseTraining = await reserveWebDownloadAccount(downloads.controller, () =>
+          bridge.reserve("delete"),
+        );
+        const result = await deleteWebAccount(userId, String(form.get("confirmacion") ?? ""));
+        if (result.status === "deleted") await finishCleanup(true);
         return result;
       } catch (error) {
         return {
@@ -86,7 +100,12 @@ export function DeleteAccount({ userId }: { userId: string }) {
 
       {!open ? (
         <div>
-          <Button type="button" variant="destructive" onClick={() => setOpen(true)}>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={!download.ready || download.busy || download.reserved}
+            onClick={() => setOpen(true)}
+          >
             <Trash2 aria-hidden /> Quiero borrar mi cuenta
           </Button>
         </div>
@@ -113,7 +132,13 @@ export function DeleteAccount({ userId }: { userId: string }) {
             <Button
               type="submit"
               variant="destructive"
-              disabled={pending || !isDeleteConfirmation(text)}
+              disabled={
+                pending ||
+                !download.ready ||
+                download.busy ||
+                download.reserved ||
+                !isDeleteConfirmation(text)
+              }
             >
               {pending ? "Borrando…" : "Borrar mi cuenta para siempre"}
             </Button>

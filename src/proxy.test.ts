@@ -42,23 +42,27 @@ describe("información pública ante indisponibilidad de identidad", () => {
 });
 
 describe("rutas JSON de entrenamiento con cookie", () => {
-  it.each(["/api/workouts/sync", "/api/workouts/training-sync", "/api/training/download"])(
-    "%s deja que el endpoint emita su 401 JSON",
-    async (path) => {
-      createServerClient.mockReturnValue({
-        auth: { getClaims: vi.fn().mockResolvedValue({ data: null }) },
-      });
-      const response = await proxy(new NextRequest(`https://test.invalid${path}`));
-      expect(createServerClient).toHaveBeenCalledOnce();
-      expect(response.status).toBe(200);
-      expect(response.headers.get("location")).toBeNull();
-    },
-  );
+  it.each([
+    "/api/workouts/sync",
+    "/api/workouts/training-sync",
+    "/api/training/download",
+    "/api/account/delete",
+  ])("%s deja que el endpoint emita su 401 JSON", async (path) => {
+    createServerClient.mockReturnValue({
+      auth: { getClaims: vi.fn().mockResolvedValue({ data: null }) },
+    });
+    const response = await proxy(new NextRequest(`https://test.invalid${path}`));
+    expect(createServerClient).toHaveBeenCalledOnce();
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
   it.each([
     "/api/workouts/training-sync-other",
     "/api/training/download/other",
     "/api/training",
     "/api/training/library",
+    "/api/account/delete/other",
+    "/api/account",
   ])("%s no amplía la excepción", async (path) => {
     createServerClient.mockReturnValue({
       auth: { getClaims: vi.fn().mockResolvedValue({ data: null }) },
