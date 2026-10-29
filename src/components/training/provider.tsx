@@ -18,7 +18,11 @@ import { activeOfflineAccount } from "@/lib/offline/account";
 import { sendWebTraining, WebSyncError } from "@/lib/workout/web-sync-client";
 import { SyncScheduler } from "../../../mobile/src/lib/sync-scheduler";
 const Context = createContext<WebTraining | null>(null);
-export function WebTrainingProvider({ userId, children }: PropsWithChildren<{ userId: string }>) {
+export function WebTrainingProvider({
+  userId,
+  children,
+  refreshOnConfirm = true,
+}: PropsWithChildren<{ userId: string; refreshOnConfirm?: boolean }>) {
   const [bridge] = useState(
     () =>
       new WebTraining(
@@ -46,12 +50,18 @@ export function WebTrainingProvider({ userId, children }: PropsWithChildren<{ us
   }, [bridge]);
   return (
     <Context.Provider value={bridge}>
-      <Synchronization bridge={bridge} />
+      <Synchronization bridge={bridge} refreshOnConfirm={refreshOnConfirm} />
       {children}
     </Context.Provider>
   );
 }
-function Synchronization({ bridge }: { bridge: WebTraining }) {
+function Synchronization({
+  bridge,
+  refreshOnConfirm,
+}: {
+  bridge: WebTraining;
+  refreshOnConfirm: boolean;
+}) {
   const router = useRouter();
   useEffect(() => {
     const update = () => window.dispatchEvent(new Event("offline-queue"));
@@ -65,17 +75,17 @@ function Synchronization({ bridge }: { bridge: WebTraining }) {
   const training = useSyncExternalStore(
     bridge.controller.subscribe,
     bridge.controller.getSnapshot,
-    bridge.controller.getSnapshot,
+    bridge.getInitialTraining,
   );
   const queue = useSyncExternalStore(
     bridge.queue.subscribe,
     bridge.queue.getSnapshot,
-    bridge.queue.getSnapshot,
+    bridge.getInitialQueue,
   );
   const reservation = useSyncExternalStore(
     bridge.subscribe,
     bridge.getSnapshot,
-    bridge.getSnapshot,
+    bridge.getInitialReservation,
   );
   const scheduler = useRef<SyncScheduler | null>(null);
   useEffect(() => {
@@ -138,8 +148,8 @@ function Synchronization({ bridge }: { bridge: WebTraining }) {
     .map((e) => e.payload.id)
     .join(":");
   useEffect(() => {
-    if (confirmed) router.refresh();
-  }, [confirmed, router]);
+    if (confirmed && refreshOnConfirm) router.refresh();
+  }, [confirmed, router, refreshOnConfirm]);
   useEffect(() => {
     const before = (event: BeforeUnloadEvent) => {
       if (training.dirty) {
@@ -158,13 +168,17 @@ export function useWebTraining() {
   const training = useSyncExternalStore(
       bridge.controller.subscribe,
       bridge.controller.getSnapshot,
-      bridge.controller.getSnapshot,
+      bridge.getInitialTraining,
     ),
     queue = useSyncExternalStore(
       bridge.queue.subscribe,
       bridge.queue.getSnapshot,
-      bridge.queue.getSnapshot,
+      bridge.getInitialQueue,
     ),
-    reservation = useSyncExternalStore(bridge.subscribe, bridge.getSnapshot, bridge.getSnapshot);
+    reservation = useSyncExternalStore(
+      bridge.subscribe,
+      bridge.getSnapshot,
+      bridge.getInitialReservation,
+    );
   return { bridge, training, queue, reservation };
 }

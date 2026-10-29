@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/recover-legacy-week";
 import { test } from "./support/network";
 import { expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -139,7 +140,7 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
     ).toEqual([]);
   }
 });
-test("descarga detalle, empieza sin red, confirma objetivos y sincroniza exactamente una vez", async ({
+test("recupera descarga anterior por serie, empieza sin red y sincroniza exactamente una vez", async ({
   page,
   context,
   network,
@@ -172,9 +173,10 @@ test("descarga detalle, empieza sin red, confirma objetivos y sincroniza exactam
   await page.getByRole("button", { name: "Ver rutina de sesión A", exact: true }).first().click();
   await expect(page.getByText("Serie 2 · 8–10 reps · 70 kg", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Cerrar vista previa", exact: true }).click();
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  await recoverLegacyWeek(page);
+  await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Descarga de la semana" }).getByRole("status"),
+    page.getByRole("region", { name: "Entrenamientos sin conexión" }).getByRole("status"),
   ).toContainText("Disponible sin conexión");
   await page.close();
   network.offline = true;
@@ -224,8 +226,9 @@ test("una descarga v1 conserva su objetivo al iniciar; actualizar no reemplaza e
   const { program, row } = await fixture();
   await login(page, COACH.email, COACH.password);
   await page.goto("/week");
-  const download = page.getByRole("region", { name: "Descarga de la semana", exact: true });
-  await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  const download = page.getByRole("region", { name: "Entrenamientos sin conexión", exact: true });
+  await recoverLegacyWeek(page);
+  await download.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   const mutateStoredVersion = async (version: number) =>
     page.evaluate(
@@ -266,7 +269,9 @@ test("una descarga v1 conserva su objetivo al iniciar; actualizar no reemplaza e
     ).error,
   ).toBeNull();
   await page.goto("/week");
-  await download.getByRole("button", { name: "Actualizar descarga", exact: true }).click();
+  await download
+    .getByRole("button", { name: "Actualizar entrenamientos descargados", exact: true })
+    .click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   await page
     .getByRole("region", { name: "Próxima sesión", exact: true })
@@ -280,11 +285,15 @@ test("una descarga v1 conserva su objetivo al iniciar; actualizar no reemplaza e
   await page.goto("/week");
   await mutateStoredVersion(99);
   await page.reload();
-  await expect(download.getByRole("alert")).toContainText("Actualiza la app");
-  const button = download.getByRole("button", { name: /Descargar semana|Actualizar descarga/ });
+  await expect(download.getByRole("alert")).toContainText("Conservamos una copia anterior");
+  const button = download.getByRole("button", {
+    name: "Actualizar entrenamientos descargados",
+    exact: true,
+  });
   await button.click();
   await expect(button).toBeEnabled();
-  await expect(download.getByRole("alert")).toContainText("La descarga anterior se conserva");
+  await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
+  await expect(download.getByRole("alert")).toContainText("Conservamos una copia anterior");
   const versions = await page.evaluate(
     () =>
       new Promise<number[]>((resolve) => {

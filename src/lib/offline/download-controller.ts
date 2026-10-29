@@ -36,6 +36,8 @@ const messages = {
   conflict:
     "La copia cambió desde otra ventana. Comprueba los datos guardados antes de reintentar.",
   network: "No pudimos completar la descarga. La copia guardada se conserva.",
+  interface:
+    "No pudimos preparar la app sin conexión. Revisa Internet; si hay una actualización, termina tus registros y cierra las otras pestañas.",
   account_changed: "La cuenta cambió. Abre la descarga con su cuenta original.",
   stale: "La respuesta es anterior a tu copia guardada. Conservamos la más reciente.",
   capacity: "La descarga supera el límite de esta versión. No se reemplazó la copia guardada.",
@@ -107,6 +109,7 @@ export class DownloadController {
     else if (error && typeof error === "object" && "code" in error) {
       if (error.code === "conflict") code = "conflict";
       if (error.code === "capacity") code = "capacity";
+      if (error.code === "interface") code = "interface";
       if (["version", "incompatible", "format"].includes(String(error.code))) code = "format";
       if (["account_changed", "identity"].includes(String(error.code))) code = "account_changed";
       if (["unauthorized", "forbidden"].includes(String(error.code))) code = "unauthorized";

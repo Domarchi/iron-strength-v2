@@ -196,3 +196,23 @@ it("una confirmación remota sin espacio para el recibo local conserva pendiente
   expect(x.data.get(`is:native-sync:v1:${id(1)}`)).toBe(before);
   expect(x.data.has(trainingGuardKey(id(1)))).toBe(true);
 });
+it("hidratación tardía usa el estado inicial del servidor aun después de recuperar un registro y su cola", async () => {
+  const x = setup();
+  const initialTraining = x.bridge.getInitialTraining(),
+    initialQueue = x.bridge.getInitialQueue(),
+    initialReservation = x.bridge.getInitialReservation();
+  expect(initialTraining.ready).toBe(false);
+  expect(initialQueue.entries).toEqual([]);
+  await started(x);
+  await x.bridge.finish(null, null);
+  const release = await x.bridge.reserve("inspect");
+  expect(x.bridge.queue.getSnapshot().entries).toHaveLength(1);
+  expect(x.bridge.getSnapshot().reserved).toBe(true);
+  expect(x.bridge.getInitialTraining()).toBe(initialTraining);
+  expect(x.bridge.getInitialTraining().ready).toBe(false);
+  expect(x.bridge.getInitialQueue()).toBe(initialQueue);
+  expect(x.bridge.getInitialQueue().entries).toEqual([]);
+  expect(x.bridge.getInitialReservation()).toBe(initialReservation);
+  expect(x.bridge.getInitialReservation().reserved).toBe(false);
+  release();
+});

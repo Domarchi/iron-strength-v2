@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
 import { PageHeading } from "@/components/layout/page-heading";
 import { WeekOverview } from "@/components/week/week-overview";
-import { DownloadWeek } from "@/components/week/download-week";
+import { WebDownloadCard } from "@/components/offline/training-download-card";
 import { PendingWorkouts } from "@/components/week/pending-workouts";
 import { getStreakSummary } from "@/lib/data/streak";
 import { ConstancyReadFailure } from "@/components/streak/read-failure";
@@ -98,12 +98,6 @@ async function WeekContent() {
               today={today}
               streak={constancyResult.ok ? constancyResult.value : null}
             />
-            <DownloadWeek
-              key={`${user.id}:${view.program.id}:${view.weekStart}`}
-              userId={user.id}
-              programId={view.program.id}
-              weekStart={view.weekStart}
-            />
           </>
         );
     }
@@ -122,6 +116,13 @@ async function WeekContent() {
         <ConstancyReadFailure error={constancyResult.error} retryHref="/week" />
       ) : null}
       {content}
+      <WebDownloadCard
+        expected={
+          view.kind === "active"
+            ? { programId: view.program.id, weekStart: view.weekStart }
+            : undefined
+        }
+      />
     </>
   );
 }

@@ -9,6 +9,9 @@ import type {
 export class WebTraining {
   readonly controller: TrainingController;
   readonly queue: NativeWorkoutQueue;
+  readonly getInitialTraining: TrainingController["getSnapshot"];
+  readonly getInitialQueue: NativeWorkoutQueue["getSnapshot"];
+  readonly getInitialReservation: () => { reserved: boolean; error: string | null };
   private disposed = false;
   private held = false;
   private work = new Set<Promise<unknown>>();
@@ -32,6 +35,12 @@ export class WebTraining {
     };
     this.controller = new TrainingController(userId, storage, dispatch, now, uuid);
     this.queue = new NativeWorkoutQueue(userId, storage, dispatch, now);
+    const training = this.controller.getSnapshot(),
+      queue = this.queue.getSnapshot(),
+      reservation = this.getSnapshot();
+    this.getInitialTraining = () => training;
+    this.getInitialQueue = () => queue;
+    this.getInitialReservation = () => reservation;
   }
   getSnapshot = () => this.state;
   subscribe = (fn: () => void) => {

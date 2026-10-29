@@ -5,14 +5,14 @@ import { useState } from "react";
 import { useWebTraining } from "./provider";
 import { Button } from "@/components/ui/button";
 import { isTypedTraining, trainingTitle } from "../../../mobile/src/lib/training";
-export function TypedPendingTraining() {
+export function TypedPendingTraining({ local }: { local?: { onResume(): void } } = {}) {
   const { bridge, training, queue, reservation } = useWebTraining(),
     path = usePathname(),
     [error, setError] = useState<string | null>(null);
-  if (path.startsWith("/workout/")) return null;
+  if (!local && path.startsWith("/workout/")) return null;
   const active = training.active,
     known =
-      active && isTypedTraining(active) && active.routine.origin.kind === "assigned"
+      active && isTypedTraining(active) && (local || active.routine.origin.kind === "assigned")
         ? active
         : null;
   const entries = queue.entries.filter((e) => e.phase === "pending" || e.phase === "confirmed");
@@ -49,10 +49,13 @@ export function TypedPendingTraining() {
             <p className="text-sm text-muted-foreground">En curso · guardado en este dispositivo</p>
           </div>
           <Button
+            onClick={local?.onResume}
             render={
-              <Link
-                href={`/workout/${"programSessionId" in known.routine.origin ? known.routine.origin.programSessionId : ""}`}
-              />
+              local ? undefined : (
+                <Link
+                  href={`/workout/${"programSessionId" in known.routine.origin ? known.routine.origin.programSessionId : ""}`}
+                />
+              )
             }
           >
             Retomar

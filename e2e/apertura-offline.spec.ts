@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/recover-legacy-week";
 import designAssets from "../src/lib/design/offline-assets.json";
 import { test } from "./support/network";
 import { expect } from "@playwright/test";
@@ -34,8 +35,9 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
   const authenticatedShell = await context.request.get("/offline");
   expect(authenticatedShell.headers()["set-cookie"]).toBeUndefined();
   expect(await authenticatedShell.text()).toBe(await publicShell.text());
-  const download = page.getByRole("region", { name: "Descarga de la semana", exact: true });
-  await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  await recoverLegacyWeek(page);
+  const download = page.getByRole("region", { name: "Entrenamientos sin conexión", exact: true });
+  await download.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   const cached = await page.evaluate(async () => {
     const keys = await caches.keys();
@@ -134,7 +136,7 @@ test("cierra, abre sin Internet, consulta historial y recupera series y descanso
   network.offline = true;
   await recovered.goto("/offline");
   await expect(
-    recovered.getByText("Entra con conexión y descarga una semana para usarla aquí.", {
+    recovered.getByText("Entra con conexión y descarga tus entrenamientos para usarlos aquí.", {
       exact: true,
     }),
   ).toBeVisible();
@@ -154,12 +156,12 @@ test("un recurso ausente impide confirmar disponibilidad y una descarga posterio
   await page.goto("/week");
   // La petición proviene del worker: se simula la falta de un recurso al instalar.
   network.blocked.add("/icons/maskable");
-  const download = page.getByRole("region", { name: "Descarga de la semana", exact: true });
-  await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  const download = page.getByRole("region", { name: "Entrenamientos sin conexión", exact: true });
+  await download.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(download.getByRole("alert")).toBeVisible();
   await expect(download.getByRole("status")).not.toContainText("Disponible sin conexión");
   network.blocked.delete("/icons/maskable");
-  await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  await download.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   await page.evaluate(async () => {
     for (const key of await caches.keys())
@@ -167,11 +169,15 @@ test("un recurso ausente impide confirmar disponibilidad y una descarga posterio
         await (await caches.open(key)).delete("/icons/maskable");
   });
   network.blocked.add("/icons/maskable");
-  await download.getByRole("button", { name: "Actualizar descarga", exact: true }).click();
+  await download
+    .getByRole("button", { name: "Actualizar entrenamientos descargados", exact: true })
+    .click();
   await expect(download.getByRole("alert")).toBeVisible();
-  await expect(download.getByRole("status")).toContainText("Datos guardados:");
+  await expect(download.getByRole("status")).toContainText("Datos guardados");
   network.blocked.delete("/icons/maskable");
-  await download.getByRole("button", { name: "Actualizar descarga", exact: true }).click();
+  await download
+    .getByRole("button", { name: "Actualizar entrenamientos descargados", exact: true })
+    .click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   expect(await page.evaluate(async () => Boolean(await caches.match("/icons/maskable")))).toBe(
     true,

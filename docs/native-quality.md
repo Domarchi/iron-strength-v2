@@ -20,6 +20,8 @@ SDK observado en la compilación preview T201: build tools 37.0.0, compile SDK 3
 
 Inspeccionar manifiesto, paquete, versión, permisos, firma y bundle del APK resultante. Instalar únicamente en el AVD propio identificado por nombre/serial; no usar adb sin serial cuando existen varios dispositivos. Nunca desinstalar o borrar datos para ocultar un fallo de recuperación. Una actualización real usa el mismo paquete/certificado y un código de versión posterior.
 
+Contrastar `sourcesContent` del mapa Hermes con las fuentes móviles y compartidas de la copia usada para compilar, además del hash del bundle incluido en el APK. Rechazar rutas de otra copia y contenidos distintos. Compartir `node_modules` no debe compartir transformaciones de la raíz de Expo Router: `cacheVersion` incluye la carpeta del proyecto. No limpiar cachés globales ni reiniciar Metro del propietario para corregir una compilación de pruebas. Un origen correcto y una copia de archivos idéntica no acreditan por sí solos el código realmente empaquetado.
+
 ## Circuito y evidencia
 
 1. Arrancar sin Metro, probar claro/oscuro y teclado: Siguiente en Correo enfoca Contraseña sin enviar. Ir o Entrar envía una sola petición.

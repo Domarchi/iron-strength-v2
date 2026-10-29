@@ -25,8 +25,17 @@ import { elapsedSessionSeconds } from "@/domain/session-timer";
 import { formatClock } from "@/domain/rest-timer";
 import { nextSupersetSet } from "@/domain/superset-rounds";
 import { RestBar } from "@/app/(app)/workout/[plannedSessionId]/rest-bar";
+import type { Bundle } from "@/lib/offline/training-bundle";
+import { DownloadedExerciseHistory } from "./downloaded-history";
+import { WebCatalogPicker } from "./catalog-picker";
 import { TypedExerciseContext } from "./workout-context";
-export function TypedWebWorkout({ active: a }: { active: TypedActiveTraining }) {
+export function TypedWebWorkout({
+  active: a,
+  local,
+}: {
+  active: TypedActiveTraining;
+  local?: { onHome(): void; bundle: Bundle | null };
+}) {
   const { bridge, training, queue, reservation } = useWebTraining();
   const router = useRouter();
   const [now, setNow] = useState(() => Date.now()),
@@ -105,7 +114,11 @@ export function TypedWebWorkout({ active: a }: { active: TypedActiveTraining }) 
         >
           Reintentar envío
         </Button>
-        <Button variant="outline" render={<Link href="/week" />}>
+        <Button
+          variant="outline"
+          onClick={local?.onHome}
+          render={local ? undefined : <Link href="/week" />}
+        >
           Volver a mi semana
         </Button>
       </div>
@@ -114,8 +127,12 @@ export function TypedWebWorkout({ active: a }: { active: TypedActiveTraining }) 
     <div className="mx-auto max-w-xl space-y-5 pb-48">
       <header className="sticky top-0 z-20 -mx-4 border-b bg-background/95 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center justify-between gap-2">
-          <Button variant="ghost" render={<Link href="/week" />}>
-            Mi semana
+          <Button
+            variant="ghost"
+            onClick={local?.onHome}
+            render={local ? undefined : <Link href="/week" />}
+          >
+            {local ? "Inicio" : "Mi semana"}
           </Button>
           <Button disabled={locked || training.dirty} onClick={() => setClosing(true)}>
             Terminar entrenamiento
@@ -276,11 +293,19 @@ export function TypedWebWorkout({ active: a }: { active: TypedActiveTraining }) 
                 >
                   {e.skipped ? "Incluir ejercicio" : "Omitir ejercicio"}
                 </Button>
-                <TypedExerciseContext
-                  key={`${d.userId}:${e.exerciseId}`}
-                  userId={d.userId}
-                  exerciseId={e.exerciseId}
-                />
+                {local ? (
+                  <DownloadedExerciseHistory
+                    key={`${d.userId}:${e.exerciseId}`}
+                    detail={local.bundle?.history[e.exerciseId]}
+                    downloadedAt={local.bundle?.downloadedAt}
+                  />
+                ) : (
+                  <TypedExerciseContext
+                    key={`${d.userId}:${e.exerciseId}`}
+                    userId={d.userId}
+                    exerciseId={e.exerciseId}
+                  />
+                )}
               </div>
             ) : null}
             {!e.skipped ? (
@@ -474,6 +499,14 @@ export function TypedWebWorkout({ active: a }: { active: TypedActiveTraining }) 
           </section>
         );
       })}
+      {local && a.routine.origin.kind !== "assigned" ? (
+        <WebCatalogPicker
+          entries={local.bundle?.catalog.exercises ?? []}
+          limit={15 - d.exercises.length}
+          disabled={locked || training.dirty}
+          onAdd={(entries) => bridge.perform((c) => c.organizeCatalog({ kind: "add", entries }))}
+        />
+      ) : null}
       <Button variant="ghost" className="text-muted-foreground" onClick={() => setDiscard(true)}>
         Descartar entrenamiento
       </Button>
@@ -486,7 +519,8 @@ export function TypedWebWorkout({ active: a }: { active: TypedActiveTraining }) 
             onClick={() =>
               void act(async () => {
                 await bridge.perform((c) => c.discard());
-                router.replace("/week");
+                if (local) local.onHome();
+                else router.replace("/week");
               })
             }
           >

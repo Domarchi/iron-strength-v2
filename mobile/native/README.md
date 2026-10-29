@@ -4,9 +4,9 @@ Estos flujos de Maestro usan exclusivamente la instalación local `com.domarchis
 
 Ejecutar los fragmentos en orden, con un solo controlador y un serial/AVD propio explícito. No ejecutar la carpeta completa automáticamente: el operador cambia la conectividad y conserva el estado entre fragmentos. No borrar datos para repetir un caso.
 
-1. `login-routine.yaml`: instalación nueva/sin sesión; recibe EMAIL, PASSWORD y FIRST_NAME de una cuenta ficticia. Entra, consulta sin iniciar y descarga la semana.
+1. `login-routine.yaml`: instalación nueva/sin sesión; recibe EMAIL, PASSWORD y FIRST_NAME de una cuenta ficticia. Entra, consulta sin iniciar y descarga entrenamientos completos (catálogo, biblioteca, semana y contexto).
 2. Activar modo avión y deshabilitar Wi-Fi; cerrar/reabrir el APK y comprobar cuenta/semana descargadas.
-3. `offline-superset.yaml`: sesión A de la semilla (dos ejercicios de dos series, descanso 90 s y alternativa Press de banca inclinado). Completa la primera ronda; no repetir sobre una sesión ya avanzada porque el check permite desmarcar.
+3. `offline-superset.yaml`: corredor tipado actual de la sesión A de la semilla (dos ejercicios de dos series, descanso 90 s y alternativa Press de banca inclinado). Completa la primera ronda; no repetir sobre una sesión ya avanzada porque el check permite desmarcar.
 4. Completar la segunda ronda. Registrar el descanso antes/después de fondo y cierre/reapertura, contrastando el tiempo transcurrido y conservando la alternativa.
 5. `close-offline.yaml`: cuatro series completadas, recibe PENDING_LABEL (por ejemplo, «1 registro pendiente»). Revisa cantidades, guarda localmente y vuelve a Inicio. Preparar una segunda sesión independiente antes de reconectar.
 6. Reabrir con ambos pendientes, conectar y comprobar en el servidor aislado una sola fila por ID con sus series. Reintentar, abrir historial/progreso/comentarios y cambiar de cuenta tras resolver pendientes.

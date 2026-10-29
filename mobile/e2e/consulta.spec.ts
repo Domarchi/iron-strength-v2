@@ -141,7 +141,11 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
   await page.getByRole("button", { name: "Ver alternativas de Sentadilla", exact: true }).click();
   await expect(page.getByText("Prensa", { exact: true })).toBeVisible();
   await expect(page.getByText("Baja con control", { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  expect(
+    await page.evaluate(() =>
+      Object.fromEntries(Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])),
+    ),
+  ).toEqual({ "is:offline:active-user": session.profile.id });
   expect(seen.filter((x) => x.startsWith("POST") && !x.endsWith("auth/login"))).toEqual([]);
   await expect(
     page.getByRole("button", { name: "Empezar entrenamiento", exact: true }),

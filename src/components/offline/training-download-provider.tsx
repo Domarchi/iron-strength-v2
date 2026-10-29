@@ -7,7 +7,8 @@ import {
   useSyncExternalStore,
   type PropsWithChildren,
 } from "react";
-import { DownloadController } from "@/lib/offline/download-controller";
+import { DownloadController, DownloadFault } from "@/lib/offline/download-controller";
+import { prepareCompleteOfflineInterface } from "@/lib/offline/interface";
 import { createIndexedDownloadStorage } from "@/lib/offline/indexed-download-storage";
 import { readWebTrainingDownload } from "@/lib/offline/web-download-client";
 import { activeOfflineAccount, subscribeOfflineAccount } from "@/lib/offline/account";
@@ -17,7 +18,14 @@ function createDownload(userId: string) {
   const controller = new DownloadController(
     userId,
     storage,
-    () => readWebTrainingDownload(userId),
+    async () => {
+      try {
+        await prepareCompleteOfflineInterface();
+      } catch {
+        throw new DownloadFault("interface");
+      }
+      return readWebTrainingDownload(userId);
+    },
     owns,
   );
   // Suspense may hydrate a child after restore finishes. Hydration must still see

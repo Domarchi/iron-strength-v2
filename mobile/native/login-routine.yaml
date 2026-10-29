@@ -4,7 +4,7 @@ name: Acceso y consulta de rutina sin iniciar entrenamiento
 ---
 - launchApp:
     clearState: false
-- assertVisible: "Bienvenido de nuevo"
+- assertVisible: "Inicia sesión"
 - tapOn:
     text: "Correo"
     index: 1
@@ -22,9 +22,9 @@ name: Acceso y consulta de rutina sin iniciar entrenamiento
 - assertNotVisible: "Retomar entrenamiento pendiente"
 - tapOn: "Volver"
 - scrollUntilVisible:
-    element: "Descargar semana"
+    element: "Descargar entrenamientos"
     direction: DOWN
-- tapOn: "Descargar semana"
+- tapOn: "Descargar entrenamientos"
 - extendedWaitUntil:
-    visible: "Descarga guardada:.*"
+    visible: "Disponible sin conexión.*"
     timeout: 30000
