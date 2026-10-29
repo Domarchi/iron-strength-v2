@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/week-fixture";
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupDownloadedWeek, enterWeekUser, setWeekConnectivity } from "./support/week-fixture";
@@ -221,8 +222,7 @@ test("convierte explícitamente un registro anterior en curso y conserva sus ser
   page,
 }) => {
   const control = await setupDownloadedWeek(page);
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await recoverLegacyWeek(page, control.pack);
   control.offline = true;
   await setWeekConnectivity(page, false);
   await expect(page.getByRole("button", { name: "Conectar", exact: true })).toBeVisible();

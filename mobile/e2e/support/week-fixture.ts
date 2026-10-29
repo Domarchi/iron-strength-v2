@@ -1,3 +1,4 @@
+import { completeWeekFixture } from "./complete-week-fixture";
 import { assignedFromLegacy, assignedFixtureResult } from "./assigned-context";
 import {
   typedRecordingRequestSchema,
@@ -30,6 +31,7 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
     offline: false,
     saveLost: false,
     requests: 0,
+    completeRequests: 0,
     pack: weekDownloadFixture(userId, timestamp),
     saved: new Map<string, WorkoutPayload>(),
     saveRequests: [] as QueuedWorkoutPayload[],
@@ -113,7 +115,12 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
         nextCursor: null,
         unreadCount: 0,
       };
-    else if (path.endsWith("/week/download")) {
+    else if (path.endsWith("/training-download")) {
+      control.completeRequests++;
+      if (control.waiting) await control.waiting;
+      if (control.lost) return route.abort("failed");
+      json = completeWeekFixture(control.pack);
+    } else if (path.endsWith("/week/download")) {
       control.requests++;
       if (control.waiting) await control.waiting;
       if (control.lost) {
@@ -270,4 +277,22 @@ export async function setWeekConnectivity(page: Page, online: boolean) {
     Object.defineProperty(navigator, "onLine", { configurable: true, get: () => value });
     window.dispatchEvent(new Event(value ? "online" : "offline"));
   }, online);
+}
+
+/** Recover bytes written by the earlier released client; never call its retired download UI. */
+export async function recoverLegacyWeek(
+  page: Page,
+  pack: import("../../../src/lib/offline/package").WeekPackage,
+) {
+  const { parseNativeWeek } = await import("../../../src/lib/mobile/download-contract");
+  const record = { version: 1, userId: pack.userId, pack };
+  expect(parseNativeWeek(record, pack.userId)).not.toBeNull();
+  const raw = JSON.stringify(record);
+  await page.evaluate(
+    ({ userId, raw }) => localStorage.setItem(`is:native-week:v1:${userId}`, raw),
+    { userId: pack.userId, raw },
+  );
+  await page.reload();
+  await enterWeekUser(page);
+  return raw;
 }

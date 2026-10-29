@@ -1,3 +1,4 @@
+import { downloadCard } from "./support/download-cache";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { enterWeekUser, setupDownloadedWeek } from "./support/week-fixture";
@@ -90,18 +91,21 @@ for (const theme of ["light", "dark"] as const) {
     expect((await action.boundingBox())!.y + (await action.boundingBox())!.height).toBeLessThan(
       600,
     );
-    await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
+    await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "Actualizar descarga", exact: true }),
+      page.getByRole("button", { name: "Actualizar entrenamientos descargados", exact: true }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Eliminar descarga", exact: true })).toHaveCount(
-      0,
-    );
-    const details = page.getByRole("button", { name: "Detalles de descarga", exact: true });
+    await expect(
+      page.getByRole("button", { name: "Eliminar entrenamientos descargados", exact: true }),
+    ).toHaveCount(0);
+    const details = page.getByRole("button", {
+      name: "Detalles de entrenamientos descargados",
+      exact: true,
+    });
     await details.click();
     await expect(details).toHaveAttribute("aria-expanded", "true");
     await expect(
-      page.getByRole("button", { name: "Eliminar descarga", exact: true }),
+      page.getByRole("button", { name: "Eliminar entrenamientos descargados", exact: true }),
     ).toBeVisible();
     await details.click();
     await expect(details).toHaveAttribute("aria-expanded", "false");

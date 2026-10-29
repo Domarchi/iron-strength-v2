@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/week-fixture";
 import { test, expect } from "@playwright/test";
 import { setupDownloadedWeek, setWeekConnectivity } from "./support/week-fixture";
 import { downloadId } from "../../src/test/fixtures/week-download";
@@ -39,8 +40,7 @@ test("pausa sin conexión: descanso vence, cierre conserva duración neta y sinc
   page,
 }) => {
   const control = await setupDownloadedWeek(page);
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await recoverLegacyWeek(page, control.pack);
   control.offline = true;
   await setWeekConnectivity(page, false);
   await expect(

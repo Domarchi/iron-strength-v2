@@ -8,7 +8,7 @@ import { PersonalExerciseDraftCard } from "../../../components/personal-exercise
 import { usePersonalExerciseDraft } from "../../../lib/personal-exercise-context";
 import { useLibraryDrafts } from "../../../lib/library-context";
 import { LibraryDraftCard } from "../../../components/library-draft-card";
-import { WeekDownloadCard } from "../../../components/week-download-card";
+import { TrainingDownloadCard } from "../../../components/training-download-card";
 import { useWeekDownload } from "../../../lib/week-context";
 import { useState } from "react";
 import { router } from "expo-router";
@@ -96,7 +96,7 @@ export default function Account() {
       <CorrectionDraftCard />
       <WorkoutRemovalCard />
       <Action label="Mis ejercicios" secondary onPress={() => router.navigate("/my-exercises")} />
-      <WeekDownloadCard />
+      <TrainingDownloadCard />
       {error ? <Notice message={error} /> : null}
       {training.error ? <Notice message={training.error} /> : null}
       {person.role === "coach" ? (

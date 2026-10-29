@@ -224,6 +224,9 @@ export function DeleteAccount() {
             sync.paused ||
             draft.busy ||
             !draft.ready ||
+            !fullDownload.ready ||
+            fullDownload.busy ||
+            fullDownload.reserved ||
             !download.ready ||
             download.busy ||
             offline

@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/week-fixture";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupDownloadedWeek, enterWeekUser } from "./support/week-fixture";
@@ -33,8 +34,7 @@ test("dos cierres sin red, otro registro en curso y sincronización automática 
   second.weekday = 3;
   control.pack.sessions.push(second);
   expect(parseWeekPackage(control.pack, downloadId(1))).not.toBeNull();
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await recoverLegacyWeek(page, control.pack);
   control.offline = true;
   await reachability(page, false);
   await expect(page.getByRole("button", { name: "Conectar", exact: true })).toBeVisible();
@@ -119,8 +119,7 @@ test("dos cierres sin red, otro registro en curso y sincronización automática 
 });
 async function prepareOffline(page: Page, night = false) {
   const control = await setupDownloadedWeek(page);
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await recoverLegacyWeek(page, control.pack);
   control.offline = true;
   await reachability(page, false);
   await expect(page.getByRole("button", { name: "Conectar", exact: true })).toBeVisible();

@@ -1,5 +1,5 @@
 import { OfflineWeek } from "../../../components/offline-week";
-import { WeekDownloadCard } from "../../../components/week-download-card";
+import { TrainingDownloadCard } from "../../../components/training-download-card";
 import { useCallback } from "react";
 import { router } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
@@ -183,9 +183,6 @@ function OnlineWeek() {
               </Pressable>
             ))}
           </View>
-          <WeekDownloadCard
-            expected={{ programId: active.program.id, weekStart: active.weekStart }}
-          />
           {active.sessions.length === 0 ? (
             <Notice message="Tu coach aún no ha añadido sesiones para esta semana." />
           ) : null}
@@ -227,6 +224,11 @@ function OnlineWeek() {
         icon="train"
         secondary={!!active || !!training.active}
         onPress={() => router.navigate("/train")}
+      />
+      <TrainingDownloadCard
+        expected={
+          active ? { programId: active.program.id, weekStart: active.weekStart } : undefined
+        }
       />
       <Action label="Actualizar semana" quiet disabled={query.loading} onPress={query.retry} />
     </Page>

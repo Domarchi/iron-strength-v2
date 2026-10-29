@@ -1,3 +1,4 @@
+import { downloadCard } from "./support/download-cache";
 import { defaultTrainingPreferences } from "../src/lib/training-preferences";
 import { trainingMetricCases } from "../../src/test/fixtures/training-metrics";
 import { trainingFields } from "../src/lib/training-fields";
@@ -351,8 +352,12 @@ test("referencia en lb: copiar mantiene kg canónicos y nunca convierte una seri
   );
   await page.reload();
   await enterWeekUser(page);
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
+  await expect(
+    downloadCard(page)
+      .getByText(/Disponible sin conexión/)
+      .filter({ visible: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
   const copy = page.getByRole("button", { name: "Copiar anterior a serie 1", exact: true });

@@ -1,3 +1,4 @@
+import { downloadCard } from "./support/download-cache";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupDownloadedWeek, setWeekConnectivity, enterWeekUser } from "./support/week-fixture";
@@ -48,11 +49,18 @@ async function setup(page: Page, week = true) {
     });
   });
   await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
+  await expect(page.getByRole("tab", { name: "Entrenar", exact: true })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.getByRole("heading", { name: "Entrenar", exact: true })).toBeVisible();
   return { control, state };
 }
 async function download(page: Page) {
-  await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
-  await expect(page.getByText(/Disponible sin conexión/)).toBeVisible();
+  await downloadCard(page)
+    .getByRole("button", { name: "Descargar entrenamientos", exact: true })
+    .click();
+  await expect(downloadCard(page).getByText(/Disponible sin conexión/)).toBeVisible();
 }
 for (const theme of ["light", "dark"] as const)
   test(`descarga completa ${theme}: catálogo, historial, personal y cierre sin red`, async ({
@@ -224,8 +232,12 @@ test("respuesta incompleta conserva la copia completa y un inicio libre usa su c
   await page
     .getByRole("button", { name: "Actualizar entrenamientos descargados", exact: true })
     .click();
-  await expect(page.getByText(/La descarga requiere una versión compatible/)).toBeVisible();
-  await expect(page.getByText(/Disponible sin conexión/)).toBeVisible();
+  await expect(
+    downloadCard(page)
+      .getByRole("alert")
+      .filter({ hasText: "La descarga requiere una versión compatible" }),
+  ).toBeVisible();
+  await expect(downloadCard(page).getByText(/Disponible sin conexión/)).toBeVisible();
   expect(control.requests).toBe(0);
   control.offline = true;
   await setWeekConnectivity(page, false);
@@ -361,6 +373,11 @@ test("historial descargado conserva tiempo, esfuerzo y notas; actualizar la copi
   await setWeekConnectivity(page, true);
   await expect(page.getByRole("tab", { name: "Entrenar", exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
+  await expect(page.getByRole("tab", { name: "Entrenar", exact: true })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.getByRole("heading", { name: "Entrenar", exact: true })).toBeVisible();
   // No pending close exists, so reconnect explicitly before fetching a new snapshot.
   const connect = page.getByRole("button", { name: "Conectar", exact: true });
   if (await connect.isVisible()) await connect.click();
@@ -380,7 +397,11 @@ test("historial descargado conserva tiempo, esfuerzo y notas; actualizar la copi
     .getByRole("button", { name: "Actualizar entrenamientos descargados", exact: true })
     .click();
   await expect.poll(() => state.calls).toBe(2);
-  await expect(page.getByText(/Disponible sin conexión/).filter({ visible: true })).toBeVisible();
+  await expect(
+    downloadCard(page)
+      .getByText(/Disponible sin conexión/)
+      .filter({ visible: true }),
+  ).toBeVisible();
   expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBe(original);
   await page.getByRole("button", { name: "Retomar entrenamiento", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Personal", exact: true })).toBeVisible();

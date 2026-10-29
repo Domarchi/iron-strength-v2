@@ -1,3 +1,4 @@
+import { downloadCard } from "./support/download-cache";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { enterWeekUser, setupDownloadedWeek } from "./support/week-fixture";
@@ -32,8 +33,12 @@ for (const theme of ["light", "dark"] as const) {
         ],
       },
     ];
-    await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-    await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+    await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
+    await expect(
+      downloadCard(page)
+        .getByText(/Disponible sin conexión/)
+        .filter({ visible: true }),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
     await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
     const weight = page.getByRole("textbox", { name: "KG serie 1", exact: true });

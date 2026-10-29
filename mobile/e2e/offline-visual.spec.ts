@@ -1,3 +1,4 @@
+import { downloadCard } from "./support/download-cache";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupDownloadedWeek } from "./support/week-fixture";
@@ -8,8 +9,12 @@ for (const theme of ["light", "dark"] as const)
     await page.setViewportSize({ width: 360, height: 800 });
     await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
     const control = await setupDownloadedWeek(page);
-    await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-    await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+    await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
+    await expect(
+      downloadCard(page)
+        .getByText(/Disponible sin conexión/)
+        .filter({ visible: true }),
+    ).toBeVisible();
     control.offline = true;
     await page.getByRole("button", { name: "Actualizar semana", exact: true }).click();
     await expect(

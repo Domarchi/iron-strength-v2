@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/week-fixture";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupDownloadedWeek, setWeekConnectivity } from "./support/week-fixture";
@@ -11,8 +12,7 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
   await page.setViewportSize({ width: 360, height: 800 });
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   const control = await setupDownloadedWeek(page);
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await recoverLegacyWeek(page, control.pack);
   control.offline = true;
   await setWeekConnectivity(page, false);
   await expect(
@@ -109,8 +109,7 @@ test("copia vencida se consulta sin iniciar; un borrador previo sigue recuperabl
   page,
 }) => {
   const control = await setupDownloadedWeek(page);
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await recoverLegacyWeek(page, control.pack);
   await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
   await expect
