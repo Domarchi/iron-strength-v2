@@ -63,6 +63,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"coach_training_receipts": {
+                  Row: {
+                    "created_at": string,"operation": string,"owner_id": string,"request_hash": string,"request_id": string,"result": NonNullable<Json>,"session_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"operation": string,"owner_id": string,"request_hash": string,"request_id": string,"result": NonNullable<Json>,"session_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"operation"?: string,"owner_id"?: string,"request_hash"?: string,"request_id"?: string,"result"?: NonNullable<Json>,"session_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "coach_training_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"comment_reads": {
                   Row: {
                     "read_at": string,"user_id": string,"workout_id": string
@@ -117,19 +137,25 @@ isOneToOne: false
                   ]
                 },"exercises": {
                   Row: {
-                    "archived_at": string | null,"coach_id": string | null,"created_at": string,"equipment": string | null,"id": string,"is_bodyweight": boolean,"muscle_group": string,"name": string,"progression_increment_kg": number
+                    "archived_at": string | null,"coach_id": string | null,"created_at": string,"equipment": string | null,"id": string,"is_bodyweight": boolean,"muscle_group": string,"name": string,"personal_owner_id": string | null,"personal_revision": number,"progression_increment_kg": number,"record_type": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group": string,"name": string,"progression_increment_kg"?: number
+                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group": string,"name": string,"personal_owner_id"?: string | null,"personal_revision"?: number,"progression_increment_kg"?: number,"record_type"?: string | null
                   }
                   Update: {
-                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group"?: string,"name"?: string,"progression_increment_kg"?: number
+                    "archived_at"?: string | null,"coach_id"?: string | null,"created_at"?: string,"equipment"?: string | null,"id"?: string,"is_bodyweight"?: boolean,"muscle_group"?: string,"name"?: string,"personal_owner_id"?: string | null,"personal_revision"?: number,"progression_increment_kg"?: number,"record_type"?: string | null
                   }
                   Relationships: [
                     {
       foreignKeyName: "exercises_coach_id_fkey"
       columns: ["coach_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "exercises_personal_owner_id_fkey"
+      columns: ["personal_owner_id"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
@@ -201,6 +227,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"personal_exercise_receipts": {
+                  Row: {
+                    "created_at": string,"operation": string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"target_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"operation": string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"target_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"operation"?: string,"owner_id"?: string,"payload_hash"?: string,"request_id"?: string,"revision"?: number,"target_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "personal_exercise_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"personal_folders": {
                   Row: {
                     "id": string,"name": string,"owner_id": string,"position": number,"revision": number
@@ -223,14 +269,14 @@ isOneToOne: false
                   ]
                 },"personal_routine_items": {
                   Row: {
-                    "exercise_id": string,"id": string,"note": string | null,"owner_id": string,"position": number,"prescription_sets": Json | null,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"routine_id": string,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"note": string | null,"owner_id": string,"position": number,"prescription_sets": Json | null,"reps_max": number | null,"reps_min": number | null,"rest_seconds": number | null,"routine_id": string,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null,"typed_prescription": Json | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id": string,"note"?: string | null,"owner_id": string,"position": number,"prescription_sets"?: Json | null,"reps_max": number,"reps_min": number,"rest_seconds"?: number | null,"routine_id": string,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id": string,"note"?: string | null,"owner_id": string,"position": number,"prescription_sets"?: Json | null,"reps_max"?: number | null,"reps_min"?: number | null,"rest_seconds"?: number | null,"routine_id": string,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"owner_id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number,"reps_min"?: number,"rest_seconds"?: number | null,"routine_id"?: string,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"owner_id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number | null,"reps_min"?: number | null,"rest_seconds"?: number | null,"routine_id"?: string,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Relationships: [
                     {
@@ -293,6 +339,26 @@ isOneToOne: false
                   Relationships: [
                     {
       foreignKeyName: "personal_training_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"personal_workout_receipts": {
+                  Row: {
+                    "created_at": string,"owner_id": string,"payload_hash": string,"workout_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"owner_id": string,"payload_hash": string,"workout_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"owner_id"?: string,"payload_hash"?: string,"workout_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "personal_workout_receipts_owner_id_fkey"
       columns: ["owner_id"]
 isOneToOne: false
       referencedRelation: "profiles"
@@ -503,14 +569,14 @@ isOneToOne: false
                   ]
                 },"session_exercise_alternatives": {
                   Row: {
-                    "exercise_id": string,"id": string,"position": number,"prescription_sets": Json | null,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"position": number,"prescription_sets": Json | null,"reps_max": number | null,"reps_min": number | null,"session_exercise_id": string,"sets": number,"target_weight_kg": number | null,"typed_prescription": Json | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id"?: string,"position": number,"prescription_sets"?: Json | null,"reps_max": number,"reps_min": number,"session_exercise_id": string,"sets": number,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id"?: string,"position": number,"prescription_sets"?: Json | null,"reps_max"?: number | null,"reps_min"?: number | null,"session_exercise_id": string,"sets": number,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number,"reps_min"?: number,"session_exercise_id"?: string,"sets"?: number,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"position"?: number,"prescription_sets"?: Json | null,"reps_max"?: number | null,"reps_min"?: number | null,"session_exercise_id"?: string,"sets"?: number,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Relationships: [
                     {
@@ -529,14 +595,14 @@ isOneToOne: false
                   ]
                 },"session_exercises": {
                   Row: {
-                    "exercise_id": string,"id": string,"note": string | null,"position": number,"prescription_sets": Json | null,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds": number | null,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null
+                    "exercise_id": string,"id": string,"note": string | null,"position": number,"prescription_sets": Json | null,"program_session_id": string,"reps_max": number | null,"reps_min": number | null,"rest_seconds": number | null,"sets": number,"superset_id": string | null,"superset_rest_seconds": number | null,"target_weight_kg": number | null,"typed_prescription": Json | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id": string,"reps_max": number,"reps_min": number,"rest_seconds"?: number | null,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id": string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id": string,"reps_max"?: number | null,"reps_min"?: number | null,"rest_seconds"?: number | null,"sets": number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Update: {
-                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id"?: string,"reps_max"?: number,"reps_min"?: number,"rest_seconds"?: number | null,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null
+                    "exercise_id"?: string,"id"?: string,"note"?: string | null,"position"?: number,"prescription_sets"?: Json | null,"program_session_id"?: string,"reps_max"?: number | null,"reps_min"?: number | null,"rest_seconds"?: number | null,"sets"?: number,"superset_id"?: string | null,"superset_rest_seconds"?: number | null,"target_weight_kg"?: number | null,"typed_prescription"?: Json | null
                   }
                   Relationships: [
                     {
@@ -553,16 +619,56 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"workout_sets": {
+                },"workout_correction_receipts": {
                   Row: {
-                    "exercise_id": string,"exercise_name": string,"id": string,"is_warmup": boolean,"position": number,"prescribed_exercise_id": string | null,"prescribed_exercise_name": string | null,"reps": number,"session_exercise_id": string | null,"set_number": number,"student_id": string,"weight_kg": number,"workout_id": string
+                    "created_at": string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"workout_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "exercise_id": string,"exercise_name": string,"id"?: string,"is_warmup"?: boolean,"position": number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"reps": number,"session_exercise_id"?: string | null,"set_number": number,"student_id": string,"weight_kg": number,"workout_id": string
+                    "created_at"?: string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"workout_id": string
                   }
                   Update: {
-                    "exercise_id"?: string,"exercise_name"?: string,"id"?: string,"is_warmup"?: boolean,"position"?: number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"reps"?: number,"session_exercise_id"?: string | null,"set_number"?: number,"student_id"?: string,"weight_kg"?: number,"workout_id"?: string
+                    "created_at"?: string,"owner_id"?: string,"payload_hash"?: string,"request_id"?: string,"revision"?: number,"workout_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_correction_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workout_recording_receipts": {
+                  Row: {
+                    "created_at": string,"owner_id": string,"payload_hash": string,"workout_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"owner_id": string,"payload_hash": string,"workout_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"owner_id"?: string,"payload_hash"?: string,"workout_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_recording_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workout_sets": {
+                  Row: {
+                    "distance_meters": number | null,"duration_seconds": number | null,"effort": number | null,"exercise_id": string,"exercise_name": string,"id": string,"is_warmup": boolean,"position": number,"prescribed_exercise_id": string | null,"prescribed_exercise_name": string | null,"record_type": string | null,"reps": number | null,"session_exercise_id": string | null,"set_number": number,"set_type": string | null,"student_id": string,"weight_kg": number | null,"workout_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "distance_meters"?: number | null,"duration_seconds"?: number | null,"effort"?: number | null,"exercise_id": string,"exercise_name": string,"id"?: string,"is_warmup"?: boolean,"position": number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"record_type"?: string | null,"reps"?: number | null,"session_exercise_id"?: string | null,"set_number": number,"set_type"?: string | null,"student_id": string,"weight_kg"?: number | null,"workout_id": string
+                  }
+                  Update: {
+                    "distance_meters"?: number | null,"duration_seconds"?: number | null,"effort"?: number | null,"exercise_id"?: string,"exercise_name"?: string,"id"?: string,"is_warmup"?: boolean,"position"?: number,"prescribed_exercise_id"?: string | null,"prescribed_exercise_name"?: string | null,"record_type"?: string | null,"reps"?: number | null,"session_exercise_id"?: string | null,"set_number"?: number,"set_type"?: string | null,"student_id"?: string,"weight_kg"?: number | null,"workout_id"?: string
                   }
                   Relationships: [
                     {
@@ -593,17 +699,23 @@ isOneToOne: false
                   ]
                 },"workouts": {
                   Row: {
-                    "created_at": string,"duration_seconds": number,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"started_at": string,"student_id": string,"week_start": string | null
+                    "created_at": string,"duration_seconds": number,"edit_revision": number,"exercise_notes": Json | null,"finished_at": string,"id": string,"note": string | null,"perceived_effort": number | null,"performed_on": string | null,"personal_routine_id": string | null,"personal_routine_revision": number | null,"program_id": string | null,"program_session_id": string | null,"session_label": string | null,"source_kind": string,"started_at": string,"structure": Json | null,"student_id": string,"title": string | null,"week_start": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"duration_seconds": number,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"started_at": string,"student_id": string,"week_start"?: never
+                    "created_at"?: string,"duration_seconds": number,"edit_revision"?: number,"exercise_notes"?: Json | null,"finished_at": string,"id": string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at": string,"structure"?: Json | null,"student_id": string,"title"?: string | null,"week_start"?: never
                   }
                   Update: {
-                    "created_at"?: string,"duration_seconds"?: number,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"started_at"?: string,"student_id"?: string,"week_start"?: never
+                    "created_at"?: string,"duration_seconds"?: number,"edit_revision"?: number,"exercise_notes"?: Json | null,"finished_at"?: string,"id"?: string,"note"?: string | null,"perceived_effort"?: number | null,"performed_on"?: never,"personal_routine_id"?: string | null,"personal_routine_revision"?: number | null,"program_id"?: string | null,"program_session_id"?: string | null,"session_label"?: string | null,"source_kind"?: string,"started_at"?: string,"structure"?: Json | null,"student_id"?: string,"title"?: string | null,"week_start"?: never
                   }
                   Relationships: [
                     {
+      foreignKeyName: "workouts_personal_owner_fk"
+      columns: ["personal_routine_id","student_id"]
+isOneToOne: false
+      referencedRelation: "personal_routines"
+      referencedColumns: ["id","owner_id"]
+    },{
       foreignKeyName: "workouts_program_id_fkey"
       columns: ["program_id"]
 isOneToOne: false
@@ -659,6 +771,12 @@ isOneToOne: false
 "copy_program_weeks":
 { Args: { "p_program_id": string,"p_request": Json,"p_request_id": string }; Returns: number
                            },
+"correct_own_workout":
+{ Args: { "p_correction": Json }; Returns: Json
+                           },
+"count_visible_workouts":
+{ Args: { "p_student_id": string }; Returns: number
+                           },
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -674,8 +792,32 @@ isOneToOne: false
 "edit_window_start":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"get_own_training_download":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"get_own_training_progress":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"get_own_workout_correction":
+{ Args: { "p_workout_id": string }; Returns: Json
+                           },
+"get_own_workout_removal":
+{ Args: { "p_workout_id": string }; Returns: Json
+                           },
+"get_personal_exercises":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "get_personal_library":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"get_training_library":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"get_visible_constancy":
+{ Args: { "p_student_id": string }; Returns: Json
+                           },
+"get_visible_training_history":
+{ Args: { "p_student_id": string }; Returns: Json
                            },
 "is_active_member":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -689,14 +831,29 @@ isOneToOne: false
 "mark_comments_read":
 { Args: { "p_workout_id": string }; Returns: undefined
                            },
+"mutate_coach_session":
+{ Args: { "p_request": Json,"p_session_id": string }; Returns: Json
+                           },
+"mutate_personal_exercise":
+{ Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string }; Returns: Json
+                           },
 "mutate_personal_library":
 { Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string }; Returns: Json
                            },
 "mutate_routine_session":
 { Args: { "p_expected_revision": number,"p_ordered_ids"?: (string)[],"p_request_id": string,"p_rows"?: Json,"p_session_id": string,"p_title"?: string,"p_weekday"?: number }; Returns: number
                            },
+"mutate_training_library":
+{ Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string,"p_version": number }; Returns: Json
+                           },
+"patch_coach_prescription":
+{ Args: { "p_changes": Json,"p_current": Json }; Returns: Json
+                           },
 "patch_prescription_series":
 { Args: { "p_fields": (string)[],"p_row": Json,"p_series": Json }; Returns: Json
+                           },
+"personal_training_prescription":
+{ Args: { "p_item": Json }; Returns: Json
                            },
 "planning_assignment_snapshot":
 { Args: { "p_end_date": string,"p_start_date": string,"p_student_id": string }; Returns: Json
@@ -707,22 +864,88 @@ isOneToOne: false
 "record_login_failure":
 { Args: { "p_email_hash": string }; Returns: undefined
                            },
+"remove_own_workout":
+{ Args: { "p_removal": Json }; Returns: Json
+                           },
 "routine_program_snapshot":
 { Args: { "p_program_id": string }; Returns: Json
+                           },
+"routine_training_prescription":
+{ Args: { "p_item": Json }; Returns: Json
                            },
 "routine_week_snapshot":
 { Args: { "p_program_id": string,"p_week": number }; Returns: Json
                            },
+"save_personal_workout":
+{ Args: { "p_workout": Json }; Returns: Json
+                           },
+"save_typed_workout_recording":
+{ Args: { "p_recording": Json }; Returns: Json
+                           },
 "save_workout":
 { Args: { "p_workout": Json }; Returns: Json
+                           },
+"save_workout_recording":
+{ Args: { "p_recording": Json }; Returns: Json
+                           },
+"training_metric_dimensions":
+{ Args: { "p_kind": string }; Returns: (string)[]
+                           },
+"training_structure_legacy":
+{ Args: { "s": Json }; Returns: Json
                            },
 "unread_comments":
 { Args: Record<PropertyKey, never>; Returns: {
               "last_comment_at": string,"student_id": string,"unread_count": number,"workout_id": string
             }[]
                            },
+"valid_coach_prescription_changes":
+{ Args: { "p": Json }; Returns: boolean
+                           },
+"valid_coach_session_request":
+{ Args: { "p": Json }; Returns: boolean
+                           },
 "valid_prescription_series":
 { Args: { "p_max": number,"p_min": number,"p_series": Json,"p_sets": number,"p_weight": number }; Returns: boolean
+                           },
+"valid_training_exercise_notes":
+{ Args: { "n": Json,"s": Json }; Returns: boolean
+                           },
+"valid_training_metrics":
+{ Args: { "p_metrics": Json }; Returns: boolean
+                           },
+"valid_training_note":
+{ Args: { "p_note": Json }; Returns: boolean
+                           },
+"valid_training_number":
+{ Args: { "p_max": number,"p_min": number,"p_step": number,"p_value": Json }; Returns: boolean
+                           },
+"valid_training_prescription":
+{ Args: { "p_prescription": Json }; Returns: boolean
+                           },
+"valid_training_set_details":
+{ Args: { "p_details": Json }; Returns: boolean
+                           },
+"valid_training_target":
+{ Args: { "p_kind": string,"p_target": Json }; Returns: boolean
+                           },
+"valid_training_uuid":
+{ Args: { "v": Json }; Returns: boolean
+                           },
+"valid_typed_workout_recording":
+{ Args: { "v": Json }; Returns: boolean
+                           },
+"valid_typed_workout_structure":
+{ Args: { "v": Json }; Returns: boolean
+                           },
+"valid_workout_correction":
+{ Args: { "v": Json }; Returns: boolean
+                           },
+"valid_workout_recording":
+{ Args: { "p_recording": Json }; Returns: boolean
+                           },
+"valid_workout_structure":
+{ Args: { "p_structure": Json }; Returns: boolean
                            },
 "validate_invitation":
 { Args: { "p_token_hash": string }; Returns: {

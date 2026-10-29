@@ -36,7 +36,15 @@ export async function proxy(request: NextRequest) {
   const decision = accessDecision(request.nextUrl.pathname, Boolean(data?.claims));
 
   // El endpoint JSON devuelve su propio 401, sin redirigir un reintento offline a HTML.
-  if (decision === "redirect-login" && request.nextUrl.pathname !== "/api/workouts/sync") {
+  if (
+    decision === "redirect-login" &&
+    ![
+      "/api/workouts/sync",
+      "/api/workouts/training-sync",
+      "/api/training/download",
+      "/api/account/delete",
+    ].includes(request.nextUrl.pathname)
+  ) {
     const redirect = NextResponse.redirect(new URL("/login", request.url));
     // Conserva las cookies refrescadas (o borradas) en la redirección.
     for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);

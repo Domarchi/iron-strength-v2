@@ -1,7 +1,12 @@
 import { listDrafts } from "@/lib/workout/draft";
 import { hasLocalTraining } from "./local-account";
 const BUILD_ID = process.env.NEXT_PUBLIC_OFFLINE_BUILD_ID;
-function checkWorker(worker: ServiceWorker, prepare = false, compatible = false): Promise<boolean> {
+function checkWorker(
+  worker: ServiceWorker,
+  prepare = false,
+  compatible = false,
+  complete = false,
+): Promise<boolean> {
   return new Promise((resolve) => {
     const channel = new MessageChannel();
     const timer = setTimeout(
@@ -16,9 +21,17 @@ function checkWorker(worker: ServiceWorker, prepare = false, compatible = false)
       channel.port1.close();
       resolve(
         event.data?.ready === true &&
-          (compatible
-            ? Array.isArray(event.data?.draftVersions) && event.data.draftVersions.includes(3)
-            : event.data?.buildId === BUILD_ID),
+          (complete
+            ? event.data?.buildId === BUILD_ID &&
+              Array.isArray(event.data?.trainingVersions) &&
+              event.data.trainingVersions.includes(4) &&
+              Array.isArray(event.data?.downloadVersions) &&
+              event.data.downloadVersions.includes(1) &&
+              Array.isArray(event.data?.queuePayloadVersions) &&
+              [1, 2, 3].every((v) => event.data.queuePayloadVersions.includes(v))
+            : compatible
+              ? Array.isArray(event.data?.draftVersions) && event.data.draftVersions.includes(3)
+              : event.data?.buildId === BUILD_ID),
       );
     };
     worker.postMessage({ type: prepare ? "OFFLINE_PREPARE" : "OFFLINE_READY" }, [channel.port2]);
@@ -38,6 +51,18 @@ export async function isOfflineInterfaceReady(): Promise<boolean> {
   if (!("serviceWorker" in navigator)) return false;
   const registration = await navigator.serviceWorker.getRegistration("/");
   return registration?.active ? checkWorker(registration.active) : false;
+}
+export async function isCompleteOfflineInterfaceReady(): Promise<boolean> {
+  if (!("serviceWorker" in navigator)) return false;
+  const registration = await navigator.serviceWorker.getRegistration("/");
+  return registration?.active ? checkWorker(registration.active, false, false, true) : false;
+}
+export async function prepareCompleteOfflineInterface(): Promise<void> {
+  await prepareOfflineInterface();
+  if (!(await isCompleteOfflineInterfaceReady()))
+    throw Error(
+      "Cierra todas las pestañas al terminar tus registros y vuelve a abrir para activar la interfaz compatible.",
+    );
 }
 export async function prepareOfflineInterface(): Promise<void> {
   if (process.env.NODE_ENV === "development")

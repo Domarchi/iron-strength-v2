@@ -8,13 +8,18 @@ const paths = {
   account: "M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2",
   arrow: "M5 12h14m-5-5 5 5-5 5",
   check: "m5 12 4 4L19 6",
+  close: "m6 6 12 12M6 18 18 6",
   sun: "M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
   moon: "M20.5 14A9 9 0 0 1 10 3a9 9 0 1 0 10.5 11Z",
   system: "M3 4h18v13H3ZM8 21h8M12 17v4",
   more: "M5 11h.01v2H5ZM12 11h.01v2H12ZM19 11h.01v2H19Z",
+  grip: "M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01",
   plus: "M5 12h14M12 5v14",
   minus: "M5 12h14",
+  refresh: "M20 7v5h-5M4 17v-5h5M6.5 7a7 7 0 0 1 11-1L20 9M4 15l2.5 3a7 7 0 0 0 11-1",
   clock: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM12 7v5l3 2",
+  pause: "M8 5v14M16 5v14",
+  play: "m8 5 11 7-11 7Z",
 } as const;
 export type IconName = keyof typeof paths;
 export function Icon({ name, color, size = 22 }: { name: IconName; color: string; size?: number }) {

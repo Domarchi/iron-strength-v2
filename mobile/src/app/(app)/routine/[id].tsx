@@ -1,5 +1,15 @@
-import { useCallback, useState } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { useTrainingDownload } from "../../../lib/training-download-context";
+import { verifiedDownloadedTraining } from "../../../lib/downloaded-training";
+import { useTrainingPreferences } from "../../../lib/training-preferences-context";
+import { formatTrainingTarget } from "../../../lib/training-labels";
+import { typedPrescriptionFromLegacy } from "../../../lib/typed-training";
+import {
+  assignedCanStart,
+  type AssignedTrainingContext,
+} from "../../../../../src/lib/workout/training-context";
+import type { TrainingPrescription } from "../../../../../src/domain/training-metrics";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
 import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/ui";
 import { useSession } from "../../../lib/session";
@@ -10,22 +20,23 @@ import { useWeekDownload } from "../../../lib/week-context";
 import { downloadedRoutine, downloadedCanStart, downloadedAt } from "../../../lib/offline-week";
 import { santiagoDate } from "../../../../../src/domain/dates";
 import type { MobileRoutine } from "../../../lib/client";
-type Exercise = MobileRoutine["exercises"][number];
+type Exercise = MobileRoutine["exercises"][number] | AssignedTrainingContext["exercises"][number];
 function Targets({ prescribed }: { prescribed: Exercise["prescribed"] }) {
-  const p = usePalette();
-  const line = (t: { repsMin: number; repsMax: number; targetWeightKg: number | null }) =>
-    `${t.repsMin === t.repsMax ? t.repsMin : `${t.repsMin}–${t.repsMax}`} reps · ${t.targetWeightKg == null ? "Sin peso indicado" : `${String(t.targetWeightKg).replace(".", ",")} kg`}`;
-  return prescribed.series ? (
+  const { preferences } = useTrainingPreferences(),
+    p = usePalette();
+  const rx: TrainingPrescription =
+    "recordType" in prescribed ? prescribed : typedPrescriptionFromLegacy(prescribed);
+  return rx.series ? (
     <View style={{ gap: 5 }}>
-      {prescribed.series.map((target, index) => (
+      {rx.series.map((target, index) => (
         <Text key={index} style={[s.body, { color: p.ink }]}>
-          {index + 1}. {line(target)}
+          {index + 1}. {formatTrainingTarget(target, preferences.value) || "Objetivo libre"}
         </Text>
       ))}
     </View>
   ) : (
     <Text style={[s.body, { color: p.ink }]}>
-      {prescribed.sets} × {line(prescribed)}
+      {rx.sets} × {formatTrainingTarget(rx.target, preferences.value) || "Objetivo libre"}
     </Text>
   );
 }
@@ -93,57 +104,106 @@ function ExerciseCard({
     </View>
   );
 }
-export default function Routine() {
+export default function RoutineRoute() {
+  const { state } = useSession(),
+    { id } = useLocalSearchParams<{ id: string }>();
+  const userId = state.status === "authenticated" ? state.session.profile.id : "";
+  return <Routine key={`${userId}:${id}`} id={id} />;
+}
+function Routine({ id }: { id: string }) {
   const p = usePalette(),
     { client, state } = useSession(),
     { download } = useWeekDownload(),
-    { controller, training } = useTraining(),
-    { id } = useLocalSearchParams<{ id: string }>();
+    { controller: completeDownloads, bundle, download: completeDownload } = useTrainingDownload(),
+    { controller, training } = useTraining();
   const demo = demoRoutine(typeof id === "string" ? id : "");
   const offline = state.status === "authenticated" && state.mode === "offline",
     userId = state.status === "authenticated" ? state.session.profile.id : "",
     pack = download.verified ? download.pack : null,
-    cached = downloadedRoutine(pack, userId, typeof id === "string" ? id : "");
+    cached = useMemo(
+      () =>
+        bundle
+          ? (bundle.week?.sessions.find((s) => s.context.session.id === id)?.context ?? null)
+          : downloadedRoutine(pack, userId, typeof id === "string" ? id : ""),
+      [bundle, pack, userId, id],
+    );
+  const canStartLocal = (context: NonNullable<typeof cached>) =>
+    context.version === 5
+      ? assignedCanStart(context, userId, santiagoDate(new Date()))
+      : downloadedCanStart(pack, userId, context.session.id, santiagoDate(new Date()));
   const request = useCallback(async () => {
     if (demo) return demo;
     if (offline) {
-      const local = downloadedRoutine(pack, userId, typeof id === "string" ? id : "");
+      const local = cached;
       if (!local)
         throw Error("Esta rutina no está en la descarga de tu cuenta. Conecta para consultarla.");
       return local;
     }
-    return client.routine(typeof id === "string" ? id : "");
-  }, [client, id, demo, offline, pack, userId]);
+    return client.assignedRoutine(typeof id === "string" ? id : "");
+  }, [client, id, demo, offline, cached]);
   const [starting, setStarting] = useState(false),
     [startError, setStartError] = useState<string | null>(null);
+  const inFlight = useRef(false),
+    mounted = useRef(true),
+    focusEpoch = useRef(0);
+  useEffect(() => {
+    mounted.current = true;
+    const epoch = focusEpoch;
+    return () => {
+      mounted.current = false;
+      epoch.current++;
+    };
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      focusEpoch.current++;
+      return () => {
+        focusEpoch.current++;
+      };
+    }, []),
+  );
   async function start() {
-    if (!query.value || starting || query.loading || query.error) return;
+    if (!query.value || inFlight.current || starting || query.loading || query.error) return;
+    inFlight.current = true;
+    const epoch = focusEpoch.current,
+      currentView = () => mounted.current && focusEpoch.current === epoch;
     setStarting(true);
     setStartError(null);
     try {
-      if (
-        offline &&
-        !demo &&
-        !downloadedCanStart(pack, userId, query.value.session.id, santiagoDate(new Date()))
-      )
+      if (offline && !demo && !canStartLocal(query.value))
         throw Error(
           "Solo puedes empezar rutinas de la semana vigente. Tu registro anterior sigue disponible.",
         );
-      const current =
-        demo ??
-        (offline
-          ? downloadedRoutine(pack, userId, query.value.session.id)
-          : await client.routine(query.value.session.id));
+      let current =
+        demo ?? (offline ? cached : await client.assignedRoutine(query.value.session.id));
+      if (offline && !demo && bundle) {
+        const fresh = await verifiedDownloadedTraining(completeDownloads);
+        current =
+          fresh.week?.sessions.find((s) => s.context.session.id === query.value!.session.id)
+            ?.context ?? null;
+        if (!current || !assignedCanStart(current, userId, santiagoDate(new Date())))
+          throw Error(
+            "Solo puedes empezar rutinas de la semana vigente. Tu registro anterior sigue disponible.",
+          );
+        if (JSON.stringify(current) !== JSON.stringify(query.value))
+          throw Error("La rutina cambió. Vuelve a revisar la vista previa antes de empezar.");
+      }
       if (!current)
         throw Error("No pudimos verificar la rutina descargada. Conservamos tus datos.");
-      await controller.start(current, demo ? "demo" : "real");
+      if (!currentView()) return;
+      const after = client.getSnapshot();
+      if (after.status !== "authenticated" || after.session.profile.id !== userId)
+        throw Error("La cuenta cambió. Vuelve a abrir la rutina.");
+      if (current.version === 5) await controller.startTyped(current);
+      else await controller.start(current, demo ? "demo" : "real");
       const active = controller.getSnapshot().active;
-      if (active)
+      if (active && currentView())
         router.push({ pathname: "/workout/[id]", params: { id: active.draft.workoutId } });
     } catch (e) {
-      setStartError(e instanceof Error ? e.message : "No pudimos iniciar.");
+      if (currentView()) setStartError(e instanceof Error ? e.message : "No pudimos iniciar.");
     } finally {
-      setStarting(false);
+      inFlight.current = false;
+      if (mounted.current) setStarting(false);
     }
   }
   const query = useQuery(request),
@@ -166,15 +226,12 @@ export default function Routine() {
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando rutina" />
       ) : null}
       {startError ? <Notice message={startError} /> : null}
-      {offline && !demo && cached && pack ? (
+      {offline && !demo && cached && (pack || bundle) ? (
         <Text style={[s.caption, { color: p.blue }]}>
-          Rutina descargada · {downloadedAt(pack.downloadedAt)}
+          Rutina descargada · {downloadedAt(bundle?.downloadedAt ?? pack!.downloadedAt)}
         </Text>
       ) : null}
-      {offline &&
-      !demo &&
-      cached &&
-      !downloadedCanStart(pack, userId, cached.session.id, santiagoDate(new Date())) ? (
+      {offline && !demo && cached && !canStartLocal(cached) ? (
         <Notice message="Puedes consultar esta copia y retomar un registro previo. Conecta para empezar una rutina de la semana vigente." />
       ) : null}
       {training.blocked ? (
@@ -205,7 +262,7 @@ export default function Routine() {
             <Text style={[s.caption, { color: p.blue }]}>
               SESIÓN {view.session.label} · SEMANA {view.session.weekNumber}
             </Text>
-            <Text style={[s.heading, { color: p.ink }]}>
+            <Text accessibilityRole="header" style={[s.heading, { color: p.ink }]}>
               {view.session.title ?? `Rutina ${view.session.label}`}
             </Text>
             <Text style={[s.body, { color: p.muted }]}>
@@ -216,14 +273,16 @@ export default function Routine() {
           <Action
             label={demo ? "Probar entrenamiento demo" : "Empezar entrenamiento"}
             disabled={
+              !completeDownload.ready ||
+              completeDownload.busy ||
+              (offline && completeDownload.blocked) ||
               !training.ready ||
               training.blocked ||
               !!training.active ||
               query.loading ||
               !!query.error ||
-              (offline &&
-                !demo &&
-                !downloadedCanStart(pack, userId, view.session.id, santiagoDate(new Date()))) ||
+              (offline && !demo && !canStartLocal(view)) ||
+              (view.version === 5 && !assignedCanStart(view, userId, santiagoDate(new Date()))) ||
               view.exercises.length === 0
             }
             busy={starting}

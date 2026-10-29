@@ -1,3 +1,4 @@
+import { sendQueuedRecording } from "./queued-recording";
 import {
   createContext,
   useCallback,
@@ -22,7 +23,7 @@ function useWorkoutSync(userId: string) {
   const [controller] = useState(
     () =>
       new NativeWorkoutQueue(userId, atomicStorage, (payload) =>
-        client.saveWorkout(payload, userId),
+        sendQueuedRecording(client, payload, userId),
       ),
   );
   const queue = useSyncExternalStore(

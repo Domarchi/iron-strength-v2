@@ -1,8 +1,10 @@
+import { recoverLegacyWeek } from "./support/recover-legacy-week";
 import { test } from "./support/network";
 import { expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { admin, COACH, resetAll, seedCoach, seedProgram, seedWorkout } from "./support/db";
 import { login } from "./support/ui";
+import { readStoredTrainingPrescription } from "../src/domain/stored-prescription";
 const targets = [
   { repsMin: 6, repsMax: 8, targetWeightKg: 75 },
   { repsMin: 8, repsMax: 10, targetWeightKg: 70 },
@@ -57,8 +59,9 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   expect(
-    (await admin().from("session_exercises").select("prescription_sets").eq("id", row.id).single())
-      .data!.prescription_sets,
+    readStoredTrainingPrescription(
+      (await admin().from("session_exercises").select("*").eq("id", row.id).single()).data!,
+    ).series?.map(({ repsMin, repsMax, targetWeightKg }) => ({ repsMin, repsMax, targetWeightKg })),
   ).toEqual(targets);
   const detailedRow = page.locator('.coach-exercise-row[data-detailed="true"]').first();
   const rowBox = await detailedRow.boundingBox(),
@@ -81,8 +84,9 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   expect(
-    (await admin().from("session_exercises").select("prescription_sets").eq("id", row.id).single())
-      .data!.prescription_sets,
+    readStoredTrainingPrescription(
+      (await admin().from("session_exercises").select("*").eq("id", row.id).single()).data!,
+    ).series,
   ).toBeNull();
   await page.getByText("Alternativas de Sentadilla (0/3)", { exact: true }).click();
   await page
@@ -105,13 +109,15 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
     .click();
   await expect(page.getByText("Alternativas guardadas.", { exact: true })).toBeVisible();
   expect(
-    (
-      await admin()
-        .from("session_exercise_alternatives")
-        .select("prescription_sets")
-        .eq("session_exercise_id", row.id)
-        .single()
-    ).data!.prescription_sets,
+    readStoredTrainingPrescription(
+      (
+        await admin()
+          .from("session_exercise_alternatives")
+          .select("*")
+          .eq("session_exercise_id", row.id)
+          .single()
+      ).data!,
+    ).series?.map(({ repsMin, repsMax, targetWeightKg }) => ({ repsMin, repsMax, targetWeightKg })),
   ).toEqual([
     { repsMin: 8, repsMax: 12, targetWeightKg: 25 },
     { repsMin: 8, repsMax: 12, targetWeightKg: 20 },
@@ -134,7 +140,7 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
     ).toEqual([]);
   }
 });
-test("descarga detalle, empieza sin red, confirma objetivos y sincroniza exactamente una vez", async ({
+test("recupera descarga anterior por serie, empieza sin red y sincroniza exactamente una vez", async ({
   page,
   context,
   network,
@@ -167,9 +173,10 @@ test("descarga detalle, empieza sin red, confirma objetivos y sincroniza exactam
   await page.getByRole("button", { name: "Ver rutina de sesión A", exact: true }).first().click();
   await expect(page.getByText("Serie 2 · 8–10 reps · 70 kg", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Cerrar vista previa", exact: true }).click();
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  await recoverLegacyWeek(page);
+  await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Descarga de la semana" }).getByRole("status"),
+    page.getByRole("region", { name: "Entrenamientos sin conexión" }).getByRole("status"),
   ).toContainText("Disponible sin conexión");
   await page.close();
   network.offline = true;
@@ -219,8 +226,9 @@ test("una descarga v1 conserva su objetivo al iniciar; actualizar no reemplaza e
   const { program, row } = await fixture();
   await login(page, COACH.email, COACH.password);
   await page.goto("/week");
-  const download = page.getByRole("region", { name: "Descarga de la semana", exact: true });
-  await download.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  const download = page.getByRole("region", { name: "Entrenamientos sin conexión", exact: true });
+  await recoverLegacyWeek(page);
+  await download.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   const mutateStoredVersion = async (version: number) =>
     page.evaluate(
@@ -261,7 +269,9 @@ test("una descarga v1 conserva su objetivo al iniciar; actualizar no reemplaza e
     ).error,
   ).toBeNull();
   await page.goto("/week");
-  await download.getByRole("button", { name: "Actualizar descarga", exact: true }).click();
+  await download
+    .getByRole("button", { name: "Actualizar entrenamientos descargados", exact: true })
+    .click();
   await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
   await page
     .getByRole("region", { name: "Próxima sesión", exact: true })
@@ -275,11 +285,15 @@ test("una descarga v1 conserva su objetivo al iniciar; actualizar no reemplaza e
   await page.goto("/week");
   await mutateStoredVersion(99);
   await page.reload();
-  await expect(download.getByRole("alert")).toContainText("Actualiza la app");
-  const button = download.getByRole("button", { name: /Descargar semana|Actualizar descarga/ });
+  await expect(download.getByRole("alert")).toContainText("Conservamos una copia anterior");
+  const button = download.getByRole("button", {
+    name: "Actualizar entrenamientos descargados",
+    exact: true,
+  });
   await button.click();
   await expect(button).toBeEnabled();
-  await expect(download.getByRole("alert")).toContainText("La descarga anterior se conserva");
+  await expect(download.getByRole("status")).toContainText("Disponible sin conexión");
+  await expect(download.getByRole("alert")).toContainText("Conservamos una copia anterior");
   const versions = await page.evaluate(
     () =>
       new Promise<number[]>((resolve) => {

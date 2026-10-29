@@ -1,13 +1,13 @@
 import { seriesTargetAt } from "../../domain/prescription-series";
-import type { WorkoutDraft } from "./draft";
+import type { RunnerDraft } from "./runner-state";
 import { prefillWeight } from "../../domain/progression";
 
 // La elección explícita reemplaza solo un ejercicio aún sin series completadas.
-export function substituteExercise(
-  draft: WorkoutDraft,
+export function substituteExercise<T extends RunnerDraft>(
+  draft: T,
   index: number,
   exerciseId: string,
-): WorkoutDraft {
+): T {
   const current = draft.exercises[index];
   if (!current || current.exerciseId === exerciseId || current.sets.some((s) => s.done))
     return draft;

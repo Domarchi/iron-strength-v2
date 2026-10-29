@@ -15,12 +15,14 @@ export default async function EditExercisePage({ params }: { params: Promise<{ i
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">Editar ejercicio</h1>
       <ExerciseForm
+        editing
         action={updateExerciseAction.bind(null, exercise.id)}
         defaults={{
           name: exercise.name,
           muscleGroup: exercise.muscleGroup,
           equipment: exercise.equipment ?? "Otro",
           progressionIncrementKg: exercise.progressionIncrementKg,
+          recordType: exercise.recordType,
         }}
         submitLabel="Guardar cambios"
       />

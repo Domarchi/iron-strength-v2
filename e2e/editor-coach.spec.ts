@@ -4,6 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { COACH, admin, resetAll, seedCoach } from "./support/db";
 import { login } from "./support/ui";
+import { readStoredTrainingPrescription } from "../src/domain/stored-prescription";
 
 test.beforeEach(async () => {
   await resetAll();
@@ -47,7 +48,7 @@ test("copiar y reordenar una semana conserva prescripciones, es accesible y cabe
   await page.getByRole("button", { name: "Revisar copia", exact: true }).click();
   await page.getByRole("button", { name: "Confirmar copia de semanas", exact: true }).click();
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("4");
-  await expect(visibleField(page, "Peso (kg) de Sentadilla")).toHaveValue("62.5");
+  await expect(visibleField(page, "Peso (kg) de Sentadilla")).toHaveValue("62,5");
   await page.getByRole("button", { name: "Bajar Sentadilla", exact: true }).click();
   await expect(page.getByRole("heading", { name: /1.*Press de banca/ })).toBeVisible();
   await expect(
@@ -55,14 +56,17 @@ test("copiar y reordenar una semana conserva prescripciones, es accesible y cabe
   ).toBeVisible();
   const { data, error } = await admin()
     .from("program_sessions")
-    .select("session_exercises(position,sets,target_weight_kg,exercises(name))")
+    .select("session_exercises(*,exercises(name))")
     .eq("program_id", programId)
     .eq("week_number", 2)
     .single();
   expect(error).toBeNull();
   const rows = data!.session_exercises.sort((a, b) => a.position - b.position);
   expect(rows[0].exercises.name).toBe("Press de banca");
-  expect(rows[1]).toMatchObject({ sets: 4, target_weight_kg: 62.5 });
+  expect(readStoredTrainingPrescription(rows[1])).toMatchObject({
+    sets: 4,
+    target: { targetWeightKg: 62.5 },
+  });
   await page.setViewportSize({ width: 360, height: 800 });
   expect(
     await page.evaluate(
@@ -115,7 +119,9 @@ test("un fallo al guardar conserva las ediciones y salir requiere confirmación"
     } else await route.continue();
   });
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "Se conservan aquí" })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "No recibimos confirmación" }),
+  ).toBeVisible();
   expect(aborted).toBe(true);
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("5");
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
@@ -162,9 +168,12 @@ test("arrastrar guarda el orden; un fallo conserva el destino y se puede reinten
     } else await route.continue();
   });
   await mouseReorder(page, "Press de banca", "Sentadilla");
-  const retry = page.getByRole("button", { name: "Reintentar guardar orden", exact: true });
+  const retry = page.getByRole("button", { name: "Reintentar operación", exact: true });
+  // El intento local se protege antes del POST: el botón puede aparecer mientras
+  // WebKit todavía entrega la petición al interceptor. Esperar el corte real.
+  await expect.poll(() => aborted).toBe(true);
   await expect(retry).toBeVisible();
-  expect(aborted).toBe(true);
+  await expect(retry).toBeEnabled();
   await expect(page.getByRole("heading", { name: /1.*Sentadilla/ })).toBeVisible();
   await retry.click();
   await expect(page.getByText("Orden guardado.", { exact: true })).toBeVisible();
@@ -172,15 +181,20 @@ test("arrastrar guarda el orden; un fallo conserva el destino y se puede reinten
   await expect(page.getByRole("heading", { name: /1.*Sentadilla/ })).toBeVisible();
   const { data } = await admin()
     .from("program_sessions")
-    .select("session_exercises(position,sets,reps_min,reps_max,exercises(name))")
+    .select("session_exercises(*,exercises(name))")
     .eq("program_id", programId)
     .eq("week_number", 1)
     .single();
   const rows = data!.session_exercises.sort((a, b) => a.position - b.position);
   expect(rows[0].exercises.name).toBe("Sentadilla");
-  expect(rows.every((row) => row.sets === 3 && row.reps_min === 8 && row.reps_max === 12)).toBe(
-    true,
-  );
+  expect(
+    rows.every((row) => {
+      const prescribed = readStoredTrainingPrescription(row);
+      return (
+        prescribed.sets === 3 && prescribed.target.repsMin === 8 && prescribed.target.repsMax === 12
+      );
+    }),
+  ).toBe(true);
 });
 
 test("arrastre touch real con scroll automático y persistencia en móvil", async ({
@@ -272,7 +286,9 @@ test("duplicar un ejercicio recupera una respuesta perdida sin repetir la copia"
     } else await route.continue();
   });
   await page.getByRole("button", { name: "Duplicar Sentadilla", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Reintentar copia", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Reintentar operación", exact: true }),
+  ).toBeVisible();
   const readRows = async () => {
     const { data, error } = await admin()
       .from("program_sessions")
@@ -282,10 +298,16 @@ test("duplicar un ejercicio recupera una respuesta perdida sin repetir la copia"
     expect(error).toBeNull();
     return data!.session_exercises.sort((a, b) => a.position - b.position);
   };
+  await expect(
+    page.getByRole("alert").filter({ hasText: "No recibimos confirmación" }),
+  ).toBeVisible();
   const beforeRetry = await readRows();
   expect(beforeRetry).toHaveLength(3);
-  expect(beforeRetry[2]).toMatchObject({ sets: 4, target_weight_kg: 62.5 });
-  await page.getByRole("button", { name: "Reintentar copia", exact: true }).click();
+  expect(readStoredTrainingPrescription(beforeRetry[2])).toMatchObject({
+    sets: 4,
+    target: { targetWeightKg: 62.5 },
+  });
+  await page.getByRole("button", { name: "Reintentar operación", exact: true }).click();
   await expect(page.getByText("Ejercicio duplicado.", { exact: true })).toBeVisible();
   expect((await readRows()).map((row) => row.id)).toEqual(beforeRetry.map((row) => row.id));
   await page.reload();
@@ -365,7 +387,7 @@ test("dos pestañas conservan sus cambios y rechazan una revisión antigua", asy
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   await other.getByRole("button", { name: "Guardar sesión", exact: true }).click();
-  await expect(other.getByRole("alert").filter({ hasText: "otra pestaña" })).toBeVisible();
+  await expect(other.getByRole("alert").filter({ hasText: "La sesión cambió" })).toBeVisible();
   await expect(visibleField(other, "Series de Sentadilla")).toHaveValue("6");
   await page.reload();
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("4");
@@ -394,7 +416,9 @@ test("perder la respuesta de un lote guardado permite confirmar sin duplicar la 
     } else await route.continue();
   });
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "Se conservan aquí" })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "No recibimos confirmación" }),
+  ).toBeVisible();
   const before = await admin()
     .from("program_sessions")
     .select("revision")
@@ -435,15 +459,34 @@ test("recarga recupera el borrador del coach y permite resolver un conflicto con
   await expect(visibleField(page, "Nota de Sentadilla")).toHaveValue("Pausa de dos segundos");
   const programId = new URL(page.url()).pathname.split("/").at(-1)!;
   const sessions = await admin().from("program_sessions").select("id").eq("program_id", programId);
-  await admin()
+  const remoteRows = await admin()
     .from("session_exercises")
-    .update({ sets: 4 })
+    .select("*")
     .eq("program_session_id", sessions.data![0].id);
+  expect(remoteRows.error).toBeNull();
+  for (const row of remoteRows.data!) {
+    const prescribed = readStoredTrainingPrescription(row);
+    expect(
+      (
+        await admin()
+          .from("session_exercises")
+          .update({ sets: 4, typed_prescription: { ...prescribed, sets: 4, series: null } })
+          .eq("id", row.id)
+      ).error,
+    ).toBeNull();
+  }
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "otra pestaña" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "La sesión cambió" })).toBeVisible();
   await page.getByRole("button", { name: "Revisar versión actual", exact: true }).click();
-  await expect(page.getByText(/Tu borrador: 7/)).toBeVisible();
-  await expect(page.getByText(/Actual: 4/).first()).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Revisión de conflicto" }).getByText(/7 series/),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Revisión de conflicto" })
+      .getByText(/4 series/)
+      .first(),
+  ).toBeVisible();
   await page
     .getByRole("button", { name: "Aplicar mis cambios a esta versión", exact: true })
     .click();
@@ -479,7 +522,9 @@ test("una operación guardada sin respuesta se recupera tras recargar con el mis
     } else await route.continue();
   });
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "Se conservan aquí" })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "No recibimos confirmación" }),
+  ).toBeVisible();
   const before = await admin()
     .from("program_sessions")
     .select("revision")
@@ -605,7 +650,9 @@ test("alternativas recupera campos y confirma una respuesta perdida sin recrear 
   await page
     .getByRole("button", { name: "Guardar alternativas de Sentadilla", exact: true })
     .click();
-  await expect(page.getByRole("alert").filter({ hasText: "confirmar" })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "No recibimos confirmación" }),
+  ).toBeVisible();
   const before = await admin()
     .from("program_sessions")
     .select("revision,session_exercises(session_exercise_alternatives(*))")
@@ -613,9 +660,7 @@ test("alternativas recupera campos y confirma una respuesta perdida sin recrear 
     .single();
   expect(before.error).toBeNull();
   await page.reload();
-  await page
-    .getByRole("button", { name: "Guardar alternativas de Sentadilla", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Reintentar operación", exact: true }).click();
   await expect(page.getByText("Alternativas guardadas.", { exact: true })).toBeVisible();
   const after = await admin()
     .from("program_sessions")
@@ -627,7 +672,10 @@ test("alternativas recupera campos y confirma una respuesta perdida sin recrear 
     (e) => e.session_exercise_alternatives,
   );
   expect(alternatives).toHaveLength(1);
-  expect(alternatives[0]).toMatchObject({ sets: 2, target_weight_kg: 22.5 });
+  expect(readStoredTrainingPrescription(alternatives[0])).toMatchObject({
+    sets: 2,
+    target: { targetWeightKg: 22.5 },
+  });
   await page.setViewportSize({ width: 360, height: 800 });
   expect(
     await page.evaluate(
@@ -777,13 +825,14 @@ test("títulos entre pestañas requieren comparación antes de sobrescribir (T15
   const programId = await routine(page);
   const other = await context.newPage();
   await other.goto(page.url());
+  await expect(other.getByLabel("Nombre de sesión A", { exact: true })).toBeEnabled();
   await page.getByLabel("Nombre de sesión A", { exact: true }).fill("Pecho");
   await other.getByLabel("Nombre de sesión A", { exact: true }).fill("Espalda");
   await other.getByRole("button", { name: "Guardar sesión", exact: true }).click();
   await expect(other.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
   await page.getByRole("button", { name: "Revisar versión actual", exact: true }).click();
-  await expect(page.getByText("Tu borrador: Pecho", { exact: true })).toBeVisible();
+  await expect(page.getByText("Título de tu borrador: Pecho", { exact: true })).toBeVisible();
   await expect(page.getByText("Actual: Espalda", { exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Aplicar mis cambios a esta versión", exact: true })
@@ -845,7 +894,7 @@ test("lote recupera preparación, conserva campos y permite editar después (T15
   await page.getByRole("button", { name: "Aplicar al borrador", exact: true }).click();
   await page.reload();
   await expect(visibleField(page, "Series de Sentadilla")).toHaveValue("5");
-  await expect(visibleField(page, "Peso (kg) de Sentadilla")).toHaveValue("62.5");
+  await expect(visibleField(page, "Peso (kg) de Sentadilla")).toHaveValue("62,5");
   if (!(await visibleField(page, "Nota de Sentadilla").isVisible()))
     await page
       .locator("[data-session-panel]:visible")
@@ -864,16 +913,23 @@ test("lote recupera preparación, conserva campos y permite editar después (T15
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   const { data, error } = await admin()
     .from("program_sessions")
-    .select("session_exercises(sets,reps_min,reps_max,rest_seconds,note,target_weight_kg,position)")
+    .select("session_exercises(*)")
     .eq("program_id", programId)
     .single();
   expect(error).toBeNull();
   const rows = data!.session_exercises.sort((a, b) => a.position - b.position);
   expect(rows).toHaveLength(2);
-  for (const row of rows)
-    expect(row).toMatchObject({ sets: 5, reps_min: 6, reps_max: 8, rest_seconds: 120 });
-  expect(rows[0]).toMatchObject({ note: "Conservar técnica", target_weight_kg: 62.5 });
-  expect(rows[1]).toMatchObject({ note: "Pausa abajo", target_weight_kg: null });
+  for (const row of rows) {
+    expect(readStoredTrainingPrescription(row)).toMatchObject({
+      sets: 5,
+      target: { repsMin: 6, repsMax: 8 },
+    });
+    expect(row.rest_seconds).toBe(120);
+  }
+  expect(rows[0].note).toBe("Conservar técnica");
+  expect(readStoredTrainingPrescription(rows[0]).target.targetWeightKg).toBe(62.5);
+  expect(rows[1].note).toBe("Pausa abajo");
+  expect(readStoredTrainingPrescription(rows[1]).target.targetWeightKg).toBeNull();
 });
 
 test("descanso de lote exige la superserie completa y confirma una respuesta perdida (T154)", async ({
@@ -903,7 +959,9 @@ test("descanso de lote exige la superserie completa y confirma una respuesta per
     } else await route.continue();
   });
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "confirmar" })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "No recibimos confirmación" }),
+  ).toBeVisible();
   const read = () =>
     admin()
       .from("program_sessions")
@@ -980,7 +1038,9 @@ test("agregar varios confirma una respuesta perdida después de recargar sin dup
     } else await route.continue();
   });
   await page.getByRole("button", { name: "Agregar seleccionados (1)", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Confirmar agregado", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Reintentar operación", exact: true }),
+  ).toBeVisible();
   const read = async () => {
     const { data, error } = await admin()
       .from("program_sessions")
@@ -990,17 +1050,18 @@ test("agregar varios confirma una respuesta perdida después de recargar sin dup
     expect(error).toBeNull();
     return data!;
   };
+  await expect(
+    page.getByRole("alert").filter({ hasText: "No recibimos confirmación" }),
+  ).toBeVisible();
   const before = await read();
   expect(before.session_exercises).toHaveLength(3);
   page.on("dialog", (d) => d.accept());
   await page.reload();
   await expect(
-    page.getByText("Borrador recuperado de este dispositivo.", { exact: true }),
+    page.getByRole("button", { name: "Reintentar operación", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Confirmar agregado", exact: true }).click();
-  await expect(
-    page.getByText("1 ejercicios agregados a la sesión.", { exact: true }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Reintentar operación", exact: true }).click();
+  await expect(page.getByText("Ejercicios agregados a la sesión.", { exact: true })).toBeVisible();
   expect(await read()).toEqual(before);
   expect(
     await page.evaluate(() =>
@@ -1090,13 +1151,66 @@ test("sesión activa conserva borradores y vincula una única biblioteca a la se
   );
   const stored = await admin()
     .from("program_sessions")
-    .select("label,session_exercises(sets,target_weight_kg,exercises(name))")
+    .select("label,session_exercises(*,exercises(name))")
     .eq("program_id", programId);
   expect(stored.error).toBeNull();
   expect(
-    stored
-      .data!.find((s) => s.label === "A")!
-      .session_exercises.find((e) => e.exercises.name === "Sentadilla")!.target_weight_kg,
+    readStoredTrainingPrescription(
+      stored
+        .data!.find((s) => s.label === "A")!
+        .session_exercises.find((e) => e.exercises.name === "Sentadilla")!,
+    ).target.targetWeightKg,
   ).toBe(77.5);
   expect(stored.data!.find((s) => s.label === "B")!.session_exercises[0].sets).toBe(5);
+});
+test("recuperar el mismo borrador en otra pestaña permite separar la propuesta sin sobrescribirla", async ({
+  page,
+  context,
+}) => {
+  await routine(page);
+  await page.getByLabel("Nombre de sesión A", { exact: true }).fill("Pecho");
+  await expect(page.getByText("Guardado en este dispositivo", { exact: true })).toBeVisible();
+  const other = await context.newPage();
+  await other.goto(page.url());
+  await expect(other.getByLabel("Nombre de sesión A", { exact: true })).toHaveValue("Pecho");
+  await other.getByLabel("Nombre de sesión A", { exact: true }).fill("Espalda");
+  await expect(other.getByText("Guardado en este dispositivo", { exact: true })).toBeVisible();
+  const original = await other.evaluate(() =>
+    Object.entries(localStorage).filter(([key]) => key.startsWith("is:coach-draft:v1:")),
+  );
+  expect(original).toHaveLength(1);
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  const fork = page.getByRole("button", {
+    name: "Conservar mi propuesta en otro borrador",
+    exact: true,
+  });
+  await expect(fork).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await fork.click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          Object.keys(localStorage).filter((key) => key.startsWith("is:coach-draft:v1:")).length,
+      ),
+    )
+    .toBe(2);
+  expect(await page.evaluate((key) => localStorage.getItem(key), original[0][0])).toBe(
+    original[0][1],
+  );
+  await other.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(other.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Reintentar operación", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "La sesión cambió" })).toBeVisible();
+  await page.getByRole("button", { name: "Revisar versión actual", exact: true }).click();
+  await expect(page.getByText("Título de tu borrador: Pecho", { exact: true })).toBeVisible();
+  await expect(page.getByText("Actual: Espalda", { exact: true })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Aplicar mis cambios a esta versión", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
+  await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Nombre de sesión A", { exact: true })).toHaveValue("Pecho");
+  await other.close();
 });

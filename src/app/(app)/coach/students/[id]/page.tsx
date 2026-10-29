@@ -1,7 +1,7 @@
+import { workoutTitle } from "@/domain/workout-title";
 import {
   navigationContext,
   studentHref,
-  progressHref,
   programHref,
   adaptHref,
   workoutHref,
@@ -17,13 +17,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UnreadBadge } from "@/components/unread/unread-badge";
 import { AchievementsList } from "@/components/achievements/achievements-list";
 import { ConstancyStrip } from "@/components/streak/constancy-strip";
+import { ConstancyReadFailure } from "@/components/streak/read-failure";
 import { santiagoDate } from "@/domain/dates";
 import { formatDuration, formatKg } from "@/domain/format";
 import { programState } from "@/domain/program-weeks";
 import { getAchievementsOverview } from "@/lib/data/achievements";
 import { listUnread } from "@/lib/data/unread";
 import { listAssignedPrograms } from "@/lib/data/programs";
-import { listExerciseProgress } from "@/lib/data/progress";
+import { getVisibleTrainingProgress } from "@/lib/data/training-review";
+import { TrainingExerciseList } from "@/components/progress/typed-exercise-list";
+import { ProgressReadFailure } from "@/components/progress/read-failure";
 import { getStreakSummary } from "@/lib/data/streak";
 import { listWorkouts } from "@/lib/data/workouts";
 import { createClient } from "@/lib/supabase/server";
@@ -39,14 +42,18 @@ const day = new Intl.DateTimeFormat("es-CL", {
   timeZone: "UTC",
 });
 const fmt = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
-const round1 = (n: number) => Math.round(n * 10) / 10;
 
 export default async function StudentDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ semanas?: string; vista?: string }>;
+  searchParams: Promise<{
+    semanas?: string | string[];
+    vista?: string | string[];
+    tipo?: string | string[];
+    metrica?: string | string[];
+  }>;
 }) {
   const navigation = navigationContext(await searchParams);
   const { id } = await params;
@@ -61,15 +68,22 @@ export default async function StudentDetailPage({
     .maybeSingle();
   if (!student) notFound();
 
-  const [streak, workouts, records, programs] = await Promise.all([
-    getStreakSummary(db, id, today),
+  const [constancyResult, workouts, reviewResult, programs, unreadRows] = await Promise.all([
+    getStreakSummary(db, id, today)
+      .then(async (streak) => ({
+        streak,
+        achievements: await getAchievementsOverview(db, id, streak.longest),
+      }))
+      .then(
+        (value) => ({ ok: true as const, value }),
+        (error: unknown) => ({ ok: false as const, error }),
+      ),
     listWorkouts(db, id, { limit: 10 }),
-    listExerciseProgress(db, id),
+    getVisibleTrainingProgress(db, id).then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({ ok: false as const, error }),
+    ),
     listAssignedPrograms(db, id),
-  ]);
-
-  const [achievements, unreadRows] = await Promise.all([
-    getAchievementsOverview(db, id, streak.longest),
     listUnread(db).catch(() => null),
   ]);
 
@@ -254,7 +268,14 @@ export default async function StudentDetailPage({
           </Link>
         ))}
       </nav>
-      <ConstancyStrip {...streak} />
+      {constancyResult.ok ? (
+        <ConstancyStrip {...constancyResult.value.streak} />
+      ) : (
+        <ConstancyReadFailure
+          error={constancyResult.error}
+          retryHref={studentHref(id, navigation)}
+        />
+      )}
 
       <div>
         <Button variant="outline" render={<a href={`/export/history?alumno=${id}`} download />}>
@@ -262,7 +283,7 @@ export default async function StudentDetailPage({
         </Button>
       </div>
 
-      <AchievementsList {...achievements} />
+      {constancyResult.ok ? <AchievementsList {...constancyResult.value.achievements} /> : null}
 
       <section aria-labelledby="programs-heading" className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
@@ -327,8 +348,7 @@ export default async function StudentDetailPage({
                     <UnreadBadge count={unread?.byWorkout.get(w.id) ?? 0} />
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {w.sessionLabel ? `Sesión ${w.sessionLabel} · ` : ""}
-                    {w.workingSets} series · {formatDuration(w.durationSeconds)}
+                    {workoutTitle(w)} · {w.workingSets} series · {formatDuration(w.durationSeconds)}
                     {w.volumeKg > 0 ? ` · ${formatKg(w.volumeKg)}` : ""}
                   </span>
                   {w.perceivedEffort != null ? (
@@ -361,26 +381,19 @@ export default async function StudentDetailPage({
         <h2 id="records-heading" className="text-lg font-medium">
           Mejores marcas
         </h2>
-        {records.length === 0 ? (
+        {!reviewResult.ok || !reviewResult.value ? (
+          <ProgressReadFailure
+            error={reviewResult.ok ? new Error("No disponible") : reviewResult.error}
+            retryHref={studentHref(id, navigation)}
+          />
+        ) : reviewResult.value.progress.exercises.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aún no hay marcas registradas.</p>
         ) : (
-          <ul className="flow-list divide-y rounded-lg border">
-            {records.map((r) => (
-              <li key={r.exerciseId}>
-                <Link
-                  href={progressHref(r.exerciseId, navigation, id)}
-                  className="flex min-h-14 flex-col justify-center gap-0.5 p-3 hover:bg-muted/50"
-                >
-                  <span className="font-medium">{r.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {r.isBodyweight
-                      ? `Mejor serie: ${r.bestReps} repeticiones`
-                      : `Mejor peso ${formatKg(r.bestWeightKg)} · 1RM estimado ${formatKg(round1(r.bestEstimated1RM))}`}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <TrainingExerciseList
+            exercises={reviewResult.value.progress.exercises}
+            navigation={navigation}
+            studentId={id}
+          />
         )}
       </section>
 

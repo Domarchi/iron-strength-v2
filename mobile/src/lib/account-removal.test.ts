@@ -41,9 +41,21 @@ describe("eliminación recuperable del dispositivo", () => {
     x.values.set(`is:native-comment:v1:${other}`, "otro mensaje");
     x.values.set("is:native-appearance:v1", "dark");
     x.values.set(`is:native-week:v1:${id}`, "descarga");
+    x.values.set(`is:training-download:v1:${id}`, '{"version":99}');
+    x.values.set(`is:training-download:v1:${other}`, "otra descarga completa");
     x.values.set(`is:native-week:v1:${other}`, "otra descarga");
     x.values.set(`is:native-sync:v1:${id}`, "cola pendiente");
     x.values.set(`is:native-sync:v1:${other}`, "otra cola");
+    x.values.set(`is:native-training-preferences:v1:${id}`, "preferencias");
+    x.values.set(`is:native-training-preferences:v1:${other}`, "otras preferencias");
+    x.values.set(`is:native-library:v1:${id}`, "borradores");
+    x.values.set(`is:native-library:v1:${other}`, "otros borradores");
+    x.values.set(`is:native-personal-exercises:v1:${id}`, "ejercicios pendientes");
+    x.values.set(`is:native-personal-exercises:v1:${other}`, "otros ejercicios");
+    x.values.set(`is:workout-removal:v1:${id}`, "eliminación pendiente");
+    x.values.set(`is:workout-removal:v1:${other}`, "otra eliminación");
+    x.values.set(`is:workout-correction:v1:${id}`, "corrección pendiente");
+    x.values.set(`is:workout-correction:v1:${other}`, "otra corrección");
     await x.controller.restore();
     const remove = vi.fn(async () => {
       expect(JSON.parse(x.values.get(REMOVAL_KEY)!).phase).toBe("requested");
@@ -57,8 +69,20 @@ describe("eliminación recuperable del dispositivo", () => {
     expect(x.values.get("is:native-appearance:v1")).toBe("dark");
     expect(x.values.has(`is:native-week:v1:${id}`)).toBe(false);
     expect(x.values.get(`is:native-week:v1:${other}`)).toBe("otra descarga");
+    expect(x.values.has(`is:training-download:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:training-download:v1:${other}`)).toBe("otra descarga completa");
     expect(x.values.has(`is:native-sync:v1:${id}`)).toBe(false);
     expect(x.values.get(`is:native-sync:v1:${other}`)).toBe("otra cola");
+    expect(x.values.has(`is:native-training-preferences:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:native-training-preferences:v1:${other}`)).toBe("otras preferencias");
+    expect(x.values.has(`is:native-library:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:native-library:v1:${other}`)).toBe("otros borradores");
+    expect(x.values.has(`is:native-personal-exercises:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:native-personal-exercises:v1:${other}`)).toBe("otros ejercicios");
+    expect(x.values.has(`is:workout-removal:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:workout-removal:v1:${other}`)).toBe("otra eliminación");
+    expect(x.values.has(`is:workout-correction:v1:${id}`)).toBe(false);
+    expect(x.values.get(`is:workout-correction:v1:${other}`)).toBe("otra corrección");
     expect(x.controller.getSnapshot().completion).toBe("server_deleted");
   });
   it("no envía si no puede confirmar el recibo y conserva registros ante respuesta perdida", async () => {

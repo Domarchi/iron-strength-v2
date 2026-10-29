@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { sharedExerciseRecordLabel } from "@/domain/shared-exercise";
 import { defaultIncrementFor } from "@/domain/exercise-options";
 import { MUSCLE_GROUPS } from "@/domain/schemas";
 import { listExercises } from "@/lib/data/exercises";
@@ -55,6 +56,7 @@ async function ExerciseList({ searchParams }: { searchParams: SearchParams }) {
               </p>
               <p className="text-xs text-muted-foreground">
                 {exercise.muscleGroup} · {exercise.equipment ?? "Sin equipamiento"} ·{" "}
+                {sharedExerciseRecordLabel(exercise.recordType)} ·{" "}
                 {exercise.coachId
                   ? exercise.archivedAt
                     ? "Archivado"
@@ -113,6 +115,7 @@ export default async function ExercisesPage({ searchParams }: { searchParams: Se
             muscleGroup: "Pecho",
             equipment: "Barra",
             progressionIncrementKg: defaultIncrementFor("Barra"),
+            recordType: "weight_reps",
           }}
           submitLabel="Crear ejercicio"
         />

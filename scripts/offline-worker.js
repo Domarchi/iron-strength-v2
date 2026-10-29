@@ -43,6 +43,9 @@ self.addEventListener("message", (event) => {
           ready: await ready(),
           buildId: BUILD_ID,
           draftVersions: [1, 2, 3],
+          trainingVersions: [4],
+          downloadVersions: [1],
+          queuePayloadVersions: [1, 2, 3],
         });
       } catch {
         event.ports[0]?.postMessage({ ready: false, buildId: BUILD_ID, draftVersions: [1, 2, 3] });

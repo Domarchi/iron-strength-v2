@@ -3,11 +3,22 @@ import { isMobileEndpointPath } from "./paths";
 import { accessDecision } from "../auth/route-access";
 it("solo los endpoints móviles exactos llegan a su guarda JWT; las pantallas siguen protegidas", () => {
   for (const path of [
+    "/api/mobile/v1/training-sessions/11111111-1111-4111-8111-111111111111",
     "/api/mobile/v1/week",
     "/api/mobile/v1/week/download",
+    "/api/mobile/v1/training-download",
     "/api/mobile/v1/workouts",
+    "/api/mobile/v1/personal-workouts",
+    "/api/mobile/v1/recordings",
+    "/api/mobile/v1/typed-recordings",
+    "/api/mobile/v1/typed-recordings/11111111-1111-4111-8111-111111111111",
     "/api/mobile/v1/progress",
     "/api/mobile/v1/exercises",
+    "/api/mobile/v1/training-catalog",
+    "/api/mobile/v1/training-catalog/11111111-1111-4111-8111-111111111111",
+    "/api/mobile/v1/training-library",
+    "/api/mobile/v1/training-library/export",
+    "/api/mobile/v1/training-library/mutations",
     "/api/mobile/v1/library",
     "/api/mobile/v1/library/export",
     "/api/mobile/v1/library/mutations",
@@ -31,13 +42,23 @@ it("solo los endpoints móviles exactos llegan a su guarda JWT; las pantallas si
     expect(accessDecision(path, false)).toBe("allow");
   }
   for (const path of [
+    "/api/mobile/v1/training-sessions/not-uuid",
+    "/api/mobile/v1/training-sessions/11111111-1111-4111-8111-111111111111/extra",
     "/week",
     "/coach",
     "/api/mobile/v1/anything",
+    "/api/mobile/v1/personal-workouts/other",
+    "/api/mobile/v1/training-library/other",
+    "/api/mobile/v1/training-library/mutations/other",
+    "/api/mobile/v1/recordings/other",
+    "/api/mobile/v1/typed-recordings/other",
+    "/api/mobile/v1/typed-recordings/11111111-1111-4111-8111-111111111111/extra",
     "/api/mobile/v1/library/other",
     "/api/mobile/v1/library/export/other",
     "/api/mobile/v1/library/mutations/other",
     "/api/mobile/v1/exercises/not-uuid",
+    "/api/mobile/v1/training-catalog/not-uuid",
+    "/api/mobile/v1/training-catalog/11111111-1111-4111-8111-111111111111/extra",
     "/api/mobile/v1/exercises/11111111-1111-4111-8111-111111111111/other",
     "/api/mobile/v1/exercises/other/extra",
     "/api/mobile/v1/account/delete/other",
@@ -51,6 +72,7 @@ it("solo los endpoints móviles exactos llegan a su guarda JWT; las pantallas si
     "/api/mobile/v1/workouts/other/extra",
     "/api/mobile/v1/week/other",
     "/api/mobile/v1/week/download/other",
+    "/api/mobile/v1/training-download/other",
     "/api/mobile/v1/sessions/not-uuid",
   ]) {
     expect(isMobileEndpointPath(path)).toBe(false);

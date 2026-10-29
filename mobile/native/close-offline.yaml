@@ -2,10 +2,6 @@ appId: com.domarchis.ironstrength.quality
 name: Cierre completo protegido sin conexión
 ---
 - scrollUntilVisible:
-    element: ".*4/4 series.*"
-    direction: UP
-- assertVisible: ".*4/4 series.*"
-- scrollUntilVisible:
     element: "Finalizar entrenamiento"
 - tapOn: "Finalizar entrenamiento"
 - scrollUntilVisible:

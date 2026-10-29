@@ -1,4 +1,14 @@
-import { WeekDownloadCard } from "../../../components/week-download-card";
+import { useTrainingDownload } from "../../../lib/training-download-context";
+import { useWorkoutRemoval } from "../../../lib/workout-removal-context";
+import { WorkoutRemovalCard } from "../../../components/workout-removal-card";
+import { useCorrectionDraft } from "../../../lib/correction-context";
+import { CorrectionDraftCard } from "../../../components/correction-draft-card";
+import { TrainingPreferencesEditor } from "../../../components/training-preferences-editor";
+import { PersonalExerciseDraftCard } from "../../../components/personal-exercise-draft-card";
+import { usePersonalExerciseDraft } from "../../../lib/personal-exercise-context";
+import { useLibraryDrafts } from "../../../lib/library-context";
+import { LibraryDraftCard } from "../../../components/library-draft-card";
+import { TrainingDownloadCard } from "../../../components/training-download-card";
 import { useWeekDownload } from "../../../lib/week-context";
 import { useState } from "react";
 import { router } from "expo-router";
@@ -17,7 +27,12 @@ export default function Account() {
     { client, state } = useSession(),
     { controller, training } = useTraining(),
     { controller: comments, draft } = useCommentDraft(),
+    { controller: routines, library } = useLibraryDrafts(),
+    { controller: ownExercises, exercises } = usePersonalExerciseDraft(),
+    { controller: corrections, correction } = useCorrectionDraft(),
+    { controller: removals, removal } = useWorkoutRemoval(),
     { controller: downloads, download } = useWeekDownload(),
+    { controller: fullDownloads, download: fullDownload } = useTrainingDownload(),
     sync = useWorkoutSyncQueue();
   const [error, setError] = useState<string | null>(null),
     [confirm, setConfirm] = useState(false);
@@ -31,18 +46,34 @@ export default function Account() {
     }
   }
   async function logout() {
+    let releaseDownload: (() => void) | undefined;
     let resume: (() => void) | undefined;
+    let releaseRemoval: (() => void) | undefined;
+    let releaseCorrection: (() => void) | undefined;
+    let releaseExercises: (() => void) | undefined;
     try {
+      releaseDownload = await fullDownloads.reserve();
+      releaseRemoval = removals.pauseWrites();
+      releaseCorrection = corrections.pauseWrites();
+      releaseExercises = ownExercises.pauseWrites();
       resume = sync.pause();
       await downloads.flush();
       await sync.clearForLogout();
       await comments.clearForLogout();
+      await routines.clearForLogout();
+      await ownExercises.clearForLogout();
+      await corrections.clearForLogout();
+      await removals.clearForLogout();
       await controller.clearForLogout();
       await client.logout(person.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos salir. Reintenta.");
     } finally {
       resume?.();
+      releaseExercises?.();
+      releaseCorrection?.();
+      releaseRemoval?.();
+      releaseDownload?.();
     }
   }
   return (
@@ -56,10 +87,16 @@ export default function Account() {
         </Text>
       </View>
       <AppearanceSelect />
+      <TrainingPreferencesEditor />
       <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
       <TrainingCard />
       <CommentDraftCard allowDiscard />
-      <WeekDownloadCard />
+      <LibraryDraftCard />
+      <PersonalExerciseDraftCard />
+      <CorrectionDraftCard />
+      <WorkoutRemovalCard />
+      <Action label="Mis ejercicios" secondary onPress={() => router.navigate("/my-exercises")} />
+      <TrainingDownloadCard />
       {error ? <Notice message={error} /> : null}
       {training.error ? <Notice message={training.error} /> : null}
       {person.role === "coach" ? (
@@ -117,7 +154,7 @@ export default function Account() {
           )}
         </>
       ) : null}
-      {download.busy ? (
+      {download.busy || fullDownload.busy ? (
         <Text style={[s.body, { color: p.muted }]}>
           Espera a que termine la descarga antes de salir.
         </Text>
@@ -137,6 +174,35 @@ export default function Account() {
         label="Salir"
         secondary
         disabled={
+          !fullDownload.ready ||
+          fullDownload.busy ||
+          fullDownload.reserved ||
+          !removal.ready ||
+          removal.busy ||
+          removal.paused ||
+          removal.blocked ||
+          removal.dirty ||
+          !!removal.pending ||
+          !correction.ready ||
+          correction.busy ||
+          correction.paused ||
+          correction.blocked ||
+          correction.dirty ||
+          !!correction.pending ||
+          !!correction.draft?.changed ||
+          !exercises.ready ||
+          exercises.busy ||
+          exercises.paused ||
+          exercises.blocked ||
+          exercises.dirty ||
+          !!exercises.pending ||
+          !!exercises.draft?.changed ||
+          !library.ready ||
+          library.blocked ||
+          library.busy ||
+          library.dirty ||
+          !!library.pending ||
+          library.drafts.some((d) => d.changed) ||
           !training.ready ||
           training.blocked ||
           !!training.active ||

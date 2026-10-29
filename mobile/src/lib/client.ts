@@ -1,3 +1,46 @@
+import { bundleSchema } from "../../../src/lib/offline/training-bundle";
+import { assignedContextSchema } from "../../../src/lib/workout/training-context";
+import {
+  workoutRemovalSnapshotSchema,
+  workoutRemovalSchema,
+  workoutRemovalReceiptSchema,
+  type WorkoutRemoval,
+} from "../../../src/lib/mobile/workout-removal-contracts";
+import { trainingProgressSchema } from "../../../src/lib/mobile/training-progress-contracts";
+import {
+  workoutCorrectionSnapshotSchema,
+  workoutCorrectionSchema,
+  workoutCorrectionReceiptSchema,
+  type WorkoutCorrection,
+} from "../../../src/lib/mobile/workout-correction-contracts";
+import {
+  personalExerciseLibrarySchema,
+  personalExerciseMutationSchema,
+  personalExerciseResultSchema,
+  type PersonalExerciseMutation,
+} from "../../../src/lib/mobile/personal-exercise-contracts";
+import {
+  typedPersonalLibrarySchema,
+  upgradePersonalLibrary,
+  typedPersonalMutationSchema,
+  typedPersonalMutationResultSchema,
+  type TypedPersonalMutation,
+} from "../../../src/lib/mobile/typed-personal-contracts";
+import {
+  personalWorkoutPayloadSchema,
+  type PersonalWorkoutPayload,
+} from "../../../src/lib/mobile/personal-workout-contracts";
+import {
+  recordingPayloadSchema,
+  recordingSaveSchema,
+  type RecordingPayload,
+} from "../../../src/lib/mobile/recording-contracts";
+import {
+  typedRecordingPayloadSchema,
+  typedRecordingSaveSchema,
+  typedWorkoutSchema,
+  type TypedRecordingPayload,
+} from "../../../src/lib/mobile/typed-recording-contracts";
 import {
   personalLibrarySchema,
   personalMutationSchema,
@@ -10,6 +53,10 @@ import {
   mobileExerciseDetailSchema,
   parseExerciseHistoryCursor,
 } from "../../../src/lib/mobile/exercise-contracts";
+import {
+  typedCatalogSchema,
+  typedExerciseDetailSchema,
+} from "../../../src/lib/mobile/typed-exercise-contracts";
 import { z } from "zod";
 import {
   mobileErrorSchema,
@@ -485,6 +532,23 @@ export class MobileClient {
         "El servidor no confirmó esta cuenta. Conservamos el registro local.",
       );
   }
+  async trainingDownload() {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id;
+    const parsed = bundleSchema.safeParse(await this.read("training-download"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La descarga requiere una versión compatible. Conservamos tu copia anterior.",
+      );
+    if (parsed.data.userId !== userId)
+      throw new MobileError(
+        "identity",
+        "La descarga no corresponde a tu cuenta. Conservamos tu copia anterior.",
+      );
+    return parsed.data;
+  }
   async downloadWeek() {
     if (this.state.status !== "authenticated")
       throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
@@ -554,6 +618,27 @@ export class MobileClient {
     this.confirmedComment(workoutId, result.workoutId);
     return result;
   }
+  async assignedRoutine(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Esa rutina no está disponible.", 404);
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const owner = this.state.session.profile.id,
+      generation = this.generation,
+      normalized = id.toLowerCase();
+    const parsed = assignedContextSchema.safeParse(
+      await this.read("training-sessions/" + normalized),
+    );
+    this.current(generation);
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La rutina recibida necesita una versión compatible de la app.",
+      );
+    if (parsed.data.userId !== owner || parsed.data.session.id !== normalized)
+      throw new MobileError("identity", "La rutina recibida no coincide con tu cuenta. Reintenta.");
+    return parsed.data;
+  }
   async routine(id: string) {
     if (!z.uuid().safeParse(id).success)
       throw new MobileError("not_found", "Esa rutina no está disponible.", 404);
@@ -611,6 +696,117 @@ export class MobileClient {
     this.listeners.forEach((fn) => fn());
     return result;
   }
+  private async readTrainingLibrary(path: "training-library" | "training-library/export") {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id,
+      generation = this.generation;
+    let value: unknown;
+    try {
+      value = await this.read(path);
+    } catch (error) {
+      this.current(generation);
+      if (!(error instanceof MobileError) || ![404, 503].includes(error.status)) throw error;
+      const legacy = await this.readPersonalLibrary(
+        path === "training-library" ? "library" : "library/export",
+      );
+      value = upgradePersonalLibrary(legacy);
+    }
+    this.current(generation);
+    const parsed = typedPersonalLibrarySchema.safeParse(value);
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tus rutinas recibidas no son compatibles. Actualiza la app y reintenta.",
+      );
+    if (parsed.data.userId !== userId)
+      throw new MobileError("identity", "Las rutinas recibidas no corresponden a tu cuenta.");
+    return parsed.data;
+  }
+  async trainingLibrary() {
+    return this.readTrainingLibrary("training-library");
+  }
+  private async readPersonalExercises(path: "personal-exercises" | "personal-exercises/export") {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id;
+    const parsed = personalExerciseLibrarySchema.safeParse(await this.read(path));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tus ejercicios necesitan una versión compatible. Conserva tus cambios y actualiza la app.",
+      );
+    if (parsed.data.userId !== userId)
+      throw new MobileError("identity", "Los ejercicios recibidos no corresponden a tu cuenta.");
+    return parsed.data;
+  }
+  async personalExercises() {
+    return this.readPersonalExercises("personal-exercises");
+  }
+  async exportPersonalExercises() {
+    return this.readPersonalExercises("personal-exercises/export");
+  }
+  async mutatePersonalExercise(value: PersonalExerciseMutation, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos los cambios para su cuenta original.",
+      );
+    const input = personalExerciseMutationSchema.safeParse(value);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa los datos del ejercicio.", 400);
+    const result = personalExerciseResultSchema.safeParse(
+      await this.read("personal-exercises/mutations", input.data),
+    );
+    if (!result.success)
+      throw new MobileError(
+        "version",
+        "No pudimos interpretar la confirmación. Conserva tus cambios y reintenta.",
+      );
+    if (
+      result.data.requestId !== input.data.requestId ||
+      result.data.targetId !== input.data.targetId
+    )
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este intento. Conservamos tus cambios.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return result.data;
+  }
+  async exportTrainingLibrary() {
+    return this.readTrainingLibrary("training-library/export");
+  }
+  async mutateTrainingLibrary(value: TypedPersonalMutation, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos los cambios para su cuenta original.",
+      );
+    const input = typedPersonalMutationSchema.safeParse(value);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa los datos de la rutina.", 400);
+    if (input.data.operation.endsWith("_reorder") && input.data.targetId !== expectedUserId)
+      throw new MobileError("identity", "El orden no corresponde a tu cuenta.");
+    const parsed = typedPersonalMutationResultSchema.safeParse(
+      await this.read("training-library/mutations", input.data),
+    );
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "No pudimos interpretar la confirmación. Conserva tus cambios y reintenta.",
+      );
+    const result = parsed.data;
+    if (result.requestId !== input.data.requestId || result.targetId !== input.data.targetId)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este intento. Conservamos tus cambios.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return result;
+  }
   async exerciseCatalog() {
     const parsed = mobileCatalogSchema.safeParse(await this.read("exercises"));
     if (!parsed.success)
@@ -619,6 +815,60 @@ export class MobileClient {
         "La biblioteca recibida no es compatible. Actualiza la app y reintenta.",
       );
     return parsed.data;
+  }
+  async trainingCatalog() {
+    const generation = this.generation;
+    try {
+      const result = typedCatalogSchema.safeParse(await this.read("training-catalog"));
+      this.current(generation);
+      if (!result.success)
+        throw new MobileError(
+          "version",
+          "La biblioteca recibida necesita una versión compatible de la app.",
+        );
+      return result.data;
+    } catch (error) {
+      if (!(error instanceof MobileError) || ![404, 503].includes(error.status)) throw error;
+      this.current(generation);
+      const legacy = await this.exerciseCatalog();
+      this.current(generation);
+      return typedCatalogSchema.parse({
+        version: 2,
+        exercises: legacy.exercises.map((e) => ({ ...e, recordType: null })),
+      });
+    }
+  }
+  async trainingExerciseDetail(id: string, cursor?: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese ejercicio no está disponible.", 404);
+    if (cursor !== undefined && !parseExerciseHistoryCursor(cursor))
+      throw new MobileError("invalid_input", "El filtro de historial no es válido.", 400);
+    const generation = this.generation,
+      normalized = id.toLowerCase();
+    try {
+      const result = typedExerciseDetailSchema.safeParse(
+        await this.read(
+          "training-catalog/" +
+            normalized +
+            (cursor ? "?cursor=" + encodeURIComponent(cursor) : ""),
+        ),
+      );
+      this.current(generation);
+      if (!result.success)
+        throw new MobileError(
+          "version",
+          "La ficha recibida necesita una versión compatible de la app.",
+        );
+      if (result.data.exercise.id !== normalized)
+        throw new MobileError("identity", "El ejercicio recibido no coincide. Reintenta.");
+      return result.data;
+    } catch (error) {
+      if (!(error instanceof MobileError) || ![404, 503].includes(error.status)) throw error;
+      this.current(generation);
+      const legacy = await this.exerciseDetail(normalized, cursor);
+      this.current(generation);
+      return legacy;
+    }
   }
   async exerciseDetail(id: string, cursor?: string) {
     if (!z.uuid().safeParse(id).success)
@@ -659,8 +909,255 @@ export class MobileClient {
       throw new MobileError("identity", "El ejercicio recibido no coincide. Reintenta.");
     return value;
   }
+  async trainingProgress() {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id,
+      generation = this.generation;
+    const result = trainingProgressSchema.safeParse(await this.read("training-progress"));
+    this.current(generation);
+    if (!result.success)
+      throw new MobileError(
+        "version",
+        "El progreso necesita una versión compatible. Actualiza la app.",
+      );
+    if (result.data.userId !== userId)
+      throw new MobileError("identity", "El historial recibido no corresponde a tu cuenta.");
+    return result.data;
+  }
+  async workoutCorrection(id: string, expectedUserId?: string) {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id,
+      generation = this.generation;
+    if (expectedUserId !== undefined && expectedUserId !== userId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos la corrección para su cuenta original.",
+      );
+    const parsedId = z
+      .uuid()
+      .transform((v) => v.toLowerCase())
+      .safeParse(id);
+    if (!parsedId.success)
+      throw new MobileError("not_found", "Ese entrenamiento no está disponible.", 404);
+    const snapshot = workoutCorrectionSnapshotSchema.safeParse(
+      await this.read("workout-corrections/" + parsedId.data),
+    );
+    this.current(generation);
+    if (!snapshot.success)
+      throw new MobileError(
+        "version",
+        "El resultado necesita una versión compatible. Conservamos tus cambios.",
+      );
+    if (snapshot.data.userId !== userId || snapshot.data.workout.id !== parsedId.data)
+      throw new MobileError(
+        "identity",
+        "El resultado recibido no corresponde a esta cuenta y entrenamiento.",
+      );
+    return snapshot.data;
+  }
+  async correctWorkout(value: WorkoutCorrection, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos la corrección para su cuenta original.",
+      );
+    const generation = this.generation,
+      input = workoutCorrectionSchema.safeParse(value);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa la corrección del entrenamiento.", 400);
+    const receipt = workoutCorrectionReceiptSchema.safeParse(
+      await this.read("workout-corrections", input.data),
+    );
+    this.current(generation);
+    if (!receipt.success)
+      throw new MobileError(
+        "version",
+        "No pudimos interpretar la confirmación. Conserva tus cambios y reintenta.",
+      );
+    if (
+      receipt.data.requestId !== input.data.requestId ||
+      receipt.data.workoutId !== input.data.workoutId ||
+      receipt.data.revision <= input.data.expectedRevision
+    )
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó esta corrección. Conservamos tus cambios.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return receipt.data;
+  }
+  async workoutRemoval(id: string, expectedUserId?: string) {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id,
+      generation = this.generation;
+    if (expectedUserId !== undefined && expectedUserId !== userId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos la eliminación para su cuenta original.",
+      );
+    const parsedId = z
+      .uuid()
+      .transform((v) => v.toLowerCase())
+      .safeParse(id);
+    if (!parsedId.success)
+      throw new MobileError("not_found", "Ese entrenamiento no está disponible.", 404);
+    const snapshot = workoutRemovalSnapshotSchema.safeParse(
+      await this.read("workout-removals/" + parsedId.data),
+    );
+    this.current(generation);
+    if (!snapshot.success)
+      throw new MobileError(
+        "version",
+        "El resultado necesita una versión compatible. Conservamos tus cambios.",
+      );
+    if (snapshot.data.userId !== userId || snapshot.data.workout.id !== parsedId.data)
+      throw new MobileError(
+        "identity",
+        "El resultado recibido no corresponde a esta cuenta y entrenamiento.",
+      );
+    return snapshot.data;
+  }
+  async removeWorkout(value: WorkoutRemoval, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos la eliminación para su cuenta original.",
+      );
+    const generation = this.generation,
+      input = workoutRemovalSchema.safeParse(value);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa la eliminación del entrenamiento.", 400);
+    const receipt = workoutRemovalReceiptSchema.safeParse(
+      await this.read("workout-removals", input.data),
+    );
+    this.current(generation);
+    if (!receipt.success)
+      throw new MobileError(
+        "version",
+        "No pudimos interpretar la confirmación. Conserva tus cambios y reintenta.",
+      );
+    if (
+      receipt.data.requestId !== input.data.requestId ||
+      receipt.data.workoutId !== input.data.workoutId ||
+      receipt.data.revision <= input.data.expectedRevision
+    )
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó esta eliminación. Conservamos tus cambios.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return receipt.data;
+  }
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
+  }
+  async savePersonalWorkout(payload: PersonalWorkoutPayload, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos el entrenamiento para su cuenta original.",
+      );
+    const input = personalWorkoutPayloadSchema.safeParse(payload);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa el entrenamiento antes de enviarlo.", 400);
+    const parsed = mobileSaveSchema.safeParse(
+      await this.read("personal-workouts", { version: 1, payload: input.data }),
+    );
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La confirmación no es compatible. Conservamos tu registro.",
+      );
+    if (parsed.data.workoutId !== input.data.id)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este entrenamiento. Conservamos el registro.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return parsed.data;
+  }
+  async saveRecording(payload: RecordingPayload, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos el entrenamiento para su cuenta original.",
+      );
+    const input = recordingPayloadSchema.safeParse(payload);
+    if (!input.success)
+      throw new MobileError(
+        "invalid_input",
+        "Revisa el entrenamiento y su estructura antes de enviarlo.",
+        400,
+      );
+    const parsed = recordingSaveSchema.safeParse(
+      await this.read("recordings", { version: 2, payload: input.data }),
+    );
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La confirmación no es compatible. Conservamos tu registro.",
+      );
+    if (parsed.data.workoutId !== input.data.id)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este entrenamiento. Conservamos el registro.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return parsed.data;
+  }
+  async typedWorkout(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese entrenamiento no está disponible.", 404);
+    const normalized = id.toLowerCase();
+    const result = typedWorkoutSchema.safeParse(await this.read("typed-recordings/" + normalized));
+    if (!result.success)
+      throw new MobileError("version", "Este resultado necesita una versión compatible de la app.");
+    if (result.data.workout.id !== normalized)
+      throw new MobileError("identity", "El entrenamiento recibido no coincide. Reintenta.");
+    return result.data;
+  }
+  async workoutResult(id: string) {
+    try {
+      return await this.typedWorkout(id);
+    } catch (error) {
+      // Legacy results and an older server have no typed endpoint. A malformed
+      // typed result, identity mismatch or expired session must never fall back.
+      if (!(error instanceof MobileError) || ![404, 503].includes(error.status)) throw error;
+      return this.workout(id);
+    }
+  }
+  async saveTypedRecording(payload: TypedRecordingPayload, expectedUserId: string) {
+    if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)
+      throw new MobileError(
+        "identity",
+        "La cuenta cambió. Conservamos el entrenamiento para su cuenta original.",
+      );
+    const input = typedRecordingPayloadSchema.safeParse(payload);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa las métricas y notas antes de enviarlo.", 400);
+    const result = typedRecordingSaveSchema.safeParse(
+      await this.read("typed-recordings", { version: 3, payload: input.data }),
+    );
+    if (!result.success)
+      throw new MobileError(
+        "version",
+        "La confirmación no es compatible. Conservamos tu registro.",
+      );
+    if (result.data.workoutId !== input.data.id)
+      throw new MobileError(
+        "identity",
+        "El servidor no confirmó este entrenamiento. Conservamos el registro.",
+      );
+    this.dataRevision++;
+    this.listeners.forEach((fn) => fn());
+    return result.data;
   }
   async saveWorkout(payload: WorkoutPayload, expectedUserId: string) {
     if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)

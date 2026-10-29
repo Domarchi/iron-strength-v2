@@ -7,6 +7,9 @@ import {
   type AdminClient,
 } from "@/test/int/helpers";
 import { getWorkoutContext } from "./workout-context";
+import { defaultPrescriptionInput, parsePrescriptionInput } from "@/domain/prescription-input";
+import { typedRecordingFixture } from "@/test/fixtures/typed-recording";
+import { saveTypedWorkoutRecording } from "./typed-recordings";
 
 const admin = adminClient();
 
@@ -21,6 +24,7 @@ describe("getWorkoutContext (RF-19, RF-20, RF-15b, DC-9)", () => {
   let sessionA: string;
   let sessionW2: string;
   let otherSession: string;
+  let typedHistoryId: string | undefined;
 
   beforeAll(async () => {
     await resetUsers(admin);
@@ -53,7 +57,11 @@ describe("getWorkoutContext (RF-19, RF-20, RF-15b, DC-9)", () => {
     squatId = ids.data!.find((e) => e.name === "Sentadilla")!.id;
     pullUpId = ids.data!.find((e) => e.name === "Dominadas")!.id;
   });
-  afterAll(() => resetUsers(admin));
+  afterAll(async () => {
+    await resetUsers(admin);
+    if (typedHistoryId)
+      expect((await admin.from("exercises").delete().eq("id", typedHistoryId)).error).toBeNull();
+  });
 
   beforeEach(async () => {
     await admin.from("workouts").delete().in("student_id", [studentId, otherId]);
@@ -180,6 +188,54 @@ describe("getWorkoutContext (RF-19, RF-20, RF-15b, DC-9)", () => {
         restSeconds: 45,
       });
   });
+  it("conserva el tipo legado null al consultar una prescripción canónica con detalle y alternativa", async () => {
+    const prescribed = parsePrescriptionInput(defaultPrescriptionInput(null));
+    const series = [
+      { ...prescribed.target, targetWeightKg: 0 },
+      { ...prescribed.target, targetWeightKg: 20.5 },
+      { ...prescribed.target, targetWeightKg: null },
+    ];
+    const updated = await admin
+      .from("session_exercises")
+      .update({
+        reps_min: null,
+        reps_max: null,
+        target_weight_kg: null,
+        typed_prescription: { ...prescribed, series },
+      })
+      .eq("program_session_id", sessionA)
+      .eq("exercise_id", squatId)
+      .select("id")
+      .single();
+    expect(updated.error).toBeNull();
+    const alt = { ...prescribed, sets: 2 };
+    expect(
+      (
+        await admin.from("session_exercise_alternatives").insert({
+          session_exercise_id: updated.data!.id,
+          exercise_id: pullUpId,
+          position: 0,
+          sets: 2,
+          reps_min: null,
+          reps_max: null,
+          typed_prescription: alt,
+        })
+      ).error,
+    ).toBeNull();
+    const result = await load(sessionA);
+    if (!result.ok) throw Error("context");
+    expect(result.context.exercises[0].prescribed.series).toEqual([
+      { repsMin: 8, repsMax: 12, targetWeightKg: 0 },
+      { repsMin: 8, repsMax: 12, targetWeightKg: 20.5 },
+      { repsMin: 8, repsMax: 12, targetWeightKg: null },
+    ]);
+    expect(result.context.exercises[0].alternatives?.[0].prescribed).toEqual({
+      sets: 2,
+      repsMin: 8,
+      repsMax: 12,
+      targetWeightKg: null,
+    });
+  });
 
   it("sin historial: sin 'última vez', sin peso previo y sin sugerencia", async () => {
     const result = await load(sessionA);
@@ -189,6 +245,54 @@ describe("getWorkoutContext (RF-19, RF-20, RF-15b, DC-9)", () => {
       lastWeightKg: null,
       suggestion: null,
     });
+  });
+  it("el historial de otro ejercicio cronometrado no se reinterpreta como repeticiones", async () => {
+    await pastWorkout("2025-03-03T15:00:00Z", [{ exerciseId: squatId, weightKg: 60, reps: 8 }]);
+    const created = await admin
+      .from("exercises")
+      .insert({ name: "Contexto temporal aislado", muscle_group: "Core", record_type: "duration" })
+      .select("id")
+      .single();
+    expect(created.error).toBeNull();
+    typedHistoryId = created.data!.id;
+    const value = typedRecordingFixture();
+    if (value.source !== "free") throw Error("fixture");
+    value.workout.startedAt = "2025-03-04T15:00:00Z";
+    value.workout.finishedAt = "2025-03-04T15:20:00Z";
+    value.workout.durationSeconds = 1200;
+    const row = {
+      ...value.structure.exercises[0],
+      exerciseId: typedHistoryId,
+      prescribed: parsePrescriptionInput(defaultPrescriptionInput("duration")),
+      supersetId: null,
+      supersetRestSeconds: null,
+    };
+    value.structure.exercises = [row];
+    value.workout.exerciseNotes = [{ sessionExerciseId: row.id, note: null }];
+    value.workout.sets = [
+      {
+        exerciseId: typedHistoryId,
+        position: 0,
+        setNumber: 1,
+        metrics: {
+          recordType: "duration",
+          weightKg: null,
+          reps: null,
+          durationSeconds: 60,
+          distanceMeters: null,
+        },
+        setType: "working",
+        effort: null,
+      },
+    ];
+    await saveTypedWorkoutRecording(studentDb, value);
+    const result = await load(sessionA);
+    if (!result.ok) throw Error("context");
+    expect(result.context.exercises[0].lastWeightKg).toBe(60);
+    expect(result.context.exercises[0].last?.sets).toEqual([
+      { weightKg: 60, reps: 8, isWarmup: false },
+    ]);
+    expect(result.context.exercises[1].last).toBeNull();
   });
 
   it("con historial: muestra la última vez y precarga el último peso", async () => {

@@ -2,7 +2,8 @@
 // el cliente con la sesión del usuario: la RLS decide quién puede leer y escribir. Además se aplica
 // la regla de RF-17: en un programa ya asignado solo se editan semanas posteriores a la en curso.
 import { z } from "zod";
-import { prescribedSeriesSchema, type SeriesTarget } from "@/domain/prescription-series";
+import type { SeriesTarget } from "@/domain/prescription-series";
+import { readLegacyRoutinePrescription } from "@/domain/stored-prescription";
 import type { AlternativeRow } from "@/lib/coach/routine-alternatives";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { santiagoDate, type DateString } from "../../domain/dates.ts";
@@ -79,6 +80,7 @@ export type Result<T = object> = ({ ok: true } & T) | { ok: false; reason: Failu
 const todayDefault = () => santiagoDate(new Date());
 
 function failureFromError(error: { code?: string; message: string }): Failure {
+  if (error.code === "55000") return "week_locked";
   if (error.code === "42501") return "forbidden";
   if (error.code === "23514") {
     // Triggers de la base: la semana excede el programa → inválido; 15 ejercicios por sesión → límite.
@@ -205,9 +207,9 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
        program_sessions (
          id, week_number, label, position, revision, title, weekday,
          session_exercises (
-           id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, prescription_sets, note, rest_seconds, superset_id, superset_rest_seconds,
+           id, exercise_id, position, sets, reps_min, reps_max, target_weight_kg, prescription_sets, typed_prescription, note, rest_seconds, superset_id, superset_rest_seconds,
            exercises ( name, muscle_group, equipment, is_bodyweight, progression_increment_kg, archived_at ),
-           session_exercise_alternatives(id,exercise_id,position,sets,reps_min,reps_max,target_weight_kg,prescription_sets,exercises(name,archived_at))
+           session_exercise_alternatives(id,exercise_id,position,sets,reps_min,reps_max,target_weight_kg,prescription_sets,typed_prescription,exercises(name,archived_at))
          )
        )`,
     )
@@ -252,13 +254,7 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
                   exerciseId: a.exercise_id,
                   name: a.exercises.name,
                   archived: a.exercises.archived_at !== null,
-                  ...(a.prescription_sets != null
-                    ? { series: prescribedSeriesSchema.parse(a.prescription_sets) }
-                    : {}),
-                  sets: a.sets,
-                  repsMin: a.reps_min,
-                  repsMax: a.reps_max,
-                  targetWeightKg: a.target_weight_kg === null ? null : Number(a.target_weight_kg),
+                  ...readLegacyRoutinePrescription(a),
                 })),
               restSeconds: e.rest_seconds,
               supersetId: e.superset_id,
@@ -271,14 +267,8 @@ export async function getProgramTree(db: Client, programId: string): Promise<Pro
               incrementKg: Number(ex.progression_increment_kg),
               archived: ex.archived_at !== null,
               position: e.position,
-              sets: e.sets,
-              repsMin: e.reps_min,
-              repsMax: e.reps_max,
-              targetWeightKg: e.target_weight_kg === null ? null : Number(e.target_weight_kg),
+              ...readLegacyRoutinePrescription(e),
               note: e.note,
-              ...(e.prescription_sets != null
-                ? { series: prescribedSeriesSchema.parse(e.prescription_sets) }
-                : {}),
             };
           })
           .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id)),

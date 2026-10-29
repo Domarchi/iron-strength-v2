@@ -1,3 +1,4 @@
+import { queuedPayloadBody } from "../lib/queued-recording";
 import { useCallback, useState } from "react";
 import { santiagoDate } from "../../../src/domain/dates";
 import { router, useFocusEffect } from "expo-router";
@@ -55,6 +56,7 @@ function QueuedEntry({ id }: { id: string }) {
         <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
       </Page>
     );
+  const payload = queuedPayloadBody(entry.payload);
   const confirmed = entry.phase === "confirmed" && queue.verified;
   return (
     <Page>
@@ -62,7 +64,7 @@ function QueuedEntry({ id }: { id: string }) {
       <ScreenIntro
         eyebrow={confirmed ? "CONFIRMADO POR EL SERVIDOR" : "GUARDADO LOCAL · PENDIENTE DE ENVIAR"}
         title={entry.title}
-        description={`${day(santiagoDate(new Date(entry.payload.startedAt)))} · ${entry.payload.sets.length} ${entry.payload.sets.length === 1 ? "serie" : "series"} · ${formatClock(entry.payload.durationSeconds)}`}
+        description={`${day(santiagoDate(new Date(payload.startedAt)))} · ${payload.sets.length} ${payload.sets.length === 1 ? "serie" : "series"} · ${formatClock(payload.durationSeconds)}`}
       />
       <SyncQueueIssue />
       {error ? <Notice message={error} /> : null}
@@ -81,14 +83,10 @@ function QueuedEntry({ id }: { id: string }) {
               ? "Conservamos el mismo identificador y contenido. Se enviará al conectar mientras la app esté abierta."
               : "Comprueba el almacenamiento antes de enviar. Conservamos el cierre y no afirmamos que la cola esté verificada."}
         </Text>
-        {entry.payload.perceivedEffort != null ? (
-          <Text style={[s.body, { color: p.ink }]}>
-            Esfuerzo: {entry.payload.perceivedEffort}/10
-          </Text>
+        {payload.perceivedEffort != null ? (
+          <Text style={[s.body, { color: p.ink }]}>Esfuerzo: {payload.perceivedEffort}/10</Text>
         ) : null}
-        {entry.payload.note ? (
-          <Text style={[s.body, { color: p.ink }]}>{entry.payload.note}</Text>
-        ) : null}
+        {payload.note ? <Text style={[s.body, { color: p.ink }]}>{payload.note}</Text> : null}
         {entry.error ? (
           <Notice
             message={

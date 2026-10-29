@@ -1,38 +1,50 @@
 import { PageHeading } from "@/components/layout/page-heading";
-import Link from "next/link";
 import { Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatKg } from "@/domain/format";
-import { requireUser } from "@/lib/auth/session";
 import { AchievementsList } from "@/components/achievements/achievements-list";
 import { ConstancyStrip } from "@/components/streak/constancy-strip";
+import { TrainingExerciseList } from "@/components/progress/typed-exercise-list";
+import { ProgressReadFailure } from "@/components/progress/read-failure";
+import { requireUser } from "@/lib/auth/session";
 import { santiagoDate } from "@/domain/dates";
 import { getAchievementsOverview } from "@/lib/data/achievements";
-import { listExerciseProgress } from "@/lib/data/progress";
+import { getVisibleTrainingProgress } from "@/lib/data/training-review";
 import { getStreakSummary } from "@/lib/data/streak";
 import { createClient } from "@/lib/supabase/server";
-
+import {
+  navigationContext,
+  progressIndexHref,
+  type TrainingNavigation,
+} from "@/lib/navigation/training-context";
 export const metadata = { title: "Progreso · Iron Strength" };
-
-const shortDate = new Intl.DateTimeFormat("es-CL", {
-  day: "numeric",
-  month: "short",
-  timeZone: "UTC",
-});
-
-async function ExerciseList() {
-  const user = await requireUser();
-  const db = await createClient();
-  const [list, streak] = await Promise.all([
-    listExerciseProgress(db, user.id),
-    getStreakSummary(db, user.id, santiagoDate(new Date())),
-  ]);
-
-  const achievements = await getAchievementsOverview(db, user.id, streak.longest);
-
-  if (list.length === 0) {
-    return (
-      <>
+async function ExerciseList({ navigation }: { navigation: TrainingNavigation }) {
+  const user = await requireUser(),
+    db = await createClient();
+  let value: {
+    review: NonNullable<Awaited<ReturnType<typeof getVisibleTrainingProgress>>>;
+    streak: Awaited<ReturnType<typeof getStreakSummary>>;
+    achievements: Awaited<ReturnType<typeof getAchievementsOverview>>;
+  };
+  try {
+    const [review, streak] = await Promise.all([
+      getVisibleTrainingProgress(db, user.id),
+      getStreakSummary(db, user.id, santiagoDate(new Date())),
+    ]);
+    if (!review) throw Error("No disponible");
+    const achievements = await getAchievementsOverview(db, user.id, streak.longest);
+    value = { review, streak, achievements };
+  } catch (error) {
+    return <ProgressReadFailure error={error} retryHref={progressIndexHref(navigation)} />;
+  }
+  const list = value.review.progress.exercises;
+  return (
+    <>
+      {list.length ? (
+        <>
+          <ConstancyStrip {...value.streak} />
+          <TrainingExerciseList exercises={list} navigation={navigation} />
+        </>
+      ) : (
         <Card>
           <CardContent className="flex flex-col gap-1 pt-6">
             <p className="font-medium">Aquí verás tu progreso.</p>
@@ -42,41 +54,22 @@ async function ExerciseList() {
             </p>
           </CardContent>
         </Card>
-        <AchievementsList {...achievements} />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <ConstancyStrip {...streak} />
-      <ul className="flow-list divide-y divide-border/70 overflow-hidden rounded-lg border bg-card">
-        {list.map((e) => (
-          <li key={e.exerciseId}>
-            <Link
-              href={`/progress/${e.exerciseId}`}
-              className="flex min-h-16 flex-col justify-center gap-0.5 p-3 hover:bg-muted/50"
-            >
-              <span className="font-medium">{e.name}</span>
-              <span className="text-sm text-muted-foreground">
-                {e.isBodyweight
-                  ? `Mejor serie: ${e.bestReps} repeticiones`
-                  : `Mejor peso ${formatKg(e.bestWeightKg)} · 1RM estimado ${formatKg(Math.round(e.bestEstimated1RM * 10) / 10)}`}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {e.workoutCount} {e.workoutCount === 1 ? "entrenamiento" : "entrenamientos"} ·
-                último {shortDate.format(new Date(`${e.lastDate}T00:00:00Z`))}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <AchievementsList {...achievements} />
+      )}
+      <AchievementsList {...value.achievements} />
     </>
   );
 }
-
-export default function ProgressPage() {
+export default async function ProgressPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    semanas?: string | string[];
+    vista?: string | string[];
+    tipo?: string | string[];
+    metrica?: string | string[];
+  }>;
+}) {
+  const navigation = navigationContext(await searchParams);
   return (
     <div className="flow-page flex flex-col gap-4">
       <PageHeading
@@ -85,7 +78,7 @@ export default function ProgressPage() {
         description="Marcas personales y constancia."
       />
       <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}>
-        <ExerciseList />
+        <ExerciseList navigation={navigation} />
       </Suspense>
     </div>
   );

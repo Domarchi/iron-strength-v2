@@ -54,6 +54,26 @@ export async function resetAll(db = admin()): Promise<void> {
     fixtureUsers.push(...data.users.filter((user) => isE2EAccount(user.email)));
     if (data.users.length < 1000) break;
   }
+  // Los ejercicios propios del coach tienen referencias RESTRICT desde sus sesiones.
+  // Retirar sus resultados y programas evita depender del orden de cascadas de Auth.
+  if (fixtureUsers.length) {
+    const removedWorkouts = await db
+      .from("workouts")
+      .delete()
+      .in(
+        "student_id",
+        fixtureUsers.map((user) => user.id),
+      );
+    if (removedWorkouts.error) throw removedWorkouts.error;
+    const { error } = await db
+      .from("programs")
+      .delete()
+      .in(
+        "coach_id",
+        fixtureUsers.map((user) => user.id),
+      );
+    if (error) throw error;
+  }
   for (const user of fixtureUsers) {
     const { data: files, error: listError } = await db.storage
       .from("progress-photos")

@@ -232,3 +232,22 @@ it("la paginación acepta el timestamp con zona que devuelve Postgres", async ()
   ).toBe(200);
   expect(x.history).toHaveBeenCalledWith(cursor);
 });
+
+it("historial acepta el cursor opaco de su cuenta y rechaza otro dueño o cursores repetidos", async () => {
+  const cursor = `v2|${user.id}|2026-10-29T12:00:00+00:00|b0000000-0000-4000-8000-000000000002`;
+  const request = (query: string) =>
+    new Request(`https://example.test?${query}`, { headers: { Authorization: "Bearer valid" } });
+  const valid = setup();
+  expect((await valid.api.history(request("cursor=" + encodeURIComponent(cursor)))).status).toBe(
+    200,
+  );
+  expect(valid.history).toHaveBeenCalledWith(cursor);
+  for (const query of [
+    "cursor=" + encodeURIComponent(cursor.replace(user.id, "a0000000-0000-4000-8000-000000000005")),
+    "cursor=" + encodeURIComponent(cursor) + "&cursor=" + encodeURIComponent(cursor),
+  ]) {
+    const invalid = setup();
+    expect((await invalid.api.history(request(query))).status).toBe(400);
+    expect(invalid.history).not.toHaveBeenCalled();
+  }
+});

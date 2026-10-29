@@ -1,3 +1,14 @@
+import { assignedFromLegacy, assignedFixtureResult } from "./support/assigned-context";
+import {
+  typedRecordingRequestSchema,
+  type TypedRecordingPayload,
+} from "../../src/lib/mobile/typed-recording-contracts";
+import {
+  buildTrainingProgress,
+  type TrainingProgressSource,
+} from "../../src/domain/training-progress";
+import { downloadId } from "../../src/test/fixtures/week-download";
+import { fulfillLegacyTypedResult } from "./support/legacy-result";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import { fulfillEmptyCommentReads } from "./support/comment-fixture";
@@ -78,6 +89,7 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
 }) => {
   const seen: string[] = [];
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    if (await fulfillLegacyTypedResult(route)) return;
     const path = new URL(route.request().url()).pathname;
     seen.push(route.request().method() + " " + path);
     if (await fulfillEmptyCommentReads(route)) return;
@@ -106,7 +118,9 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
                 },
               ],
             }
-          : routine;
+          : path.includes("/training-sessions/")
+            ? assignedFromLegacy(routine, id, program)
+            : routine;
     await route.fulfill({ json: data, headers: { "Access-Control-Allow-Origin": "*" } });
   });
   await enter(page);
@@ -127,7 +141,11 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
   await page.getByRole("button", { name: "Ver alternativas de Sentadilla", exact: true }).click();
   await expect(page.getByText("Prensa", { exact: true })).toBeVisible();
   await expect(page.getByText("Baja con control", { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  expect(
+    await page.evaluate(() =>
+      Object.fromEntries(Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])),
+    ),
+  ).toEqual({ "is:offline:active-user": session.profile.id });
   expect(seen.filter((x) => x.startsWith("POST") && !x.endsWith("auth/login"))).toEqual([]);
   await expect(
     page.getByRole("button", { name: "Empezar entrenamiento", exact: true }),
@@ -148,6 +166,7 @@ test("error de red conserva el recorrido y permite reintentar; estados vacíos y
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   let attempt = 0;
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    if (await fulfillLegacyTypedResult(route)) return;
     if (await fulfillEmptyCommentReads(route)) return;
     if (/auth\/(login|refresh)$/.test(route.request().url()))
       return route.fulfill({ json: session, headers: { "Access-Control-Allow-Origin": "*" } });
@@ -172,11 +191,61 @@ test("error de red conserva el recorrido y permite reintentar; estados vacíos y
   expect(rects.every((h) => h >= 44)).toBe(true);
 });
 
+function consultationProgress() {
+  const rows = [
+    { date: "2026-10-19", exerciseId: id, name: "Sentadilla", weightKg: 50, reps: 6 },
+    { date: "2026-10-21", exerciseId: id, name: "Sentadilla", weightKg: 50, reps: 6 },
+    { date: "2026-10-23", exerciseId: id, name: "Sentadilla", weightKg: 52.5, reps: 6 },
+    { date: "2026-10-20", exerciseId: exercise, name: "Dominadas", weightKg: 0, reps: 8 },
+    { date: "2026-10-22", exerciseId: exercise, name: "Dominadas", weightKg: 0, reps: 12 },
+  ];
+  const source: TrainingProgressSource = {
+    version: 1,
+    userId: id,
+    today: "2026-10-24",
+    workouts: rows.map((r, i) => ({
+      id: downloadId(8900 + i),
+      startedAt: `${r.date}T12:00:00Z`,
+      date: r.date,
+      sourceKind: "assigned",
+      title: null,
+      sessionLabel: "A",
+      durationSeconds: 1800,
+      perceivedEffort: 7,
+      note: "Carga controlada en la última serie",
+      sets: [
+        {
+          id: downloadId(8950 + i),
+          exerciseId: r.exerciseId,
+          name: r.name,
+          muscleGroup: null,
+          position: 0,
+          setNumber: 1,
+          metrics: {
+            recordType: null,
+            weightKg: r.weightKg,
+            reps: r.reps,
+            durationSeconds: null,
+            distanceMeters: null,
+          },
+          setType: "working",
+          effort: null,
+        },
+      ],
+    })),
+  };
+  return { version: 2, userId: id, today: source.today, ...buildTrainingProgress(source) };
+}
 async function emptyAccount(page: Page, seen: string[] = []) {
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    if (await fulfillLegacyTypedResult(route)) return;
     const path = new URL(route.request().url()).pathname;
     seen.push(route.request().method() + " " + path);
     if (await fulfillEmptyCommentReads(route)) return;
+    if (path.endsWith("/training-progress"))
+      return route.fulfill({
+        json: { version: 2, userId: id, today: "2026-10-24", activity: [], exercises: [] },
+      });
     const data = path.endsWith("auth/login")
       ? session
       : path.endsWith("workouts")
@@ -215,9 +284,7 @@ test("sin programa: demo interactiva, recuperación, cierre y resultados separad
   ).toBeChecked();
   await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
   await expect(
-    page.getByText(
-      "1 series realizadas · 10 pendientes. Se guardarán solo las series completadas.",
-    ),
+    page.getByText("1 serie realizada · 10 pendientes. Se guardarán solo las series completadas."),
   ).toBeVisible();
   await page.getByLabel("Esfuerzo percibido", { exact: true }).fill("7");
   await page.getByLabel("Nota del entrenamiento", { exact: true }).fill("Mi primera prueba");
@@ -274,7 +341,8 @@ test("superserie demo avanza por ronda y bloquea sustitución después de comple
 test("registro real conserva el payload ante respuesta perdida y confirma un único resultado", async ({
   page,
 }) => {
-  const sent: unknown[] = [],
+  await page.clock.setFixedTime(new Date("2026-10-24T15:00:00Z"));
+  const sent: { version: number; payload: TypedRecordingPayload }[] = [],
     activeWeek = {
       version: 1,
       kind: "active",
@@ -295,23 +363,29 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
       ],
     };
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    const previous = sent[0]?.payload;
+    if (
+      route.request().method() === "GET" &&
+      route.request().url().includes("/typed-recordings/") &&
+      previous
+    )
+      return route.fulfill({
+        json: assignedFixtureResult(assignedFromLegacy(routine, id, program), previous),
+      });
+    if (await fulfillLegacyTypedResult(route)) return;
     const request = route.request(),
       path = new URL(request.url()).pathname;
     if (await fulfillEmptyCommentReads(route)) return;
-    if (path.endsWith("workouts") && request.method() === "POST") {
-      const body = request.postDataJSON();
+    if (path.endsWith("recordings") && request.method() === "POST") {
+      const body = typedRecordingRequestSchema.parse(request.postDataJSON());
       sent.push(body);
       if (sent.length === 1) return route.abort("internetdisconnected");
       return route.fulfill({
-        json: { version: 1, ok: true, status: "duplicate", workoutId: body.payload.id },
+        json: { version: 3, ok: true, status: "duplicate", workoutId: body.payload.id },
         headers: { "Access-Control-Allow-Origin": "*" },
       });
     }
-    const payload = (
-      sent[0] as
-        | { payload: { id: string; startedAt: string; sets: { weightKg: number; reps: number }[] } }
-        | undefined
-    )?.payload;
+    const payload = sent[0]?.payload.workout;
     const data = /auth\/(login|refresh)$/.test(path)
       ? session
       : path.endsWith("week")
@@ -322,8 +396,8 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
               status: sent.length > 1 ? "done" : "pending",
             })),
           }
-        : path.includes("/sessions/")
-          ? routine
+        : path.includes("/training-sessions/")
+          ? assignedFromLegacy(routine, id, program)
           : {
               version: 1,
               workout: {
@@ -351,10 +425,11 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
   await enter(page);
   await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
-  await page.getByLabel("Peso serie 1", { exact: true }).fill("55");
+  await page.getByLabel("KG serie 1", { exact: true }).fill("55");
+  await page.getByLabel("REPS serie 1", { exact: true }).fill("6");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
   await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
-  await page.getByRole("button", { name: "Guardar entrenamiento", exact: true }).click();
+  await page.getByRole("button", { name: "Confirmar y guardar", exact: true }).click();
   await expect.poll(() => sent.length).toBe(1);
   await setWeekConnectivity(page, false);
   const syncKey = `is:native-sync:v1:${id}`;
@@ -696,9 +771,12 @@ for (const theme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
     const writes: string[] = [];
     await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+      if (await fulfillLegacyTypedResult(route)) return;
       const path = new URL(route.request().url()).pathname;
       if (await fulfillEmptyCommentReads(route)) return;
       if (route.request().method() === "POST") writes.push(path);
+      if (path.endsWith("/training-progress"))
+        return route.fulfill({ json: consultationProgress() });
       const data = path.endsWith("auth/login")
         ? session
         : path.endsWith("week")
@@ -783,7 +861,10 @@ for (const theme of ["light", "dark"] as const) {
       }
       if (name === "Historial")
         await expect(
-          page.getByText("Carga controlada en la última serie", { exact: true }),
+          page
+            .getByText("Carga controlada en la última serie", { exact: true })
+            .filter({ visible: true })
+            .first(),
         ).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         360,

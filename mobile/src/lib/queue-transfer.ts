@@ -1,7 +1,13 @@
-import type { TrainingController } from "./training";
+import type { QueuedWorkoutPayload } from "./queued-recording";
 import type { NativeWorkoutQueue } from "./sync-queue";
 /** The source is retired only after atomic write and readback confirm the complete queue entry. */
-export async function handoffPending(source: TrainingController, queue: NativeWorkoutQueue) {
+export async function handoffPending<P extends QueuedWorkoutPayload>(
+  source: {
+    pendingForQueue(): Promise<{ userId: string; title: string; payload: P } | null>;
+    releaseQueued(id: string, payload: P): Promise<void>;
+  },
+  queue: NativeWorkoutQueue,
+) {
   const epoch = queue.generation();
   const pending = await source.pendingForQueue();
   if (!pending) return null;

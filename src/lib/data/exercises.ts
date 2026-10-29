@@ -2,10 +2,15 @@
 // sesión del usuario: la RLS decide qué ve y qué puede escribir. El catálogo base (coach_id nulo)
 // es de solo lectura; el coach crea, edita y archiva solo los suyos. Nunca se borran: se archivan.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { exerciseInputSchema, type MUSCLE_GROUPS } from "../../domain/schemas.ts";
+import { type MUSCLE_GROUPS } from "../../domain/schemas.ts";
 import type { Database } from "../../types/database.ts";
 import { MOBILE_CATALOG_LIMIT } from "../mobile/exercise-contracts";
 
+import {
+  sharedExerciseCreateSchema,
+  sharedExerciseUpdateSchema,
+} from "../../domain/shared-exercise";
+import { recordTypeSchema, type RecordType } from "../../domain/training-metrics";
 type Client = SupabaseClient<Database>;
 type Row = Database["public"]["Tables"]["exercises"]["Row"];
 
@@ -19,6 +24,8 @@ export type Exercise = {
   progressionIncrementKg: number;
   archivedAt: string | null;
 };
+
+export type SharedExercise = Exercise & { recordType: RecordType };
 
 const COLUMNS =
   "id, coach_id, name, muscle_group, equipment, is_bodyweight, progression_increment_kg, archived_at";
@@ -48,16 +55,24 @@ function toExercise(
   };
 }
 
+const SHARED_COLUMNS = `${COLUMNS},record_type` as const;
+function toSharedExercise(
+  row: Parameters<typeof toExercise>[0] & { record_type: string | null },
+): SharedExercise {
+  return { ...toExercise(row), recordType: recordTypeSchema.parse(row.record_type) };
+}
+
 // ilike trata % y _ como comodines: se escapan para buscar el texto tal cual.
 const escapeLike = (text: string) => text.replace(/[\\%_]/g, "\\$&");
 
 export async function listExercises(
   db: Client,
   options: { group?: string; query?: string; includeArchived?: boolean; limit?: number } = {},
-): Promise<Exercise[]> {
+): Promise<SharedExercise[]> {
   let request = db
     .from("exercises")
-    .select(COLUMNS)
+    .select(SHARED_COLUMNS)
+    .is("personal_owner_id", null)
     .order("name")
     .limit(options.limit ?? 200);
   if (options.group) request = request.eq("muscle_group", options.group);
@@ -67,7 +82,7 @@ export async function listExercises(
 
   const { data, error } = await request;
   if (error) throw new Error(`No se pudieron cargar los ejercicios: ${error.message}`);
-  return data.map(toExercise);
+  return data.map(toSharedExercise);
 }
 
 // One statement gives rows and exact count the same database snapshot. Never join
@@ -77,6 +92,7 @@ export async function listMobileExercises(db: Client): Promise<Exercise[]> {
     .from("exercises")
     .select(COLUMNS, { count: "exact" })
     .is("archived_at", null)
+    .is("record_type", null)
     .order("name")
     .order("id")
     .range(0, MOBILE_CATALOG_LIMIT - 1);
@@ -99,6 +115,7 @@ export async function getActiveExercise(db: Client, id: string): Promise<Exercis
     .from("exercises")
     .select(COLUMNS)
     .eq("id", id)
+    .is("record_type", null)
     .is("archived_at", null)
     .maybeSingle();
   if (error) throw new Error("No se pudo consultar el ejercicio.");
@@ -106,27 +123,38 @@ export async function getActiveExercise(db: Client, id: string): Promise<Exercis
 }
 
 // Un ejercicio propio del coach (no del catálogo base).
-export async function getOwnExercise(db: Client, id: string): Promise<Exercise | null> {
+export async function getOwnExercise(db: Client, id: string): Promise<SharedExercise | null> {
   const { data, error } = await db
     .from("exercises")
-    .select(COLUMNS)
+    .select(SHARED_COLUMNS)
+    .is("personal_owner_id", null)
     .eq("id", id)
     .not("coach_id", "is", null)
     .maybeSingle();
   if (error) throw new Error(`No se pudo cargar el ejercicio: ${error.message}`);
-  return data ? toExercise(data) : null;
+  return data ? toSharedExercise(data) : null;
 }
 
 export type WriteResult =
   { ok: true } | { ok: false; reason: "invalid" | "name_taken" | "forbidden" | "not_found" };
 
 // ¿Existe ya un ejercicio visible (base o propio, archivado o no) con ese nombre?
-async function nameExists(db: Client, name: string, exceptId?: string): Promise<boolean> {
-  let request = db.from("exercises").select("id").ilike("name", escapeLike(name.trim())).limit(1);
+async function nameExists(
+  db: Client,
+  name: string,
+  exceptId?: string,
+): Promise<{ ok: true; exists: boolean } | { ok: false; reason: "forbidden" }> {
+  let request = db
+    .from("exercises")
+    .select("id")
+    .is("personal_owner_id", null)
+    .ilike("name", escapeLike(name.trim()))
+    .limit(1);
   if (exceptId) request = request.neq("id", exceptId);
   const { data, error } = await request;
-  if (error) throw new Error(`No se pudo comprobar el nombre: ${error.message}`);
-  return data.length > 0;
+  if (error?.code === "42501") return { ok: false, reason: "forbidden" };
+  if (error) throw new Error("No se pudo comprobar el nombre del ejercicio.");
+  return { ok: true, exists: data.length > 0 };
 }
 
 export async function createExercise(args: {
@@ -134,16 +162,19 @@ export async function createExercise(args: {
   coachId: string;
   input: unknown;
 }): Promise<WriteResult & { id?: string }> {
-  const parsed = exerciseInputSchema.safeParse(args.input);
+  const parsed = sharedExerciseCreateSchema.safeParse(args.input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
-  const { name, muscleGroup, equipment, progressionIncrementKg } = parsed.data;
+  const { name, muscleGroup, equipment, progressionIncrementKg, recordType } = parsed.data;
 
-  if (await nameExists(args.db, name)) return { ok: false, reason: "name_taken" };
+  const named = await nameExists(args.db, name);
+  if (!named.ok) return named;
+  if (named.exists) return { ok: false, reason: "name_taken" };
 
   const { data, error } = await args.db
     .from("exercises")
     .insert({
       coach_id: args.coachId,
+      record_type: recordType,
       name,
       muscle_group: muscleGroup,
       equipment,
@@ -166,11 +197,13 @@ export async function updateExercise(args: {
   id: string;
   input: unknown;
 }): Promise<WriteResult> {
-  const parsed = exerciseInputSchema.safeParse(args.input);
+  const parsed = sharedExerciseUpdateSchema.safeParse(args.input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
   const { name, muscleGroup, equipment, progressionIncrementKg } = parsed.data;
 
-  if (await nameExists(args.db, name, args.id)) return { ok: false, reason: "name_taken" };
+  const named = await nameExists(args.db, name, args.id);
+  if (!named.ok) return named;
+  if (named.exists) return { ok: false, reason: "name_taken" };
 
   const { data, error } = await args.db
     .from("exercises")

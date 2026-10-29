@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { listDrafts } from "@/lib/workout/draft";
+import { localAssignedTrainings } from "@/lib/workout/local-typed-training";
 import { orderScheduledSessions, scheduleState, WEEKDAYS } from "@/domain/session-schedule";
 import { SessionStart } from "./session-start";
 import { RoutinePreview } from "./routine-preview";
@@ -157,13 +158,19 @@ export function WeekOverview({
   userId: string;
   view: Extract<WeekView, { kind: "active" }>;
   today: string;
-  streak: { current: number; longest: number };
+  streak: { current: number; longest: number } | null;
 }) {
   const scheduled = orderScheduledSessions(view.sessions);
   const resumeId = useSyncExternalStore(
     subscribeDrafts,
     () => {
       try {
+        const typed = localAssignedTrainings(window.localStorage, userId).find(
+          (r) =>
+            r.phase === "in_progress" &&
+            view.sessions.some((s) => s.status !== "done" && s.sessionId === r.sessionId),
+        );
+        if (typed) return typed.sessionId;
         return (
           listDrafts(window.localStorage, userId)
             .filter(
@@ -252,7 +259,7 @@ export function WeekOverview({
           {view.extraCount} {view.extraCount === 1 ? "sesión extra" : "sesiones extra"} esta semana.
         </p>
       ) : null}
-      <StreakChip current={streak.current} longest={streak.longest} />
+      {streak ? <StreakChip current={streak.current} longest={streak.longest} /> : null}
     </div>
   );
 }

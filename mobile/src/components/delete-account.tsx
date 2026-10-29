@@ -1,3 +1,9 @@
+import { useTrainingDownload } from "../lib/training-download-context";
+import { useWorkoutRemoval } from "../lib/workout-removal-context";
+import { useCorrectionDraft } from "../lib/correction-context";
+import { useTrainingPreferences } from "../lib/training-preferences-context";
+import { usePersonalExerciseDraft } from "../lib/personal-exercise-context";
+import { useLibraryDrafts } from "../lib/library-context";
 import { useWeekDownload } from "../lib/week-context";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
@@ -9,12 +15,18 @@ import { useAccountRemoval } from "../lib/account-removal-context";
 import { useCommentDraft } from "../lib/comment-context";
 import { useWorkoutSyncQueue } from "../lib/sync-context";
 export function DeleteAccount() {
+  const { controller: correctionController, correction } = useCorrectionDraft();
+  const { controller: workoutRemovals, removal: workoutRemoval } = useWorkoutRemoval();
+  const { controller: preferencesController, preferences } = useTrainingPreferences();
+  const { controller: exerciseController, exercises } = usePersonalExerciseDraft();
   const p = usePalette(),
     { client, state } = useSession(),
     { controller, training } = useTraining(),
     { controller: removalController } = useAccountRemoval(),
     { controller: comments, draft } = useCommentDraft(),
+    { controller: routines, library } = useLibraryDrafts(),
     { controller: downloads, download } = useWeekDownload(),
+    { controller: fullDownloads, download: fullDownload } = useTrainingDownload(),
     sync = useWorkoutSyncQueue();
   const [open, setOpen] = useState(false),
     [confirmation, setConfirmation] = useState(""),
@@ -40,26 +52,62 @@ export function DeleteAccount() {
       sync.syncing ||
       sync.transferring ||
       sync.paused ||
+      preferences.busy ||
+      preferences.paused ||
+      !preferences.ready ||
+      !workoutRemoval.ready ||
+      workoutRemoval.busy ||
+      workoutRemoval.paused ||
+      !correction.ready ||
+      correction.busy ||
+      correction.paused ||
+      !exercises.ready ||
+      exercises.busy ||
+      exercises.paused ||
+      library.busy ||
+      !library.ready ||
       draft.busy ||
+      fullDownload.busy ||
+      fullDownload.reserved ||
+      !fullDownload.ready ||
       downloads.getSnapshot().busy ||
       offline
     )
       return;
     setBusy(true);
     setError(null);
+    let releaseDownload: (() => void) | undefined;
     let resume: (() => void) | undefined;
+    let resumePreferences: (() => void) | undefined;
+    let resumeWorkoutRemoval: (() => void) | undefined;
+    let resumeCorrection: (() => void) | undefined;
+    let resumeExercises: (() => void) | undefined;
     try {
+      releaseDownload = await fullDownloads.reserve();
+      resumeWorkoutRemoval = workoutRemovals.pauseWrites();
+      resumeCorrection = correctionController.pauseWrites();
+      resumeExercises = exerciseController.pauseWrites();
+      resumePreferences = preferencesController.pauseWrites();
       resume = sync.pause();
       // Flush valid drafts before unmounting the training provider. Unknown formats stay until explicit deletion.
       await downloads.flush();
       if (!sync.queue.blocked) await sync.flush();
       if (!training.blocked) await controller.flush();
       if (!draft.blocked) await comments.flush();
+      if (!library.blocked) await routines.flush();
+      if (!exercises.blocked) await exerciseController.flush();
+      if (!correction.blocked) await correctionController.flush();
+      if (!workoutRemoval.blocked) await workoutRemovals.flush();
       await removalController.request(userId, () => client.deleteAccount(confirmation, userId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pudimos completar la eliminación.");
     } finally {
       resume?.();
+      resumePreferences?.();
+      resumeExercises?.();
+      resumeCorrection?.();
+      resumeWorkoutRemoval?.();
+      releaseDownload?.();
       setBusy(false);
     }
   }
@@ -67,11 +115,17 @@ export function DeleteAccount() {
     <View style={[s.divider, { borderColor: p.border }]}>
       <Text style={[s.subheading, { color: p.ink }]}>Borrar mi cuenta</Text>
       <Text style={[s.body, { color: p.muted }]}>
-        Se borran para siempre tu cuenta, planes asignados, entrenamientos, medidas, fotos, logros y
-        comentarios de tus entrenamientos. También se descartan los registros, mensajes pendientes y
-        demos y descargas de esta cuenta en este dispositivo. No se puede deshacer. Antes puedes
-        exportar tu historial desde Cuenta en la web.
+        Se borran para siempre tu cuenta, ejercicios propios, rutinas personales, planes asignados,
+        entrenamientos, medidas, fotos, logros y comentarios de tus entrenamientos. También se
+        descartan los registros, mensajes pendientes y demos y descargas de esta cuenta en este
+        dispositivo. No se puede deshacer. Antes puedes exportar tu historial desde Cuenta en la
+        web.
       </Text>
+      {preferences.busy ? (
+        <Text style={[s.caption, { color: p.muted }]}>
+          Espera a que se guarden tus preferencias antes de borrar la cuenta.
+        </Text>
+      ) : null}
       {offline ? (
         <Text style={[s.body, { color: p.muted }]}>
           Conecta para borrar tu cuenta. Tus datos locales se conservan.
@@ -96,6 +150,20 @@ export function DeleteAccount() {
             disabled={
               !isDeleteConfirmation(confirmation) ||
               !training.ready ||
+              preferences.busy ||
+              preferences.paused ||
+              !preferences.ready ||
+              !workoutRemoval.ready ||
+              workoutRemoval.busy ||
+              workoutRemoval.paused ||
+              !correction.ready ||
+              correction.busy ||
+              correction.paused ||
+              !exercises.ready ||
+              exercises.busy ||
+              exercises.paused ||
+              library.busy ||
+              !library.ready ||
               training.busy ||
               training.closing ||
               !sync.queue.ready ||
@@ -105,6 +173,9 @@ export function DeleteAccount() {
               sync.paused ||
               !draft.ready ||
               draft.busy ||
+              !fullDownload.ready ||
+              fullDownload.busy ||
+              fullDownload.reserved ||
               !download.ready ||
               download.busy ||
               offline
@@ -130,6 +201,20 @@ export function DeleteAccount() {
           label="Quiero borrar mi cuenta"
           secondary
           disabled={
+            preferences.busy ||
+            preferences.paused ||
+            !preferences.ready ||
+            !workoutRemoval.ready ||
+            workoutRemoval.busy ||
+            workoutRemoval.paused ||
+            !correction.ready ||
+            correction.busy ||
+            correction.paused ||
+            !exercises.ready ||
+            exercises.busy ||
+            exercises.paused ||
+            library.busy ||
+            !library.ready ||
             training.busy ||
             training.closing ||
             !sync.queue.ready ||
@@ -139,6 +224,9 @@ export function DeleteAccount() {
             sync.paused ||
             draft.busy ||
             !draft.ready ||
+            !fullDownload.ready ||
+            fullDownload.busy ||
+            fullDownload.reserved ||
             !download.ready ||
             download.busy ||
             offline

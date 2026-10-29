@@ -1,3 +1,10 @@
+import { useWorkoutRemoval } from "../../../lib/workout-removal-context";
+import { trainingProgressReturn } from "../../../lib/training-progress-view";
+import { useTrainingPreferences } from "../../../lib/training-preferences-context";
+import { formatWeight } from "../../../../../src/domain/training-tools";
+import { TypedResult } from "../../../components/typed-result";
+import type { TypedWorkout } from "../../../../../src/lib/mobile/typed-recording-contracts";
+import { workoutTitle } from "../../../../../src/domain/workout-title";
 import { progressReturn } from "../../../lib/progress-view";
 import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
@@ -12,6 +19,8 @@ import type { MobileWorkout } from "../../../../../src/lib/mobile/contracts";
 import { santiagoDate } from "../../../../../src/domain/dates";
 import { setVolume } from "../../../../../src/domain/volume";
 export default function Result() {
+  const { preferences } = useTrainingPreferences();
+  const { removal } = useWorkoutRemoval();
   const p = usePalette(),
     params = useLocalSearchParams<{
       id: string;
@@ -19,13 +28,16 @@ export default function Result() {
       exercise?: string;
       weeks?: string;
       metric?: string;
+      progressVersion?: string;
+      recordType?: string;
+      from?: string;
     }>(),
     { id, demo } = params,
     { client } = useSession(),
     { training } = useTraining();
   const sample = demo === "1" ? training.demos.find((x) => x.id === id) : null;
-  const request = useCallback(async (): Promise<MobileWorkout> => {
-    if (demo !== "1") return client.workout(id);
+  const request = useCallback(async (): Promise<MobileWorkout | TypedWorkout> => {
+    if (demo !== "1") return client.workoutResult(id);
     if (!sample) throw Error("El resultado demo no está disponible en este dispositivo.");
     const payload = sample.payload,
       volume = setVolume(payload.sets),
@@ -69,7 +81,7 @@ export default function Result() {
     };
   }, [client, id, demo, sample]);
   const q = useQuery(request),
-    w = q.value?.workout,
+    w = q.value?.version === 1 ? q.value.workout : null,
     back =
       demo !== "1" && w
         ? progressReturn(
@@ -77,6 +89,17 @@ export default function Result() {
             w.exercises.map((e) => e.exerciseId),
           )
         : null;
+  const trainingBack =
+    w && demo !== "1"
+      ? trainingProgressReturn(
+          params,
+          w.exercises.map((e) => ({ exerciseId: e.exerciseId, recordType: null })),
+        )
+      : null;
+  if (q.value?.version === 3)
+    return (
+      <TypedResult workout={q.value.workout} loading={q.loading} error={q.error} retry={q.retry} />
+    );
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: p.bg }}
@@ -87,6 +110,39 @@ export default function Result() {
         {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
         {q.loading && !q.value ? (
           <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text>
+        ) : null}
+        {trainingBack ? (
+          <Action
+            label="Volver al progreso"
+            secondary
+            onPress={() =>
+              router.canGoBack()
+                ? router.back()
+                : router.replace({
+                    pathname: "/progress/[id]",
+                    params: {
+                      id: trainingBack.exercise,
+                      progressVersion: "2",
+                      recordType: trainingBack.recordType,
+                      weeks: String(trainingBack.weeks),
+                      metric: trainingBack.metric,
+                    },
+                  })
+            }
+          />
+        ) : null}
+        {params.from === "history" ? (
+          <Action
+            label="Volver al historial"
+            secondary
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/history"))}
+          />
+        ) : params.from === "summary" ? (
+          <Action
+            label="Volver al resumen"
+            secondary
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/progress"))}
+          />
         ) : null}
         {w ? (
           <>
@@ -114,14 +170,19 @@ export default function Result() {
               </Text>
             </View>
             <Text style={[s.subheading, { color: p.ink }]}>
-              {w.programName ?? "Tu entrenamiento"} · {day(w.performedOn)}
+              {w.sourceKind === "personal" || w.sourceKind === "free"
+                ? workoutTitle(w)
+                : (w.programName ?? "Tu entrenamiento")}{" "}
+              · {day(w.performedOn)}
             </Text>
             <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
               <Text style={[s.subheading, { color: p.ink }]}>
-                {w.summary.workingSets} series · {w.summary.exerciseCount} ejercicios
+                {w.summary.workingSets} {w.summary.workingSets === 1 ? "serie" : "series"} ·{" "}
+                {w.summary.exerciseCount}{" "}
+                {w.summary.exerciseCount === 1 ? "ejercicio" : "ejercicios"}
               </Text>
               <Text style={[s.body, { color: p.muted }]}>
-                {w.summary.volumeKg.toLocaleString("es-CL")} kg de volumen ·{" "}
+                {formatWeight(w.summary.volumeKg, preferences.value.weightUnit)} de volumen ·{" "}
                 {Math.max(1, Math.round(w.durationSeconds / 60))} min
               </Text>
               {w.perceivedEffort ? (
@@ -146,16 +207,73 @@ export default function Result() {
                       {set.isWarmup ? "Calentamiento" : `Serie ${i + 1}`}
                     </Text>
                     <Text style={[s.label, { color: p.ink }]}>
-                      {set.weightKg.toLocaleString("es-CL")} kg × {set.reps} reps
+                      {formatWeight(set.weightKg, preferences.value.weightUnit)} × {set.reps} reps
                     </Text>
                   </View>
                 ))}
               </View>
             ))}
+            {demo !== "1" ? (
+              <Action
+                label="Corregir entrenamiento"
+                secondary
+                disabled={
+                  q.loading ||
+                  !!q.error ||
+                  w.id !== id ||
+                  removal.busy ||
+                  removal.pending?.request.workoutId === w.id
+                }
+                onPress={() =>
+                  router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })
+                }
+              />
+            ) : null}
+            {demo !== "1" ? (
+              <Action
+                label="Eliminar entrenamiento"
+                quiet
+                disabled={q.loading || !!q.error || w.id !== id || removal.busy}
+                onPress={() =>
+                  router.push({ pathname: "/remove-result/[id]", params: { id: w.id } })
+                }
+              />
+            ) : null}
+            {demo !== "1" ? (
+              <Action
+                label="Repetir entrenamiento"
+                secondary
+                disabled={q.loading || !!q.error || w.id !== id}
+                onPress={() => router.push({ pathname: "/repeat/[id]", params: { id: w.id } })}
+              />
+            ) : null}
+            {demo !== "1" ? (
+              <Action
+                label="Guardar como rutina"
+                secondary
+                disabled={q.loading || !!q.error || w.id !== id}
+                onPress={() =>
+                  router.push({ pathname: "/save-routine/[id]", params: { id: w.id } })
+                }
+              />
+            ) : null}
+            {demo !== "1" && w.sourceKind === "personal" && w.personalRoutineId ? (
+              <Action
+                label="Actualizar mi rutina"
+                quiet
+                disabled={q.loading || !!q.error || w.id !== id}
+                onPress={() =>
+                  router.push({
+                    pathname: "/save-routine/[id]",
+                    params: { id: w.id, mode: "update" },
+                  })
+                }
+              />
+            ) : null}
             {demo !== "1" ? <WorkoutComments key={w.id} workoutId={w.id} /> : null}
           </>
         ) : null}
-        {back ? (
+        {back && !trainingBack ? (
           <Action
             label="Volver al progreso"
             onPress={() =>

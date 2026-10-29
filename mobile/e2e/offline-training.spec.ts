@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/week-fixture";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupDownloadedWeek, setWeekConnectivity } from "./support/week-fixture";
@@ -11,8 +12,7 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
   await page.setViewportSize({ width: 360, height: 800 });
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   const control = await setupDownloadedWeek(page);
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await recoverLegacyWeek(page, control.pack);
   control.offline = true;
   await setWeekConnectivity(page, false);
   await expect(
@@ -71,7 +71,16 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
     (k) => JSON.parse(localStorage.getItem(k)!).entries[0].payload,
     queueKey,
   );
-  expect(local.sets[0]).toMatchObject({
+  expect(local.version).toBe(2);
+  expect(local.source).toBe("assigned");
+  expect(local.structure.exercises[0]).toMatchObject({
+    exerciseId: downloadId(6),
+    prescribedExerciseId: downloadId(5),
+    supersetId: downloadId(8),
+    supersetRestSeconds: 60,
+    prescribed: { targetWeightKg: 60 },
+  });
+  expect(local.workout.sets[0]).toMatchObject({
     exerciseId: downloadId(6),
     prescribedExerciseId: downloadId(5),
   });
@@ -92,16 +101,25 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
   expect(control.saved.size).toBe(1);
   expect(control.saveRequests).toHaveLength(2);
   expect(control.saveRequests[0]).toEqual(control.saveRequests[1]);
+  expect(control.saveRequests[0]).toEqual(local);
+  expect(control.recordings.get(local.id)?.structure).toEqual(local.structure);
   expect(control.saveRequests[0].id).toBe(local.id);
 });
 test("copia vencida se consulta sin iniciar; un borrador previo sigue recuperable", async ({
   page,
 }) => {
   const control = await setupDownloadedWeek(page);
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
-  await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
+  await recoverLegacyWeek(page, control.pack);
   await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (key) => JSON.parse(localStorage.getItem(key) ?? "null")?.active?.draft?.workoutId ?? null,
+        trainingKey,
+      ),
+    )
+    .not.toBeNull();
   const before = await page.evaluate(
     (k) => JSON.parse(localStorage.getItem(k)!).active.draft.workoutId,
     trainingKey,
@@ -115,7 +133,7 @@ test("copia vencida se consulta sin iniciar; un borrador previo sigue recuperabl
     page.getByRole("button", { name: "Empezar entrenamiento", exact: true }),
   ).toBeDisabled();
   await page.getByRole("button", { name: "Retomar entrenamiento pendiente", exact: true }).click();
-  await expect(page.getByRole("textbox", { name: "Peso serie 1", exact: true })).toHaveValue("55");
+  await expect(page.getByRole("textbox", { name: "KG serie 1", exact: true })).toHaveValue("55");
   expect(
     await page.evaluate(
       (k) => JSON.parse(localStorage.getItem(k)!).active.draft.workoutId,

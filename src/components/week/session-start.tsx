@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { listDrafts } from "@/lib/workout/draft";
+import { localAssignedTrainings } from "@/lib/workout/local-typed-training";
 
 function subscribe(notify: () => void) {
   window.addEventListener("storage", notify);
@@ -29,6 +30,10 @@ export function SessionStart({
     subscribe,
     () => {
       try {
+        const typed = localAssignedTrainings(window.localStorage, userId).find(
+          (r) => r.sessionId === sessionId,
+        );
+        if (typed) return `${typed.phase}:${typed.workoutId}`;
         const found = listDrafts(window.localStorage, userId).find(
           (d) => d.plannedSessionId === sessionId,
         );

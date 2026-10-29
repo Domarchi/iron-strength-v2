@@ -35,6 +35,6 @@ Para actualizaciones posteriores, contrastar de nuevo las opciones y elegibilida
 
 No ampliar la beta o publicar con cierres reproducibles, pérdida de borradores, duplicación, acceso ajeno o políticas/enlaces de acceso rotos. Conservar evidencias privadas mínimas; resolver y repetir el recorrido afectado sobre un candidato nuevo cuando cambie el binario.
 
-Detener la distribución no retira las instalaciones ya recibidas. No pedir desinstalar una app con pendientes ni intentar volver a un versionCode menor. Mantener API/formatos compatibles y preparar la corrección con versión superior y misma identidad/firma de distribución. Recuperar web mediante L/K según docs/operations.md conserva la base y no autoriza revertir migraciones o eliminar datos locales de teléfonos.
+Detener la distribución no retira las instalaciones ya recibidas. No pedir desinstalar una app con pendientes ni intentar volver a un versionCode menor. Mantener API/formatos compatibles y preparar la corrección con versión superior y misma identidad/firma de distribución. Recuperar web mediante el artefacto compatible T221 de docs/operations.md conserva la base; no usar L/K o N para los registros tipados nuevos. No se autoriza revertir migraciones o eliminar datos locales de teléfonos.
 
 Fuentes revisadas el 25 de octubre de 2026. Los límites y acciones se vuelven a contrastar con las cuentas reales antes de enviar. T204 termina con disponibilidad comprobada en ambas tiendas y sus evidencias; este procedimiento no la marca completa.

@@ -1,3 +1,7 @@
+import { WorkoutChangesProvider } from "@/components/workout-changes/provider";
+import { WebTrainingProvider } from "@/components/training/provider";
+import { WebTrainingDownloadProvider } from "@/components/offline/training-download-provider";
+import { TypedPendingTraining } from "@/components/training/pending";
 import Link from "next/link";
 import { SyncWorkouts } from "@/components/offline/sync-workouts";
 import { AccountBoundary, OfflineAccount } from "@/components/offline/account";
@@ -24,42 +28,53 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <>
       <OfflineAccount userId={user.id} />
       <AccountBoundary userId={user.id}>
-        <AppChrome
-          coach={user.role === "coach"}
-          header={
-            <header className="app-header border-b bg-card pt-[env(safe-area-inset-top)]">
-              <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2 md:px-6">
-                <Link
-                  href={user.role === "coach" ? "/coach/students" : "/week"}
-                  aria-label="Iron Strength, inicio"
-                >
-                  <Brand />
-                </Link>
-                <div className="flex items-center gap-2">
-                  <span className="mr-2 hidden text-right sm:block">
-                    <span className="block text-sm font-medium">{user.fullName}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {user.role === "coach" ? "Coach" : "Alumno"}
-                    </span>
-                  </span>
-                  <Button variant="ghost" aria-label="Mi cuenta" render={<Link href="/account" />}>
-                    <CircleUser aria-hidden />
-                  </Button>
-                  <LogoutForm userId={user.id}>
-                    <Button type="submit" variant="ghost" aria-label="Cerrar sesión">
-                      <LogOut aria-hidden />
-                      <span className="hidden sm:inline">Salir</span>
-                    </Button>
-                  </LogoutForm>
-                </div>
-              </div>
-            </header>
-          }
-          nav={<AppNav items={items} />}
-        >
-          <SyncWorkouts key={user.id} userId={user.id} />
-          {children}
-        </AppChrome>
+        <WebTrainingDownloadProvider key={user.id} userId={user.id}>
+          <WebTrainingProvider key={user.id} userId={user.id}>
+            <WorkoutChangesProvider key={user.id} userId={user.id}>
+              <AppChrome
+                coach={user.role === "coach"}
+                header={
+                  <header className="app-header border-b bg-card pt-[env(safe-area-inset-top)]">
+                    <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2 md:px-6">
+                      <Link
+                        href={user.role === "coach" ? "/coach/students" : "/week"}
+                        aria-label="Iron Strength, inicio"
+                      >
+                        <Brand />
+                      </Link>
+                      <div className="flex items-center gap-2">
+                        <span className="mr-2 hidden text-right sm:block">
+                          <span className="block text-sm font-medium">{user.fullName}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {user.role === "coach" ? "Coach" : "Alumno"}
+                          </span>
+                        </span>
+                        <Button
+                          variant="ghost"
+                          aria-label="Mi cuenta"
+                          render={<Link href="/account" />}
+                        >
+                          <CircleUser aria-hidden />
+                        </Button>
+                        <LogoutForm userId={user.id}>
+                          <Button type="submit" variant="ghost" aria-label="Cerrar sesión">
+                            <LogOut aria-hidden />
+                            <span className="hidden sm:inline">Salir</span>
+                          </Button>
+                        </LogoutForm>
+                      </div>
+                    </div>
+                  </header>
+                }
+                nav={<AppNav items={items} />}
+              >
+                <SyncWorkouts key={user.id} userId={user.id} />
+                <TypedPendingTraining />
+                {children}
+              </AppChrome>
+            </WorkoutChangesProvider>
+          </WebTrainingProvider>
+        </WebTrainingDownloadProvider>
       </AccountBoundary>
     </>
   );

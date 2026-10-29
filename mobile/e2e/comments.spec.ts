@@ -1,3 +1,4 @@
+import { fulfillLegacyTypedResult } from "./support/legacy-result";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 const origin = "https://iron-strength-seven.vercel.app",
@@ -19,6 +20,7 @@ async function setup(page: Page, loseFirst = false) {
     reads = 0,
     lost = false;
   await page.route(origin + "/api/mobile/v1/**", async (route) => {
+    if (await fulfillLegacyTypedResult(route)) return;
     const req = route.request(),
       path = new URL(req.url()).pathname;
     let json: unknown = { version: 1, kind: "no_program" };

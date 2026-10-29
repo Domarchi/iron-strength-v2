@@ -16,11 +16,25 @@ export function LineChart({
 }) {
   const width = 320;
   const height = 180;
-  const chart = buildChart(points, {
+  const initial = buildChart(points, {
     width,
     height,
     padding: { top: 12, right: 14, bottom: 26, left: 46 },
   });
+
+  const longestLabel = Math.max(
+    0,
+    ...initial.yTickPositions.map((tick) => Array.from(formatY(tick.value)).length),
+  );
+  const left = Math.min(width / 2, Math.max(46, 12 + longestLabel * 8));
+  const chart =
+    left === 46
+      ? initial
+      : buildChart(points, {
+          width,
+          height,
+          padding: { top: 12, right: 14, bottom: 26, left },
+        });
 
   if (points.length === 0) {
     return <p className="text-sm text-muted-foreground">Todavía no hay datos para graficar.</p>;
@@ -51,7 +65,7 @@ export function LineChart({
             x={chart.area.left - 6}
             y={tick.py + 3}
             textAnchor="end"
-            fontSize="10"
+            fontSize="13"
             fill="var(--muted-foreground)"
           >
             {formatY(tick.value)}
@@ -84,7 +98,7 @@ export function LineChart({
         </circle>
       ))}
 
-      <text x={chart.area.left} y={height - 6} fontSize="10" fill="var(--muted-foreground)">
+      <text x={chart.area.left} y={height - 6} fontSize="13" fill="var(--muted-foreground)">
         {formatX(first.x)}
       </text>
       {points.length > 1 ? (
@@ -92,7 +106,7 @@ export function LineChart({
           x={chart.area.right}
           y={height - 6}
           textAnchor="end"
-          fontSize="10"
+          fontSize="13"
           fill="var(--muted-foreground)"
         >
           {formatX(last.x)}

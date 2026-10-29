@@ -1,4 +1,6 @@
 import { weekDownloadFixture } from "../../../src/test/fixtures/week-download";
+import { recordingFixture } from "../../../src/test/fixtures/workout-recording";
+import { recordingPayloadSchema } from "../../../src/lib/mobile/recording-contracts";
 import { describe, it, expect, vi } from "vitest";
 import { MobileClient, validateApiOrigin, type Transport, type CredentialStore } from "./client";
 const profile = {
@@ -40,6 +42,81 @@ function setup(fetcher: Transport) {
   };
 }
 describe("sesión móvil segura", () => {
+  it("cierre con estructura envía el documento completo y exige confirmación versión2 de esa cuenta e ID", async () => {
+    const input = recordingPayloadSchema.parse(recordingFixture()),
+      reply = { version: 2, ok: true, status: "created", workoutId: input.id };
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(reply))
+      .mockResolvedValueOnce(Response.json({ ...reply, version: 1 }))
+      .mockResolvedValueOnce(Response.json({ ...reply, workoutId: profile.id }));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    await expect(x.client.saveRecording(input, input.id)).rejects.toMatchObject({
+      code: "identity",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(await x.client.saveRecording(input, profile.id)).toEqual(reply);
+    expect(fetcher.mock.calls[1][0]).toContain("/api/mobile/v1/recordings");
+    expect(JSON.parse(String(fetcher.mock.calls[1][1]!.body))).toEqual({
+      version: 2,
+      payload: input,
+    });
+    await expect(x.client.saveRecording(input, profile.id)).rejects.toMatchObject({
+      code: "version",
+    });
+    await expect(x.client.saveRecording(input, profile.id)).rejects.toMatchObject({
+      code: "identity",
+    });
+  });
+  it("registro libre valida cuenta y confirmación del ID sin inventar programa", async () => {
+    const workoutId = "22222222-2222-4222-8222-222222222222";
+    const input = {
+      version: 1 as const,
+      id: workoutId,
+      origin: { kind: "free" as const },
+      title: "Libre",
+      startedAt: "2026-10-26T12:00:00Z",
+      finishedAt: "2026-10-26T12:30:00Z",
+      durationSeconds: 1800,
+      sets: [
+        {
+          exerciseId: workoutId,
+          position: 0,
+          setNumber: 1,
+          weightKg: 30,
+          reps: 8,
+          isWarmup: false,
+        },
+      ],
+    };
+    const reply = { version: 1, ok: true, workoutId, status: "created" };
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(reply))
+      .mockResolvedValueOnce(Response.json({ ...reply, workoutId: profile.id }))
+      .mockResolvedValueOnce(Response.json({ ...reply, version: 99 }));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    await expect(x.client.savePersonalWorkout(input, workoutId)).rejects.toMatchObject({
+      code: "identity",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(await x.client.savePersonalWorkout(input, profile.id)).toEqual(reply);
+    expect(fetcher.mock.calls[1][0]).toContain("/api/mobile/v1/personal-workouts");
+    expect(JSON.parse(String(fetcher.mock.calls[1][1]!.body))).toEqual({
+      version: 1,
+      payload: input,
+    });
+    await expect(x.client.savePersonalWorkout(input, profile.id)).rejects.toMatchObject({
+      code: "identity",
+    });
+    await expect(x.client.savePersonalWorkout(input, profile.id)).rejects.toMatchObject({
+      code: "version",
+    });
+  });
   it("biblioteca personal valida cuenta, versión y recibo estable antes de confirmar", async () => {
     const requestId = "22222222-2222-4222-8222-222222222222";
     const targetId = "33333333-3333-4333-8333-333333333333";
@@ -76,6 +153,51 @@ describe("sesión móvil segura", () => {
       code: "identity",
     });
     await expect(x.client.exportPersonalLibrary()).rejects.toMatchObject({ code: "version" });
+  });
+
+  it("biblioteca tipada2 valida cuenta, versión y recibo estable antes de confirmar", async () => {
+    const requestId = "22222222-2222-4222-8222-222222222222";
+    const targetId = "33333333-3333-4333-8333-333333333333";
+    const library = { version: 2, userId: profile.id, folders: [], routines: [] };
+    const input = {
+      version: 2 as const,
+      requestId,
+      targetId,
+      expectedRevision: 0 as const,
+      operation: "folder_create" as const,
+      data: { name: "Fuerza" },
+    };
+    const receipt = {
+      version: 2,
+      requestId,
+      targetId,
+      revision: 1,
+      status: "created",
+      duplicate: false,
+    };
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(library))
+      .mockResolvedValueOnce(Response.json({ ...library, userId: targetId }))
+      .mockResolvedValueOnce(Response.json(receipt))
+      .mockResolvedValueOnce(Response.json({ ...receipt, requestId: targetId }))
+      .mockResolvedValueOnce(Response.json({ ...library, version: 1 }));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    expect(await x.client.trainingLibrary()).toEqual(library);
+    await expect(x.client.trainingLibrary()).rejects.toMatchObject({ code: "identity" });
+    const before = fetcher.mock.calls.length;
+    await expect(x.client.mutateTrainingLibrary(input, targetId)).rejects.toMatchObject({
+      code: "identity",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(before);
+    expect(await x.client.mutateTrainingLibrary(input, profile.id)).toEqual(receipt);
+    expect(JSON.parse(String(fetcher.mock.calls.at(-1)?.[1].body))).toEqual(input);
+    await expect(x.client.mutateTrainingLibrary(input, profile.id)).rejects.toMatchObject({
+      code: "identity",
+    });
+    await expect(x.client.exportTrainingLibrary()).rejects.toMatchObject({ code: "version" });
   });
 
   it("descarga recibe solo el paquete completo de la identidad actual", async () => {
@@ -409,4 +531,80 @@ it("acceso por enlace nunca persiste token/contraseña ni sustituye una sesión 
     x.client.resetPassword({ token: "b".repeat(56), password: "clave-nueva" }),
   ).rejects.toThrow("salir");
   expect(fetcher).toHaveBeenCalledTimes(4);
+});
+it("biblioteca2 cae a snapshot1 solo por404/503; mutaciones2 no se degradan", async () => {
+  const legacy = { version: 1, userId: profile.id, folders: [], routines: [] };
+  for (const status of [404, 503]) {
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(
+        Response.json(
+          { version: 1, error: { code: "unavailable", message: "Anterior" } },
+          { status },
+        ),
+      )
+      .mockResolvedValueOnce(Response.json(legacy));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    expect(await x.client.trainingLibrary()).toEqual({ ...legacy, version: 2 });
+    expect(fetcher.mock.calls.map((c) => new URL(c[0]).pathname)).toEqual([
+      "/api/mobile/v1/auth/login",
+      "/api/mobile/v1/training-library",
+      "/api/mobile/v1/library",
+    ]);
+  }
+  const input = {
+    version: 2 as const,
+    requestId: "22222222-2222-4222-8222-222222222222",
+    targetId: "33333333-3333-4333-8333-333333333333",
+    expectedRevision: 0 as const,
+    operation: "folder_create" as const,
+    data: { name: "Fuerza" },
+  };
+  const fetcher = vi
+    .fn<Transport>()
+    .mockResolvedValueOnce(Response.json(session))
+    .mockResolvedValueOnce(
+      Response.json(
+        { version: 1, error: { code: "unavailable", message: "Anterior" } },
+        { status: 404 },
+      ),
+    );
+  const x = setup(fetcher);
+  await x.client.login(profile.email, "clave");
+  await expect(x.client.mutateTrainingLibrary(input, profile.id)).rejects.toMatchObject({
+    status: 404,
+  });
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+it("snapshot2 futuro, malformado o ajeno nunca se convierte a biblioteca1", async () => {
+  for (const value of [
+    { version: 3, userId: profile.id, folders: [], routines: [] },
+    { version: 2, userId: profile.id, folders: [], routines: [{}] },
+    { version: 2, userId: "33333333-3333-4333-8333-333333333333", folders: [], routines: [] },
+  ]) {
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(value));
+    const x = setup(fetcher);
+    await x.client.login(profile.email, "clave");
+    await expect(x.client.trainingLibrary()).rejects.toBeInstanceOf(Error);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  }
+});
+
+it("historial1 conserva y reenvía un cursor opaco nuevo sin convertirlo en una fecha", async () => {
+  const cursor = `v2|${profile.id}|2026-10-29T12:00:00.123456+00:00|b0000000-0000-4000-8000-000000000002`;
+  const fetcher = vi
+    .fn<Transport>()
+    .mockResolvedValueOnce(Response.json(session))
+    .mockResolvedValueOnce(Response.json({ version: 1, items: [], nextCursor: cursor }))
+    .mockResolvedValueOnce(Response.json({ version: 1, items: [], nextCursor: null }));
+  const value = setup(fetcher);
+  await value.client.login(profile.email, "password-123");
+  expect((await value.client.history()).nextCursor).toBe(cursor);
+  expect((await value.client.history(cursor)).nextCursor).toBeNull();
+  expect(new URL(String(fetcher.mock.calls[2][0])).searchParams.get("cursor")).toBe(cursor);
 });

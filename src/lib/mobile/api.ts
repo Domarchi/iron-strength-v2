@@ -1,3 +1,5 @@
+import { parseWorkoutHistoryCursor } from "../../domain/workout-history-cursor";
+import { WorkoutHistoryPageError } from "../data/workout-history-error";
 import { z } from "zod";
 import { workoutPayloadSchema } from "../workout/payload";
 import type { SaveWorkoutResult } from "../data/save-workout";
@@ -154,11 +156,20 @@ export function createMobileApi(deps: MobileApiDependencies) {
         if (!token) return unauthorized();
         const identity = await deps.authorize(token);
         if (!identity) return unauthorized();
-        const cursor = new URL(request.url).searchParams.get("cursor") ?? undefined;
-        if (cursor && !z.iso.datetime({ offset: true }).safeParse(cursor).success)
+        const query = new URL(request.url).searchParams;
+        if (query.getAll("cursor").length > 1)
+          return failure("invalid_input", "La página solicitada no es válida.", 400);
+        const cursor = query.get("cursor") ?? undefined,
+          parsed = cursor === undefined ? null : parseWorkoutHistoryCursor(cursor);
+        if (
+          (cursor !== undefined && !parsed) ||
+          (parsed?.version === 2 && parsed.userId !== identity.profile.id.toLowerCase())
+        )
           return failure("invalid_input", "La página solicitada no es válida.", 400);
         return json(await identity.history(cursor));
-      } catch {
+      } catch (error) {
+        if (error instanceof WorkoutHistoryPageError && error.code !== "unavailable")
+          return failure("invalid_input", error.message, error.code === "stale" ? 409 : 400);
         return unavailable();
       }
     },

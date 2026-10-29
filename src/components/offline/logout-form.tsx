@@ -1,11 +1,18 @@
 "use client";
 import { useRef, useState, useId } from "react";
+import { useWorkoutChanges } from "@/components/workout-changes/provider";
+import { useWebTraining } from "@/components/training/provider";
 import { logoutAction } from "@/app/(auth)/actions";
 import { setOfflineAccount } from "@/lib/offline/account";
 import { clearLocalAccount, inspectLocalAccount } from "@/lib/offline/local-account";
 import { syncAllWorkouts } from "@/lib/offline/sync";
 import { Button } from "@/components/ui/button";
+import { useWebTrainingDownload } from "./training-download-provider";
+import { reserveWebDownloadAccount } from "@/lib/offline/web-download-account";
 export function LogoutForm({ children, userId }: { children: React.ReactNode; userId: string }) {
+  const changes = useWorkoutChanges();
+  const { bridge } = useWebTraining();
+  const { bridge: downloads, download } = useWebTrainingDownload();
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
   const [busy, setBusy] = useState(false);
@@ -14,6 +21,7 @@ export function LogoutForm({ children, userId }: { children: React.ReactNode; us
     "Hay entrenamientos o ediciones sin confirmar en este dispositivo.",
   );
   async function leave() {
+    await downloads.clearReserved();
     await clearLocalAccount(userId);
     if (!setOfflineAccount(null))
       throw new Error("No se pudo ocultar la cuenta local. No cerramos la sesión; reintenta.");
@@ -22,7 +30,13 @@ export function LogoutForm({ children, userId }: { children: React.ReactNode; us
   async function attempt(mode: "inspect" | "sync" | "discard") {
     setBusy(true);
     setError(null);
+    let release: (() => void) | undefined;
+    let releaseTraining: (() => void) | undefined;
     try {
+      release = await changes.reserveExit();
+      releaseTraining = await reserveWebDownloadAccount(downloads.controller, () =>
+        bridge.reserve(mode),
+      );
       if (mode === "discard") {
         await leave();
         return;
@@ -49,13 +63,17 @@ export function LogoutForm({ children, userId }: { children: React.ReactNode; us
       );
       dialog.current?.showModal();
     } finally {
+      release?.();
+      releaseTraining?.();
       setBusy(false);
     }
   }
   return (
     <>
       <form data-local-exit action={() => attempt("inspect")}>
-        <fieldset disabled={busy}>{children}</fieldset>
+        <fieldset disabled={busy || !download.ready || download.busy || download.reserved}>
+          {children}
+        </fieldset>
       </form>
       <dialog
         ref={dialog}

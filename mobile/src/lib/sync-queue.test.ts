@@ -1,9 +1,12 @@
+import { legacySender } from "../test/fixtures/legacy-sender";
+import { queuedPayloadBody as nativeWorkoutBody } from "./queued-recording";
 import { describe, expect, it, vi } from "vitest";
 import { NativeWorkoutQueue, nativeSyncKey } from "./sync-queue";
 import { MobileError } from "./client";
 import { DEMO_ROUTINES } from "./demo";
 import { TrainingController, type TrainingStorage, type SaveReply } from "./training";
 import { updateSetField } from "../../../src/lib/workout/runner-state";
+import type { NativeWorkoutPayload } from "./personal-training";
 import type { WorkoutPayload } from "../../../src/lib/workout/runner-state";
 const user = "11111111-1111-4111-8111-111111111111",
   other = "22222222-2222-4222-8222-222222222222",
@@ -49,14 +52,22 @@ function fixture() {
       await storage.set(key, next);
     }),
   };
-  const send = vi.fn(async (p: WorkoutPayload): Promise<SaveReply> => ({
-    version: 1 as const,
+  const send = vi.fn(async (p: NativeWorkoutPayload): Promise<SaveReply> => ({
+    version: (p.version === 2 ? 2 : 1) as 1 | 2,
     ok: true as const,
     status: "created" as const,
     workoutId: p.id,
   }));
   const create = (owner = user) =>
-    new NativeWorkoutQueue(owner, storage, send, () => new Date("2026-10-24T16:00:00Z"));
+    new NativeWorkoutQueue(
+      owner,
+      storage,
+      (p) => {
+        if (p.version === 3) throw Error("Este fixture anterior no envía documento3");
+        return send(p);
+      },
+      () => new Date("2026-10-24T16:00:00Z"),
+    );
   return { map, storage, send, create };
 }
 describe("cola nativa, contrato y durabilidad", () => {
@@ -277,7 +288,7 @@ it("la transferencia interrumpida conserva el origen hasta la confirmación de l
     training = new TrainingController(
       user,
       x.storage,
-      x.send,
+      legacySender(x.send),
       () => new Date("2026-10-24T15:00:00Z"),
       () => id(1),
     );
@@ -303,7 +314,7 @@ it("retirar el origen impide iniciar otra sesión hasta confirmar su escritura",
     training = new TrainingController(
       user,
       x.storage,
-      x.send,
+      legacySender(x.send),
       () => new Date("2026-10-24T15:00:00Z"),
       () => id(1),
     );
@@ -339,7 +350,7 @@ it("un cierre legado de borrador v1 sin payload migra a la cola antes de retirar
     source = new TrainingController(
       user,
       x.storage,
-      x.send,
+      legacySender(x.send),
       () => new Date("2026-10-24T15:00:00Z"),
       () => id(1),
     );
@@ -350,6 +361,8 @@ it("un cierre legado de borrador v1 sin payload migra a la cola antes de retirar
   await source.finish(8, "Nota antigua", { localOnly: true });
   const key = `is:native-training:v1:${user}`,
     old = JSON.parse(x.map.get(key)!);
+  old.version = 1;
+  delete old.previousFormat;
   old.active.draft.version = 1;
   for (const e of old.active.draft.exercises)
     for (const c of [e, ...(e.original ? [e.original] : []), ...(e.alternatives ?? [])])
@@ -359,7 +372,7 @@ it("un cierre legado de borrador v1 sin payload migra a la cola antes de retirar
   const recovered = new TrainingController(
     user,
     x.storage,
-    x.send,
+    legacySender(x.send),
     () => new Date("2026-10-25T17:00:00Z"),
     () => id(2),
   );
@@ -374,7 +387,10 @@ it("un cierre legado de borrador v1 sin payload migra a la cola antes de retirar
     perceivedEffort: 8,
     finishedAt: old.active.draft.finishedAt,
   });
-  expect(q.getSnapshot().entries[0].payload.sets[0]).toMatchObject({ weightKg: 20, reps: 8 });
+  expect(nativeWorkoutBody(q.getSnapshot().entries[0].payload).sets[0]).toMatchObject({
+    weightKg: 20,
+    reps: 8,
+  });
   expect(x.send).not.toHaveBeenCalled();
 });
 it("perder la relectura de la copia o cambiar de sesión no retira el cierre original", async () => {
@@ -383,7 +399,7 @@ it("perder la relectura de la copia o cambiar de sesión no retira el cierre ori
     source = new TrainingController(
       user,
       x.storage,
-      x.send,
+      legacySender(x.send),
       () => new Date("2026-10-24T15:00:00Z"),
       () => id(1),
     );

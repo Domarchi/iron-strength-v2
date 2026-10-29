@@ -1,10 +1,19 @@
+import { useTrainingPreferences } from "../lib/training-preferences-context";
+import { formatWeight } from "../../../src/domain/training-tools";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
 import { useWeekDownload } from "../lib/week-context";
 import { useSession } from "../lib/session";
 import { downloadedAt, downloadedHistory } from "../lib/offline-week";
 import { Action, day, s, usePalette } from "./ui";
-export function DownloadedHistory({ exerciseId }: { exerciseId: string }) {
+export function DownloadedHistory({
+  exerciseId,
+  personal = false,
+}: {
+  exerciseId: string;
+  personal?: boolean;
+}) {
+  const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     { state } = useSession(),
     { download } = useWeekDownload();
@@ -14,7 +23,9 @@ export function DownloadedHistory({ exerciseId }: { exerciseId: string }) {
   if (!history || !pack)
     return (
       <Text style={[s.caption, { color: p.muted }]}>
-        Descarga tu semana con conexión para traer el historial reciente.
+        {personal
+          ? "No hay historial descargado de este ejercicio."
+          : "Descarga tu semana con conexión para traer el historial reciente."}
       </Text>
     );
   return (
@@ -39,7 +50,7 @@ export function DownloadedHistory({ exerciseId }: { exerciseId: string }) {
           {item.sets.map((set) => (
             <Text key={set.id} style={[s.body, s.number, { color: p.muted }]}>
               {set.isWarmup ? "Calentamiento · " : ""}
-              {set.weightKg.toLocaleString("es-CL")} kg × {set.reps} reps
+              {formatWeight(set.weightKg, preferences.value.weightUnit)} × {set.reps} reps
             </Text>
           ))}
           {state.mode === "online" ? (

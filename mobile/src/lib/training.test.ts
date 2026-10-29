@@ -1,3 +1,5 @@
+import { legacySender, legacyActive } from "../test/fixtures/legacy-sender";
+import type { NativeWorkoutPayload } from "./personal-training";
 import { describe, expect, it, vi } from "vitest";
 import { DEMO_ROUTINES } from "./demo";
 import { TrainingController, type TrainingStorage } from "./training";
@@ -22,8 +24,8 @@ function fixture() {
       await store.set(key, next);
     }),
   };
-  const save = vi.fn(async () => ({
-    version: 1 as const,
+  const save = vi.fn(async (payload: NativeWorkoutPayload) => ({
+    version: (payload.version === 2 ? 2 : 1) as 1 | 2,
     ok: true as const,
     status: "created" as const,
     workoutId: user,
@@ -32,7 +34,7 @@ function fixture() {
     new TrainingController(
       id,
       store,
-      save,
+      legacySender(save),
       () => new Date("2026-10-24T15:00:00Z"),
       () => user,
     );
@@ -63,6 +65,8 @@ describe("registro nativo, persistencia y separación de la demo", () => {
     await a.finish(null, null, { localOnly: true });
     const key = `is:native-training:v1:${user}`,
       raw = JSON.parse(x.map.get(key)!);
+    raw.version = 1;
+    delete raw.previousFormat;
     delete raw.active.payload;
     x.map.set(key, JSON.stringify(raw));
     const b = x.create();
@@ -87,7 +91,7 @@ describe("registro nativo, persistencia y separación de la demo", () => {
       id: user,
     });
     expect(x.save).not.toHaveBeenCalled();
-    const payload = a.getSnapshot().active!.payload;
+    const payload = legacyActive(a.getSnapshot().active).payload;
     const b = x.create();
     await b.restore();
     expect(b.getSnapshot().active?.payload).toEqual(payload);
@@ -214,7 +218,7 @@ describe("registro nativo, persistencia y separación de la demo", () => {
     await expect(b.start(DEMO_ROUTINES[1], "demo")).rejects.toThrow();
     const c = x.create();
     await c.restore();
-    expect(c.getSnapshot().active?.routine.session.label).toBe("A");
+    expect(legacyActive(c.getSnapshot().active).routine.session.label).toBe("A");
   });
   it("una respuesta tardía después de disponer el controlador conserva el pendiente", async () => {
     const x = fixture(),
@@ -233,7 +237,7 @@ describe("registro nativo, persistencia y separación de la demo", () => {
     const finishing = a.finish(null, null);
     await vi.waitFor(() => expect(x.save).toHaveBeenCalled());
     a.dispose();
-    resolve({ version: 1, ok: true, status: "created", workoutId: user });
+    resolve({ version: 2, ok: true, status: "created", workoutId: user });
     await finishing;
     const b = x.create();
     await b.restore();
@@ -299,15 +303,15 @@ it("una entrada inválida conserva series y descanso; recuperar no reinicia el t
   await a.start(DEMO_ROUTINES[0], "demo");
   a.edit((d) => updateSetField(d, 0, 0, "weight", "20"));
   await a.complete(0, 0);
-  const rest = a.getSnapshot().active!.draft.rest!;
+  const rest = legacyActive(a.getSnapshot().active).draft.rest!;
   a.edit((d) => updateSetField(d, 0, 1, "weight", "501"));
   await expect(a.complete(0, 1)).rejects.toThrow("Revisa kg");
-  expect(a.getSnapshot().active!.draft.exercises[0].sets[1].done).toBe(false);
-  expect(a.getSnapshot().active!.draft.rest).toEqual(rest);
+  expect(legacyActive(a.getSnapshot().active).draft.exercises[0].sets[1].done).toBe(false);
+  expect(legacyActive(a.getSnapshot().active).draft.rest).toEqual(rest);
   await a.flush();
   const b = x.create();
   await b.restore();
-  expect(b.getSnapshot().active!.draft.rest).toEqual(rest);
+  expect(legacyActive(b.getSnapshot().active).draft.rest).toEqual(rest);
   expect(remainingSeconds(rest, Date.parse("2026-10-24T15:00:25Z"))).toBe(65);
   expect(remainingSeconds(rest, Date.parse("2026-10-24T15:02:00Z"))).toBe(0);
 });

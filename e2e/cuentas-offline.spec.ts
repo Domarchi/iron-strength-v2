@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/recover-legacy-week";
 import { test } from "./support/network";
 import { expect } from "@playwright/test";
 import { admin, COACH, resetAll, seedCoach, seedProgram } from "./support/db";
@@ -102,9 +103,10 @@ test("cerrar sesión exige resolver pendientes, sincroniza y limpia solo esa cue
   const program = await seedProgram({ coachId: userId, studentId: userId });
   await login(page, COACH.email, COACH.password);
   await page.goto("/week");
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  await recoverLegacyWeek(page);
+  await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Descarga de la semana" }).getByRole("status"),
+    page.getByRole("region", { name: "Entrenamientos sin conexión" }).getByRole("status"),
   ).toContainText("Disponible sin conexión");
   await page.goto(`/workout/${program.sessionId}`);
   await page.getByLabel("Peso de la serie 1 de Sentadilla (kg)").fill("60");

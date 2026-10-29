@@ -138,6 +138,19 @@ test("ficha prioriza evidencia y conserva alumno/periodo/métrica hasta adaptar 
   await page.setViewportSize({ width: 360, height: 800 });
   for (const colorScheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme });
+    if (colorScheme === "dark") await expect(page.locator("html")).toHaveClass(/dark/);
+    else await expect(page.locator("html")).not.toHaveClass(/dark/);
+    // Contrastar el tema aplicado: las transiciones de color pueden seguir
+    // interpolando después del cambio de clase. Esperar su final real.
+    await page.evaluate(async () => {
+      document.documentElement.getBoundingClientRect();
+      await Promise.all(
+        document
+          .getAnimations()
+          .filter((animation) => animation instanceof CSSTransition)
+          .map((animation) => animation.finished.catch(() => {})),
+      );
+    });
     expect(
       (
         await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()

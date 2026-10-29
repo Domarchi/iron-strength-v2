@@ -1,3 +1,5 @@
+import { removalDraftKey } from "../../../src/lib/workout/removal-draft";
+import { correctionDraftKey } from "../../../src/lib/workout/correction-draft";
 import { z } from "zod";
 import type { TrainingStorage } from "./training";
 export const REMOVAL_KEY = "is:native-account-removal:v1";
@@ -19,7 +21,13 @@ export async function clearAccountTraining(storage: TrainingStorage, id: string)
     `is:native-training:v1:${id}`,
     `is:native-comment:v1:${id}`,
     `is:native-week:v1:${id}`,
+    `is:training-download:v1:${id}`,
     `is:native-sync:v1:${id}`,
+    `is:native-library:v1:${id}`,
+    `is:native-training-preferences:v1:${id}`,
+    `is:native-personal-exercises:v1:${id}`,
+    correctionDraftKey(id),
+    removalDraftKey(id),
   ]) {
     await storage.remove(key);
     if ((await storage.get(key)) !== null)

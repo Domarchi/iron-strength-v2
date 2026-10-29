@@ -1,3 +1,4 @@
+import { workoutTitle, workoutOriginLabel } from "@/domain/workout-title";
 import { navigationContext, evidenceReturn } from "@/lib/navigation/training-context";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -15,7 +16,8 @@ import { listAchievements } from "@/lib/data/achievements";
 import { listComments } from "@/lib/data/comments";
 import { getUnreadSummary } from "@/lib/data/unread";
 import { getWorkoutRecords } from "@/lib/data/progress";
-import { getWorkoutDetail } from "@/lib/data/workouts";
+import { getWorkoutResult } from "@/lib/data/workout-result";
+import { TypedWorkoutResult } from "@/components/workout/typed-result";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/session";
 
@@ -36,17 +38,30 @@ export default async function WorkoutDetailPage({
   searchParams: Promise<{
     nuevo?: string;
     logros?: string;
-    semanas?: string;
-    vista?: string;
+    semanas?: string | string[];
+    vista?: string | string[];
+    tipo?: string | string[];
+    metrica?: string | string[];
     desde?: string;
     ejercicio?: string;
   }>;
 }) {
   const [{ id }, query, user] = await Promise.all([params, searchParams, requireUser()]);
-  const { nuevo, logros } = query;
+  const nuevo = typeof query.nuevo === "string" ? query.nuevo : undefined,
+    logros = typeof query.logros === "string" ? query.logros : undefined;
   const db = await createClient();
-  const workout = await getWorkoutDetail(db, id);
-  if (!workout) notFound();
+  const result = await getWorkoutResult(db, id);
+  if (!result) notFound();
+  if (result.kind === "typed")
+    return (
+      <TypedWorkoutResult
+        workout={result.workout}
+        studentId={result.studentId}
+        user={user}
+        query={query}
+      />
+    );
+  const workout = result.workout;
   const [records, comments, unread] = await Promise.all([
     getWorkoutRecords(db, id),
     listComments({ db, workoutId: id, viewerId: user.id, studentId: workout.studentId }),
@@ -101,7 +116,10 @@ export default async function WorkoutDetailPage({
         </h1>
         <p className="text-sm text-muted-foreground">
           {workout.programName ? `${workout.programName} · ` : ""}
-          {workout.sessionLabel ? `Sesión ${workout.sessionLabel}` : "Sesión"}
+          {workoutTitle(workout)}
+          {workout.sourceKind && workout.sourceKind !== "assigned"
+            ? ` · ${workoutOriginLabel(workout.sourceKind)}`
+            : ""}
         </p>
       </header>
 
@@ -191,9 +209,14 @@ export default async function WorkoutDetailPage({
           {back.label}
         </Button>
         {own && isWorkoutEditable(workout.performedOn, santiagoDate(new Date())) ? (
-          <Button variant="secondary" render={<Link href={`/history/${workout.id}/edit`} />}>
-            Editar
-          </Button>
+          <>
+            <Button variant="secondary" render={<Link href={`/history/${workout.id}/edit`} />}>
+              Editar
+            </Button>
+            <Button variant="outline" render={<Link href={`/history/${workout.id}/remove`} />}>
+              Eliminar entrenamiento
+            </Button>
+          </>
         ) : null}
       </div>
     </div>

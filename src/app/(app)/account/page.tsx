@@ -1,3 +1,5 @@
+import { WebDownloadCard } from "@/components/offline/training-download-card";
+import { PendingWorkoutChanges } from "@/components/workout-changes/pending";
 import { PublicInfoLinks } from "@/components/layout/public-info-links";
 import { ThemeSelect } from "@/components/layout/theme-select";
 import { PageHeading } from "@/components/layout/page-heading";
@@ -35,7 +37,9 @@ export default async function AccountPage() {
         </dl>
       </section>
 
+      <PendingWorkoutChanges />
       <ThemeSelect />
+      <WebDownloadCard />
 
       <section aria-labelledby="export-heading" className="flex flex-col gap-2">
         <h2 id="export-heading" className="text-lg font-medium">

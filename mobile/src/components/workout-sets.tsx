@@ -1,3 +1,6 @@
+import { useTrainingPreferences } from "../lib/training-preferences-context";
+import { formatWeight } from "../../../src/domain/training-tools";
+import { isTypedTraining } from "../lib/training";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Action, s, usePalette } from "./ui";
@@ -24,6 +27,7 @@ export function WorkoutSets({
   index: number;
   onComplete: (setIndex: number) => Promise<unknown>;
 }) {
+  const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     { controller, training } = useTraining(),
     { download } = useWeekDownload(),
@@ -31,7 +35,13 @@ export function WorkoutSets({
     { width, fontScale } = useWindowDimensions();
   const [options, showOptions] = useState<string | null>(null);
   const [error, setError] = useState<{ setId: string; message: string } | null>(null);
-  const exercise = training.active?.draft.exercises[index];
+  const a = training.active;
+  const exercise = a && !isTypedTraining(a) ? a.draft.exercises[index] : undefined;
+  const blocked =
+    training.busy ||
+    training.closing ||
+    training.active?.pause?.pausedAtMs != null ||
+    training.active?.draft.status === "pending_save";
   if (!exercise) return null;
   const history =
       state.status === "authenticated" && training.active?.mode === "real"
@@ -42,7 +52,7 @@ export function WorkoutSets({
           )
         : null,
     last = history?.items[0] ?? null,
-    previousColumn = width >= 360 && fontScale <= 1.15;
+    previousColumn = preferences.value.showPrevious && width >= 360 && fontScale <= 1.15;
   async function complete(setId: string, si: number) {
     setError(null);
     try {
@@ -56,7 +66,7 @@ export function WorkoutSets({
   }
   return (
     <View style={{ gap: 2 }}>
-      {!exercise.prescribed.series ? (
+      {preferences.value.showTargets && !exercise.prescribed.series ? (
         <Text style={[s.caption, { color: p.muted, marginBottom: 8 }]}>
           Objetivo{" "}
           {exercise.prescribed.repsMin === exercise.prescribed.repsMax
@@ -64,11 +74,11 @@ export function WorkoutSets({
             : `${exercise.prescribed.repsMin}–${exercise.prescribed.repsMax}`}{" "}
           reps
           {exercise.prescribed.targetWeightKg != null
-            ? ` · ${exercise.prescribed.targetWeightKg.toLocaleString("es-CL")} kg`
+            ? ` · ${formatWeight(exercise.prescribed.targetWeightKg, preferences.value.weightUnit)}`
             : ""}
         </Text>
       ) : null}
-      {last ? (
+      {last && preferences.value.showPrevious ? (
         <Text style={[s.caption, { color: p.muted, marginBottom: 8 }]}>
           Anterior · {last.date.split("-").reverse().slice(0, 2).join("/")} · copia descargada
         </Text>
@@ -102,8 +112,8 @@ export function WorkoutSets({
               accessibilityRole="button"
               accessibilityLabel={`Copiar anterior a serie ${si + 1}`}
               accessibilityHint={`${previous.weightKg.toLocaleString("es-CL")} kg y ${previous.reps} repeticiones. Copia solo al tocar.`}
-              accessibilityState={{ disabled: set.done }}
-              disabled={set.done}
+              accessibilityState={{ disabled: set.done || blocked }}
+              disabled={set.done || blocked}
               onPress={() => {
                 if (error?.setId === set.id) setError(null);
                 controller.edit((draft) => copyPrevious(draft, index, si, previous));
@@ -119,7 +129,7 @@ export function WorkoutSets({
             >
               <Text style={[s.caption, s.number, { color: p.muted, fontSize: 12 }]}>
                 {previousColumn ? "" : "Anterior · "}
-                {previous.weightKg.toLocaleString("es-CL")} × {previous.reps}
+                {formatWeight(previous.weightKg, preferences.value.weightUnit)} × {previous.reps}
               </Text>
             </Pressable>
           ) : (
@@ -148,7 +158,8 @@ export function WorkoutSets({
                 accessibilityRole="button"
                 accessibilityLabel={`Opciones de serie ${si + 1}`}
                 accessibilityHint="Calentamiento o quitar serie"
-                accessibilityState={{ expanded: options === set.id }}
+                accessibilityState={{ expanded: options === set.id, disabled: blocked }}
+                disabled={blocked}
                 aria-expanded={options === set.id}
                 onPress={() => showOptions((current) => (current === set.id ? null : set.id))}
                 style={({ pressed }) => ({
@@ -169,6 +180,8 @@ export function WorkoutSets({
               {previousColumn ? previousValue : null}
               <TextInput
                 accessibilityLabel={`Peso serie ${si + 1}`}
+                editable={!blocked}
+                accessibilityState={{ disabled: blocked }}
                 keyboardAppearance={p.dark ? "dark" : "light"}
                 selectionColor={p.blue}
                 value={set.weight}
@@ -201,6 +214,8 @@ export function WorkoutSets({
               />
               <TextInput
                 accessibilityLabel={`Repeticiones serie ${si + 1}`}
+                editable={!blocked}
+                accessibilityState={{ disabled: blocked }}
                 keyboardAppearance={p.dark ? "dark" : "light"}
                 selectionColor={p.blue}
                 value={set.reps}
@@ -234,13 +249,22 @@ export function WorkoutSets({
               <SetCheck
                 number={si + 1}
                 checked={set.done}
+                disabled={blocked}
                 onPress={() => {
                   void complete(set.id, si);
                 }}
               />
             </View>
-            {!previousColumn ? <View style={{ paddingLeft: 48 }}>{previousValue}</View> : null}
-            {set.isWarmup || exercise.prescribed.series || !target ? (
+            {preferences.value.weightUnit !== "kg" && /^\d+(?:[.,]\d+)?$/.test(set.weight) ? (
+              <Text style={[s.caption, { color: p.muted, paddingLeft: 48 }]}>
+                ≈ {formatWeight(Number(set.weight.replace(",", ".")), preferences.value.weightUnit)}
+              </Text>
+            ) : null}
+            {preferences.value.showPrevious && !previousColumn ? (
+              <View style={{ paddingLeft: 48 }}>{previousValue}</View>
+            ) : null}
+            {set.isWarmup ||
+            (preferences.value.showTargets && (exercise.prescribed.series || !target)) ? (
               <Text
                 style={[
                   s.caption,
@@ -250,7 +274,7 @@ export function WorkoutSets({
                 {set.isWarmup
                   ? "Calentamiento · no avanza la ronda"
                   : target
-                    ? `Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${target.targetWeightKg.toLocaleString("es-CL")} kg` : ""}`
+                    ? `Objetivo ${target.repsMin === target.repsMax ? target.repsMin : `${target.repsMin}–${target.repsMax}`} reps${target.targetWeightKg != null ? ` · ${formatWeight(target.targetWeightKg, preferences.value.weightUnit)}` : ""}`
                     : "Serie adicional"}
               </Text>
             ) : null}
@@ -268,6 +292,7 @@ export function WorkoutSets({
                   label={set.isWarmup ? "Usar como trabajo" : "Calentamiento"}
                   accessibilityLabel={`${set.isWarmup ? "Usar como trabajo" : "Usar como calentamiento"} serie ${si + 1}`}
                   secondary
+                  disabled={blocked}
                   onPress={() => controller.edit((draft) => toggleWarmup(draft, index, si))}
                 />
                 {!set.done && exercise.sets.length > 1 ? (
@@ -275,6 +300,7 @@ export function WorkoutSets({
                     label="Quitar"
                     accessibilityLabel={`Quitar serie ${si + 1}`}
                     secondary
+                    disabled={blocked}
                     onPress={() => controller.edit((draft) => removeSet(draft, index, si))}
                   />
                 ) : null}
@@ -287,6 +313,7 @@ export function WorkoutSets({
         <Action
           label="Añadir serie"
           quiet
+          disabled={blocked}
           onPress={() => controller.edit((draft) => addSet(draft, index))}
         />
       ) : null}

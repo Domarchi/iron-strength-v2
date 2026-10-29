@@ -7,9 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { santiagoDate } from "@/domain/dates";
 import { PageHeading } from "@/components/layout/page-heading";
 import { WeekOverview } from "@/components/week/week-overview";
-import { DownloadWeek } from "@/components/week/download-week";
+import { WebDownloadCard } from "@/components/offline/training-download-card";
 import { PendingWorkouts } from "@/components/week/pending-workouts";
 import { getStreakSummary } from "@/lib/data/streak";
+import { ConstancyReadFailure } from "@/components/streak/read-failure";
 import { getWeekView } from "@/lib/data/week";
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -23,9 +24,12 @@ async function WeekContent() {
   const user = await requireUser();
   const db = await createClient();
   const today = santiagoDate(new Date());
-  const [view, streak] = await Promise.all([
+  const [view, constancyResult] = await Promise.all([
     getWeekView(db, user.id, today),
-    getStreakSummary(db, user.id, today),
+    getStreakSummary(db, user.id, today).then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({ ok: false as const, error }),
+    ),
   ]);
 
   const content = (() => {
@@ -88,12 +92,11 @@ async function WeekContent() {
       case "active":
         return (
           <>
-            <WeekOverview userId={user.id} view={view} today={today} streak={streak} />
-            <DownloadWeek
-              key={`${user.id}:${view.program.id}:${view.weekStart}`}
+            <WeekOverview
               userId={user.id}
-              programId={view.program.id}
-              weekStart={view.weekStart}
+              view={view}
+              today={today}
+              streak={constancyResult.ok ? constancyResult.value : null}
             />
           </>
         );
@@ -109,7 +112,17 @@ async function WeekContent() {
             : []
         }
       />
+      {!constancyResult.ok ? (
+        <ConstancyReadFailure error={constancyResult.error} retryHref="/week" />
+      ) : null}
       {content}
+      <WebDownloadCard
+        expected={
+          view.kind === "active"
+            ? { programId: view.program.id, weekStart: view.weekStart }
+            : undefined
+        }
+      />
     </>
   );
 }

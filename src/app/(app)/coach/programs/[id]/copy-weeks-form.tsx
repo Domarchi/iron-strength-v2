@@ -6,10 +6,10 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { StatusMessage } from "@/components/ui/status-message";
 import { isWeekEditable } from "@/domain/program-weeks";
 import { makeCopyInput, weekPlanningSummary, type CopyWeeksInput } from "@/lib/coach/planning";
-import type { ProgramTree } from "@/lib/data/programs";
+import type { PlanningTree } from "@/lib/coach/planning";
 import { confirmPlanningAction, reviewPlanningCopyAction } from "../planning-actions";
 import { usePlanningDraft, subscribePlanningHydration } from "./use-planning-draft";
-type Props = { tree: ProgramTree; userId: string; today: string };
+type Props = { tree: PlanningTree; userId: string; today: string };
 export function CopyWeeksForm(props: Props) {
   const ready = useSyncExternalStore(
     subscribePlanningHydration,

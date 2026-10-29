@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireCoach } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { getProgramTree } from "@/lib/data/programs";
+import { getCoachProgramTree } from "@/lib/data/coach-programs";
 import {
   copyProgramWeeks,
   assignReviewedProgram,
@@ -29,7 +29,7 @@ export async function reviewPlanningCopyAction(programId: string) {
   if (!z.uuid().safeParse(programId).success)
     return { ok: false as const, error: messages.invalid };
   try {
-    const tree = await getProgramTree(await createClient(), programId);
+    const tree = await getCoachProgramTree(await createClient(), programId);
     return tree ? { ok: true as const, tree } : { ok: false as const, error: messages.not_found };
   } catch {
     return {

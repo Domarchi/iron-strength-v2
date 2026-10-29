@@ -1,8 +1,35 @@
+import { createTrainingDownloadApi } from "./training-download-api";
+import { readTrainingDownload } from "../data/training-download";
+import { createAssignedTrainingApi } from "./assigned-training-api";
+import { getAssignedTrainingContext } from "../data/assigned-training-context";
+import { createWorkoutRemovalApi } from "./workout-removal-api";
+import { readOwnWorkoutRemoval, removeOwnWorkout } from "../data/workout-removals";
+import { createTrainingProgressApi } from "./training-progress-api";
+import { createWorkoutCorrectionApi } from "./workout-correction-api";
+import { correctOwnWorkout, readOwnWorkoutCorrection } from "../data/workout-corrections";
+import { readOwnTrainingProgress } from "../data/training-progress";
+import { createTypedPersonalApi } from "./typed-personal-api";
+import { readTrainingLibrary, mutateTrainingLibrary } from "../data/typed-personal-library";
+import { createTypedExerciseApi } from "./typed-exercise-api";
+import { createPersonalExerciseApi } from "./personal-exercise-api";
+import { readPersonalExercises, mutatePersonalExercise } from "../data/personal-exercises";
+import {
+  getTypedActiveExercise,
+  listTypedExerciseHistory,
+  listTypedExercises,
+} from "../data/typed-exercises";
+import { createPersonalWorkoutApi } from "./personal-workout-api";
+import { createRecordingApi } from "./recording-api";
+import { createTypedRecordingApi } from "./typed-recording-api";
+import { getTypedWorkoutDetail } from "../data/typed-recordings";
+import { saveTypedWorkoutWithAchievements } from "../data/typed-recording-achievements";
+import { saveWorkoutRecording } from "../data/save-workout-recording";
+import { savePersonalWorkout } from "../data/save-personal-workout";
 import { createMobilePersonalApi } from "./personal-api";
 import { readPersonalLibrary, mutatePersonalLibrary } from "../data/personal-library";
 import { createMobileProgressApi } from "./progress-api";
 import { createMobileExerciseApi } from "./exercise-api";
-import { getActiveExercise, listMobileExercises } from "../data/exercises";
+import { listMobileExercises } from "../data/exercises";
 import { listExerciseHistory } from "../data/exercise-history";
 import { exerciseHistoryCursorString } from "./exercise-contracts";
 import "server-only";
@@ -281,8 +308,8 @@ export function mobileExerciseApi() {
       return {
         catalog: () => listMobileExercises(db),
         detail: async (id, cursor) => {
-          const exercise = await getActiveExercise(db, id);
-          if (!exercise) return null;
+          const exercise = await getTypedActiveExercise(db, id);
+          if (!exercise || exercise.recordType !== null) return null;
           const history = await listExerciseHistory(db, identity.profile.id, id, { cursor });
           return {
             exercise,
@@ -310,6 +337,183 @@ export function mobilePersonalApi() {
         read: () => readPersonalLibrary(db),
         mutate: (input) => mutatePersonalLibrary(db, input),
       };
+    },
+  });
+}
+
+export function mobileTrainingLibraryApi() {
+  return createTypedPersonalApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: () => readTrainingLibrary(db),
+        mutate: (input) => mutateTrainingLibrary(db, input),
+      };
+    },
+  });
+}
+
+export function mobilePersonalWorkoutApi() {
+  return createPersonalWorkoutApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        save: async (payload) => {
+          const receipt = await savePersonalWorkout(db, payload);
+          if (receipt.status !== "removed")
+            await syncAchievements({
+              db,
+              studentId: identity.profile.id,
+              workoutId: payload.id,
+            }).catch(() => []);
+          return receipt;
+        },
+      };
+    },
+  });
+}
+
+export function mobileRecordingApi() {
+  return createRecordingApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        save: async (payload) => {
+          const receipt = await saveWorkoutRecording(db, payload);
+          if (receipt.status !== "removed")
+            await syncAchievements({
+              db,
+              studentId: identity.profile.id,
+              workoutId: payload.id,
+            }).catch(() => []);
+          return receipt;
+        },
+      };
+    },
+  });
+}
+
+export function mobileTypedRecordingApi() {
+  return createTypedRecordingApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        save: (payload) => saveTypedWorkoutWithAchievements(db, identity.profile.id, payload),
+        read: (id) => getTypedWorkoutDetail(db, id, identity.profile.id),
+      };
+    },
+  });
+}
+
+export function mobileTypedExerciseApi() {
+  return createTypedExerciseApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        catalog: () => listTypedExercises(db),
+        detail: async (id, cursor) => {
+          const exercise = await getTypedActiveExercise(db, id);
+          if (!exercise) return null;
+          return {
+            exercise,
+            history: await listTypedExerciseHistory(db, identity.profile.id, id, { cursor }),
+          };
+        },
+      };
+    },
+  });
+}
+
+export function mobilePersonalExerciseApi() {
+  return createPersonalExerciseApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: () => readPersonalExercises(db),
+        mutate: (input) => mutatePersonalExercise(db, input),
+      };
+    },
+  });
+}
+
+export function mobileTrainingProgressApi() {
+  return createTrainingProgressApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: () => readOwnTrainingProgress(db, identity.profile.id),
+      };
+    },
+  });
+}
+
+export function mobileWorkoutCorrectionApi() {
+  return createWorkoutCorrectionApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: (id) => readOwnWorkoutCorrection(db, id, identity.profile.id),
+        correct: (input) => correctOwnWorkout(db, input),
+      };
+    },
+  });
+}
+
+export function mobileWorkoutRemovalApi() {
+  return createWorkoutRemovalApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        userId: identity.profile.id,
+        read: (id) => readOwnWorkoutRemoval(db, id, identity.profile.id),
+        remove: (input) => removeOwnWorkout(db, input),
+      };
+    },
+  });
+}
+
+export function mobileAssignedTrainingApi() {
+  return createAssignedTrainingApi({
+    authorize: async (token) => {
+      const actor = await mobileProductionDependencies().authorize(token);
+      if (!actor) return null;
+      const db = client(token),
+        userId = actor.profile.id;
+      return { userId, read: (id) => getAssignedTrainingContext(db, userId, id) };
+    },
+  });
+}
+
+export function mobileTrainingDownloadApi() {
+  return createTrainingDownloadApi({
+    authorize: async (token) => {
+      const actor = await mobileProductionDependencies().authorize(token);
+      if (!actor) return null;
+      const db = client(token),
+        userId = actor.profile.id;
+      return { userId, read: () => readTrainingDownload(db, userId) };
     },
   });
 }

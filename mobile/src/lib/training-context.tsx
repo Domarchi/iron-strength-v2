@@ -1,3 +1,5 @@
+import { useTrainingPreferences } from "./training-preferences-context";
+import { sendQueuedRecording } from "./queued-recording";
 import {
   createContext,
   useContext,
@@ -13,14 +15,16 @@ import { useSession } from "./session";
 const Context = createContext<TrainingController | null>(null);
 export function TrainingProvider({ userId, children }: PropsWithChildren<{ userId: string }>) {
   const { client } = useSession();
+  const { controller: preferences } = useTrainingPreferences();
   const [controller] = useState(
     () =>
       new TrainingController(
         userId,
         atomicStorage,
-        (p) => client.saveWorkout(p, userId),
+        (p) => sendQueuedRecording(client, p, userId),
         () => new Date(),
         randomUUID,
+        preferences.restForNewSession,
       ),
   );
   useEffect(() => {

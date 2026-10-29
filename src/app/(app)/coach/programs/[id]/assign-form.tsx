@@ -11,13 +11,13 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { StatusMessage } from "@/components/ui/status-message";
 import { assignmentImpacts, assignmentWindow, type AssignmentInput } from "@/lib/coach/planning";
-import type { ProgramTree } from "@/lib/data/programs";
+import type { PlanningTree } from "@/lib/coach/planning";
 import { confirmPlanningAction, reviewAssignmentAction } from "../planning-actions";
 import { usePlanningDraft, subscribePlanningHydration } from "./use-planning-draft";
 export type AssignTarget = { id: string; label: string };
 type Props = {
   userId: string;
-  tree: ProgramTree;
+  tree: PlanningTree;
   targets: AssignTarget[];
   defaultStartDate: string;
   today: string;

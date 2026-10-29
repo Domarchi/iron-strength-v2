@@ -1,0 +1,95 @@
+# Entrenamiento, herramientas e historial · T216–T218
+
+Implementación local del cliente Expo. No implica publicación en la web, entrega por Expo Go ni aceptación en un teléfono físico.
+
+## Mis ejercicios
+
+Abre **Entrenar → Biblioteca de ejercicios → Mis ejercicios**, o el acceso **Mis ejercicios** de Cuenta. Puedes buscar, crear y editar tus ejercicios. El tipo de registro se elige al crear; para usar otro tipo, crea otro ejercicio. Los ajustes de carga aparecen cuando corresponden al tipo. Los ejercicios propios pertenecen solo a tu cuenta; el coach conserva el acceso a los entrenamientos que puede revisar.
+
+**Guardar ejercicio** confirma el servidor. **Guardado en este dispositivo** protege únicamente el borrador: puedes volver a la lista y retomarlo después de recargar. Si falla el espacio local, conserva el texto y usa el reintento local antes de enviar. Una respuesta perdida ofrece reintentar el mismo intento; no crees el ejercicio de nuevo para recuperarlo.
+
+Un conflicto ofrece **Revisar versión actual del ejercicio**. Compara los datos y elige **Conservar mi edición** antes de guardar sobre la nueva revisión. Si se eliminó, **Conservar como ejercicio nuevo** prepara una copia independiente. Un conflicto de archivo requiere revisar y elegir otra vez la acción; no reutiliza la confirmación anterior.
+
+En **Opciones**, archivar pide confirmación y conserva tus rutinas e historial; la pestaña **Archivados** permite restaurar. **Exportar mis ejercicios** prepara tus metadatos activos y archivados como JSON: descarga en web y hoja de compartir en Android/iPhone. No incluye credenciales ni recibos internos. Cuenta muestra los cambios pendientes y exige guardarlos o descartarlos antes de salir. Borrar la cuenta por el recorrido confirmado elimina también estos datos de esa cuenta en el dispositivo, conservando las otras cuentas.
+
+## Discos por lado
+
+En el registro, abre **Herramientas del ejercicio → Calculadora de discos**. Indica la carga total, incluida la barra, la unidad del equipo y los tamaños y pares disponibles. Un par corresponde a un disco a cada lado. La calculadora busca una combinación simétrica exacta con la menor cantidad de discos; si hay empate, prefiere tamaños mayores.
+
+Sin una combinación exacta, muestra la causa. No aproxima la carga ni supone discos que no declaraste. **Calcular discos** es una consulta y no cambia tu serie. **Guardar equipo en este dispositivo** conserva el inventario solo para tu cuenta. Cerrar sin guardarlo descarta esa edición del equipo.
+
+## Calentamientos
+
+Abre **Preparar calentamientos**, completa las métricas del ejercicio y, si necesitas, añade más filas (hasta cinco). No hay cargas, repeticiones, máximos ni porcentajes recomendados. **Revisar calentamientos** permite consultar los valores antes de **Añadir calentamientos**. Cancelar no agrega series. Cambiar a otra alternativa o reemplazar el ejercicio descarta la preparación no confirmada, para usar las métricas del ejercicio nuevo.
+
+La confirmación agrega las filas pendientes antes de las existentes. Conserva las series ya completadas, sus valores, notas, objetivos de trabajo, agrupaciones y el descanso que está corriendo. Una serie de calentamiento no avanza la ronda ni suma volumen de trabajo. Máximo veinte series por ejercicio y trescientas en el entrenamiento; la operación se rechaza completa si no caben todas.
+
+Si falta espacio, los calentamientos quedan en memoria con un aviso de guardado sin confirmar. Usa **Reintentar guardado de calentamientos** o el reintento general del registro cuando haya espacio. No prepares otro lote para recuperar el anterior: la propuesta conserva sus identificadores y el reintento no la duplica. No cierres el navegador mientras siga sin confirmarse el guardado local. Un cambio desde otra ventana exige revisar el conflicto; no sobrescribe su registro.
+
+## Descanso y columnas
+
+**Ajustar descanso del ejercicio** muestra una revisión antes de confirmar. Para una superserie, cambia el descanso de todo el grupo. Se aplica al próximo descanso; no reinicia ni prolonga el temporizador actual. Puedes usar tu descanso habitual o ingresar otro valor de cero a seiscientos segundos, en pasos de quince. Cero significa sin descanso. Los calentamientos conservan el descanso breve de 60 s existente; una elección de cero también lo desactiva.
+
+En **Cuenta → Preferencias de entrenamiento**, configura el descanso habitual, la visibilidad de objetivos y de la referencia anterior. Guarda o cancela explícitamente. El descanso habitual solo completa valores ausentes al iniciar una sesión nueva; una prescripción explícita (incluido cero) tiene prioridad. Las sesiones en curso y las repetidas desde un resultado conservan sus descansos. Las columnas no ocultan los campos necesarios para registrar una serie.
+
+## Unidades
+
+Puedes elegir kg/lb y m/km/mi para la presentación de objetivos, equivalencias del registro y resultados. Los campos de registro y edición permanecen identificados en kg y metros. Al usar otra unidad, la equivalencia aparece junto al campo. Cambiar la preferencia no convierte el texto guardado, ni modifica métricas, prescripciones, resultados históricos o cierres pendientes. Los gráficos y otros consumidores anteriores mantienen sus unidades canónicas explícitas hasta su evolución prevista en T218; esta entrega no recalcula esos datos.
+
+La conversión usa 1 lb = 0,45359237 kg y 1 mi = 1609,344 m; el redondeo a dos decimales afecta solo al texto mostrado. El equipo de discos declara su propia unidad: al cambiarla, revisa los números del equipo; no se convierten automáticamente.
+
+## Recuperación y límites
+
+Las preferencias y el equipo se guardan por cuenta, con comprobación de escritura y relectura. Salir de la cuenta los conserva; borrar la cuenta mediante el recorrido confirmado también retira su copia local y conserva las demás cuentas. El borrado de cuenta espera a que termine una escritura de preferencias y reserva las escrituras durante su recorrido, para no reponer datos locales después de limpiar. Un formato desconocido se mantiene intacto y bloquea su edición; puedes recuperar el entrenamiento existente. Los errores de lectura o conflicto permiten releer; **Releer y descartar propuesta** descarta únicamente la edición de preferencias abierta.
+
+Las herramientas no requieren una petición nueva al servidor y funcionan dentro de un registro ya recuperado. Esto no amplía la descarga del catálogo o de rutinas personales, que sigue en T220. Las pruebas de Expo web y la exportación Hermes no acreditan SQLite en un teléfono, apertura sin Metro ni un binario firmado.
+
+## Prueba rápida en una demo
+
+Usa **Entrenar → Ver demo A → Probar entrenamiento demo** para comprobar controles sin enviar un resultado al coach. Estos números son ficticios para verificar la interfaz.
+
+1. Abre Herramientas y calcula 100 kg con barra de 20 kg y dos pares de 20 kg. Debe mostrar dos discos de 20 kg por lado. Pide 101 kg con ese mismo inventario: debe explicar que no puede componerse.
+2. Prepara un calentamiento de 20 kg y 5 repeticiones. Revisa y cancela: el registro debe seguir idéntico. Repítelo y confirma: aparece pendiente antes del trabajo, sin completar ni cambiar las series existentes.
+3. Con un descanso en curso, revisa y confirma 120 s para el ejercicio. El contador actual debe conservar su hora de término; el próximo descanso de trabajo utiliza la elección correspondiente al ejercicio/grupo.
+4. En Cuenta, elige lb y guarda preferencias. Al retomar, los campos siguen en kg y muestran su equivalencia; no cambian las cifras guardadas. Recarga y vuelve a entrar con la misma cuenta para recuperar el registro.
+5. En preferencias, cambia un valor y cancela. Vuelve a abrirlas: deben conservar la última configuración confirmada.
+
+Registra por separado dispositivo, sistema, versión del cliente y resultado observado. Esta lista no acredita que esa prueba física ya se haya realizado.
+
+## Historial y progreso · Consulta T218
+
+**Historial** permite buscar por rutina o ejercicio, elegir el origen y alternar Lista/Calendario. La búsqueda incluye todo el historial consultado, no solo la primera página. En el calendario puedes cambiar de mes, elegir un día y volver a ver todo el mes. Abrir un resultado y usar Volver al historial conserva los filtros y la posición. Las demos permanecen separadas de los registros reales.
+
+En **Progreso → Ejercicios**, cada tipo de registro tiene sus propias métricas y evidencias. Tiempo, distancia y asistencia no se convierten en volumen ni 1RM. Los datos anteriores siguen identificados como Registro anterior. Puedes elegir 4, 8 o 12 semanas, consultar Marcas históricas y abrir el entrenamiento que produjo el valor; Volver al progreso conserva periodo y métrica. Las unidades elegidas en Cuenta cambian solo la presentación.
+
+En **Progreso → Resumen**, alterna Mes/Año y navega por periodos. La regularidad muestra semanas con trabajo frente a semanas observadas hasta hoy; no equivale al cumplimiento de la planificación. Toca un músculo para ver sus entrenamientos. La clasificación procede del catálogo visible actual; lo que no esté disponible aparece Sin clasificar. Los calentamientos no suman actividad de trabajo. Cómo se calcula mantiene el detalle fuera de la vista principal.
+
+Actualizar consulta el servidor; un fallo conserva la última vista con Datos sin actualizar. Esta consulta necesita conexión y la API2 correspondiente; no anuncia una descarga ni cambia el entrenamiento o descanso activo. La edición y eliminación recuperables se describen a continuación; su validación y publicación se acreditan por separado. Publicación, offline ampliado y aceptación en teléfonos se verifican por separado.
+
+## Corregir un resultado · T218 verificado localmente
+
+Abre un resultado propio real y elige **Corregir entrenamiento**. Cambia entre ejercicios para corregir sus valores registrados; los campos indican kg, repeticiones, segundos o metros. Las notas y el esfuerzo son opcionales. **Retirar serie** conserva sus valores para restaurarla antes de confirmar; debe quedar al menos una. Revisa la propuesta y pulsa **Confirmar corrección**. El plazo se comprueba también en el servidor. La corrección conserva el origen, los objetivos y la estructura del entrenamiento.
+
+**Guardado en este dispositivo** protege el borrador; **Corrección confirmada** acredita la respuesta del servidor y la limpieza local verificada. Si se perdió la respuesta, **Reintentar el mismo envío** conserva el mismo intento. Si otra ventana cambió el entrenamiento, compara su versión y acepta la propuesta revisada antes de enviar. Los cambios de series eliminadas se muestran y requieren aceptar expresamente su omisión. Historial y Cuenta permiten retomar la corrección después de volver a entrar.
+
+Si falla el almacenamiento, el texto permanece en memoria y no se envía. Reintenta el guardado; **Releer corrección local** pide confirmar antes de reemplazar esos cambios por la versión del dispositivo. **Descartar corrección** pide confirmación y conserva el entrenamiento remoto. Salir exige resolver la propuesta pendiente. Eliminar la cuenta por el recorrido confirmado incluye este borrador, conservando las otras cuentas. Esta integración no acredita todavía una publicación, prueba física ni la disponibilidad en producción de las funciones nuevas.
+
+Después de volver a entrar, una corrección rechazada conserva su explicación y los pasos para resolverla. Si una relectura falla, puedes consultar la propuesta que permanece en memoria y confirmar otra relectura cuando el almacenamiento vuelva a contener una versión compatible. No se reemplaza esa propuesta ni el documento desconocido automáticamente. Si el servidor ya confirmó y solo falla la limpieza local, el reintento completa la limpieza sin reenviar mientras se conserve esa confirmación.
+
+## Eliminar un resultado · T218 verificado localmente
+
+Desde un resultado real propio, abre **Eliminar entrenamiento**. Revisa nombre, fecha y cantidad de series y comentarios. Abrir o cancelar esta vista no crea un intento. **Eliminar para siempre** retira el entrenamiento y sus comentarios; no modifica tu rutina ni otro registro en curso. Si existe una corrección pendiente de ese resultado, primero retómala o descártala. El servidor comprueba el plazo de siete días y la versión revisada.
+
+Si no llega la respuesta, el intento queda en **Cuenta** e **Historial**. **Revisar eliminación → Reintentar la misma eliminación** conserva el intento; reconecta la misma cuenta si es necesario. Si otra ventana cambió el entrenamiento, consulta y acepta su versión actual antes de volver a confirmar. **Completar limpieza local** no vuelve a enviar una eliminación ya confirmada en memoria. Tras reiniciar, se consulta su recibo mediante el mismo intento.
+
+**Descartar intento local** no restaura un entrenamiento que el servidor ya eliminó. Si cambia el documento local desde otra ventana, **Releer eliminación local** exige confirmar el reemplazo de la memoria; un formato desconocido se conserva. Nunca se muestra **Ver resultado** después de confirmar la eliminación.
+
+## Correcciones desde la web · T218 verificado localmente
+
+En un resultado propio, **Editar** conserva el texto de los campos al recargar. Revisa la propuesta antes de confirmarla. Para eliminar el entrenamiento completo usa su acción separada, revisa el resumen y confirma. **Cuenta** e **Historial** permiten recuperar las operaciones pendientes, incluso si el resultado ya no está disponible después de perder una respuesta.
+
+Cerrar sesión no descarta estas propuestas desde el botón general: primero retómalas o descártalas en su recorrido. Sincronizar entrenamientos terminados no envía correcciones. Borrar la cuenta es otra operación y requiere su confirmación escrita; después se limpian solo los datos locales de esa cuenta.
+
+Estos recorridos están verificados localmente. No confundir sus pruebas con una actualización ya publicada, una comprobación de SQLite en el teléfono o una aceptación física.
+
+Después de confirmar una corrección desde la web, **Ver resultado** abre el detalle correspondiente al formato guardado. Los registros por tiempo o distancia conservan sus dimensiones, clases, esfuerzo, notas propias y comentarios; las notas de un ejercicio sin series también se muestran. El resumen distingue el tiempo registrado por serie de la duración del entrenamiento. Esta vista está verificada localmente y su publicación sigue pendiente.

@@ -22,7 +22,7 @@ export async function moveDayAction(
 export async function previewRoutineAction(
   sessionId: string,
 ): Promise<
-  | { ok: true; context: import("@/lib/data/workout-context").WorkoutContext }
+  | { ok: true; context: import("@/lib/workout/training-context").AssignedTrainingContext }
   | { ok: false; error: string }
 > {
   const user = await requireUser();
@@ -30,8 +30,8 @@ export async function previewRoutineAction(
   if (!z.uuid().safeParse(sessionId).success)
     return { ok: false, error: "La sesión no está disponible." };
   try {
-    const { getWorkoutContext } = await import("@/lib/data/workout-context");
-    const result = await getWorkoutContext(await createClient(), user.id, sessionId);
+    const { getAssignedTrainingContext } = await import("@/lib/data/assigned-training-context");
+    const result = await getAssignedTrainingContext(await createClient(), user.id, sessionId);
     return result.ok && result.canStart
       ? { ok: true, context: result.context }
       : { ok: false, error: "Solo puedes consultar las rutinas de tu semana vigente." };

@@ -1,300 +1,103 @@
-import { navigationContext, studentHref, workoutHref } from "@/lib/navigation/training-context";
-import type { ProgressPoint } from "@/domain/volume";
-import { z } from "zod";
-import { santiagoDate } from "@/domain/dates";
-import { compareProgressPeriods, parseProgressWeeks } from "@/domain/progress-period";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart } from "@/components/charts/line-chart";
-import { formatKg } from "@/domain/format";
+import { StatusMessage } from "@/components/ui/status-message";
+import { ProgressReadFailure } from "@/components/progress/read-failure";
+import { TrainingExerciseDetail } from "@/components/progress/typed-exercise-detail";
+import { TrainingExerciseList } from "@/components/progress/typed-exercise-list";
 import { requireUser } from "@/lib/auth/session";
-import { getExerciseSeries, listExerciseProgress } from "@/lib/data/progress";
 import { createClient } from "@/lib/supabase/server";
-import { cn } from "@/lib/utils";
-
+import { getVisibleTrainingProgress } from "@/lib/data/training-review";
+import {
+  selectTrainingExercise,
+  progressSelectionNavigation,
+} from "@/lib/navigation/training-progress-selection";
+import {
+  navigationContext,
+  progressHref,
+  progressIndexHref,
+  studentHref,
+} from "@/lib/navigation/training-context";
 export const metadata = { title: "Progreso del ejercicio · Iron Strength" };
-
-const shortDate = new Intl.DateTimeFormat("es-CL", {
-  day: "numeric",
-  month: "short",
-  timeZone: "UTC",
-});
-const fmtDate = (iso: string) => shortDate.format(new Date(`${iso}T00:00:00Z`));
-const fullDate = new Intl.DateTimeFormat("es-CL", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
-const fmtPeriodDate = (date: string) => fullDate.format(new Date(`${date}T00:00:00Z`));
-const round1 = (n: number) => Math.round(n * 10) / 10;
-
+type Query = {
+  semanas?: string | string[];
+  vista?: string | string[];
+  tipo?: string | string[];
+  metrica?: string | string[];
+  alumno?: string | string[];
+};
 export default async function ExerciseProgressPage({
   params,
   searchParams,
 }: {
   params: Promise<{ exerciseId: string }>;
-  searchParams: Promise<{ vista?: string; alumno?: string; semanas?: string }>;
+  searchParams: Promise<Query>;
 }) {
-  const [{ exerciseId }, { vista, alumno: requestedStudent, semanas }, user] = await Promise.all([
-    params,
-    searchParams,
-    requireUser(),
-  ]);
-  // El coach puede ver el progreso de sus alumnos (la RLS decide si el alumno es suyo).
-  const alumno = user.role === "coach" ? requestedStudent : undefined;
-  const studentId = alumno ?? user.id;
-  if (!z.uuid().safeParse(exerciseId).success || !z.uuid().safeParse(studentId).success) notFound();
-  const db = await createClient();
-  const [list, series] = await Promise.all([
-    listExerciseProgress(db, studentId),
-    getExerciseSeries(db, studentId, exerciseId),
-  ]);
-
-  const summary = list.find((e) => e.exerciseId === exerciseId);
-  if (!summary) notFound();
-
-  const metric = summary.isBodyweight ? "reps" : vista === "volumen" ? "volume" : "1rm";
-  const weeks = parseProgressWeeks(semanas);
-  const navigation = navigationContext({ semanas, vista });
-  const evidenceHref = (workoutId: string) =>
-    workoutHref(workoutId, navigation, alumno, exerciseId);
-  const comparison = compareProgressPeriods(series, santiagoDate(new Date()), weeks, metric);
-  const periodHref = (period: number, selectedMetric = metric) => {
-    const query = new URLSearchParams({
-      semanas: String(period),
-      vista: selectedMetric === "volume" ? "volumen" : "1rm",
-    });
-    if (alumno) query.set("alumno", alumno);
-    return `/progress/${exerciseId}?${query}`;
-  };
-  const chartPoints = comparison.current.map((p) => ({
-    x: p.date,
-    y:
-      metric === "reps"
-        ? p.bodyweightReps
-        : metric === "volume"
-          ? p.volumeKg
-          : round1(p.estimated1RM),
-  }));
-  const formatY = (y: number) => (metric === "reps" ? `${y} rep.` : formatKg(y));
-
-  return (
-    <div className="flow-page flex flex-col gap-4">
-      <header>
-        <h1 className="text-xl font-semibold">{summary.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          Historial completo · {summary.workoutCount}{" "}
-          {summary.workoutCount === 1 ? "entrenamiento" : "entrenamientos"}
-        </p>
-      </header>
-
-      <p className="text-xs font-medium text-muted-foreground">Marcas históricas</p>
-      <dl className="grid grid-cols-2 gap-3">
-        {(summary.isBodyweight
-          ? [["Mejor serie", `${summary.bestReps} repeticiones`]]
-          : [
-              ["Mayor peso", formatKg(summary.bestWeightKg)],
-              ["Mejor 1RM estimado", formatKg(round1(summary.bestEstimated1RM))],
-            ]
-        ).map(([label, value]) => (
-          <div key={label} className="rounded-lg border p-3">
-            <dt className="text-xs text-muted-foreground">{label}</dt>
-            <dd className="text-lg font-semibold tabular-nums">{value}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <nav aria-label="Periodo de progreso" className="flex flex-wrap gap-2">
-        {[4, 8, 12].map((period) => (
-          <Link
-            key={period}
-            href={periodHref(period)}
-            aria-current={weeks === period ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-11 items-center rounded-full border px-4 text-sm",
-              weeks === period
-                ? "border-primary bg-primary text-primary-foreground"
-                : "text-muted-foreground",
-            )}
-          >
-            {period} semanas
-          </Link>
-        ))}
-      </nav>
-      <section aria-label="Comparación de periodos" className="rounded-lg border p-4">
-        <h2 className="font-semibold">
-          {metric === "1rm"
-            ? "Mejor 1RM estimado"
-            : metric === "volume"
-              ? "Volumen total"
-              : "Repeticiones totales"}
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Dos periodos consecutivos de {comparison.days} días.
-        </p>
-        <dl className="mt-3 grid gap-3 sm:grid-cols-3">
-          <div>
-            <dt className="text-xs text-muted-foreground">
-              Actual · {fmtPeriodDate(comparison.currentStart)} —{" "}
-              {fmtPeriodDate(comparison.currentEnd)}
-            </dt>
-            <dd className="text-lg font-semibold">
-              {comparison.currentValue == null
-                ? "Sin datos"
-                : formatY(round1(comparison.currentValue))}
-            </dd>
-            <dd className="text-xs text-muted-foreground">
-              {comparison.current.length} entrenamientos
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">
-              Anterior · {fmtPeriodDate(comparison.previousStart)} —{" "}
-              {fmtPeriodDate(comparison.previousEnd)}
-            </dt>
-            <dd className="text-lg font-semibold">
-              {comparison.previousValue == null
-                ? "Sin datos"
-                : formatY(round1(comparison.previousValue))}
-            </dd>
-            <dd className="text-xs text-muted-foreground">
-              {comparison.previous.length} entrenamientos
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Variación</dt>
-            <dd className="text-lg font-semibold">
-              {comparison.changePercent == null
-                ? "Sin datos comparables"
-                : `${comparison.changePercent > 0 ? "+" : ""}${new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1 }).format(comparison.changePercent)} %`}
-            </dd>
-          </div>
-        </dl>
-      </section>
-      <Card>
-        <CardHeader className="gap-3">
-          <CardTitle className="text-base">
-            {metric === "reps"
-              ? "Repeticiones por entrenamiento"
-              : metric === "volume"
-                ? "Volumen por entrenamiento"
-                : "1RM estimado por entrenamiento"}
-          </CardTitle>
-          {summary.isBodyweight ? null : (
-            <nav aria-label="Qué mostrar" className="flex gap-2">
-              {[
-                ["1rm", "1RM estimado", periodHref(weeks, "1rm")],
-                ["volume", "Volumen", periodHref(weeks, "volume")],
-              ].map(([key, label, href]) => (
-                <Link
-                  key={key}
-                  href={href}
-                  aria-current={metric === key ? "true" : undefined}
-                  className={cn(
-                    "inline-flex min-h-11 items-center rounded-full border px-4 text-sm",
-                    metric === key
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          )}
-        </CardHeader>
-        <CardContent>
-          <LineChart
-            points={chartPoints}
-            label={summary.name}
-            formatY={formatY}
-            formatX={fmtDate}
-          />
-        </CardContent>
-      </Card>
-
-      <section aria-labelledby="progress-results-heading">
-        <h2 id="progress-results-heading" className="mb-2 font-semibold">
-          Entrenamientos del periodo
-        </h2>
-        {!comparison.current.length ? (
-          <p className="text-sm text-muted-foreground">
-            No hay entrenamientos en estas {weeks} semanas.
-          </p>
-        ) : null}
-        {comparison.current.length ? (
-          <ResultsTable
-            points={comparison.current}
-            bodyweight={summary.isBodyweight}
-            evidenceHref={evidenceHref}
-          />
-        ) : null}
-      </section>
-
-      {comparison.previous.length ? (
-        <details>
-          <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">
-            Ver entrenamientos del periodo anterior
-          </summary>
-          <ResultsTable
-            points={comparison.previous}
-            bodyweight={summary.isBodyweight}
-            evidenceHref={evidenceHref}
-          />
-        </details>
-      ) : null}
-      <div>
-        <Button
-          variant="outline"
-          render={<Link href={alumno ? studentHref(alumno, navigation) : "/progress"} />}
-        >
-          {alumno ? "Volver a la ficha" : "Volver"}
+  const [{ exerciseId }, query, user] = await Promise.all([params, searchParams, requireUser()]);
+  if (!z.uuid().safeParse(exerciseId).success) notFound();
+  if (
+    query.alumno !== undefined &&
+    (typeof query.alumno !== "string" || !z.uuid().safeParse(query.alumno).success)
+  )
+    notFound();
+  if (
+    user.role !== "coach" &&
+    typeof query.alumno === "string" &&
+    query.alumno.toLowerCase() !== user.id.toLowerCase()
+  )
+    notFound();
+  const studentId = typeof query.alumno === "string" ? query.alumno.toLowerCase() : user.id,
+    selectedStudent = studentId === user.id ? undefined : studentId,
+    navigation = navigationContext(query),
+    back = selectedStudent
+      ? studentHref(selectedStudent, navigation)
+      : progressIndexHref(navigation);
+  let review: Awaited<ReturnType<typeof getVisibleTrainingProgress>>;
+  try {
+    review = await getVisibleTrainingProgress(await createClient(), studentId);
+  } catch (error) {
+    return (
+      <div className="flow-page space-y-4">
+        <h1 className="text-xl font-semibold">Progreso del ejercicio</h1>
+        <ProgressReadFailure
+          error={error}
+          retryHref={progressHref(exerciseId, navigation, selectedStudent)}
+        />
+      </div>
+    );
+  }
+  if (!review) notFound();
+  const selection = selectTrainingExercise(review.progress.exercises, exerciseId, query);
+  if (selection.kind === "missing") notFound();
+  if (selection.kind === "invalid_type")
+    return (
+      <div className="flow-page space-y-4">
+        <h1 className="text-xl font-semibold">Progreso del ejercicio</h1>
+        <StatusMessage error>El tipo de registro de este enlace no es válido.</StatusMessage>
+        <Button variant="outline" render={<Link href={back} />}>
+          Volver
         </Button>
       </div>
-    </div>
-  );
-}
-
-function ResultsTable({
-  points,
-  bodyweight,
-  evidenceHref,
-}: {
-  points: ProgressPoint[];
-  bodyweight: boolean;
-  evidenceHref: (id: string) => string;
-}) {
+    );
+  if (selection.kind === "choose_type")
+    return (
+      <div className="flow-page space-y-4">
+        <h1 className="text-xl font-semibold">Elige un registro</h1>
+        <TrainingExerciseList
+          exercises={selection.choices}
+          navigation={navigation}
+          studentId={selectedStudent}
+        />
+      </div>
+    );
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="text-left text-xs text-muted-foreground">
-          <th className="py-1 font-normal">Fecha</th>
-          <th className="py-1 font-normal">{bodyweight ? "Repeticiones" : "1RM estimado"}</th>
-          {!bodyweight ? <th className="py-1 font-normal">Volumen</th> : null}
-        </tr>
-      </thead>
-      <tbody>
-        {[...points].reverse().map((p) => (
-          <tr key={p.workoutId} className="border-t">
-            <td>
-              <Link
-                href={evidenceHref(p.workoutId)}
-                aria-label={`Ver entrenamiento del ${p.date}`}
-                className="inline-flex min-h-11 min-w-11 items-center text-primary underline underline-offset-4"
-              >
-                {fmtDate(p.date)}
-              </Link>
-            </td>
-            <td className="py-2 tabular-nums">
-              {bodyweight ? p.bodyweightReps : formatKg(round1(p.estimated1RM))}
-            </td>
-            {!bodyweight ? <td className="py-2 tabular-nums">{formatKg(p.volumeKg)}</td> : null}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <TrainingExerciseDetail
+      selection={selection}
+      navigation={progressSelectionNavigation(selection, query.vista)}
+      studentId={selectedStudent}
+      today={review.today}
+      ownerId={review.student.id}
+    />
   );
 }

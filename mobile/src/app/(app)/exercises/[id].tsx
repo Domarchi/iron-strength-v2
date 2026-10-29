@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import type { TypedExerciseDetail } from "../../../../../src/lib/mobile/typed-exercise-contracts";
+import { formatTrainingMetrics } from "../../../../../src/domain/training-metrics";
+import { RECORD_TYPE_LABELS, SET_TYPE_LABELS } from "../../../lib/training-labels";
+import { useEffect, useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
 import { Action, Notice, Page, ScreenIntro, day, s, usePalette } from "../../../components/ui";
 import { useSession } from "../../../lib/session";
-import { useQuery } from "../../../lib/use-query";
+import { useTrainingExerciseQuery } from "../../../lib/training-download-query";
+import { downloadedAt } from "../../../lib/offline-week";
 import type { MobileExerciseDetail } from "../../../../../src/lib/mobile/exercise-contracts";
 
 export default function ExerciseDetailRoute() {
@@ -22,21 +26,20 @@ function ExerciseDetail({ id, fromCatalog }: { id: string; fromCatalog: boolean 
   const p = usePalette(),
     { client, state } = useSession();
   const offline = state.status === "authenticated" && state.mode === "offline";
-  const request = useCallback(() => {
-    if (offline)
-      return Promise.reject(new Error("Necesitas conexión para consultar este ejercicio."));
-    return client.exerciseDetail(id);
-  }, [client, id, offline]);
-  const q = useQuery(request);
+  const q = useTrainingExerciseQuery(id);
   const [more, setMore] = useState<{
-    base: MobileExerciseDetail | null;
-    items: MobileExerciseDetail["history"]["items"];
+    base: MobileExerciseDetail | TypedExerciseDetail | null;
+    items: (
+      | MobileExerciseDetail["history"]["items"][number]
+      | TypedExerciseDetail["history"]["items"][number]
+    )[];
     nextCursor: string | null;
   }>({ base: null, items: [], nextCursor: null });
   const [loadingMore, setLoadingMore] = useState(false),
-    [moreError, setMoreError] = useState<{ base: MobileExerciseDetail; message: string } | null>(
-      null,
-    );
+    [moreError, setMoreError] = useState<{
+      base: MobileExerciseDetail | TypedExerciseDetail;
+      message: string;
+    } | null>(null);
   const alive = useRef(false);
   useEffect(() => {
     alive.current = true;
@@ -44,19 +47,24 @@ function ExerciseDetail({ id, fromCatalog }: { id: string; fromCatalog: boolean 
       alive.current = false;
     };
   }, []);
-  const detail = !offline && !q.error ? q.value : null;
+  const detail = !q.error ? q.value : null;
   const extra = more.base === detail ? more.items : [];
   const rows = [...(detail?.history.items ?? []), ...extra].filter(
     (row, i, all) => all.findIndex((other) => other.id === row.id) === i,
   );
   const cursor = more.base === detail ? more.nextCursor : detail?.history.nextCursor;
+  const progressTypes = [
+    ...new Set(
+      rows.flatMap((w) => w.sets.map((set) => ("metrics" in set ? set.metrics.recordType : null))),
+    ),
+  ];
   async function loadMore() {
     if (!detail || !cursor || loadingMore || offline) return;
     const base = detail;
     setLoadingMore(true);
     setMoreError(null);
     try {
-      const page = await client.exerciseDetail(id, cursor);
+      const page = await client.trainingExerciseDetail(id, cursor);
       if (!alive.current) return;
       setMore({
         base,
@@ -82,18 +90,18 @@ function ExerciseDetail({ id, fromCatalog }: { id: string; fromCatalog: boolean 
           fromCatalog && router.canGoBack() ? router.back() : router.replace("/exercises")
         }
       />
-      {q.loading && !q.value && !offline ? (
+      {q.loading && !q.value ? (
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando ejercicio" />
       ) : null}
-      {offline || q.error ? (
+      {q.error ? (
         <Notice
           message={q.error ?? "Necesitas conexión para consultar este ejercicio."}
           retry={offline ? undefined : q.retry}
         />
       ) : null}
-      {offline || q.error ? (
+      {q.downloadedAt ? (
         <Text style={[s.caption, { color: p.muted }]}>
-          La ficha y su historial requieren conexión. No están descargados desde la biblioteca.
+          Historial descargado · {downloadedAt(q.downloadedAt)}
         </Text>
       ) : null}
       {detail ? (
@@ -103,7 +111,11 @@ function ExerciseDetail({ id, fromCatalog }: { id: string; fromCatalog: boolean 
             <Text style={[s.body, { color: p.muted }]}>
               {detail.exercise.muscleGroup} · {detail.exercise.equipment ?? "Sin equipo indicado"}
             </Text>
-            {detail.exercise.isBodyweight ? (
+            {detail.version === 2 && detail.exercise.recordType !== null ? (
+              <Text style={[s.caption, { color: p.muted }]}>
+                {RECORD_TYPE_LABELS[detail.exercise.recordType]}
+              </Text>
+            ) : detail.exercise.isBodyweight ? (
               <Text style={[s.caption, { color: p.muted }]}>Peso corporal</Text>
             ) : null}
           </View>
@@ -113,40 +125,80 @@ function ExerciseDetail({ id, fromCatalog }: { id: string; fromCatalog: boolean 
           {!rows.length ? (
             <Text style={[s.body, { color: p.muted }]}>Aún no has registrado este ejercicio.</Text>
           ) : null}
-          {rows.length ? (
-            <Action
-              label="Ver progreso de este ejercicio"
-              secondary
-              onPress={() => router.push({ pathname: "/progress/[id]", params: { id } })}
-            />
-          ) : null}
+          {!offline
+            ? progressTypes.map((kind) => (
+                <Action
+                  key={kind ?? "legacy"}
+                  label={
+                    progressTypes.length === 1
+                      ? "Ver progreso de este ejercicio"
+                      : `Ver progreso · ${kind === null ? "Registro anterior" : RECORD_TYPE_LABELS[kind]}`
+                  }
+                  secondary
+                  onPress={() =>
+                    router.push({
+                      pathname: "/progress/[id]",
+                      params: {
+                        id,
+                        progressVersion: "2",
+                        recordType: kind ?? "legacy",
+                        from: "exercise",
+                      },
+                    })
+                  }
+                />
+              ))
+            : null}
           {rows.map((workout) => (
             <View key={workout.id} style={[s.divider, { borderColor: p.border }]}>
               <Text style={[s.label, { color: p.ink }]}>
                 {day(workout.date)}
                 {workout.sessionLabel ? ` · Sesión ${workout.sessionLabel}` : ""}
               </Text>
+              {"exerciseNotes" in workout
+                ? workout.exerciseNotes
+                    .filter((n) => n.note)
+                    .map((n) => (
+                      <Text key={n.position} style={[s.body, { color: p.muted }]}>
+                        {n.note}
+                      </Text>
+                    ))
+                : null}
               {workout.sets.map((set) => (
                 <View key={set.id} style={s.row}>
                   <Text style={[s.body, { color: p.muted }]}>
-                    {set.isWarmup ? "Calentamiento" : `Serie ${set.setNumber}`}
+                    {"setType" in set
+                      ? `${SET_TYPE_LABELS[set.setType]} ${set.setNumber}`
+                      : set.isWarmup
+                        ? "Calentamiento"
+                        : `Serie ${set.setNumber}`}
                   </Text>
                   <Text style={[s.label, s.number, { color: p.ink }]}>
-                    {set.weightKg.toLocaleString("es-CL")} kg × {set.reps} reps
+                    {"metrics" in set
+                      ? formatTrainingMetrics(set.metrics)
+                      : `${set.weightKg.toLocaleString("es-CL")} kg × ${set.reps} reps`}
+                    {"effort" in set && set.effort !== null ? ` · Esfuerzo ${set.effort}/10` : ""}
                   </Text>
                 </View>
               ))}
-              <Action
-                label={`Ver entrenamiento del ${day(workout.date)}`}
-                quiet
-                onPress={() =>
-                  router.push({ pathname: "/result/[id]", params: { id: workout.id } })
-                }
-              />
+              {!offline ? (
+                <Action
+                  label={`Ver entrenamiento del ${day(workout.date)}`}
+                  quiet
+                  onPress={() =>
+                    router.push({ pathname: "/result/[id]", params: { id: workout.id } })
+                  }
+                />
+              ) : null}
             </View>
           ))}
           {moreError?.base === detail ? <Notice message={moreError.message} /> : null}
-          {cursor ? (
+          {cursor && offline ? (
+            <Text style={[s.caption, { color: p.muted }]}>
+              Conecta para ver más entrenamientos.
+            </Text>
+          ) : null}
+          {cursor && !offline ? (
             <Action
               label={
                 moreError?.base === detail ? "Reintentar más entrenamientos" : "Más entrenamientos"

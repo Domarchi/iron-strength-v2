@@ -1,12 +1,12 @@
 "use client";
-import { PrescriptionTargets } from "@/components/workout/prescription-targets";
+import { formatTrainingTarget } from "../../../mobile/src/lib/training-labels";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatPrescription } from "@/domain/format";
-import type { WorkoutContext } from "@/lib/data/workout-context";
+
+import type { AssignedTrainingContext } from "@/lib/workout/training-context";
 import { previewRoutineAction } from "@/app/(app)/week/actions";
 
 export function RoutinePreview({ sessionId, label }: { sessionId: string; label: string }) {
@@ -39,7 +39,7 @@ function PreviewPanel({
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [context, setContext] = useState<WorkoutContext | null>(null);
+  const [context, setContext] = useState<AssignedTrainingContext | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -109,8 +109,20 @@ function PreviewPanel({
             {context.exercises.map((ex) => (
               <li key={ex.sessionExerciseId} className="space-y-1 py-4">
                 <h3 className="font-semibold">{ex.name}</h3>
-                <p className="text-sm">{formatPrescription(ex.prescribed)}</p>
-                <PrescriptionTargets series={ex.prescribed.series} />
+                <p className="text-sm">
+                  {formatTrainingTarget(ex.prescribed.target)
+                    ? `${ex.prescribed.sets} × ${formatTrainingTarget(ex.prescribed.target)}`
+                    : `${ex.prescribed.sets} ${ex.prescribed.sets === 1 ? "serie" : "series"}`}
+                </p>
+                {ex.prescribed.series ? (
+                  <ol className="text-xs text-muted-foreground">
+                    {ex.prescribed.series.map((target, i) => (
+                      <li key={i}>
+                        Serie {i + 1} · {formatTrainingTarget(target) || "Sin objetivo indicado"}
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
                 {ex.supersetId ? (
                   <p className="text-xs font-medium text-primary">
                     Superserie · alterna con los ejercicios del mismo grupo

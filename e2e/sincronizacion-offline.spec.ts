@@ -1,3 +1,4 @@
+import { recoverLegacyWeek } from "./support/recover-legacy-week";
 import { test } from "./support/network";
 import { expect, type Page } from "@playwright/test";
 import { admin, COACH, createUser, resetAll, seedCoach, seedProgram } from "./support/db";
@@ -71,9 +72,10 @@ test("termina offline, cierra y sincroniza una vez aunque pierda la respuesta; c
   ).toBeNull();
   await login(page, COACH.email, COACH.password);
   await page.goto("/week");
-  await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
+  await recoverLegacyWeek(page);
+  await page.getByRole("button", { name: "Descargar entrenamientos", exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Descarga de la semana" }).getByRole("status"),
+    page.getByRole("region", { name: "Entrenamientos sin conexión" }).getByRole("status"),
   ).toContainText("Disponible sin conexión");
   await page.close();
   network.offline = true;

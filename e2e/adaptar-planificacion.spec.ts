@@ -4,6 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { COACH, admin, createUser, resetAll, seedCoach } from "./support/db";
 import { login } from "./support/ui";
 import { mondayOf, santiagoDate } from "../src/domain/dates";
+import { readStoredTrainingPrescription } from "../src/domain/stored-prescription";
 let programId: string, studentId: string, names: string[];
 test.beforeEach(async () => {
   await resetAll();
@@ -191,13 +192,17 @@ test("adaptación de 72 pesos incluye revisión y reduce al menos 30 % las accio
     copy = await snapshot(copyId);
   const rows = assigned.program_sessions.flatMap((s) => s.session_exercises);
   expect(rows).toHaveLength(72);
-  expect(rows.every((e) => e.target_weight_kg === 77.5 && e.note === "Conservar técnica")).toBe(
-    true,
-  );
+  expect(
+    rows.every(
+      (e) =>
+        readStoredTrainingPrescription(e).target.targetWeightKg === 77.5 &&
+        e.note === "Conservar técnica",
+    ),
+  ).toBe(true);
   expect(
     copy.program_sessions
       .flatMap((s) => s.session_exercises)
-      .every((e) => e.target_weight_kg === 77.5),
+      .every((e) => readStoredTrainingPrescription(e).target.targetWeightKg === 77.5),
   ).toBe(true);
   const originalIds = new Set(
     original.program_sessions.flatMap((s) => s.session_exercises).map((e) => e.id),
@@ -207,7 +212,9 @@ test("adaptación de 72 pesos incluye revisión y reduce al menos 30 % las accio
   expect(new Set(groups).size).toBe(12);
   const alternatives = rows.flatMap((e) => e.session_exercise_alternatives);
   expect(alternatives).toHaveLength(12);
-  expect(alternatives.every((a) => a.target_weight_kg === 20)).toBe(true);
+  expect(
+    alternatives.every((a) => readStoredTrainingPrescription(a).target.targetWeightKg === 20),
+  ).toBe(true);
   expect(await snapshot()).toEqual(original);
   expect(actions).toBeLessThanOrEqual(66);
   expect((95 - actions) / 95).toBeGreaterThanOrEqual(0.3);
@@ -366,7 +373,14 @@ test("recupera semana y sesión; el atajo guarda solo la sesión visible", async
   const a = after.program_sessions.find((s) => s.week_number === 3 && s.label === "A")!;
   const b = after.program_sessions.find((s) => s.week_number === 3 && s.label === "B")!;
   expect(a.session_exercises.every((e) => e.target_weight_kg === 50)).toBe(true);
-  expect(b.session_exercises.find((e) => e.position === 0)!.target_weight_kg).toBe(62);
+  const changed = b.session_exercises.find((e) => e.position === 0)!;
+  expect(changed.target_weight_kg).toBeNull();
+  expect(readStoredTrainingPrescription(changed)).toMatchObject({
+    recordType: null,
+    sets: 3,
+    target: { targetWeightKg: 62, repsMin: 8, repsMax: 12 },
+  });
+  expect(changed.note).toBe("Conservar técnica");
   await tabs.getByRole("button", { name: /^Sesión A/ }).click();
   await expect(weight()).toHaveValue("61");
   await expect(

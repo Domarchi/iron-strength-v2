@@ -7,18 +7,21 @@ export function SetCheck({
   number,
   checked,
   onPress,
+  disabled = false,
 }: {
   number: number;
   checked: boolean;
   onPress: () => void;
+  disabled?: boolean;
 }) {
   const p = usePalette();
   return (
     <Pressable
       accessibilityRole="checkbox"
       accessibilityLabel={`Completar serie ${number}`}
-      accessibilityState={{ checked }}
+      accessibilityState={{ checked, disabled }}
       aria-checked={checked}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
         width: 48,

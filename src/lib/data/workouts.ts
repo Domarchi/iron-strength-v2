@@ -1,9 +1,20 @@
+import { z } from "zod";
+import {
+  parseWorkoutHistoryCursor,
+  workoutHistoryCursorString,
+} from "../../domain/workout-history-cursor";
+import { WorkoutHistoryPageError } from "./workout-history-error";
+import { workoutSourceKindSchema } from "../mobile/personal-workout-contracts";
+import { workoutStructureSchema, type WorkoutStructure } from "../mobile/recording-contracts";
+import type { WorkoutSourceKind } from "../../domain/workout-title";
 // Entrenamientos realizados: detalle y lista paginada (RF-34, RF-77). La RLS decide quién ve qué:
 // el alumno sus entrenamientos, el coach los de sus alumnos.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { setVolume } from "../../domain/volume.ts";
 import type { DateString } from "../../domain/dates.ts";
 import type { Database } from "../../types/database.ts";
+import { repetitionValues, storedTrainingSet } from "./stored-training-set";
+import { trainingTotals } from "../../domain/training-metrics";
 
 type Client = SupabaseClient<Database>;
 
@@ -12,6 +23,8 @@ export type WorkoutSummary = {
   volumeKg: number;
   bodyweightReps: number;
   exerciseCount: number;
+  recordedSeconds?: number;
+  distanceMeters?: number;
 };
 
 export type WorkoutSetRow = {
@@ -32,6 +45,11 @@ export type WorkoutExerciseRow = {
 };
 
 export type WorkoutDetail = {
+  structure?: WorkoutStructure | null;
+  sourceKind?: WorkoutSourceKind;
+  title?: string | null;
+  personalRoutineId?: string | null;
+  personalRoutineRevision?: number | null;
   id: string;
   studentId: string;
   programId: string | null;
@@ -52,16 +70,30 @@ type RawSet = {
   exercise_name: string;
   position: number;
   set_number: number;
-  weight_kg: number | string;
-  reps: number;
+  weight_kg: number | string | null;
+  reps: number | null;
   is_warmup: boolean;
+  record_type: string | null;
+  duration_seconds: number | null;
+  distance_meters: number | null;
+  set_type: string | null;
+  effort: number | null;
 };
 
-function summarize(
-  sets: Pick<RawSet, "weight_kg" | "reps" | "is_warmup" | "exercise_id">[],
-): WorkoutSummary {
+function summarize(sets: Omit<RawSet, "id" | "exercise_name" | "set_number">[]): WorkoutSummary {
+  if (sets.some((s) => s.set_type !== null)) {
+    const totals = trainingTotals(sets.map(storedTrainingSet));
+    return {
+      workingSets: totals.workingSets,
+      volumeKg: totals.externalVolumeKg,
+      bodyweightReps: totals.bodyweightReps,
+      exerciseCount: new Set(sets.map((s) => s.position)).size,
+      recordedSeconds: totals.durationSeconds,
+      distanceMeters: totals.distanceMeters,
+    };
+  }
   const { loadKg, bodyweightReps } = setVolume(
-    sets.map((s) => ({ weightKg: Number(s.weight_kg), reps: s.reps, isWarmup: s.is_warmup })),
+    sets.map((s) => ({ ...repetitionValues(s), isWarmup: s.is_warmup })),
   );
   return {
     workingSets: sets.filter((s) => !s.is_warmup).length,
@@ -79,15 +111,17 @@ export async function getWorkoutDetail(
   let query = db
     .from("workouts")
     .select(
-      `id, student_id, program_id, session_label, started_at, duration_seconds, performed_on, perceived_effort, note,
+      `id, student_id, program_id, source_kind, title, personal_routine_id, personal_routine_revision, session_label, started_at, duration_seconds, performed_on, perceived_effort, note, structure,
        programs ( name ),
-       workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup )`,
+       workout_sets ( id, exercise_id, exercise_name, prescribed_exercise_id, prescribed_exercise_name, position, set_number, weight_kg, reps, is_warmup, record_type,duration_seconds,distance_meters,set_type,effort )`,
     )
     .eq("id", id);
   if (ownerId) query = query.eq("student_id", ownerId);
   const { data, error } = await query.maybeSingle();
   if (error) throw new Error(`No se pudo cargar el entrenamiento: ${error.message}`);
   if (!data) return null;
+  // Older result consumers must not reinterpret a new document as weight/repetitions.
+  const structure = data.structure == null ? null : workoutStructureSchema.parse(data.structure);
 
   const grouped = new Map<number, WorkoutExerciseRow>();
   for (const s of [...data.workout_sets].sort(
@@ -104,16 +138,20 @@ export async function getWorkoutDetail(
     row.sets.push({
       id: s.id,
       setNumber: s.set_number,
-      weightKg: Number(s.weight_kg),
-      reps: s.reps,
+      ...repetitionValues(s),
       isWarmup: s.is_warmup,
     });
     grouped.set(s.position, row);
   }
 
   return {
+    ...(structure == null ? {} : { structure }),
     id: data.id,
     studentId: data.student_id,
+    sourceKind: workoutSourceKindSchema.parse(data.source_kind),
+    title: data.title,
+    personalRoutineId: data.personal_routine_id,
+    personalRoutineRevision: data.personal_routine_revision,
     programId: data.program_id,
     programName: (data.programs as unknown as { name: string } | null)?.name ?? null,
     sessionLabel: data.session_label,
@@ -128,6 +166,8 @@ export async function getWorkoutDetail(
 }
 
 export type WorkoutListItem = {
+  sourceKind?: WorkoutSourceKind;
+  title?: string | null;
   id: string;
   perceivedEffort: number | null;
   note: string | null;
@@ -140,26 +180,57 @@ export type WorkoutListItem = {
 export async function listWorkouts(
   db: Client,
   studentId: string,
-  options: { limit?: number; cursor?: string } = {},
+  options: { limit?: number; cursor?: unknown } = {},
 ): Promise<{ items: WorkoutListItem[]; nextCursor: string | null }> {
-  const limit = options.limit ?? 20;
+  const parsedId = z.uuid().safeParse(studentId),
+    parsedLimit = z
+      .number()
+      .int()
+      .min(1)
+      .max(999)
+      .safeParse(options.limit ?? 20);
+  if (!parsedId.success || !parsedLimit.success) throw new WorkoutHistoryPageError("invalid");
+  const owner = parsedId.data.toLowerCase(),
+    limit = parsedLimit.data;
+  let cursor = options.cursor === undefined ? null : parseWorkoutHistoryCursor(options.cursor);
+  if (options.cursor !== undefined && !cursor) throw new WorkoutHistoryPageError("invalid");
+  if (cursor?.version === 2 && cursor.userId !== owner)
+    throw new WorkoutHistoryPageError("invalid");
+  if (cursor?.version === 1) {
+    const legacy = await db
+      .from("workouts")
+      .select("id")
+      .eq("student_id", owner)
+      .eq("started_at", cursor.startedAt)
+      .order("id", { ascending: false })
+      .limit(2);
+    if (legacy.error) throw new WorkoutHistoryPageError("unavailable");
+    if (legacy.data.length !== 1) throw new WorkoutHistoryPageError("stale");
+    cursor = { version: 2, userId: owner, startedAt: cursor.startedAt, id: legacy.data[0].id };
+  }
   let query = db
     .from("workouts")
     .select(
-      "id, session_label, started_at, performed_on, duration_seconds, perceived_effort, note, workout_sets(exercise_id, weight_kg, reps, is_warmup)",
+      "id, source_kind, title, session_label, started_at, performed_on, duration_seconds, perceived_effort, note, workout_sets(exercise_id,position,weight_kg,reps,is_warmup,record_type,duration_seconds,distance_meters,set_type,effort)",
     )
-    .eq("student_id", studentId)
+    .eq("student_id", owner)
     .order("started_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(limit + 1);
-  if (options.cursor) query = query.lt("started_at", options.cursor);
+  if (cursor?.version === 2)
+    query = query.or(
+      `started_at.lt.${cursor.startedAt},and(started_at.eq.${cursor.startedAt},id.lt.${cursor.id})`,
+    );
 
   const { data, error } = await query;
-  if (error) throw new Error(`No se pudo cargar el historial: ${error.message}`);
+  if (error) throw new WorkoutHistoryPageError("unavailable");
 
   const page = data.slice(0, limit);
   return {
     items: page.map((w) => ({
       id: w.id,
+      sourceKind: workoutSourceKindSchema.parse(w.source_kind),
+      title: w.title,
       sessionLabel: w.session_label,
       startedAt: w.started_at,
       performedOn: w.performed_on as string,
@@ -168,6 +239,13 @@ export async function listWorkouts(
       note: w.note,
       ...summarize(w.workout_sets),
     })),
-    nextCursor: data.length > limit ? page[page.length - 1].started_at : null,
+    nextCursor:
+      data.length > limit
+        ? workoutHistoryCursorString({
+            userId: owner,
+            startedAt: page[page.length - 1].started_at,
+            id: page[page.length - 1].id,
+          })
+        : null,
   };
 }
