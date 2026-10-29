@@ -4,6 +4,25 @@ import { clearEditorViews, editorViewStorage } from "@/lib/coach/editor-view";
 import type { DraftStorage } from "@/lib/workout/draft";
 import { offlineTransaction } from "./storage";
 import { listQueuedWorkouts, notifyQueueChanged } from "./queue";
+import { trainingEnvelopeSchema } from "../../../mobile/src/lib/training";
+import { workoutQueueEnvelopeSchema } from "../../../mobile/src/lib/sync-queue";
+export function typedTrainingPending(key: string, raw: string | null, userId: string): boolean {
+  if (raw === null) return false;
+  const parts = key.split(":");
+  if (parts.length !== 4 || parts[2] !== "v1" || parts[3] !== userId) return true;
+  try {
+    if (parts[1] === "native-training") {
+      const value = trainingEnvelopeSchema.parse(JSON.parse(raw));
+      return value.userId !== userId || !!value.active;
+    }
+    const value = workoutQueueEnvelopeSchema.parse(JSON.parse(raw));
+    return value.userId !== userId || value.entries.some((e) => e.phase === "pending");
+  } catch {
+    return true;
+  }
+}
+const isTypedTrainingKey = (key: string) =>
+  key.startsWith("is:native-training:") || key.startsWith("is:native-sync:");
 export function accountStorageKeys(storage: DraftStorage, userId: string): string[] {
   const keys: string[] = [];
   for (let i = 0; i < storage.length; i++) {
@@ -20,6 +39,8 @@ export function accountStorageKeys(storage: DraftStorage, userId: string): strin
         "workout-focus",
         "workout-correction",
         "workout-removal",
+        "native-training",
+        "native-sync",
       ].includes(parts[1]) &&
       parts[3] === userId
     )
@@ -28,7 +49,16 @@ export function accountStorageKeys(storage: DraftStorage, userId: string): strin
   return keys;
 }
 export function hasLocalTraining(storage: DraftStorage): boolean {
-  for (let i = 0; i < storage.length; i++) if (storage.key(i)?.startsWith("is:draft:")) return true;
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (key?.startsWith("is:draft:")) return true;
+    if (
+      key &&
+      isTypedTrainingKey(key) &&
+      typedTrainingPending(key, storage.getItem(key), key.split(":")[3] ?? "")
+    )
+      return true;
+  }
   return false;
 }
 function isWorkoutChangeKey(key: string) {
@@ -59,6 +89,7 @@ export async function inspectLocalAccount(userId: string) {
   const keys = accountStorageKeys(localStorage, userId).filter(
     (key) =>
       !key.startsWith("is:workout-focus:") &&
+      (!isTypedTrainingKey(key) || typedTrainingPending(key, localStorage.getItem(key), userId)) &&
       (!isWorkoutChangeKey(key) || workoutChangePending(key, localStorage.getItem(key), userId)),
   );
   const queue = await listQueuedWorkouts(userId);
@@ -68,6 +99,18 @@ export async function clearLocalAccount(
   userId: string,
   options: { afterAccountDeletion?: boolean } = {},
 ): Promise<void> {
+  const typedBefore = new Map(
+    accountStorageKeys(localStorage, userId)
+      .filter(isTypedTrainingKey)
+      .map((key) => [key, localStorage.getItem(key)]),
+  );
+  if (
+    !options.afterAccountDeletion &&
+    [...typedBefore].some(([key, raw]) => typedTrainingPending(key, raw, userId))
+  )
+    throw Error(
+      "Retoma, sincroniza o descarta explícitamente el registro pendiente antes de salir.",
+    );
   if (
     !options.afterAccountDeletion &&
     accountStorageKeys(localStorage, userId).some(
@@ -95,7 +138,21 @@ export async function clearLocalAccount(
       },
       storeName,
     );
-  for (const key of accountStorageKeys(localStorage, userId)) {
+  for (const key of accountStorageKeys(localStorage, userId).sort(
+    (a, b) => Number(isTypedTrainingKey(b)) - Number(isTypedTrainingKey(a)),
+  )) {
+    if (isTypedTrainingKey(key)) {
+      const before = typedBefore.get(key);
+      if (before === undefined || !navigator.locks)
+        throw Error("El registro cambió. Conservamos sus datos.");
+      await navigator.locks.request("iron-strength-native-week:" + key, () => {
+        if (localStorage.getItem(key) !== before)
+          throw Error("El registro cambió en otra ventana.");
+        localStorage.removeItem(key);
+        if (localStorage.getItem(key) !== null) throw Error("No se confirmó la limpieza local.");
+      });
+      continue;
+    }
     if (!isWorkoutChangeKey(key)) {
       localStorage.removeItem(key);
       continue;

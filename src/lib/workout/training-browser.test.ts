@@ -4,7 +4,7 @@ import { TrainingController } from "../../../mobile/src/lib/training";
 import { editTypedSet } from "../../../mobile/src/lib/typed-training";
 import type { QueuedWorkoutPayload } from "../../../mobile/src/lib/queued-recording";
 import { hasLocalTraining } from "../offline/local-account";
-import { createTrainingBrowserStorage } from "./training-browser";
+import { createTrainingBrowserStorage, reserveTrainingAccount } from "./training-browser";
 import { trainingGuardKey } from "./training-guard";
 const owner = id(1),
   key = `is:native-training:v1:${owner}`;
@@ -23,11 +23,14 @@ function setup() {
       return data.size;
     },
   };
-  let tail = Promise.resolve();
+  const tails = new Map<string, Promise<void>>();
   const locks = {
-    request: vi.fn(async (_name: string, operation: () => void) => {
-      const next = tail.then(operation);
-      tail = next.catch(() => {});
+    request: vi.fn(async (name: string, operation: () => void | Promise<void>) => {
+      const next = (tails.get(name) ?? Promise.resolve()).then(operation);
+      tails.set(
+        name,
+        next.catch(() => {}),
+      );
       await next;
     }),
   };
@@ -59,7 +62,9 @@ it("es lazy y protege un registro real con la guarda que ve el worker anterior",
   expect(x.data.has(trainingGuardKey(owner))).toBe(true);
   expect(hasLocalTraining(x.storage)).toBe(true);
   expect(
-    x.locks.request.mock.calls.every(([name]) => name === `iron-strength-native-week:${key}`),
+    x.locks.request.mock.calls.every(([name]) =>
+      ["iron-strength-web-training:" + owner, `iron-strength-native-week:${key}`].includes(name),
+    ),
   ).toBe(true);
   expect(x.controller.getSnapshot()).toMatchObject({
     dirty: false,
@@ -229,4 +234,38 @@ it("clearForLogout usa comparación para no retirar un documento cambiado tras f
   await expect(x.controller.clearForLogout()).rejects.toMatchObject({ reason: "conflict" });
   expect(x.data.get(key)).toBe('{"version":99}');
   expect(x.data.get(key)).not.toBe(empty);
+});
+it("una clave de versión futura propia bloquea restauración sin ignorarla", async () => {
+  const x = setup();
+  x.data.set(`is:native-training:v99:${owner}`, "future");
+  await x.controller.restore();
+  expect(x.controller.getSnapshot().blocked).toBe(true);
+  expect(x.data.get(`is:native-training:v99:${owner}`)).toBe("future");
+});
+it("una reserva de cuenta aplaza escrituras de otra ventana y comprueba cuenta al liberar", async () => {
+  const x = setup();
+  let own = true;
+  vi.stubGlobal("navigator", { locks: x.locks });
+  try {
+    const adapter = createTrainingBrowserStorage(
+      owner,
+      () => x.storage,
+      () => x.locks,
+      () => own,
+    );
+    const release = await reserveTrainingAccount(owner);
+    const writing = adapter.compareAndSet(
+      key,
+      null,
+      JSON.stringify({ version: 4, userId: owner, active: null, demos: [] }),
+    );
+    await Promise.resolve();
+    expect(x.data.has(key)).toBe(false);
+    own = false;
+    release();
+    await expect(writing).rejects.toThrow("La cuenta cambió");
+    expect(x.data.has(key)).toBe(false);
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

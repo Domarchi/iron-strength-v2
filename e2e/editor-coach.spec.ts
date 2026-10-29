@@ -169,8 +169,11 @@ test("arrastrar guarda el orden; un fallo conserva el destino y se puede reinten
   });
   await mouseReorder(page, "Press de banca", "Sentadilla");
   const retry = page.getByRole("button", { name: "Reintentar operación", exact: true });
+  // El intento local se protege antes del POST: el botón puede aparecer mientras
+  // WebKit todavía entrega la petición al interceptor. Esperar el corte real.
+  await expect.poll(() => aborted).toBe(true);
   await expect(retry).toBeVisible();
-  expect(aborted).toBe(true);
+  await expect(retry).toBeEnabled();
   await expect(page.getByRole("heading", { name: /1.*Sentadilla/ })).toBeVisible();
   await retry.click();
   await expect(page.getByText("Orden guardado.", { exact: true })).toBeVisible();

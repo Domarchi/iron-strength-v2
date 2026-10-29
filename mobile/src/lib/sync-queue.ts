@@ -81,6 +81,7 @@ const typedRecordSchema = z
     }
   });
 const queueRecordSchema = z.union([previousRecordSchema, typedRecordSchema]);
+export const workoutQueueEnvelopeSchema = queueRecordSchema;
 export const nativeSyncKey = (userId: string) => `is:native-sync:v1:${userId}`;
 export const samePayload = (a: QueuedWorkoutPayload, b: QueuedWorkoutPayload) =>
   JSON.stringify(queuedWorkoutPayloadSchema.parse(a)) ===

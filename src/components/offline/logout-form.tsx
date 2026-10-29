@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState, useId } from "react";
 import { useWorkoutChanges } from "@/components/workout-changes/provider";
+import { useWebTraining } from "@/components/training/provider";
 import { logoutAction } from "@/app/(auth)/actions";
 import { setOfflineAccount } from "@/lib/offline/account";
 import { clearLocalAccount, inspectLocalAccount } from "@/lib/offline/local-account";
@@ -8,6 +9,7 @@ import { syncAllWorkouts } from "@/lib/offline/sync";
 import { Button } from "@/components/ui/button";
 export function LogoutForm({ children, userId }: { children: React.ReactNode; userId: string }) {
   const changes = useWorkoutChanges();
+  const { bridge } = useWebTraining();
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
   const [busy, setBusy] = useState(false);
@@ -25,8 +27,10 @@ export function LogoutForm({ children, userId }: { children: React.ReactNode; us
     setBusy(true);
     setError(null);
     let release: (() => void) | undefined;
+    let releaseTraining: (() => void) | undefined;
     try {
       release = await changes.reserveExit();
+      releaseTraining = await bridge.reserve(mode);
       if (mode === "discard") {
         await leave();
         return;
@@ -54,6 +58,7 @@ export function LogoutForm({ children, userId }: { children: React.ReactNode; us
       dialog.current?.showModal();
     } finally {
       release?.();
+      releaseTraining?.();
       setBusy(false);
     }
   }

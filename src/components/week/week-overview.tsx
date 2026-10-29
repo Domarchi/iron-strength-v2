@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { listDrafts } from "@/lib/workout/draft";
+import { localAssignedTrainings } from "@/lib/workout/local-typed-training";
 import { orderScheduledSessions, scheduleState, WEEKDAYS } from "@/domain/session-schedule";
 import { SessionStart } from "./session-start";
 import { RoutinePreview } from "./routine-preview";
@@ -164,6 +165,12 @@ export function WeekOverview({
     subscribeDrafts,
     () => {
       try {
+        const typed = localAssignedTrainings(window.localStorage, userId).find(
+          (r) =>
+            r.phase === "in_progress" &&
+            view.sessions.some((s) => s.status !== "done" && s.sessionId === r.sessionId),
+        );
+        if (typed) return typed.sessionId;
         return (
           listDrafts(window.localStorage, userId)
             .filter(

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useWorkoutChanges } from "@/components/workout-changes/provider";
+import { useWebTraining } from "@/components/training/provider";
 import { useRouter } from "next/navigation";
 import { clearLocalAccount } from "@/lib/offline/local-account";
 import { setOfflineAccount } from "@/lib/offline/account";
@@ -16,6 +17,7 @@ import { deleteAccountAction, type DeleteAccountState } from "./actions";
 export function DeleteAccount({ userId }: { userId: string }) {
   const router = useRouter();
   const changes = useWorkoutChanges();
+  const { bridge } = useWebTraining();
   const [cleanupError, setCleanupError] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState(false);
   async function finishCleanup() {
@@ -38,8 +40,10 @@ export function DeleteAccount({ userId }: { userId: string }) {
   const [state, action, pending] = useActionState<DeleteAccountState, FormData>(
     async (previous, form) => {
       let release: (() => void) | undefined;
+      let releaseTraining: (() => void) | undefined;
       try {
         release = await changes.reserveAccountDeletion();
+        releaseTraining = await bridge.reserve("delete");
         const result = await deleteAccountAction(previous, form);
         if (result.status === "deleted") await finishCleanup();
         return result;
@@ -51,6 +55,7 @@ export function DeleteAccount({ userId }: { userId: string }) {
         };
       } finally {
         release?.();
+        releaseTraining?.();
       }
     },
     { status: "idle" },

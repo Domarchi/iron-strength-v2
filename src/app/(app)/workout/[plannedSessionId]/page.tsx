@@ -1,47 +1,38 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { z } from "zod";
 import { requireUser } from "@/lib/auth/session";
 import { getWorkoutContext } from "@/lib/data/workout-context";
+import { getAssignedTrainingContext } from "@/lib/data/assigned-training-context";
 import { createClient } from "@/lib/supabase/server";
-import { RunnerLoader } from "./runner-loader";
-
+import { WebRunnerGate } from "@/components/training/runner";
 export const metadata: Metadata = { title: "Entrenamiento · Iron Strength" };
-
 export default async function WorkoutPage({
   params,
 }: {
   params: Promise<{ plannedSessionId: string }>;
 }) {
   const { plannedSessionId } = await params;
-  const user = await requireUser();
-  const result = await getWorkoutContext(
-    await createClient(),
-    user.id,
-    plannedSessionId,
-    undefined,
-    true,
+  if (!z.uuid().safeParse(plannedSessionId).success) notFound();
+  const user = await requireUser(),
+    db = await createClient();
+  const result = await getAssignedTrainingContext(db, user.id, plannedSessionId, undefined, true);
+  const context = result.ok ? result.context : null;
+  const advanced = context?.exercises.some((e) =>
+    [e, ...e.alternatives].some((c) => c.prescribed.recordType !== null),
   );
-
-  if (!result.ok && result.reason === "not_found") notFound();
-
-  if (!result.ok) {
-    return (
-      <Card className="mt-6">
-        <CardContent className="flex flex-col gap-3 pt-6">
-          <p className="font-medium">Esta sesión no está disponible hoy.</p>
-          <p className="text-sm text-muted-foreground">
-            Solo puedes entrenar las sesiones de la semana en curso de tu programa.
-          </p>
-          <div>
-            <Button render={<Link href="/week" />}>Volver a mi semana</Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return <RunnerLoader userId={user.id} context={result.context} recoveryOnly={!result.canStart} />;
+  const previous =
+    context && !advanced
+      ? await getWorkoutContext(db, user.id, plannedSessionId, undefined, true)
+      : null;
+  return (
+    <WebRunnerGate
+      key={`${user.id}:${plannedSessionId}`}
+      userId={user.id}
+      sessionId={plannedSessionId}
+      context={context}
+      legacy={previous?.ok ? previous.context : null}
+      canStart={result.ok && result.canStart}
+    />
+  );
 }

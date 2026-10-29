@@ -46,3 +46,12 @@ it("reconoce sobres de corrección/eliminación propios de cualquier versión si
     "is:workout-removal:v99:a",
   ]);
 });
+it("descubre activos y colas tipados propios, incluso futuros, y aplaza actualizar con los ajenos", () => {
+  for (const key of ["is:native-training:v1:a", "is:native-sync:v99:a", "is:native-training:v1:ab"])
+    localStorage.setItem(key, "future");
+  expect(accountStorageKeys(localStorage, "a")).toEqual([
+    "is:native-training:v1:a",
+    "is:native-sync:v99:a",
+  ]);
+  expect(hasLocalTraining(localStorage)).toBe(true);
+});

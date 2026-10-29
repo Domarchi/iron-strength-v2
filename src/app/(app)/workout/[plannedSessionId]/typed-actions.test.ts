@@ -7,13 +7,19 @@ const mocks = vi.hoisted(() => ({
   read: vi.fn(),
   save: vi.fn(),
   revalidate: vi.fn(),
+  history: vi.fn(),
 }));
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser: mocks.user }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.db }));
 vi.mock("@/lib/data/assigned-training-context", () => ({ getAssignedTrainingContext: mocks.read }));
 vi.mock("@/lib/data/typed-recordings", () => ({ saveTypedWorkoutRecording: mocks.save }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
-import { readAssignedTrainingAction, saveAssignedTrainingAction } from "./typed-actions";
+vi.mock("@/lib/data/typed-exercises", () => ({ listTypedExerciseHistory: mocks.history }));
+import {
+  readAssignedTrainingAction,
+  saveAssignedTrainingAction,
+  readTypedExerciseHistoryAction,
+} from "./typed-actions";
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.user.mockResolvedValue({ id: id(1) });
@@ -23,6 +29,31 @@ beforeEach(() => {
     status: "created",
     workoutId: typedRecordingFixture("assigned").id,
   });
+});
+it("historial deriva la cuenta de sesión y rechaza cuenta ajena/cursor o campos no autorizados", async () => {
+  const request = { userId: id(1), exerciseId: id(5), cursor: null };
+  mocks.history.mockResolvedValue({ items: [], nextCursor: null });
+  expect(await readTypedExerciseHistoryAction(request)).toEqual({
+    ok: true,
+    history: { items: [], nextCursor: null },
+  });
+  expect(mocks.history).toHaveBeenCalledWith("session-bound-client", id(1), id(5), {
+    cursor: undefined,
+  });
+  mocks.history.mockClear();
+  for (const input of [
+    { ...request, userId: id(90) },
+    { ...request, cursor: "invalid" },
+    { ...request, studentId: id(90) },
+  ])
+    expect((await readTypedExerciseHistoryAction(input)).ok).toBe(false);
+  mocks.user.mockResolvedValueOnce(null);
+  expect((await readTypedExerciseHistoryAction(request)).ok).toBe(false);
+  expect(mocks.history).not.toHaveBeenCalled();
+  mocks.history.mockRejectedValueOnce(Error("internal-secret"));
+  expect(JSON.stringify(await readTypedExerciseHistoryAction(request))).not.toContain(
+    "internal-secret",
+  );
 });
 it("consulta con cliente de sesión y sin parámetros cliente de recuperación", async () => {
   expect(
