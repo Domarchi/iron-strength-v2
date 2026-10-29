@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run ops:backup:test && npm run build",
     "db:types": "supabase gen types typescript --local > src/types/database.ts",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
@@ -27,7 +27,9 @@
     "mobile:bundle": "npm --prefix mobile run bundle",
     "ops:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-release.ts",
     "ops:backup:prune": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/prune-backups.ts",
-    "ops:native-audit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-native-runtime.ts"
+    "ops:native-audit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-native-runtime.ts",
+    "ops:backup:create": "python3 scripts/create_backup.py",
+    "ops:backup:test": "python3 -m unittest discover -s scripts -p 'test_backup*.py'"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
