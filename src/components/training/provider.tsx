@@ -1,7 +1,6 @@
 "use client";
 import {
   createContext,
-  startTransition,
   useContext,
   useEffect,
   useState,
@@ -16,7 +15,7 @@ import {
   reserveTrainingAccount,
 } from "@/lib/workout/training-browser";
 import { activeOfflineAccount } from "@/lib/offline/account";
-import { saveAssignedTrainingAction } from "@/app/(app)/workout/[plannedSessionId]/typed-actions";
+import { sendWebTraining, WebSyncError } from "@/lib/workout/web-sync-client";
 import { SyncScheduler } from "../../../mobile/src/lib/sync-scheduler";
 const Context = createContext<WebTraining | null>(null);
 export function WebTrainingProvider({ userId, children }: PropsWithChildren<{ userId: string }>) {
@@ -30,34 +29,11 @@ export function WebTrainingProvider({ userId, children }: PropsWithChildren<{ us
           undefined,
           () => activeOfflineAccount() === userId,
         ),
-        (payload) =>
-          new Promise((resolve, reject) => {
-            startTransition(async () => {
-              try {
-                if (document.visibilityState === "hidden" || !navigator.onLine)
-                  throw Object.assign(Error("Esperando conexión con la app abierta."), {
-                    code: "unavailable",
-                    status: 503,
-                  });
-                const result = await saveAssignedTrainingAction({ version: 1, userId, payload });
-                if (result.ok) resolve(result.value);
-                else
-                  reject(
-                    Object.assign(Error(result.message), {
-                      code: result.code,
-                      status:
-                        result.code === "unauthorized" || result.code === "account_changed"
-                          ? 401
-                          : result.code === "unavailable"
-                            ? 503
-                            : 422,
-                    }),
-                  );
-              } catch (error) {
-                reject(error);
-              }
-            });
-          }),
+        (payload) => {
+          if (document.visibilityState === "hidden" || !navigator.onLine)
+            return Promise.reject(new WebSyncError("unavailable", 503));
+          return sendWebTraining(userId, payload);
+        },
         () => activeOfflineAccount() === userId,
         () => new Date(),
         () => globalThis.crypto.randomUUID(),
