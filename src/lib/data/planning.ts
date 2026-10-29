@@ -9,7 +9,8 @@ import {
   type AssignmentInput,
   type CopyWeeksInput,
 } from "@/lib/coach/planning";
-import { getProgramTree, type Failure } from "./programs";
+import type { Failure } from "./programs";
+import { getCoachProgramTree } from "./coach-programs";
 import { addDays } from "@/domain/dates";
 type Client = SupabaseClient<Database>;
 export type PlanningFailure = Failure | "has_workouts" | "destination_not_empty";
@@ -55,7 +56,7 @@ export async function getAssignmentPreview(
 ) {
   if (!z.uuid().safeParse(studentId).success || !z.iso.date().safeParse(startDate).success)
     return null;
-  const tree = await getProgramTree(db, programId);
+  const tree = await getCoachProgramTree(db, programId);
   if (!tree || tree.studentId !== null) return null;
   const { data, error } = await db.rpc("planning_assignment_snapshot", {
     p_student_id: studentId,

@@ -71,6 +71,7 @@ const schema = z
     );
   });
 export type EditorDraft = z.infer<typeof schema>;
+export const legacyEditorDraftSchema = schema;
 const prefix = (userId: string, programId: string, sessionId: string) =>
   `is:coach-draft:v1:${userId}:${programId}:${sessionId}:`;
 const key = (draft: EditorDraft) =>

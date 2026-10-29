@@ -4,6 +4,8 @@ Continuación autorizada por el propietario: entrenamiento y planificación priv
 
 ## Orden y dependencias
 
+Fase actual T219: lectura canónica autenticada y catálogo compartido cerrado; conectar las revisiones de copia/asignación y sus conteos sin proyectar dimensiones. Preparar controles crudos por tipo, reemplazo/parche explícito y contenido4 del borrador con migración conservadora/CAS/relectura. Después integrar estos módulos con la orquestación del editor existente y su adaptador Web Locks, incluyendo recuperación de intentos anteriores y comparación de conflictos. No retirar arrastre, superseries, alternativas, biblioteca, acciones colectivas, sesión/semana seleccionadas ni recuperación. Módulos preparados y revisiones conectadas no equivalen al editor completo, entrenamiento asignado o cierre de T219.
+
 1. T209 fija inventario, decisiones y evidencia REA. T210 habilita el catálogo real de consulta, sin migraciones.
 2. T211 define propiedad/revisión/recibos de rutinas personales en SQL y sus contratos. T212 construye el editor sobre ese modelo; no altera programas del coach.
 3. T213 extiende el guardado/registro a origen personal y libre; solo después se muestra el inicio real sin programa. T214 habilita adaptación y repetición sobre esa procedencia.

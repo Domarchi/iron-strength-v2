@@ -4,8 +4,11 @@ import {
   assignmentImpacts,
   makeCopyInput,
   copyWeeksInputSchema,
+  programSnapshot,
+  weekPlanningSummary,
 } from "./planning";
 import type { ProgramTree } from "@/lib/data/programs";
+import { defaultPrescriptionInput, parsePrescriptionInput } from "@/domain/prescription-input";
 const ids = [crypto.randomUUID(), crypto.randomUUID()];
 const tree = {
   id: crypto.randomUUID(),
@@ -24,6 +27,35 @@ const tree = {
     exercises: [],
   })),
 } satisfies ProgramTree;
+it("las revisiones y conteos no necesitan proyectar objetivos modernos a repeticiones", () => {
+  const canonical = {
+    ...tree,
+    sessions: tree.sessions.map((session) => ({
+      ...session,
+      title: "Tiempo y distancia",
+      exercises: [
+        { prescribed: parsePrescriptionInput(defaultPrescriptionInput("duration")) },
+        {
+          prescribed: {
+            ...parsePrescriptionInput(defaultPrescriptionInput("weight_distance")),
+            sets: 2,
+          },
+        },
+      ],
+    })),
+  };
+  expect(programSnapshot(canonical)).toEqual(programSnapshot(tree));
+  expect(makeCopyInput(canonical, 1, [{ week: 2, replace: true }])).toEqual(
+    makeCopyInput(tree, 1, [{ week: 2, replace: true }]),
+  );
+  expect(weekPlanningSummary(canonical, 1)).toEqual({
+    sessions: 1,
+    exercises: 2,
+    sets: 5,
+    titles: ["A · Tiempo y distancia"],
+  });
+  expect(weekPlanningSummary(tree, 1).sets).toBe(0);
+});
 it("el lote congela la pertenencia completa incluso cuando un destino está vacío", () => {
   const input = makeCopyInput(tree, 1, [
     { week: 2, replace: true },

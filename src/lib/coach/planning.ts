@@ -1,6 +1,20 @@
 import { z } from "zod";
 import { addDays, mondayOf } from "@/domain/dates";
 import type { ProgramTree } from "@/lib/data/programs";
+// Reviews need identities/revisions and counts, never a projection of the targets.
+export type PlanningTree = Pick<
+  ProgramTree,
+  "id" | "name" | "weeksCount" | "studentId" | "startDate" | "endsOn"
+> & {
+  sessions: {
+    id: string;
+    revision: number;
+    weekNumber: number;
+    label: string;
+    title?: string | null;
+    exercises: ({ sets: number } | { prescribed: { sets: number } })[];
+  }[];
+};
 const sessionVersion = z
   .object({ id: z.uuid(), revision: z.number().int().nonnegative() })
   .strict();
@@ -64,7 +78,7 @@ export const assignmentInputSchema = z
   })
   .strict();
 export type AssignmentInput = z.infer<typeof assignmentInputSchema>;
-export function programSnapshot(tree: ProgramTree): z.infer<typeof programSnapshotSchema> {
+export function programSnapshot(tree: PlanningTree): z.infer<typeof programSnapshotSchema> {
   return {
     id: tree.id,
     name: tree.name,
@@ -78,7 +92,7 @@ export function programSnapshot(tree: ProgramTree): z.infer<typeof programSnapsh
   };
 }
 export function makeCopyInput(
-  tree: ProgramTree,
+  tree: PlanningTree,
   sourceWeek: number,
   targets: { week: number; replace: boolean }[],
 ): CopyWeeksInput {
@@ -121,12 +135,16 @@ export function assignmentImpacts(
         : { ...p, kind: "shorten" as const, endsOn: addDays(range.startDate, -1), blocked: false },
     );
 }
-export function weekPlanningSummary(tree: ProgramTree, week: number) {
+export function weekPlanningSummary(tree: PlanningTree, week: number) {
   const sessions = tree.sessions.filter((s) => s.weekNumber === week);
   return {
     sessions: sessions.length,
     exercises: sessions.reduce((n, s) => n + s.exercises.length, 0),
-    sets: sessions.reduce((n, s) => n + s.exercises.reduce((v, e) => v + e.sets, 0), 0),
+    sets: sessions.reduce(
+      (n, s) =>
+        n + s.exercises.reduce((v, e) => v + ("prescribed" in e ? e.prescribed.sets : e.sets), 0),
+      0,
+    ),
     titles: sessions.map((s) => `${s.label}${s.title ? ` · ${s.title}` : ""}`),
   };
 }
