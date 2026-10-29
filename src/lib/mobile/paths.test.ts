@@ -6,6 +6,7 @@ it("solo los endpoints móviles exactos llegan a su guarda JWT; las pantallas si
     "/api/mobile/v1/training-sessions/11111111-1111-4111-8111-111111111111",
     "/api/mobile/v1/week",
     "/api/mobile/v1/week/download",
+    "/api/mobile/v1/training-download",
     "/api/mobile/v1/workouts",
     "/api/mobile/v1/personal-workouts",
     "/api/mobile/v1/recordings",
@@ -71,6 +72,7 @@ it("solo los endpoints móviles exactos llegan a su guarda JWT; las pantallas si
     "/api/mobile/v1/workouts/other/extra",
     "/api/mobile/v1/week/other",
     "/api/mobile/v1/week/download/other",
+    "/api/mobile/v1/training-download/other",
     "/api/mobile/v1/sessions/not-uuid",
   ]) {
     expect(isMobileEndpointPath(path)).toBe(false);

@@ -1,3 +1,4 @@
+import { bundleSchema } from "../../../src/lib/offline/training-bundle";
 import { assignedContextSchema } from "../../../src/lib/workout/training-context";
 import {
   workoutRemovalSnapshotSchema,
@@ -530,6 +531,23 @@ export class MobileClient {
         "identity",
         "El servidor no confirmó esta cuenta. Conservamos el registro local.",
       );
+  }
+  async trainingDownload() {
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const userId = this.state.session.profile.id;
+    const parsed = bundleSchema.safeParse(await this.read("training-download"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La descarga requiere una versión compatible. Conservamos tu copia anterior.",
+      );
+    if (parsed.data.userId !== userId)
+      throw new MobileError(
+        "identity",
+        "La descarga no corresponde a tu cuenta. Conservamos tu copia anterior.",
+      );
+    return parsed.data;
   }
   async downloadWeek() {
     if (this.state.status !== "authenticated")

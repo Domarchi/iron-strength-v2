@@ -1,3 +1,5 @@
+import { createTrainingDownloadApi } from "./training-download-api";
+import { readTrainingDownload } from "../data/training-download";
 import { createAssignedTrainingApi } from "./assigned-training-api";
 import { getAssignedTrainingContext } from "../data/assigned-training-context";
 import { createWorkoutRemovalApi } from "./workout-removal-api";
@@ -500,6 +502,18 @@ export function mobileAssignedTrainingApi() {
       const db = client(token),
         userId = actor.profile.id;
       return { userId, read: (id) => getAssignedTrainingContext(db, userId, id) };
+    },
+  });
+}
+
+export function mobileTrainingDownloadApi() {
+  return createTrainingDownloadApi({
+    authorize: async (token) => {
+      const actor = await mobileProductionDependencies().authorize(token);
+      if (!actor) return null;
+      const db = client(token),
+        userId = actor.profile.id;
+      return { userId, read: () => readTrainingDownload(db, userId) };
     },
   });
 }

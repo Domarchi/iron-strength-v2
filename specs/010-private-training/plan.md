@@ -77,3 +77,10 @@ Acciones de consulta/cierre asignadas y adaptador CAS web con guarda de compatib
 ### T219 completa; siguiente T220
 
 Aceptación integral local terminada29-oct14:37UTC: cuatro semanas/cuatro cuentas,375E2E web aprobadas/1omisión prevista,1348pgTAP/457integración/361móviles y check1312/14Python/build; fuentes finales idénticas. Ver validation.md para alcance y gates conservados con dependencias idénticas. T220 debe conectar catálogo/bases/semana tipada/historial reciente a una descarga coherente por cuenta y consumidores reales, junto a migración conservadora y sincronización estable. Un prototipo privado de almacenamiento no acredita disponibilidad. T221/publicación/CI/físico/tiendas mantienen todo el alcance.
+
+### T220 · Secuencia de integración completa
+
+1. Especificar y probar contrato de paquete y proyección coherente; RPC de lectura propia, permisos, límites, API/cliente y controles reales. Un commit preparatorio no cierra la tarea ni anuncia descarga disponible.
+2. Controlador/persistencia SQLite/IndexedDB y coordinación de Cuenta; CAS/relectura, descarga anterior, desconocidos y migración conservadora de formatos existentes. Conectar Inicio/catálogo/biblioteca/vista previa e inicio a los datos descargados.
+3. Transporte web estable y shell público offline con el corredor compartido, recuperación de formatos anteriores y sincronización íntegra. Conservar los recursos públicos cerrados y guardas del worker.
+4. Circuitos reales en ambos motores, pruebas de permisos/concurrencia/cuota/cuentas/respuesta perdida, checks completos/Hermes y binario disponible antes de documentar/commitear el cierre. Física/tiendas/publicación permanecen T221.

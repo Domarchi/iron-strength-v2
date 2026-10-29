@@ -792,6 +792,9 @@ isOneToOne: false
 "edit_window_start":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"get_own_training_download":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "get_own_training_progress":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
