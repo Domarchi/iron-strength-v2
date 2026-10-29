@@ -2,9 +2,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ChevronLeft } from "lucide-react";
 import { santiagoDate } from "@/domain/dates";
-import { formatKg, formatTrend } from "@/domain/format";
+import { formatDuration, formatKg, formatTrend } from "@/domain/format";
+import { workoutTitle } from "@/domain/workout-title";
+import { StatusMessage } from "@/components/ui/status-message";
 import { requireUser } from "@/lib/auth/session";
 import { getWeeklySummary, type WeekCard } from "@/lib/data/weekly-summary";
+import { TrainingHistoryReadError } from "@/lib/data/training-history";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Resumen semanal · Iron Strength" };
@@ -47,36 +50,82 @@ function WeekSection({ week }: { week: WeekCard }) {
         </p>
       ) : null}
 
-      <dl className="grid grid-cols-2 gap-3">
-        <Stat
-          label="Sesiones del programa"
-          value={week.sessions ? `${week.sessions.done} de ${week.sessions.planned}` : "—"}
-          note={week.sessions ? undefined : "Sin sesiones planificadas"}
-        />
-        <Stat
-          label="Entrenamientos"
-          value={String(week.workoutCount)}
-          note={
-            week.trainedDays > 0
-              ? `${week.trainedDays} ${week.trainedDays === 1 ? "día" : "días"}`
-              : undefined
-          }
-        />
-        <Stat
-          label="Récords"
-          value={String(week.records)}
-          note={week.records > 0 ? "¡Buen trabajo!" : undefined}
-        />
-        <Stat
-          label="Volumen"
-          value={hasVolume ? formatKg(week.volumeKg) : "—"}
-          note={hasVolume || week.volumeTrend !== null ? formatTrend(week.volumeTrend) : undefined}
-        />
-      </dl>
+      {week.workoutCount > 0 ? (
+        <dl className="grid grid-cols-2 gap-3">
+          <Stat
+            label="Sesiones del programa"
+            value={week.sessions ? `${week.sessions.done} de ${week.sessions.planned}` : "—"}
+            note={week.sessions ? undefined : "Sin sesiones planificadas"}
+          />
+          <Stat
+            label="Entrenamientos"
+            value={String(week.workoutCount)}
+            note={
+              week.trainedDays > 0
+                ? `${week.trainedDays} ${week.trainedDays === 1 ? "día" : "días"}`
+                : undefined
+            }
+          />
+          <Stat label="Series de trabajo" value={String(week.workingSets)} />
+          <Stat label="Duración de las sesiones" value={formatDuration(week.durationSeconds)} />
+          <Stat
+            label="Récords"
+            value={String(week.records)}
+            note={week.records > 0 ? "¡Buen trabajo!" : undefined}
+          />
+          <Stat
+            label="Volumen"
+            value={hasVolume ? formatKg(week.volumeKg) : "—"}
+            note={
+              hasVolume || week.volumeTrend !== null ? formatTrend(week.volumeTrend) : undefined
+            }
+          />
+          {week.recordedSeconds > 0 ? (
+            <Stat
+              label="Tiempo registrado"
+              value={`${week.recordedSeconds.toLocaleString("es-CL")} s`}
+            />
+          ) : null}
+          {week.distanceMeters > 0 ? (
+            <Stat
+              label="Distancia registrada"
+              value={`${week.distanceMeters.toLocaleString("es-CL", { maximumFractionDigits: 2 })} m`}
+            />
+          ) : null}
+        </dl>
+      ) : week.sessions ? (
+        <dl>
+          <Stat
+            label="Sesiones del programa"
+            value={`${week.sessions.done} de ${week.sessions.planned}`}
+          />
+        </dl>
+      ) : null}
       {week.bodyweightReps > 0 ? (
         <p className="text-sm text-muted-foreground">
           Además, {week.bodyweightReps} repeticiones con tu peso corporal.
         </p>
+      ) : null}
+      {week.workouts.length ? (
+        <details>
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">
+            Ver entrenamientos
+          </summary>
+          <ul className="divide-y rounded-lg border">
+            {week.workouts.map((w) => (
+              <li key={w.id}>
+                <Link
+                  href={`/history/${w.id}`}
+                  aria-label={`Ver entrenamiento del ${w.date}: ${workoutTitle(w)}`}
+                  className="flex min-h-11 items-center justify-between gap-3 p-3 text-sm hover:bg-muted/50"
+                >
+                  <span className="min-w-0 break-words font-medium">{workoutTitle(w)}</span>
+                  <span className="shrink-0 text-muted-foreground">{fmt(w.date)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
       ) : null}
     </section>
   );
@@ -84,7 +133,32 @@ function WeekSection({ week }: { week: WeekCard }) {
 
 async function SummaryContent() {
   const user = await requireUser();
-  const summary = await getWeeklySummary(await createClient(), user.id, santiagoDate(new Date()));
+  let summary: Awaited<ReturnType<typeof getWeeklySummary>>;
+  try {
+    summary = await getWeeklySummary(await createClient(), user.id, santiagoDate(new Date()));
+  } catch (error) {
+    const cause =
+      error instanceof TrainingHistoryReadError
+        ? error.code === "capacity"
+          ? "Tu historial supera el límite de esta versión. No mostramos un resumen parcial."
+          : error.code === "incompatible"
+            ? "Este historial requiere una versión compatible de la app."
+            : error.code === "unauthorized"
+              ? "Vuelve a iniciar sesión para consultar tus registros."
+              : "Tus registros siguen guardados. Vuelve a intentarlo."
+        : "Tus registros siguen guardados. Vuelve a intentarlo.";
+    return (
+      <div className="space-y-3">
+        <StatusMessage error>No pudimos cargar el resumen. {cause}</StatusMessage>
+        <a
+          href="/week/summary"
+          className="inline-flex min-h-11 min-w-11 items-center rounded-lg border px-4 text-sm font-medium"
+        >
+          Reintentar
+        </a>
+      </div>
+    );
+  }
   return (
     <>
       <WeekSection week={summary.current} />

@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getAssignedTrainingContext } from "@/lib/data/assigned-training-context";
-import { saveTypedWorkoutRecording } from "@/lib/data/typed-recordings";
+import { saveTypedWorkoutWithAchievements } from "@/lib/data/typed-recording-achievements";
 import { createAssignedWebOperations } from "@/lib/workout/assigned-web-operations";
 import { z } from "zod";
 import { listTypedExerciseHistory } from "@/lib/data/typed-exercises";
@@ -18,7 +18,7 @@ function operations() {
       return {
         userId: user.id.toLowerCase(),
         read: (id) => getAssignedTrainingContext(db, user.id, id),
-        save: (payload) => saveTypedWorkoutRecording(db, payload),
+        save: (payload) => saveTypedWorkoutWithAchievements(db, user.id, payload),
       };
     },
   });

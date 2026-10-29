@@ -19,7 +19,8 @@ import {
 import { createPersonalWorkoutApi } from "./personal-workout-api";
 import { createRecordingApi } from "./recording-api";
 import { createTypedRecordingApi } from "./typed-recording-api";
-import { getTypedWorkoutDetail, saveTypedWorkoutRecording } from "../data/typed-recordings";
+import { getTypedWorkoutDetail } from "../data/typed-recordings";
+import { saveTypedWorkoutWithAchievements } from "../data/typed-recording-achievements";
 import { saveWorkoutRecording } from "../data/save-workout-recording";
 import { savePersonalWorkout } from "../data/save-personal-workout";
 import { createMobilePersonalApi } from "./personal-api";
@@ -404,7 +405,7 @@ export function mobileTypedRecordingApi() {
       if (!identity) return null;
       const db = client(token);
       return {
-        save: (payload) => saveTypedWorkoutRecording(db, payload),
+        save: (payload) => saveTypedWorkoutWithAchievements(db, identity.profile.id, payload),
         read: (id) => getTypedWorkoutDetail(db, id, identity.profile.id),
       };
     },

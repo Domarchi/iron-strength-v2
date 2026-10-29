@@ -10,10 +10,16 @@ import {
 } from "@/test/int/helpers";
 import { typedRecordingFixture } from "@/test/fixtures/typed-recording";
 import { trainingMetricCases } from "@/test/fixtures/training-metrics";
-import { typedRecordingPayloadSchema } from "../mobile/typed-recording-contracts";
+import {
+  typedRecordingPayloadSchema,
+  typedWorkoutStructureSchema,
+} from "../mobile/typed-recording-contracts";
 import { saveTypedWorkoutRecording } from "./typed-recordings";
 import { readVisibleTrainingHistory } from "./training-history";
 import { getHistoryExport } from "./export";
+import { getWeeklySummary } from "./weekly-summary";
+import { getTrainingWorkoutRecordCount } from "./training-review";
+import { syncAchievements, listAchievements } from "./achievements";
 import { mutatePersonalExercise } from "./personal-exercises";
 const admin = adminClient();
 let coach: AdminClient, coachId: string;
@@ -143,6 +149,86 @@ it("coach obtiene las mismas métricas, notas y CSV que el alumno autorizado", a
     expect(await getHistoryExport(coach, owners[i + 1])).toEqual(
       await getHistoryExport(db, owners[i + 1]),
     );
+  }
+});
+it("resumen tipado y récords conservan dimensiones y permisos para cuatro dueños", async () => {
+  for (const [i, db] of [coach, ...students].entries()) {
+    const source = await readVisibleTrainingHistory(db, owners[i]);
+    const w = source!.workouts[0];
+    const summary = await getWeeklySummary(db, owners[i], w.date);
+    expect(summary.current).toMatchObject({
+      workoutCount: 1,
+      workingSets: 8,
+      volumeKg: 320,
+      bodyweightReps: 24,
+      recordedSeconds: 420,
+      distanceMeters: 1030.5,
+      durationSeconds: w.durationSeconds,
+      workoutIds: [w.id],
+      records: 0,
+      sessions: null,
+    });
+    expect(await getTrainingWorkoutRecordCount(db, owners[i], w.id)).toBe(0);
+    expect(await getWeeklySummary(coach, owners[i], w.date)).toEqual(summary);
+  }
+  expect((await getWeeklySummary(students[0], owners[2], "2026-10-29")).current.workoutCount).toBe(
+    0,
+  );
+  expect(await getTrainingWorkoutRecordCount(students[0], owners[2], workoutIds[2])).toBe(0);
+});
+it("un récord de tiempo real otorga first_record una vez sin proyectar repeticiones", async () => {
+  const db = students[0],
+    source = await readVisibleTrainingHistory(db, owners[1]),
+    previous = source!.workouts[0];
+  expect(await syncAchievements({ db, studentId: owners[1], workoutId: previous.id })).toContain(
+    "first_workout",
+  );
+  const p = typedRecordingFixture();
+  if (p.source !== "free") throw Error("fixture");
+  p.id = randomUUID();
+  p.workout.id = p.id;
+  p.workout.startedAt = new Date(Date.parse(previous.startedAt) + 86400000).toISOString();
+  p.workout.finishedAt = new Date(Date.parse(p.workout.startedAt) + 1800000).toISOString();
+  p.structure.exercises = [
+    { ...typedWorkoutStructureSchema.parse(previous.structure).exercises[5] },
+  ];
+  p.workout.exerciseNotes = p.structure.exercises.map((r) => ({
+    sessionExerciseId: r.id,
+    note: null,
+  }));
+  p.workout.sets = [
+    {
+      exerciseId: exerciseIds[5],
+      position: 0,
+      setNumber: 1,
+      metrics: {
+        recordType: "duration",
+        weightKg: null,
+        reps: null,
+        durationSeconds: 90,
+        distanceMeters: null,
+      },
+      setType: "working",
+      effort: 8,
+    },
+  ];
+  try {
+    await saveTypedWorkoutRecording(db, typedRecordingPayloadSchema.parse(p));
+    expect(await getTrainingWorkoutRecordCount(db, owners[1], p.id)).toBe(1);
+    expect(await syncAchievements({ db, studentId: owners[1], workoutId: p.id })).toEqual([
+      "first_record",
+    ]);
+    expect(await syncAchievements({ db, studentId: owners[1], workoutId: p.id })).toEqual([]);
+    expect(
+      (await listAchievements(coach, owners[1])).filter((a) => a.kind === "first_record"),
+    ).toHaveLength(1);
+    expect(
+      (await readVisibleTrainingHistory(db, owners[1]))!.workouts.find((w) => w.id === p.id)!
+        .sets[0].metrics,
+    ).toMatchObject({ recordType: "duration", durationSeconds: 90, reps: null, weightKg: null });
+  } finally {
+    const cleanup = await admin.from("workouts").delete().eq("id", p.id);
+    if (cleanup.error) throw cleanup.error;
   }
 });
 it("no cambia nombres históricos por metadatos actuales o invisibles", async () => {

@@ -12,7 +12,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser: mocks.user }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.db }));
 vi.mock("@/lib/data/assigned-training-context", () => ({ getAssignedTrainingContext: mocks.read }));
-vi.mock("@/lib/data/typed-recordings", () => ({ saveTypedWorkoutRecording: mocks.save }));
+vi.mock("@/lib/data/typed-recording-achievements", () => ({
+  saveTypedWorkoutWithAchievements: mocks.save,
+}));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
 vi.mock("@/lib/data/typed-exercises", () => ({ listTypedExerciseHistory: mocks.history }));
 import {
@@ -84,7 +86,7 @@ it("solo revalida después de una confirmación válida; errores y cambio de cue
   });
   expect(mocks.revalidate).not.toHaveBeenCalled();
   expect(await saveAssignedTrainingAction(request)).toMatchObject({ ok: true });
-  expect(mocks.save).toHaveBeenLastCalledWith("session-bound-client", payload);
+  expect(mocks.save).toHaveBeenLastCalledWith("session-bound-client", id(1), payload);
   expect(mocks.revalidate.mock.calls).toEqual([
     ["/week"],
     ["/history"],

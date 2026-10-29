@@ -10,7 +10,7 @@ import {
   type AchievementStats,
 } from "../../domain/achievements.ts";
 import type { Database } from "../../types/database.ts";
-import { getWorkoutRecords } from "./progress";
+import { getTrainingWorkoutRecordCount } from "./training-review";
 import { getStreakSummary } from "./streak";
 
 type Client = SupabaseClient<Database>;
@@ -61,7 +61,7 @@ export async function getAchievementStats(args: {
       : getStreakSummary(db, studentId, today).then((s) => s.longest),
     alreadyEarned.has("first_record") || !args.workoutId
       ? Promise.resolve(0)
-      : getWorkoutRecords(db, args.workoutId).then((r) => r.length),
+      : getTrainingWorkoutRecordCount(db, studentId, args.workoutId),
   ]);
   return { workoutCount, longestStreak, recordCount };
 }
