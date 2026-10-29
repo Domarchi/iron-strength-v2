@@ -577,3 +577,11 @@ El puente de registro web conserva instantáneas iniciales inmutables de control
 Un marcador local de cuenta ilegible o de formato desconocido no se usa para construir controladores. La pantalla pública ofrece recuperar el acceso con conexión y explica que conserva los datos locales; no borra ni normaliza el marcador o los registros para ocultar el problema, ni intenta descargar/enviar con esa identidad.
 
 La comprobación nativa verifica también la identidad del código empaquetado: certificado, origen y fuentes copiadas no bastan si el bundle conserva rutas transformadas de otra carpeta. Las copias locales separan su caché Metro por raíz de proyecto y contrastan el contenido de los mapas de fuentes con la app compilada antes de acreditar un recorrido. Un APK con fuentes antiguas se conserva como fallo y no se presenta como la versión actual.
+
+## T221 · Acabado y entrega final
+
+El gráfico compartido debe reservar espacio según las etiquetas de sus ejes, sin recortar valores/unidades válidos grandes de volumen, tiempo o distancia a360px. Conservar valores completos, descripción accesible y tabla/evidencia; no resolver el recorte ocultando etiquetas o cambiando los datos. Comprobar límites geométricos con las fuentes reales de la app en Chromium/WebKit, claro/oscuro.
+
+En el registro nativo tipado, Herramientas y Detalles se presentan juntos en una fila compacta, con etiquetas accesibles completas y blancos táctiles44px. Conservar acciones, foco, estado de paneles, guardas y temporizadores; textos visibles cortos, sin añadir menús intermedios. Las cantidades de resultados y cierres usan singular cuando corresponde. La compatibilidad y los datos de formatos anteriores no cambian por este acabado.
+
+Después del acabado se exige regresión completa actual, comprobar el APK disponible y su contenido contra fuentes actuales, recorrido nativo de coach/tres alumnos y publicación preparada/verificada/promovida del mismo artefacto. Conservar pruebas físicas, ejecución iOS y firma/tiendas como aceptación propia; no acreditarlas desde exportaciones o Android emulado. Revisar destino Git/Vercel, CI actual, migraciones/respaldo antes de publicar, sin alterar planes ni cargos.

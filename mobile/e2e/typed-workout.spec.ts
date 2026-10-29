@@ -144,6 +144,19 @@ for (const theme of ["light", "dark"] as const)
     await page.reload();
     await enterWeekUser(page);
     await page.getByRole("button", { name: "Retomar entrenamiento", exact: true }).click();
+    const tools = await page
+      .getByRole("button", { name: "Herramientas del ejercicio", exact: true })
+      .boundingBox();
+    const details = await page
+      .getByRole("button", { name: "Detalles del ejercicio", exact: true })
+      .boundingBox();
+    expect(tools).not.toBeNull();
+    expect(details).not.toBeNull();
+    expect(Math.abs(tools!.y - details!.y)).toBeLessThan(2);
+    for (const button of [tools!, details!]) {
+      expect(button.width).toBeGreaterThanOrEqual(44);
+      expect(button.height).toBeGreaterThanOrEqual(44);
+    }
     for (const [i, m] of trainingMetricCases.entries()) {
       await page.getByRole("button", { name: `Ir a Tipo ${i}`, exact: true }).click();
       if (m.weightKg !== null)

@@ -511,8 +511,11 @@ export default function Workout() {
                   {formatWeight(volume.loadKg, preferences.value.weightUnit)} de volumen registrado
                 </Text>
                 <Text style={[s.body, { color: p.muted }]}>
-                  {summary.doneSets} series realizadas · {summary.totalSets - summary.doneSets}{" "}
-                  pendientes. Se guardarán solo las series completadas.
+                  {summary.doneSets}{" "}
+                  {summary.doneSets === 1 ? "serie realizada" : "series realizadas"} ·{" "}
+                  {summary.totalSets - summary.doneSets}{" "}
+                  {summary.totalSets - summary.doneSets === 1 ? "pendiente" : "pendientes"}. Se
+                  guardarán solo las series completadas.
                 </Text>
                 <Text style={[s.label, { color: p.ink }]}>Esfuerzo de 1 a 10 · opcional</Text>
                 <TextInput

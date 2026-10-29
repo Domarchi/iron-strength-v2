@@ -444,14 +444,27 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                 }))
               }
             />
-            {!pending ? (
-              <Action
-                label="Herramientas del ejercicio"
-                quiet
-                disabled={locked || training.dirty}
-                onPress={() => setTools((v) => !v)}
-              />
-            ) : null}
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {!pending ? (
+                <View style={{ flex: 1 }}>
+                  <Action
+                    label="Herramientas"
+                    accessibilityLabel="Herramientas del ejercicio"
+                    quiet
+                    disabled={locked || training.dirty}
+                    onPress={() => setTools((v) => !v)}
+                  />
+                </View>
+              ) : null}
+              <View style={{ flex: 1 }}>
+                <Action
+                  label="Detalles"
+                  accessibilityLabel="Detalles del ejercicio"
+                  quiet
+                  onPress={() => setDetails((v) => !v)}
+                />
+              </View>
+            </View>
             {tools ? (
               <WorkoutTools
                 key={`${d.workoutId}:${exercise.sessionExerciseId}:${exercise.exerciseId}`}
@@ -460,7 +473,6 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                 onClose={() => setTools(false)}
               />
             ) : null}
-            <Action label="Detalles del ejercicio" quiet onPress={() => setDetails((v) => !v)} />
             {details ? (
               <View style={{ gap: 10 }}>
                 <TrainingExerciseHistory
@@ -574,7 +586,8 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
           <View style={{ gap: 10 }}>
             <Text style={[s.subheading, { color: p.ink }]}>Revisa antes de terminar</Text>
             <Text style={[s.body, { color: p.muted }]}>
-              {done} series realizadas · {total - done} pendientes
+              {done} {done === 1 ? "serie realizada" : "series realizadas"} · {total - done}{" "}
+              {total - done === 1 ? "pendiente" : "pendientes"}
             </Text>
             <Text style={[s.caption, { color: p.muted }]}>
               {formatWeight(totals.externalVolumeKg, preferences.value.weightUnit)} de volumen ·{" "}

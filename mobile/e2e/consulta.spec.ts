@@ -284,9 +284,7 @@ test("sin programa: demo interactiva, recuperación, cierre y resultados separad
   ).toBeChecked();
   await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
   await expect(
-    page.getByText(
-      "1 series realizadas · 10 pendientes. Se guardarán solo las series completadas.",
-    ),
+    page.getByText("1 serie realizada · 10 pendientes. Se guardarán solo las series completadas."),
   ).toBeVisible();
   await page.getByLabel("Esfuerzo percibido", { exact: true }).fill("7");
   await page.getByLabel("Nota del entrenamiento", { exact: true }).fill("Mi primera prueba");

@@ -550,7 +550,8 @@ export function TypedWebWorkout({
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Cerrar entrenamiento</h2>
           <p>
-            {done} series realizadas · {total - done} pendiente{total - done === 1 ? "" : "s"}
+            {done} {done === 1 ? "serie realizada" : "series realizadas"} · {total - done} pendiente
+            {total - done === 1 ? "" : "s"}
           </p>
           <label className="block space-y-1 text-sm">
             <span>Esfuerzo del entrenamiento · opcional</span>

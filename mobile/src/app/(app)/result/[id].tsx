@@ -177,7 +177,9 @@ export default function Result() {
             </Text>
             <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
               <Text style={[s.subheading, { color: p.ink }]}>
-                {w.summary.workingSets} series · {w.summary.exerciseCount} ejercicios
+                {w.summary.workingSets} {w.summary.workingSets === 1 ? "serie" : "series"} ·{" "}
+                {w.summary.exerciseCount}{" "}
+                {w.summary.exerciseCount === 1 ? "ejercicio" : "ejercicios"}
               </Text>
               <Text style={[s.body, { color: p.muted }]}>
                 {formatWeight(w.summary.volumeKg, preferences.value.weightUnit)} de volumen ·{" "}
