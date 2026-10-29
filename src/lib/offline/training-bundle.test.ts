@@ -1,6 +1,6 @@
 import { trainingDownloadFixture as fixture } from "../../test/fixtures/training-download";
 import { expect, it } from "vitest";
-import { assignedTrainingFixture, assignedId as id } from "../../test/fixtures/assigned-training";
+import { assignedId as id } from "../../test/fixtures/assigned-training";
 import { bundleSchema, downloadedAssignedContext } from "./training-bundle";
 import { RECORD_TYPES, trainingTargetSummary } from "../../domain/training-metrics";
 import { defaultPrescriptionInput, parsePrescriptionInput } from "../../domain/prescription-input";
