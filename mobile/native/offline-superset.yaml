@@ -4,16 +4,19 @@ name: Superserie y alternativa con semana descargada
 - assertVisible: "SIN CONEXIÓN"
 - tapOn: "Consultar rutina descargada A"
 - tapOn: "Empezar entrenamiento"
-- assertVisible: ".*0/4 series.*"
+- assertVisible: "Ronda 1 · sigue Sentadilla"
 - scrollUntilVisible:
     element: "Detalles del ejercicio"
+    waitToSettleTimeoutMs: 500
 - tapOn: "Detalles del ejercicio"
 - scrollUntilVisible:
     element: "Cambiar a Press de banca inclinado"
+    waitToSettleTimeoutMs: 500
 - tapOn: "Cambiar a Press de banca inclinado"
 - scrollUntilVisible:
     element: "REPS serie 1"
     direction: UP
+    waitToSettleTimeoutMs: 500
 - tapOn: "REPS serie 1"
 - inputText: "8"
 - hideKeyboard
