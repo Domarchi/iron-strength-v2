@@ -810,6 +810,9 @@ isOneToOne: false
 "get_training_library":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"get_visible_constancy":
+{ Args: { "p_student_id": string }; Returns: Json
+                           },
 "get_visible_training_history":
 { Args: { "p_student_id": string }; Returns: Json
                            },

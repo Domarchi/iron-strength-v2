@@ -1,6 +1,6 @@
 "use client";
 import { unstable_rethrow } from "next/navigation";
-import { useActionState, useState } from "react";
+import { useActionState, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ type Defaults = {
   progressionIncrementKg: number;
   recordType?: RecordType;
 };
+const mountedSubscribe = () => () => {};
 const incrementText = (value: number) => String(value).replace(".", ",");
 export function ExerciseForm({
   action,
@@ -30,6 +31,11 @@ export function ExerciseForm({
   submitLabel: string;
   editing?: boolean;
 }) {
+  const ready = useSyncExternalStore(
+    mountedSubscribe,
+    () => true,
+    () => false,
+  );
   const [name, setName] = useState(defaults.name),
     [group, setGroup] = useState(defaults.muscleGroup),
     [equipment, setEquipment] = useState(defaults.equipment),
@@ -70,11 +76,13 @@ export function ExerciseForm({
   return (
     <form
       action={formAction}
+      onReset={(event) => event.preventDefault()}
+      aria-busy={!ready || pending}
       aria-label={editing ? "Editar ejercicio" : "Crear ejercicio"}
       className="flex min-w-0 flex-col gap-4"
       noValidate
     >
-      <fieldset disabled={pending} className="flex min-w-0 flex-col gap-4">
+      <fieldset disabled={!ready || pending} className="flex min-w-0 flex-col gap-4">
         <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="name">Nombre</Label>
           <Input
@@ -192,7 +200,7 @@ export function ExerciseForm({
           Ejercicio guardado.
         </p>
       ) : null}
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={!ready || pending}>
         {pending ? "Guardando…" : submitLabel}
       </Button>
     </form>

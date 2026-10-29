@@ -56,11 +56,26 @@ export async function getWeekView(
   studentId: string,
   today: DateString,
 ): Promise<WeekView> {
-  const { data: programs, error } = await db
-    .from("programs")
-    .select("id, name, weeks_count, start_date, ends_on")
-    .eq("student_id", studentId);
-  if (error) throw new Error(`No se pudieron cargar los programas: ${error.message}`);
+  // Select the relevant candidates in SQL rather than truncating the whole history at 1000.
+  const base = () =>
+    db
+      .from("programs")
+      .select("id, name, weeks_count, start_date, ends_on")
+      .eq("student_id", studentId)
+      .not("start_date", "is", null)
+      .not("ends_on", "is", null);
+  const results = await Promise.all([
+    base()
+      .lte("start_date", today)
+      .gte("ends_on", today)
+      .order("start_date", { ascending: false })
+      .order("id")
+      .limit(1),
+    base().gt("start_date", today).order("start_date", { ascending: true }).order("id").limit(1),
+    base().lt("ends_on", today).order("start_date", { ascending: false }).order("id").limit(1),
+  ]);
+  if (results.some((r) => r.error)) throw new Error("No se pudieron cargar los programas.");
+  const programs = results.flatMap((r) => r.data ?? []);
 
   const candidates: CurrentProgram[] = programs.flatMap((p) =>
     p.start_date && p.ends_on

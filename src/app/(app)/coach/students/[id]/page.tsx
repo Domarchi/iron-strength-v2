@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UnreadBadge } from "@/components/unread/unread-badge";
 import { AchievementsList } from "@/components/achievements/achievements-list";
 import { ConstancyStrip } from "@/components/streak/constancy-strip";
+import { ConstancyReadFailure } from "@/components/streak/read-failure";
 import { santiagoDate } from "@/domain/dates";
 import { formatDuration, formatKg } from "@/domain/format";
 import { programState } from "@/domain/program-weeks";
@@ -67,18 +68,22 @@ export default async function StudentDetailPage({
     .maybeSingle();
   if (!student) notFound();
 
-  const [streak, workouts, reviewResult, programs] = await Promise.all([
-    getStreakSummary(db, id, today),
+  const [constancyResult, workouts, reviewResult, programs, unreadRows] = await Promise.all([
+    getStreakSummary(db, id, today)
+      .then(async (streak) => ({
+        streak,
+        achievements: await getAchievementsOverview(db, id, streak.longest),
+      }))
+      .then(
+        (value) => ({ ok: true as const, value }),
+        (error: unknown) => ({ ok: false as const, error }),
+      ),
     listWorkouts(db, id, { limit: 10 }),
     getVisibleTrainingProgress(db, id).then(
       (value) => ({ ok: true as const, value }),
       (error: unknown) => ({ ok: false as const, error }),
     ),
     listAssignedPrograms(db, id),
-  ]);
-
-  const [achievements, unreadRows] = await Promise.all([
-    getAchievementsOverview(db, id, streak.longest),
     listUnread(db).catch(() => null),
   ]);
 
@@ -263,7 +268,14 @@ export default async function StudentDetailPage({
           </Link>
         ))}
       </nav>
-      <ConstancyStrip {...streak} />
+      {constancyResult.ok ? (
+        <ConstancyStrip {...constancyResult.value.streak} />
+      ) : (
+        <ConstancyReadFailure
+          error={constancyResult.error}
+          retryHref={studentHref(id, navigation)}
+        />
+      )}
 
       <div>
         <Button variant="outline" render={<a href={`/export/history?alumno=${id}`} download />}>
@@ -271,7 +283,7 @@ export default async function StudentDetailPage({
         </Button>
       </div>
 
-      <AchievementsList {...achievements} />
+      {constancyResult.ok ? <AchievementsList {...constancyResult.value.achievements} /> : null}
 
       <section aria-labelledby="programs-heading" className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">

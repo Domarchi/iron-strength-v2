@@ -1,3 +1,6 @@
+import { WorkoutHistoryPageError } from "@/lib/data/workout-history-error";
+import { parseWorkoutHistoryCursor } from "@/domain/workout-history-cursor";
+import { StatusMessage } from "@/components/ui/status-message";
 import { PendingWorkoutChanges } from "@/components/workout-changes/pending";
 import { workoutTitle } from "@/domain/workout-title";
 import { EmptyState } from "@/components/layout/empty-state";
@@ -21,13 +24,36 @@ const dayFormat = new Intl.DateTimeFormat("es-CL", {
   timeZone: "UTC",
 });
 
-async function WorkoutList({ cursor }: { cursor?: string }) {
+async function WorkoutList({ cursor }: { cursor?: unknown }) {
   const user = await requireUser();
   const db = await createClient();
-  const [{ items, nextCursor }, unread] = await Promise.all([
-    listWorkouts(db, user.id, { limit: 20, cursor }),
+  const [result, unread] = await Promise.all([
+    listWorkouts(db, user.id, { limit: 20, cursor }).then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({ ok: false as const, error }),
+    ),
     getUnreadSummary(db).catch(() => null),
   ]);
+  if (!result.ok) {
+    const error =
+      result.error instanceof WorkoutHistoryPageError
+        ? result.error
+        : new WorkoutHistoryPageError("unavailable");
+    const canRetry = error.code === "unavailable";
+    const href =
+      canRetry && typeof cursor === "string" && parseWorkoutHistoryCursor(cursor)
+        ? `/history?antes=${encodeURIComponent(cursor)}`
+        : "/history";
+    return (
+      <div className="space-y-3">
+        <StatusMessage error>{error.message}</StatusMessage>
+        <Button variant="outline" render={<Link href={href} />}>
+          {canRetry ? "Reintentar" : "Volver al historial"}
+        </Button>
+      </div>
+    );
+  }
+  const { items, nextCursor } = result.value;
 
   if (items.length === 0 && !cursor) {
     return (
@@ -75,7 +101,7 @@ async function WorkoutList({ cursor }: { cursor?: string }) {
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ antes?: string }>;
+  searchParams: Promise<{ antes?: string | string[] }>;
 }) {
   const { antes } = await searchParams;
   return (

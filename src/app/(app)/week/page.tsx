@@ -10,6 +10,7 @@ import { WeekOverview } from "@/components/week/week-overview";
 import { DownloadWeek } from "@/components/week/download-week";
 import { PendingWorkouts } from "@/components/week/pending-workouts";
 import { getStreakSummary } from "@/lib/data/streak";
+import { ConstancyReadFailure } from "@/components/streak/read-failure";
 import { getWeekView } from "@/lib/data/week";
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -23,9 +24,12 @@ async function WeekContent() {
   const user = await requireUser();
   const db = await createClient();
   const today = santiagoDate(new Date());
-  const [view, streak] = await Promise.all([
+  const [view, constancyResult] = await Promise.all([
     getWeekView(db, user.id, today),
-    getStreakSummary(db, user.id, today),
+    getStreakSummary(db, user.id, today).then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({ ok: false as const, error }),
+    ),
   ]);
 
   const content = (() => {
@@ -88,7 +92,12 @@ async function WeekContent() {
       case "active":
         return (
           <>
-            <WeekOverview userId={user.id} view={view} today={today} streak={streak} />
+            <WeekOverview
+              userId={user.id}
+              view={view}
+              today={today}
+              streak={constancyResult.ok ? constancyResult.value : null}
+            />
             <DownloadWeek
               key={`${user.id}:${view.program.id}:${view.weekStart}`}
               userId={user.id}
@@ -109,6 +118,9 @@ async function WeekContent() {
             : []
         }
       />
+      {!constancyResult.ok ? (
+        <ConstancyReadFailure error={constancyResult.error} retryHref="/week" />
+      ) : null}
       {content}
     </>
   );

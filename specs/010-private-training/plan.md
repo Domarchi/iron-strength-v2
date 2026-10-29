@@ -73,3 +73,7 @@ Contexto5 y registro nativo asignado completos localmente: las secuencias99794/7
 ### Estado posterior · Preparación del registro web tipado
 
 Acciones de consulta/cierre asignadas y adaptador CAS web con guarda de compatibilidad preparados y verificados:1239unitarias raíz/build,445integración,48E2E web de compatibilidad y360unitarias móviles. Secuencia `t219-web-protection-second-final-state.json` terminal0, fuentes1026iguales; detalles y fallo de limpieza corregido en validation.md. La pantalla/proveedor/consulta tipados y coordinación de cuenta/cola todavía no están montados. Continuar con la integración web real, recuperación sin origen y herramientas de revisión/progreso/CSV; no cerrarT219 ni sustituirT220/T221. No se publicó esta preparación.
+
+### T219 completa; siguiente T220
+
+Aceptación integral local terminada29-oct14:37UTC: cuatro semanas/cuatro cuentas,375E2E web aprobadas/1omisión prevista,1348pgTAP/457integración/361móviles y check1312/14Python/build; fuentes finales idénticas. Ver validation.md para alcance y gates conservados con dependencias idénticas. T220 debe conectar catálogo/bases/semana tipada/historial reciente a una descarga coherente por cuenta y consumidores reales, junto a migración conservadora y sincronización estable. Un prototipo privado de almacenamiento no acredita disponibilidad. T221/publicación/CI/físico/tiendas mantienen todo el alcance.

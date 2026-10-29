@@ -158,7 +158,7 @@ export function WeekOverview({
   userId: string;
   view: Extract<WeekView, { kind: "active" }>;
   today: string;
-  streak: { current: number; longest: number };
+  streak: { current: number; longest: number } | null;
 }) {
   const scheduled = orderScheduledSessions(view.sessions);
   const resumeId = useSyncExternalStore(
@@ -259,7 +259,7 @@ export function WeekOverview({
           {view.extraCount} {view.extraCount === 1 ? "sesión extra" : "sesiones extra"} esta semana.
         </p>
       ) : null}
-      <StreakChip current={streak.current} longest={streak.longest} />
+      {streak ? <StreakChip current={streak.current} longest={streak.longest} /> : null}
     </div>
   );
 }

@@ -594,3 +594,17 @@ it("snapshot2 futuro, malformado o ajeno nunca se convierte a biblioteca1", asyn
     expect(fetcher).toHaveBeenCalledTimes(2);
   }
 });
+
+it("historial1 conserva y reenvía un cursor opaco nuevo sin convertirlo en una fecha", async () => {
+  const cursor = `v2|${profile.id}|2026-10-29T12:00:00.123456+00:00|b0000000-0000-4000-8000-000000000002`;
+  const fetcher = vi
+    .fn<Transport>()
+    .mockResolvedValueOnce(Response.json(session))
+    .mockResolvedValueOnce(Response.json({ version: 1, items: [], nextCursor: cursor }))
+    .mockResolvedValueOnce(Response.json({ version: 1, items: [], nextCursor: null }));
+  const value = setup(fetcher);
+  await value.client.login(profile.email, "password-123");
+  expect((await value.client.history()).nextCursor).toBe(cursor);
+  expect((await value.client.history(cursor)).nextCursor).toBeNull();
+  expect(new URL(String(fetcher.mock.calls[2][0])).searchParams.get("cursor")).toBe(cursor);
+});

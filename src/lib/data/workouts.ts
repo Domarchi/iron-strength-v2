@@ -1,3 +1,9 @@
+import { z } from "zod";
+import {
+  parseWorkoutHistoryCursor,
+  workoutHistoryCursorString,
+} from "../../domain/workout-history-cursor";
+import { WorkoutHistoryPageError } from "./workout-history-error";
 import { workoutSourceKindSchema } from "../mobile/personal-workout-contracts";
 import { workoutStructureSchema, type WorkoutStructure } from "../mobile/recording-contracts";
 import type { WorkoutSourceKind } from "../../domain/workout-title";
@@ -174,21 +180,50 @@ export type WorkoutListItem = {
 export async function listWorkouts(
   db: Client,
   studentId: string,
-  options: { limit?: number; cursor?: string } = {},
+  options: { limit?: number; cursor?: unknown } = {},
 ): Promise<{ items: WorkoutListItem[]; nextCursor: string | null }> {
-  const limit = options.limit ?? 20;
+  const parsedId = z.uuid().safeParse(studentId),
+    parsedLimit = z
+      .number()
+      .int()
+      .min(1)
+      .max(999)
+      .safeParse(options.limit ?? 20);
+  if (!parsedId.success || !parsedLimit.success) throw new WorkoutHistoryPageError("invalid");
+  const owner = parsedId.data.toLowerCase(),
+    limit = parsedLimit.data;
+  let cursor = options.cursor === undefined ? null : parseWorkoutHistoryCursor(options.cursor);
+  if (options.cursor !== undefined && !cursor) throw new WorkoutHistoryPageError("invalid");
+  if (cursor?.version === 2 && cursor.userId !== owner)
+    throw new WorkoutHistoryPageError("invalid");
+  if (cursor?.version === 1) {
+    const legacy = await db
+      .from("workouts")
+      .select("id")
+      .eq("student_id", owner)
+      .eq("started_at", cursor.startedAt)
+      .order("id", { ascending: false })
+      .limit(2);
+    if (legacy.error) throw new WorkoutHistoryPageError("unavailable");
+    if (legacy.data.length !== 1) throw new WorkoutHistoryPageError("stale");
+    cursor = { version: 2, userId: owner, startedAt: cursor.startedAt, id: legacy.data[0].id };
+  }
   let query = db
     .from("workouts")
     .select(
       "id, source_kind, title, session_label, started_at, performed_on, duration_seconds, perceived_effort, note, workout_sets(exercise_id,position,weight_kg,reps,is_warmup,record_type,duration_seconds,distance_meters,set_type,effort)",
     )
-    .eq("student_id", studentId)
+    .eq("student_id", owner)
     .order("started_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(limit + 1);
-  if (options.cursor) query = query.lt("started_at", options.cursor);
+  if (cursor?.version === 2)
+    query = query.or(
+      `started_at.lt.${cursor.startedAt},and(started_at.eq.${cursor.startedAt},id.lt.${cursor.id})`,
+    );
 
   const { data, error } = await query;
-  if (error) throw new Error(`No se pudo cargar el historial: ${error.message}`);
+  if (error) throw new WorkoutHistoryPageError("unavailable");
 
   const page = data.slice(0, limit);
   return {
@@ -204,6 +239,13 @@ export async function listWorkouts(
       note: w.note,
       ...summarize(w.workout_sets),
     })),
-    nextCursor: data.length > limit ? page[page.length - 1].started_at : null,
+    nextCursor:
+      data.length > limit
+        ? workoutHistoryCursorString({
+            userId: owner,
+            startedAt: page[page.length - 1].started_at,
+            id: page[page.length - 1].id,
+          })
+        : null,
   };
 }
