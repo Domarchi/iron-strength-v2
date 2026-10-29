@@ -72,6 +72,7 @@ export interface TrainingStorage {
   set(key: string, value: string): Promise<void>;
   remove(key: string): Promise<void>;
   compareAndSet?(key: string, before: string | null, next: string): Promise<void>;
+  compareAndRemove?(key: string, before: string | null): Promise<void>;
 }
 export type SaveReply = QueuedSaveReply;
 const activeSchema = z
@@ -243,6 +244,7 @@ const typedEnvelopeSchema = z
     }
   });
 const envelopeSchema = z.union([oldEnvelopeSchema, typedEnvelopeSchema]);
+export const trainingEnvelopeSchema = envelopeSchema;
 const currentActiveSchema = z.union([activeSchema, typedActiveSchema]);
 export type TrainingState = {
   ready: boolean;
@@ -1062,7 +1064,8 @@ export class TrainingController {
     this.ensure();
     if (this.state.active)
       throw Error("Retoma o descarta el entrenamiento pendiente antes de salir.");
-    await this.storage.remove(this.key);
+    if (this.storage.compareAndRemove) await this.storage.compareAndRemove(this.key, this.raw);
+    else await this.storage.remove(this.key);
     if ((await this.storage.get(this.key)) !== null)
       throw Error("No se pudieron retirar los datos locales.");
     this.raw = null;

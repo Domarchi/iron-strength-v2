@@ -15,6 +15,10 @@ import { trainingMetricCases } from "@/test/fixtures/training-metrics";
 import { getAssignedTrainingContext } from "./assigned-training-context";
 import { saveTypedWorkoutRecording } from "./typed-recordings";
 import { createTypedDraft, buildTypedRecording } from "../../../mobile/src/lib/typed-training";
+import { TrainingController } from "../../../mobile/src/lib/training";
+import { createTrainingBrowserStorage } from "../workout/training-browser";
+import { createAssignedWebOperations } from "../workout/assigned-web-operations";
+import { getTypedWorkoutDetail } from "./typed-recordings";
 const admin = adminClient(),
   kinds = [null, ...RECORD_TYPES],
   exerciseIds = kinds.map(() => randomUUID()),
@@ -142,7 +146,20 @@ beforeAll(async () => {
   }
 });
 afterAll(async () => {
-  await admin.from("programs").delete().eq("coach_id", coachId);
+  if (people.length) {
+    const removed = await admin
+      .from("workouts")
+      .delete()
+      .in(
+        "student_id",
+        people.map((p) => p.id),
+      );
+    if (removed.error) throw removed.error;
+  }
+  if (coachId) {
+    const removed = await admin.from("programs").delete().eq("coach_id", coachId);
+    if (removed.error) throw removed.error;
+  }
   await resetUsers(admin);
 });
 it("tres alumnos y coach propio leen nueve objetivos, grupos, alternativas y revisión reales", async () => {
@@ -259,4 +276,117 @@ it("el contexto real cierra los nueve contratos una sola vez y el historial no m
     unrelated = await getAssignedTrainingContext(other.db, other.id, other.sessionId);
   if (!unrelated.ok) throw Error("other");
   expect(unrelated.context.exercises.every((e) => e.lastMetrics === null)).toBe(true);
+});
+it("la frontera web autentica cuatro dueños, recupera cierres tipados y confirma una sola vez tras respuesta perdida", async () => {
+  for (const person of people) {
+    let identity = person,
+      loseResponse = true;
+    const operations = createAssignedWebOperations({
+      authorize: async () => ({
+        userId: identity.id,
+        read: (session) => getAssignedTrainingContext(identity.db, identity.id, session),
+        save: (payload) => saveTypedWorkoutRecording(identity.db, payload),
+      }),
+    });
+    const read = await operations.read({
+      version: 1,
+      userId: person.id,
+      sessionId: person.sessionId,
+    });
+    if (!read.ok) throw Error("web context");
+    const data = new Map<string, string>(),
+      storage = {
+        getItem: (key: string) => data.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          data.set(key, value);
+        },
+        removeItem: (key: string) => {
+          data.delete(key);
+        },
+        key: (i: number) => [...data.keys()][i] ?? null,
+        get length() {
+          return data.size;
+        },
+      },
+      adapter = createTrainingBrowserStorage(
+        person.id,
+        () => storage,
+        () => ({
+          request: async (_name, operation) => {
+            operation();
+          },
+        }),
+      );
+    const sent: string[] = [];
+    const send = async (
+      payload: import("../../../mobile/src/lib/queued-recording").QueuedWorkoutPayload,
+    ) => {
+      const result = await operations.save({ version: 1, userId: person.id, payload });
+      if (!result.ok) throw Object.assign(Error(result.message), { code: result.code });
+      sent.push(JSON.stringify(payload));
+      if (loseResponse) {
+        loseResponse = false;
+        throw Error("lost response after SQL commit");
+      }
+      return result.value;
+    };
+    const controller = new TrainingController(person.id, adapter, send);
+    await controller.restore();
+    await controller.startTyped(read.value);
+    controller.editTyped((d) => ({
+      ...d,
+      exercises: d.exercises.map((row, i) => {
+        const m = trainingMetricCases[i];
+        return {
+          ...row,
+          athleteNote: `Web ${i}`,
+          sets: row.sets.map((s, n) =>
+            n
+              ? s
+              : {
+                  ...s,
+                  weight: m.weightKg === null ? "" : String(m.weightKg),
+                  reps: m.reps === null ? "" : String(m.reps),
+                  duration: m.durationSeconds === null ? "" : String(m.durationSeconds),
+                  distance: m.distanceMeters === null ? "" : String(m.distanceMeters),
+                  effort: "8,5",
+                  done: true,
+                },
+          ),
+        };
+      }),
+    }));
+    await controller.flush();
+    await controller.finish(7, "Recuperación web", { localOnly: true });
+    const key = `is:native-training:v1:${person.id}`,
+      frozen = data.get(key)!;
+    identity = people.find((p) => p.id !== person.id)!;
+    await expect(controller.retry()).rejects.toMatchObject({ code: "account_changed" });
+    expect(data.get(key)).toBe(frozen);
+    expect(sent).toHaveLength(0);
+    identity = person;
+    await expect(controller.retry()).rejects.toThrow("lost response after SQL commit");
+    expect(data.get(key)).toBe(frozen);
+    const recovered = new TrainingController(person.id, adapter, send);
+    await recovered.restore();
+    const confirmed = await recovered.retry();
+    expect(confirmed?.mode).toBe("real");
+    expect(sent).toHaveLength(2);
+    expect(sent[0]).toBe(sent[1]);
+    const result = await getTypedWorkoutDetail(person.db, confirmed!.id, person.id);
+    expect(result!.workout.exercises.map((e) => e.sets[0].metrics)).toEqual(trainingMetricCases);
+    expect(result!.workout.exercises.map((e) => e.athleteNote)).toEqual(
+      kinds.map((_, i) => `Web ${i}`),
+    );
+    expect(result!.workout.exercises.every((e) => e.sets[0].effort === 8.5)).toBe(true);
+    expect(recovered.getSnapshot().active).toBeNull();
+    expect(
+      (
+        await person.db
+          .from("workouts")
+          .select("id", { count: "exact", head: true })
+          .eq("id", confirmed!.id)
+      ).count,
+    ).toBe(1);
+  }
 });

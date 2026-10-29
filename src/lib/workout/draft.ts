@@ -3,6 +3,7 @@
 // "pending_save" con el mismo id de entrenamiento para reintentar sin duplicar. Todo acceso al
 // almacenamiento es defensivo: modo privado, cuota llena o datos corruptos nunca deben romper la app.
 import { z } from "zod";
+import { trainingGuardKey } from "./training-guard";
 import {
   prescribedSeriesSchema,
   coherentPrescriptionSeries,
@@ -172,6 +173,7 @@ function writeDraft(
   try {
     const parsed = draftSchema.safeParse(draft);
     if (!parsed.success) return false;
+    if (storage.getItem(trainingGuardKey(draft.userId)) !== null) return false;
     const key = draftKey(draft.userId, draft.plannedSessionId);
     const previousRaw = storage.getItem(key);
     const previous = parse(previousRaw);

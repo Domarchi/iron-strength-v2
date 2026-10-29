@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { trainingGuardKey } from "./training-guard";
 import {
   clearDraft,
   draftKey,
@@ -54,6 +55,18 @@ const draft = (over: Partial<WorkoutDraft> = {}): WorkoutDraft => ({
 });
 
 describe("borrador de la sesión en curso (RF-22, RF-24, DC-8)", () => {
+  it("la guarda tipada propia impide otro escritor anterior, incluso si es desconocida", () => {
+    const storage = fakeStorage();
+    expect(saveDraft(storage, draft())).toBe(true);
+    const before = storage.getItem(draftKey("user-a", "session-1"));
+    storage.setItem(trainingGuardKey("user-a"), "future-guard");
+    expect(saveDraft(storage, draft({ updatedAt: "2026-10-07T15:20:00.000Z" }))).toBe(false);
+    expect(storage.getItem(draftKey("user-a", "session-1"))).toBe(before);
+    expect(storage.getItem(trainingGuardKey("user-a"))).toBe("future-guard");
+    storage.removeItem(trainingGuardKey("user-a"));
+    storage.setItem(trainingGuardKey("user-b"), "other");
+    expect(saveDraft(storage, draft())).toBe(true);
+  });
   it("guarda y recupera el borrador tal cual", () => {
     const storage = fakeStorage();
     expect(saveDraft(storage, draft())).toBe(true);
