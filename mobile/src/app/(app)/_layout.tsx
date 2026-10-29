@@ -1,3 +1,4 @@
+import { TrainingDownloadProvider } from "../../lib/training-download-context";
 import { WorkoutRemovalProvider } from "../../lib/workout-removal-context";
 import { CorrectionProvider } from "../../lib/correction-context";
 import { TrainingPreferencesProvider } from "../../lib/training-preferences-context";
@@ -26,37 +27,39 @@ export default function AppLayout() {
                 key={state.session.profile.id}
                 userId={state.session.profile.id}
               >
-                <WorkoutSyncProvider
-                  key={state.session.profile.id}
-                  userId={state.session.profile.id}
-                >
-                  <CorrectionProvider
+                <TrainingDownloadProvider userId={state.session.profile.id}>
+                  <WorkoutSyncProvider
                     key={state.session.profile.id}
                     userId={state.session.profile.id}
                   >
-                    <WorkoutRemovalProvider
+                    <CorrectionProvider
                       key={state.session.profile.id}
                       userId={state.session.profile.id}
                     >
-                      <Stack
-                        screenOptions={{
-                          headerShown: false,
-                          animation: reduced ? "none" : "slide_from_right",
-                          animationDuration: reduced ? 0 : 240,
-                          contentStyle: { backgroundColor: p.bg },
-                        }}
+                      <WorkoutRemovalProvider
+                        key={state.session.profile.id}
+                        userId={state.session.profile.id}
                       >
-                        <Stack.Screen name="(tabs)" />
-                        <Stack.Screen name="routine/[id]" />
-                        <Stack.Screen name="workout/[id]" />
-                        <Stack.Screen name="result/[id]" />
-                        <Stack.Screen name="correct-result/[id]" />
-                        <Stack.Screen name="remove-result/[id]" />
-                        <Stack.Screen name="progress/[id]" />
-                      </Stack>
-                    </WorkoutRemovalProvider>
-                  </CorrectionProvider>
-                </WorkoutSyncProvider>
+                        <Stack
+                          screenOptions={{
+                            headerShown: false,
+                            animation: reduced ? "none" : "slide_from_right",
+                            animationDuration: reduced ? 0 : 240,
+                            contentStyle: { backgroundColor: p.bg },
+                          }}
+                        >
+                          <Stack.Screen name="(tabs)" />
+                          <Stack.Screen name="routine/[id]" />
+                          <Stack.Screen name="workout/[id]" />
+                          <Stack.Screen name="result/[id]" />
+                          <Stack.Screen name="correct-result/[id]" />
+                          <Stack.Screen name="remove-result/[id]" />
+                          <Stack.Screen name="progress/[id]" />
+                        </Stack>
+                      </WorkoutRemovalProvider>
+                    </CorrectionProvider>
+                  </WorkoutSyncProvider>
+                </TrainingDownloadProvider>
               </WeekDownloadProvider>
             </CommentProvider>
           </TrainingProvider>

@@ -6,6 +6,60 @@ const origin = "https://iron-strength-seven.vercel.app",
   other = "22222222-2222-4222-8222-222222222222";
 const receiptKey = "is:native-account-removal:v1",
   trainingKey = `is:native-training:v1:${id}`;
+async function seedCompleteDownloads(page: Page, raw: string) {
+  await page.evaluate(
+    ({ id, other, raw }) =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open("iron-strength-training-download", 1);
+        request.onupgradeneeded = () => {
+          if (!request.result.objectStoreNames.contains("bundles"))
+            request.result.createObjectStore("bundles", { keyPath: "userId" });
+        };
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const db = request.result,
+            tx = db.transaction("bundles", "readwrite");
+          tx.objectStore("bundles").put({ userId: id, raw });
+          tx.objectStore("bundles").put({ userId: other, raw: "other complete cache" });
+          tx.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          tx.onabort = () => {
+            db.close();
+            reject(tx.error);
+          };
+        };
+      }),
+    { id, other, raw },
+  );
+}
+async function completeDownloadRows(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<{ userId: string; raw: string }[]>((resolve, reject) => {
+        const request = indexedDB.open("iron-strength-training-download", 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const db = request.result,
+            tx = db.transaction("bundles", "readonly"),
+            read = tx.objectStore("bundles").getAll();
+          let rows: { userId: string; raw: string }[] = [];
+          read.onsuccess = () => {
+            rows = read.result;
+          };
+          tx.oncomplete = () => {
+            db.close();
+            resolve(rows);
+          };
+          tx.onabort = () => {
+            db.close();
+            reject(tx.error);
+          };
+        };
+      }),
+  );
+}
 async function enter(page: Page, role: "student" | "coach" = "student", removeStatus = 200) {
   const calls: string[] = [];
   await page.route(origin + "/api/mobile/v1/**", async (route) => {
@@ -71,6 +125,7 @@ test("borrado nativo exige confirmación, limpia su cuenta y conserva tema/otras
   page,
 }) => {
   const calls = await enter(page);
+  await seedCompleteDownloads(page, '{"version":99}');
   await page.evaluate(
     ({ trainingKey, other, id }) => {
       localStorage.setItem(trainingKey, "pendiente sintético para eliminación explícita");
@@ -129,6 +184,10 @@ test("borrado nativo exige confirmación, limpia su cuenta y conserva tema/otras
   expect(await page.evaluate(() => localStorage.getItem("is:native-appearance:v1"))).toContain(
     "dark",
   );
+  expect(await completeDownloadRows(page)).toEqual([
+    { userId: other, raw: "other complete cache" },
+  ]);
+  expect(calls.filter((path) => path.endsWith("training-download"))).toEqual([]);
 });
 test("respuesta incierta conserva el registro y recibo tras recarga; volver no afirma eliminación", async ({
   page,
@@ -272,4 +331,29 @@ test("política y soporte públicos se abren por acción explícita, sin identid
   await expect(
     page.getByRole("button", { name: "Volver a iniciar sesión", exact: true }),
   ).toBeVisible();
+});
+
+test("salir oculta la cuenta y conserva la descarga completa y los bytes de otras cuentas", async ({
+  page,
+}) => {
+  const calls = await enter(page);
+  const bundle = {
+    version: 1,
+    userId: id,
+    downloadedAt: "2026-10-29T12:00:00Z",
+    catalog: { version: 2, exercises: [] },
+    library: { version: 2, userId: id, folders: [], routines: [] },
+    week: null,
+    history: {},
+  };
+  const raw = JSON.stringify({ version: 1, userId: id, bundle, previousBundle: null });
+  await seedCompleteDownloads(page, raw);
+  await page.getByRole("button", { name: "Salir", exact: true }).click();
+  await expect(page.getByLabel("Correo", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("is:offline:active-user"))).toBeNull();
+  expect(await completeDownloadRows(page)).toEqual([
+    { userId: id, raw },
+    { userId: other, raw: "other complete cache" },
+  ]);
+  expect(calls.filter((path) => path.endsWith("training-download"))).toEqual([]);
 });

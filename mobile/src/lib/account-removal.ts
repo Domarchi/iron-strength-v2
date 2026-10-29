@@ -21,6 +21,7 @@ export async function clearAccountTraining(storage: TrainingStorage, id: string)
     `is:native-training:v1:${id}`,
     `is:native-comment:v1:${id}`,
     `is:native-week:v1:${id}`,
+    `is:training-download:v1:${id}`,
     `is:native-sync:v1:${id}`,
     `is:native-library:v1:${id}`,
     `is:native-training-preferences:v1:${id}`,

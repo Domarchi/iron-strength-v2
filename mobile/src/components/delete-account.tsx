@@ -1,3 +1,4 @@
+import { useTrainingDownload } from "../lib/training-download-context";
 import { useWorkoutRemoval } from "../lib/workout-removal-context";
 import { useCorrectionDraft } from "../lib/correction-context";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
@@ -25,6 +26,7 @@ export function DeleteAccount() {
     { controller: comments, draft } = useCommentDraft(),
     { controller: routines, library } = useLibraryDrafts(),
     { controller: downloads, download } = useWeekDownload(),
+    { controller: fullDownloads, download: fullDownload } = useTrainingDownload(),
     sync = useWorkoutSyncQueue();
   const [open, setOpen] = useState(false),
     [confirmation, setConfirmation] = useState(""),
@@ -65,18 +67,23 @@ export function DeleteAccount() {
       library.busy ||
       !library.ready ||
       draft.busy ||
+      fullDownload.busy ||
+      fullDownload.reserved ||
+      !fullDownload.ready ||
       downloads.getSnapshot().busy ||
       offline
     )
       return;
     setBusy(true);
     setError(null);
+    let releaseDownload: (() => void) | undefined;
     let resume: (() => void) | undefined;
     let resumePreferences: (() => void) | undefined;
     let resumeWorkoutRemoval: (() => void) | undefined;
     let resumeCorrection: (() => void) | undefined;
     let resumeExercises: (() => void) | undefined;
     try {
+      releaseDownload = await fullDownloads.reserve();
       resumeWorkoutRemoval = workoutRemovals.pauseWrites();
       resumeCorrection = correctionController.pauseWrites();
       resumeExercises = exerciseController.pauseWrites();
@@ -100,6 +107,7 @@ export function DeleteAccount() {
       resumeExercises?.();
       resumeCorrection?.();
       resumeWorkoutRemoval?.();
+      releaseDownload?.();
       setBusy(false);
     }
   }
@@ -165,6 +173,9 @@ export function DeleteAccount() {
               sync.paused ||
               !draft.ready ||
               draft.busy ||
+              !fullDownload.ready ||
+              fullDownload.busy ||
+              fullDownload.reserved ||
               !download.ready ||
               download.busy ||
               offline

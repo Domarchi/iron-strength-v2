@@ -1,3 +1,4 @@
+import { clearConfirmedTrainingDownload } from "./training-download-storage";
 import {
   createContext,
   useContext,
@@ -15,6 +16,7 @@ export function AccountRemovalProvider({ children }: PropsWithChildren) {
   const [controller] = useState(
     () =>
       new AccountRemovalController(trainingStorage, async (userId) => {
+        await clearConfirmedTrainingDownload(userId);
         await clearAccountTraining(trainingStorage, userId);
         const session = client.getSnapshot();
         if (session.status === "booting" || session.status === "blocked")

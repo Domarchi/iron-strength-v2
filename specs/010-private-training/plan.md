@@ -84,3 +84,5 @@ Aceptación integral local terminada29-oct14:37UTC: cuatro semanas/cuatro cuenta
 2. Controlador/persistencia SQLite/IndexedDB y coordinación de Cuenta; CAS/relectura, descarga anterior, desconocidos y migración conservadora de formatos existentes. Conectar Inicio/catálogo/biblioteca/vista previa e inicio a los datos descargados.
 3. Transporte web estable y shell público offline con el corredor compartido, recuperación de formatos anteriores y sincronización íntegra. Conservar los recursos públicos cerrados y guardas del worker.
 4. Circuitos reales en ambos motores, pruebas de permisos/concurrencia/cuota/cuentas/respuesta perdida, checks completos/Hermes y binario disponible antes de documentar/commitear el cierre. Física/tiendas/publicación permanecen T221.
+
+Proveedor/Cuenta de T220 verificados en la secuencia t220-native-provider-final terminal0: check1365/363móviles/Hermes/44E2E, fuentes iguales. Continuar botón y consumidores completos; esta fase no completa T220.

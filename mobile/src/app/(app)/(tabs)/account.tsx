@@ -1,3 +1,4 @@
+import { useTrainingDownload } from "../../../lib/training-download-context";
 import { useWorkoutRemoval } from "../../../lib/workout-removal-context";
 import { WorkoutRemovalCard } from "../../../components/workout-removal-card";
 import { useCorrectionDraft } from "../../../lib/correction-context";
@@ -31,6 +32,7 @@ export default function Account() {
     { controller: corrections, correction } = useCorrectionDraft(),
     { controller: removals, removal } = useWorkoutRemoval(),
     { controller: downloads, download } = useWeekDownload(),
+    { controller: fullDownloads, download: fullDownload } = useTrainingDownload(),
     sync = useWorkoutSyncQueue();
   const [error, setError] = useState<string | null>(null),
     [confirm, setConfirm] = useState(false);
@@ -44,11 +46,13 @@ export default function Account() {
     }
   }
   async function logout() {
+    let releaseDownload: (() => void) | undefined;
     let resume: (() => void) | undefined;
     let releaseRemoval: (() => void) | undefined;
     let releaseCorrection: (() => void) | undefined;
     let releaseExercises: (() => void) | undefined;
     try {
+      releaseDownload = await fullDownloads.reserve();
       releaseRemoval = removals.pauseWrites();
       releaseCorrection = corrections.pauseWrites();
       releaseExercises = ownExercises.pauseWrites();
@@ -69,6 +73,7 @@ export default function Account() {
       releaseExercises?.();
       releaseCorrection?.();
       releaseRemoval?.();
+      releaseDownload?.();
     }
   }
   return (
@@ -149,7 +154,7 @@ export default function Account() {
           )}
         </>
       ) : null}
-      {download.busy ? (
+      {download.busy || fullDownload.busy ? (
         <Text style={[s.body, { color: p.muted }]}>
           Espera a que termine la descarga antes de salir.
         </Text>
@@ -169,6 +174,9 @@ export default function Account() {
         label="Salir"
         secondary
         disabled={
+          !fullDownload.ready ||
+          fullDownload.busy ||
+          fullDownload.reserved ||
           !removal.ready ||
           removal.busy ||
           removal.paused ||
