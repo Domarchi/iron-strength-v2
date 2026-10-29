@@ -250,7 +250,16 @@ describe("T219 · modelo del coach y copias con la identidad real", () => {
       .order("position");
     expect(rows.error).toBeNull();
     const id = randomUUID();
-    const day = santiagoDate(new Date());
+    const finishedMs = Date.now();
+    const day = santiagoDate(new Date(finishedMs));
+    // Keep a real past interval in today's Santiago date, even near midnight/DST.
+    let low = 0,
+      high = 1800;
+    while (low < high) {
+      const seconds = Math.ceil((low + high) / 2);
+      if (santiagoDate(new Date(finishedMs - seconds * 1000)) === day) low = seconds;
+      else high = seconds - 1;
+    }
     const payload = typedRecordingPayloadSchema.parse({
       version: 3,
       id,
@@ -274,9 +283,9 @@ describe("T219 · modelo del coach y copias con la identidad real", () => {
         programId: assignedId,
         programSessionId: assignedSession,
         sessionLabel: "A",
-        startedAt: `${day}T12:00:00Z`,
-        finishedAt: `${day}T12:30:00Z`,
-        durationSeconds: 1800,
+        startedAt: new Date(finishedMs - low * 1000).toISOString(),
+        finishedAt: new Date(finishedMs).toISOString(),
+        durationSeconds: low,
         exerciseNotes: rows.data!.map((row) => ({ sessionExerciseId: row.id, note: null })),
         sets: rows.data!.map((row, position) => ({
           sessionExerciseId: row.id,

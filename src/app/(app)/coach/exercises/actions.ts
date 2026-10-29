@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { requireCoach } from "@/lib/auth/session";
 import {
   archiveExercise,
@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 export type ExerciseFormState = { error: string | null; saved?: boolean };
 
 const MESSAGES: Record<Extract<WriteResult, { ok: false }>["reason"], string> = {
-  invalid: "Revisa los datos: nombre, grupo muscular e incremento (mayor que 0 y hasta 20 kg).",
+  invalid: "Revisa los datos del ejercicio y el incremento de carga (mayor que 0 y hasta 20 kg).",
   name_taken: "Ya existe un ejercicio con ese nombre.",
   forbidden: "No tienes permiso para editar la biblioteca.",
   not_found:
@@ -36,14 +36,25 @@ export async function createExerciseAction(
   formData: FormData,
 ): Promise<ExerciseFormState> {
   const coach = await requireCoach();
-  const result = await createExercise({
-    db: await createClient(),
-    coachId: coach.id,
-    input: readInput(formData),
-  });
-  if (!result.ok) return { error: MESSAGES[result.reason] };
-  revalidatePath("/coach/exercises");
-  return { error: null, saved: true };
+  try {
+    const result = await createExercise({
+      db: await createClient(),
+      coachId: coach.id,
+      input: {
+        ...readInput(formData),
+        recordType: formData.has("recordType") ? formData.get("recordType") : null,
+      },
+    });
+    if (!result.ok) return { error: MESSAGES[result.reason] };
+    revalidatePath("/coach/exercises");
+    return { error: null, saved: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      error:
+        "No se pudo confirmar el guardado. Busca el nombre en la biblioteca antes de reintentar.",
+    };
+  }
 }
 
 export async function updateExerciseAction(
@@ -52,7 +63,18 @@ export async function updateExerciseAction(
   formData: FormData,
 ): Promise<ExerciseFormState> {
   await requireCoach();
-  const result = await updateExercise({ db: await createClient(), id, input: readInput(formData) });
+  if (formData.has("recordType"))
+    return { error: "El tipo de registro es fijo. Crea otro ejercicio para cambiarlo." };
+  let result: WriteResult;
+  try {
+    result = await updateExercise({ db: await createClient(), id, input: readInput(formData) });
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      error:
+        "No se pudo confirmar el guardado. Tus datos siguen en el formulario; revisa la biblioteca antes de reintentar.",
+    };
+  }
   if (!result.ok) return { error: MESSAGES[result.reason] };
   revalidatePath("/coach/exercises");
   redirect("/coach/exercises");
