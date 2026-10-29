@@ -63,6 +63,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"coach_training_receipts": {
+                  Row: {
+                    "created_at": string,"operation": string,"owner_id": string,"request_hash": string,"request_id": string,"result": NonNullable<Json>,"session_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"operation": string,"owner_id": string,"request_hash": string,"request_id": string,"result": NonNullable<Json>,"session_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"operation"?: string,"owner_id"?: string,"request_hash"?: string,"request_id"?: string,"result"?: NonNullable<Json>,"session_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "coach_training_receipts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"comment_reads": {
                   Row: {
                     "read_at": string,"user_id": string,"workout_id": string
@@ -799,6 +819,9 @@ isOneToOne: false
 "mark_comments_read":
 { Args: { "p_workout_id": string }; Returns: undefined
                            },
+"mutate_coach_session":
+{ Args: { "p_request": Json,"p_session_id": string }; Returns: Json
+                           },
 "mutate_personal_exercise":
 { Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string }; Returns: Json
                            },
@@ -810,6 +833,9 @@ isOneToOne: false
                            },
 "mutate_training_library":
 { Args: { "p_data": Json,"p_expected_revision": number,"p_operation": string,"p_request_id": string,"p_target_id": string,"p_version": number }; Returns: Json
+                           },
+"patch_coach_prescription":
+{ Args: { "p_changes": Json,"p_current": Json }; Returns: Json
                            },
 "patch_prescription_series":
 { Args: { "p_fields": (string)[],"p_row": Json,"p_series": Json }; Returns: Json
@@ -860,6 +886,12 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "last_comment_at": string,"student_id": string,"unread_count": number,"workout_id": string
             }[]
+                           },
+"valid_coach_prescription_changes":
+{ Args: { "p": Json }; Returns: boolean
+                           },
+"valid_coach_session_request":
+{ Args: { "p": Json }; Returns: boolean
                            },
 "valid_prescription_series":
 { Args: { "p_max": number,"p_min": number,"p_series": Json,"p_sets": number,"p_weight": number }; Returns: boolean
