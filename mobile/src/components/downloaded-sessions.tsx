@@ -1,3 +1,4 @@
+import { useTrainingDownload } from "../lib/training-download-context";
 import { useCallback, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { AppState, Text, View } from "react-native";
@@ -10,6 +11,7 @@ export function DownloadedSessions() {
   const p = usePalette(),
     { state } = useSession(),
     { controller, download } = useWeekDownload(),
+    { bundle, download: complete } = useTrainingDownload(),
     [today, setToday] = useState(() => santiagoDate(new Date()));
   useFocusEffect(
     useCallback(() => {
@@ -20,10 +22,19 @@ export function DownloadedSessions() {
     }, []),
   );
   if (state.status !== "authenticated") return null;
-  const pack =
-    download.verified && download.pack?.userId === state.session.profile.id ? download.pack : null;
-  if (!download.ready)
+  const pack = bundle
+    ? bundle.week
+    : download.verified && download.pack?.userId === state.session.profile.id
+      ? download.pack
+      : null;
+  if (!complete.ready || (!bundle && !download.ready))
     return <Text style={[s.body, { color: p.muted }]}>Recuperando la semana descargada…</Text>;
+  if (bundle && !bundle.week)
+    return (
+      <Text style={[s.caption, { color: p.muted }]}>
+        No hay sesiones asignadas en la descarga. Tus rutinas personales están en Mis rutinas.
+      </Text>
+    );
   if (!pack)
     return (
       <>
@@ -49,7 +60,16 @@ export function DownloadedSessions() {
         </Text>
       </>
     );
-  const current = downloadedWeekCurrent(pack, state.session.profile.id, today);
+  const current = bundle
+    ? !!bundle.week &&
+      today >= bundle.week.weekStart &&
+      today <= bundle.week.weekEnd &&
+      today <= bundle.week.program.endsOn
+    : downloadedWeekCurrent(
+        pack as NonNullable<typeof download.pack>,
+        state.session.profile.id,
+        today,
+      );
   return (
     <View style={{ gap: 18 }}>
       {download.error ? <Notice message={download.error} /> : null}
@@ -59,7 +79,9 @@ export function DownloadedSessions() {
         </Text>
         <Text style={[s.caption, { color: p.muted }]}>
           {day(pack.weekStart)} — {day(pack.weekEnd)} · Guardada el{" "}
-          {downloadedAt(pack.downloadedAt)}
+          {downloadedAt(
+            bundle?.downloadedAt ?? (pack as NonNullable<typeof download.pack>).downloadedAt,
+          )}
         </Text>
         <Text style={[s.body, { color: p.muted }]}>El avance se actualizará al conectar.</Text>
       </View>

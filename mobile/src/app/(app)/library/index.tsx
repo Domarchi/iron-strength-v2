@@ -1,6 +1,6 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useReducedMotion } from "../../../lib/motion-context";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { randomUUID } from "expo-crypto";
 import { router } from "expo-router";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -14,7 +14,7 @@ import { LibraryAttempt } from "../../../components/library-attempt";
 import type { TypedPersonalDraft } from "../../../lib/typed-library-drafts";
 import { useLibraryDrafts } from "../../../lib/library-context";
 import { useSession } from "../../../lib/session";
-import { useQuery } from "../../../lib/use-query";
+import { useTrainingLibraryQuery } from "../../../lib/training-download-query";
 type LibraryRow = {
   id: string;
   name: string;
@@ -29,9 +29,9 @@ export default function PersonalLibraryScreen() {
   const reduced = useReducedMotion(),
     insets = useSafeAreaInsets();
   const p = usePalette(),
-    { client, state } = useSession(),
+    { state } = useSession(),
     { controller, library } = useLibraryDrafts();
-  const q = useQuery(useCallback(() => client.trainingLibrary(), [client]));
+  const q = useTrainingLibraryQuery();
   const [search, setSearch] = useState(""),
     [menu, setMenu] = useState<Menu>(null),
     [confirm, setConfirm] = useState(false),
@@ -236,10 +236,12 @@ export default function PersonalLibraryScreen() {
       </View>
       <LibraryAttempt allowDiscard onConfirmed={q.retry} />
       {error && error !== library.error ? <Notice message={error} /> : null}
-      {q.error && !offline ? <Notice message={q.error} retry={q.retry} /> : null}
+      {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
       {offline ? (
         <Text style={[s.caption, { color: p.muted }]}>
-          Conecta para consultar la biblioteca completa. Puedes retomar tus borradores.
+          {q.downloadedAt
+            ? "Rutinas descargadas · sin conexión"
+            : "Conecta para descargar tus rutinas. Tus borradores se conservan."}
         </Text>
       ) : null}
       <Action

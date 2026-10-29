@@ -1,8 +1,15 @@
+import { useTrainingLibraryQuery } from "../../../../lib/training-download-query";
+import { useTrainingDownload } from "../../../../lib/training-download-context";
+import {
+  PersonalPreviewChanged,
+  downloadedPersonalRoutine,
+  verifiedDownloadedTraining,
+  requireSamePersonalPreview,
+} from "../../../../lib/downloaded-training";
 import { useTrainingPreferences } from "../../../../lib/training-preferences-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
-import { useQuery } from "../../../../lib/use-query";
 import { useSession } from "../../../../lib/session";
 import { useTraining } from "../../../../lib/training-context";
 import { useLibraryDrafts } from "../../../../lib/library-context";
@@ -27,6 +34,7 @@ function PersonalRoutinePreview({ id }: { id: string }) {
   const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     { client, state } = useSession(),
+    { controller: downloads } = useTrainingDownload(),
     { controller, training } = useTraining(),
     { controller: libraryController, library } = useLibraryDrafts();
   const [busy, setBusy] = useState(false),
@@ -52,15 +60,7 @@ function PersonalRoutinePreview({ id }: { id: string }) {
       };
     }, []),
   );
-  const q = useQuery(
-    useCallback(
-      () =>
-        offline
-          ? Promise.reject(Error("Conecta para consultar tus rutinas personales."))
-          : client.trainingLibrary(),
-      [client, offline],
-    ),
-  );
+  const q = useTrainingLibraryQuery();
   const routine = q.value?.routines.find((r) => r.id === id);
   async function run(edit: boolean) {
     if (inFlight.current) return;
@@ -71,7 +71,8 @@ function PersonalRoutinePreview({ id }: { id: string }) {
     setBusy(true);
     setError(null);
     try {
-      const snapshot = await client.trainingLibrary();
+      const saved = offline ? await verifiedDownloadedTraining(downloads) : null;
+      const snapshot = saved ? saved.library : await client.trainingLibrary();
       if (!currentView()) return;
       const after = client.getSnapshot();
       if (
@@ -81,12 +82,20 @@ function PersonalRoutinePreview({ id }: { id: string }) {
         snapshot.userId !== identity.session.profile.id
       )
         throw Error("La cuenta cambió. Vuelve a abrir la rutina.");
-      const current = snapshot.routines.find((r) => r.id === id);
+      const current = saved
+        ? downloadedPersonalRoutine(
+            saved,
+            identity.status === "authenticated" ? identity.session.profile.id : "",
+            id,
+          )
+        : snapshot.routines.find((r) => r.id === id);
       if (!current) throw Error("Esta rutina ya no está disponible.");
       if (edit) {
         await libraryController.createDraft(current);
         if (currentView()) router.push({ pathname: "/library/[id]", params: { id } });
       } else {
+        if (!routine) throw Error("Vuelve a revisar la rutina antes de empezar.");
+        requireSamePersonalPreview(routine, current);
         const context = personalRoutineTrainingContext(current);
         if (context.version === 3) await controller.startTyped(context);
         else await controller.startPersonal(context);
@@ -95,6 +104,7 @@ function PersonalRoutinePreview({ id }: { id: string }) {
           router.push({ pathname: "/workout/[id]", params: { id: active.draft.workoutId } });
       }
     } catch (e) {
+      if (e instanceof PersonalPreviewChanged && currentView()) q.retry();
       if (currentView()) setError(e instanceof Error ? e.message : "No pudimos abrir la rutina.");
     } finally {
       inFlight.current = false;
@@ -118,10 +128,13 @@ function PersonalRoutinePreview({ id }: { id: string }) {
       </View>
       {q.loading && !routine ? <Loading /> : null}
       {q.error ? <Notice message={q.error} retry={offline ? undefined : q.retry} /> : null}
-      {error ? <Notice message={error} /> : null}
+      {error && error !== q.error ? <Notice message={error} /> : null}
       {routine ? (
         <>
           <ScreenIntro title={routine.name} />
+          {q.downloadedAt ? (
+            <Text style={[s.caption, { color: p.muted }]}>Rutina descargada · sin conexión</Text>
+          ) : null}
           <Text style={[s.caption, { color: p.muted }]}>
             {routine.items.length} ejercicios ·{" "}
             {routine.items.reduce((n, e) => n + e.prescribed.sets, 0)} series
@@ -130,7 +143,6 @@ function PersonalRoutinePreview({ id }: { id: string }) {
             label="Empezar entrenamiento"
             disabled={
               busy ||
-              offline ||
               !training.ready ||
               training.blocked ||
               training.busy ||

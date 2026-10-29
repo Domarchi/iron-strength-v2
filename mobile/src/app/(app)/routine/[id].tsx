@@ -1,3 +1,5 @@
+import { useTrainingDownload } from "../../../lib/training-download-context";
+import { verifiedDownloadedTraining } from "../../../lib/downloaded-training";
 import { useTrainingPreferences } from "../../../lib/training-preferences-context";
 import { formatTrainingTarget } from "../../../lib/training-labels";
 import { typedPrescriptionFromLegacy } from "../../../lib/typed-training";
@@ -6,7 +8,7 @@ import {
   type AssignedTrainingContext,
 } from "../../../../../src/lib/workout/training-context";
 import type { TrainingPrescription } from "../../../../../src/domain/training-metrics";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
 import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/ui";
@@ -112,22 +114,33 @@ function Routine({ id }: { id: string }) {
   const p = usePalette(),
     { client, state } = useSession(),
     { download } = useWeekDownload(),
+    { controller: completeDownloads, bundle, download: completeDownload } = useTrainingDownload(),
     { controller, training } = useTraining();
   const demo = demoRoutine(typeof id === "string" ? id : "");
   const offline = state.status === "authenticated" && state.mode === "offline",
     userId = state.status === "authenticated" ? state.session.profile.id : "",
     pack = download.verified ? download.pack : null,
-    cached = downloadedRoutine(pack, userId, typeof id === "string" ? id : "");
+    cached = useMemo(
+      () =>
+        bundle
+          ? (bundle.week?.sessions.find((s) => s.context.session.id === id)?.context ?? null)
+          : downloadedRoutine(pack, userId, typeof id === "string" ? id : ""),
+      [bundle, pack, userId, id],
+    );
+  const canStartLocal = (context: NonNullable<typeof cached>) =>
+    context.version === 5
+      ? assignedCanStart(context, userId, santiagoDate(new Date()))
+      : downloadedCanStart(pack, userId, context.session.id, santiagoDate(new Date()));
   const request = useCallback(async () => {
     if (demo) return demo;
     if (offline) {
-      const local = downloadedRoutine(pack, userId, typeof id === "string" ? id : "");
+      const local = cached;
       if (!local)
         throw Error("Esta rutina no está en la descarga de tu cuenta. Conecta para consultarla.");
       return local;
     }
     return client.assignedRoutine(typeof id === "string" ? id : "");
-  }, [client, id, demo, offline, pack, userId]);
+  }, [client, id, demo, offline, cached]);
   const [starting, setStarting] = useState(false),
     [startError, setStartError] = useState<string | null>(null);
   const inFlight = useRef(false),
@@ -157,19 +170,24 @@ function Routine({ id }: { id: string }) {
     setStarting(true);
     setStartError(null);
     try {
-      if (
-        offline &&
-        !demo &&
-        !downloadedCanStart(pack, userId, query.value.session.id, santiagoDate(new Date()))
-      )
+      if (offline && !demo && !canStartLocal(query.value))
         throw Error(
           "Solo puedes empezar rutinas de la semana vigente. Tu registro anterior sigue disponible.",
         );
-      const current =
-        demo ??
-        (offline
-          ? downloadedRoutine(pack, userId, query.value.session.id)
-          : await client.assignedRoutine(query.value.session.id));
+      let current =
+        demo ?? (offline ? cached : await client.assignedRoutine(query.value.session.id));
+      if (offline && !demo && bundle) {
+        const fresh = await verifiedDownloadedTraining(completeDownloads);
+        current =
+          fresh.week?.sessions.find((s) => s.context.session.id === query.value!.session.id)
+            ?.context ?? null;
+        if (!current || !assignedCanStart(current, userId, santiagoDate(new Date())))
+          throw Error(
+            "Solo puedes empezar rutinas de la semana vigente. Tu registro anterior sigue disponible.",
+          );
+        if (JSON.stringify(current) !== JSON.stringify(query.value))
+          throw Error("La rutina cambió. Vuelve a revisar la vista previa antes de empezar.");
+      }
       if (!current)
         throw Error("No pudimos verificar la rutina descargada. Conservamos tus datos.");
       if (!currentView()) return;
@@ -208,15 +226,12 @@ function Routine({ id }: { id: string }) {
         <ActivityIndicator color={p.blue} accessibilityLabel="Cargando rutina" />
       ) : null}
       {startError ? <Notice message={startError} /> : null}
-      {offline && !demo && cached && pack ? (
+      {offline && !demo && cached && (pack || bundle) ? (
         <Text style={[s.caption, { color: p.blue }]}>
-          Rutina descargada · {downloadedAt(pack.downloadedAt)}
+          Rutina descargada · {downloadedAt(bundle?.downloadedAt ?? pack!.downloadedAt)}
         </Text>
       ) : null}
-      {offline &&
-      !demo &&
-      cached &&
-      !downloadedCanStart(pack, userId, cached.session.id, santiagoDate(new Date())) ? (
+      {offline && !demo && cached && !canStartLocal(cached) ? (
         <Notice message="Puedes consultar esta copia y retomar un registro previo. Conecta para empezar una rutina de la semana vigente." />
       ) : null}
       {training.blocked ? (
@@ -247,7 +262,7 @@ function Routine({ id }: { id: string }) {
             <Text style={[s.caption, { color: p.blue }]}>
               SESIÓN {view.session.label} · SEMANA {view.session.weekNumber}
             </Text>
-            <Text style={[s.heading, { color: p.ink }]}>
+            <Text accessibilityRole="header" style={[s.heading, { color: p.ink }]}>
               {view.session.title ?? `Rutina ${view.session.label}`}
             </Text>
             <Text style={[s.body, { color: p.muted }]}>
@@ -258,14 +273,15 @@ function Routine({ id }: { id: string }) {
           <Action
             label={demo ? "Probar entrenamiento demo" : "Empezar entrenamiento"}
             disabled={
+              !completeDownload.ready ||
+              completeDownload.busy ||
+              (offline && completeDownload.blocked) ||
               !training.ready ||
               training.blocked ||
               !!training.active ||
               query.loading ||
               !!query.error ||
-              (offline &&
-                !demo &&
-                !downloadedCanStart(pack, userId, view.session.id, santiagoDate(new Date()))) ||
+              (offline && !demo && !canStartLocal(view)) ||
               (view.version === 5 && !assignedCanStart(view, userId, santiagoDate(new Date()))) ||
               view.exercises.length === 0
             }

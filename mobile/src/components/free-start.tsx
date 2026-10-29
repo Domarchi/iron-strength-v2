@@ -1,3 +1,5 @@
+import { useTrainingDownload } from "../lib/training-download-context";
+import { verifiedDownloadedTraining } from "../lib/downloaded-training";
 import { useRef, useState } from "react";
 import { router } from "expo-router";
 import { View } from "react-native";
@@ -9,6 +11,7 @@ import { PersonalField } from "./personal-controls";
 export function FreeStart() {
   const p = usePalette(),
     { state } = useSession(),
+    { controller: downloads, bundle } = useTrainingDownload(),
     { controller, training } = useTraining();
   const [open, setOpen] = useState(false),
     [title, setTitle] = useState(""),
@@ -22,6 +25,8 @@ export function FreeStart() {
     setStarting(true);
     setError(null);
     try {
+      if (offline && !(await verifiedDownloadedTraining(downloads)).catalog.exercises.length)
+        throw Error("No hay ejercicios descargados para un entrenamiento libre.");
       await controller.startPersonal(freeRoutineContext(title));
       const active = controller.getSnapshot().active;
       if (active) {
@@ -36,7 +41,7 @@ export function FreeStart() {
     }
   }
   const disabled =
-    offline ||
+    (offline && !bundle?.catalog.exercises.length) ||
     !training.ready ||
     training.blocked ||
     training.busy ||

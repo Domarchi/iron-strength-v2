@@ -1,3 +1,5 @@
+import { useTrainingDownload } from "../lib/training-download-context";
+import { TrainingExerciseHistory } from "./training-exercise-history";
 import { WorkoutTools } from "./workout-tools";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { trainingFields } from "../lib/training-fields";
@@ -50,6 +52,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
   const p = usePalette(),
     { controller, training } = useTraining(),
     { state } = useSession(),
+    { bundle } = useTrainingDownload(),
     sync = useWorkoutSyncQueue();
   const [now, setNow] = useState(() => Date.now()),
     [error, setError] = useState<string | null>(null),
@@ -148,7 +151,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
         <Action label="Volver a Inicio" quiet onPress={() => router.navigate("/")} />
         <View style={s.row}>
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[s.caption, { color: p.muted }]}>
+            <Text accessibilityRole="header" style={[s.caption, { color: p.muted }]}>
               {a.routine.title ?? `Sesión ${d.sessionLabel}`}
             </Text>
             <Text
@@ -460,6 +463,10 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
             <Action label="Detalles del ejercicio" quiet onPress={() => setDetails((v) => !v)} />
             {details ? (
               <View style={{ gap: 10 }}>
+                <TrainingExerciseHistory
+                  key={exercise.exerciseId}
+                  exerciseId={exercise.exerciseId}
+                />
                 {source.note ? (
                   <Text style={[s.body, { color: p.muted }]}>{source.note}</Text>
                 ) : null}
@@ -548,7 +555,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
             <Action
               label="Agregar ejercicios"
               secondary
-              disabled={locked || offline || training.dirty}
+              disabled={locked || (offline && !bundle) || training.dirty}
               onPress={() =>
                 router.push({ pathname: "/workout-add/[id]", params: { id: d.workoutId } })
               }

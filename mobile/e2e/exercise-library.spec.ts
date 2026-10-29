@@ -234,7 +234,11 @@ test("error inicial y falta de conexión conservan reintento honesto", async ({ 
   state.error = false;
   state.lost = true;
   await page.getByRole("button", { name: "Reintentar", exact: true }).click();
-  await expect(page.getByText(/La biblioteca requiere conexión/)).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({
+      hasText: "Estos datos no están descargados. Conecta y descarga tus entrenamientos.",
+    }),
+  ).toBeVisible();
   await expect(
     page
       .getByTestId("exercise-library-list")

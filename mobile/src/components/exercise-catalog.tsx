@@ -7,7 +7,7 @@ import { TrainingChangeReview } from "./training-change-review";
 import { randomUUID } from "expo-crypto";
 import { addTypedPersonalExercise } from "../../../src/domain/typed-personal-routines";
 import { useLibraryDrafts } from "../lib/library-context";
-import { useCallback, useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef } from "react";
 import { router } from "expo-router";
 import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,7 +16,7 @@ import { ConnectionStatus } from "./connection-status";
 import { CatalogFilter } from "./catalog-filter";
 import { Icon } from "./icon";
 import { useSession } from "../lib/session";
-import { useQuery } from "../lib/use-query";
+import { useTrainingCatalogQuery } from "../lib/training-download-query";
 
 const normalize = (value: string) =>
   value
@@ -36,7 +36,7 @@ export function ExerciseCatalog({
 }) {
   const p = usePalette(),
     insets = useSafeAreaInsets(),
-    { client, state } = useSession();
+    { state } = useSession();
   const { controller, library } = useLibraryDrafts();
   const { controller: trainingController, training } = useTraining();
   const draft = library.drafts.find((d) => d.id === pickFor);
@@ -67,11 +67,7 @@ export function ExerciseCatalog({
   } | null>(null);
   const addingRef = useRef(false);
   const offline = state.status === "authenticated" && state.mode === "offline";
-  const request = useCallback(async (): Promise<{ exercises: TypedCatalogEntry[] }> => {
-    if (offline) throw Error("Necesitas conexión para consultar la biblioteca.");
-    return client.trainingCatalog();
-  }, [client, offline]);
-  const q = useQuery(request);
+  const q = useTrainingCatalogQuery();
   const [search, setSearch] = useState(""),
     [muscle, setMuscle] = useState(""),
     [equipment, setEquipment] = useState("");
@@ -100,15 +96,14 @@ export function ExerciseCatalog({
     [catalog],
   );
   const needle = normalize(search);
-  const matches =
-    offline || q.error
-      ? []
-      : catalog.filter(
-          (exercise) =>
-            (!muscle || exercise.muscleGroup === muscle) &&
-            (!equipment || (exercise.equipment ?? noEquipment) === equipment) &&
-            exercise.needle.includes(needle),
-        );
+  const matches = q.error
+    ? []
+    : catalog.filter(
+        (exercise) =>
+          (!muscle || exercise.muscleGroup === muscle) &&
+          (!equipment || (exercise.equipment ?? noEquipment) === equipment) &&
+          exercise.needle.includes(needle),
+      );
   async function add(confirmedStamp?: string) {
     if (addingRef.current || (!draft && !trainingTarget)) return;
     addingRef.current = true;
@@ -315,22 +310,21 @@ export function ExerciseCatalog({
                 }}
               />
             ) : null}
-            {offline || q.error ? (
+            {q.error ? (
               <Notice
                 message={q.error ?? "Necesitas conexión para consultar la biblioteca."}
                 retry={offline ? undefined : q.retry}
               />
             ) : null}
-            {offline || q.error ? (
+            {q.downloadedAt ? (
               <Text style={[s.caption, { color: p.muted }]}>
-                La biblioteca requiere conexión. El catálogo aún no está descargado en este
-                dispositivo.
+                Catálogo descargado · sin conexión
               </Text>
             ) : null}
-            {q.loading && !q.value && !offline ? (
+            {q.loading && !q.value ? (
               <ActivityIndicator color={p.blue} accessibilityLabel="Cargando biblioteca" />
             ) : null}
-            {(q.value && !q.error && !offline) || search || muscle || equipment ? (
+            {(q.value && !q.error) || search || muscle || equipment ? (
               <View
                 style={{
                   flexDirection: "row",
@@ -340,7 +334,7 @@ export function ExerciseCatalog({
                   gap: 8,
                 }}
               >
-                {q.value && !q.error && !offline ? (
+                {q.value && !q.error ? (
                   <Text style={[s.caption, { color: p.muted }]}>
                     {matches.length} {matches.length === 1 ? "ejercicio" : "ejercicios"}
                   </Text>
@@ -361,7 +355,7 @@ export function ExerciseCatalog({
           </View>
         }
         ListEmptyComponent={
-          !q.loading && !q.error && !offline ? (
+          !q.loading && !q.error ? (
             <Text style={[s.body, { color: p.muted }]}>
               {catalog.length
                 ? "No hay ejercicios con estos filtros."
@@ -484,7 +478,6 @@ export function ExerciseCatalog({
                   training.busy ||
                   training.closing
                 : !draft || library.blocked || !!library.pending) ||
-              offline ||
               (!added && !selected.length)
             }
             onPress={() => {

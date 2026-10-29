@@ -1,3 +1,4 @@
+import { useTrainingDownload } from "../../../lib/training-download-context";
 import { WorkoutTools } from "../../../components/workout-tools";
 import { useTrainingPreferences } from "../../../lib/training-preferences-context";
 import { formatWeight } from "../../../../../src/domain/training-tools";
@@ -31,7 +32,7 @@ import {
   usePalette,
 } from "../../../components/ui";
 import { RestControls } from "../../../components/rest-controls";
-import { DownloadedHistory } from "../../../components/downloaded-history";
+import { TrainingExerciseHistory } from "../../../components/training-exercise-history";
 import { WorkoutSets } from "../../../components/workout-sets";
 import { useTraining } from "../../../lib/training-context";
 import { summarize, workoutVolume } from "../../../../../src/lib/workout/runner-state";
@@ -59,6 +60,7 @@ export default function Workout() {
     { id } = useLocalSearchParams<{ id: string }>(),
     { controller, training } = useTraining(),
     { state: session } = useSession(),
+    { bundle } = useTrainingDownload(),
     syncQueue = useWorkoutSyncQueue(),
     now = useClock();
   const [error, setError] = useState<string | null>(null),
@@ -167,7 +169,7 @@ export default function Workout() {
             icon="plus"
             disabled={
               paused ||
-              offline ||
+              (offline && !bundle) ||
               training.blocked ||
               training.busy ||
               training.closing ||
@@ -458,7 +460,7 @@ export default function Workout() {
                     />
                   ) : null}
                   {a.mode === "real" ? (
-                    <DownloadedHistory exerciseId={exercise.exerciseId} personal={personal} />
+                    <TrainingExerciseHistory exerciseId={exercise.exerciseId} />
                   ) : null}
                   {rx.note ? (
                     <Text style={[s.body, { color: p.muted }]}>{rx.note}</Text>
@@ -568,7 +570,7 @@ export default function Workout() {
                     secondary
                     disabled={
                       paused ||
-                      offline ||
+                      (offline && !bundle) ||
                       training.blocked ||
                       training.busy ||
                       training.closing ||

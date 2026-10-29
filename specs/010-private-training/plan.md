@@ -86,3 +86,5 @@ Aceptación integral local terminada29-oct14:37UTC: cuatro semanas/cuatro cuenta
 4. Circuitos reales en ambos motores, pruebas de permisos/concurrencia/cuota/cuentas/respuesta perdida, checks completos/Hermes y binario disponible antes de documentar/commitear el cierre. Física/tiendas/publicación permanecen T221.
 
 Proveedor/Cuenta de T220 verificados en la secuencia t220-native-provider-final terminal0: check1365/363móviles/Hermes/44E2E, fuentes iguales. Continuar botón y consumidores completos; esta fase no completa T220.
+
+Consumidores nativos T220 verificados localmente: catálogo/bases/historial/consulta asignada e inicio personal/libre offline con relectura y revisión;86E2E/check1365/366móviles/Hermes. La ruta de descarga nueva está en Entrenar e Inicio offline; todavía unificar Inicio online/Cuenta y retirar las nuevas descargas del formato anterior, preservando sus pruebas y recuperación explícitas. Después transporte JSON web estable, shell/consumidores/migración y aceptación completa. T220/T221 siguen abiertas; no publicar ni acreditar SQLite físico desde estas pruebas.

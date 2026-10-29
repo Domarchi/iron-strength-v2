@@ -1,3 +1,4 @@
+import { useTrainingDownload } from "../../../../lib/training-download-context";
 import { useCallback, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { randomUUID } from "expo-crypto";
@@ -24,7 +25,7 @@ import {
 } from "../../../../../../src/domain/typed-personal-routines";
 import { useLibraryDrafts } from "../../../../lib/library-context";
 import { useSession } from "../../../../lib/session";
-import { useQuery } from "../../../../lib/use-query";
+import { useTrainingLibraryQuery } from "../../../../lib/training-download-query";
 import { Action, Loading, Notice, s, usePalette } from "../../../../components/ui";
 import { ConnectionStatus } from "../../../../components/connection-status";
 import { PersonalField, SelectionMark } from "../../../../components/personal-controls";
@@ -35,9 +36,10 @@ export default function PersonalRoutineEditor() {
   const { id } = useLocalSearchParams<{ id: string }>(),
     p = usePalette(),
     insets = useSafeAreaInsets(),
-    { client, state } = useSession(),
+    { state } = useSession(),
+    { bundle } = useTrainingDownload(),
     { controller, library } = useLibraryDrafts();
-  const q = useQuery(useCallback(() => client.trainingLibrary(), [client]));
+  const q = useTrainingLibraryQuery();
   const draft = library.drafts.find((d) => d.id === id),
     pending = library.pending?.draftId === id;
   const [error, setError] = useState<string | null>(null),
@@ -546,12 +548,16 @@ export default function PersonalRoutineEditor() {
           label="Agregar ejercicios"
           secondary
           icon="plus"
-          disabled={disabled || !!library.pending || offline || draft.items.length >= 15}
+          disabled={
+            disabled || !!library.pending || (offline && !bundle) || draft.items.length >= 15
+          }
           onPress={() => router.push({ pathname: "/library/[id]/add", params: { id } })}
         />
         {offline ? (
           <Text style={[s.caption, { color: p.muted }]}>
-            El borrador se conserva aquí. Conecta para agregar ejercicios o guardar en el servidor.
+            {bundle
+              ? "El borrador se conserva aquí. Conecta para guardarlo en el servidor."
+              : "El borrador se conserva aquí. Conecta para descargar el catálogo o guardar en el servidor."}
           </Text>
         ) : null}
         {confirmDiscard ? (
