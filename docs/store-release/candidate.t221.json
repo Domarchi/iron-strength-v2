@@ -1,0 +1,66 @@
+{
+  "formatVersion": 1,
+  "status": "Preparación T221: API publicada; todavía sin AAB/IPA de producción ni publicación en tiendas",
+  "sourceCommit": null,
+  "webApi": {
+    "origin": "https://iron-strength-seven.vercel.app",
+    "contractVersion": 1,
+    "verifiedDeploymentId": "dpl_H5CJ6jePTrp3vzCxfc7GZUEeBJ9s",
+    "verifiedBuildId": "39dc90df3f9b4d0d8dde6f0d68934c0b",
+    "databaseProjectRef": "udwhjcnlfqlggblnpchu",
+    "verifiedMigrationVersion": "20261029145147",
+    "backupEvidencePrivateReference": "work/t221post-restore-sequence-state.json; work/t221-post-migration-proof.json"
+  },
+  "referencePreviewsOnly": {
+    "androidEasBuildId": "91d38132-87fe-4aca-aae4-368f0076dae8",
+    "iosSimulatorEasBuildId": "cf066780-0f66-4f6b-bde1-6454071513a1",
+    "usableForStorePromotion": false
+  },
+  "android": {
+    "format": "aab",
+    "confirmedApplicationId": null,
+    "versionName": null,
+    "versionCode": null,
+    "easBuildId": null,
+    "artifactSha256": null,
+    "uploadCertificateSha256": null,
+    "playSigningCertificateSha256": null,
+    "playArtifactReference": null,
+    "trackEvidencePrivateReferences": [],
+    "physicalValidationPrivateReferences": []
+  },
+  "ios": {
+    "format": "ipa-device",
+    "confirmedBundleIdentifier": null,
+    "version": null,
+    "buildNumber": null,
+    "easBuildId": null,
+    "artifactSha256": null,
+    "appStoreConnectBuildReference": null,
+    "testFlightEvidencePrivateReferences": [],
+    "physicalValidationPrivateReferences": []
+  },
+  "finalReview": {
+    "metadataCommit": "7b01291",
+    "publicPolicyAndSupportReferences": [],
+    "countriesAndRegions": null,
+    "ownerApprovalPrivateReference": null,
+    "approvedAt": null
+  },
+  "publication": {
+    "androidStoreUrl": null,
+    "iosStoreUrl": null,
+    "androidVerifiedAt": null,
+    "iosVerifiedAt": null
+  },
+  "qualityOnly": {
+    "package": "com.domarchis.ironstrength.quality",
+    "versionCode": 7,
+    "abis": [
+      "x86_64"
+    ],
+    "distributableStoreCandidate": false,
+    "applicationSourcesCommit": "02db7bb0428affec483c383c6289bb839b723e74",
+    "privateVerificationReference": "work/t221-native7-four-accounts-proof.json"
+  }
+}

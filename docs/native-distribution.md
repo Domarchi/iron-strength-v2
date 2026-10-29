@@ -1,6 +1,8 @@
 # Preparar e instalar las versiones móviles
 
-Android preview vigente: **0.1.0/code 4**, EAS 91d38132-87fe-4aca-aae4-368f0076dae8, fuente d34366d. Corrige comentarios, teclado, área segura y selector de tema con texto ampliado. Firma, permisos mínimos, bundle y arranque en frío offline comprobados en emuladores Android de 4 y 16 KB; aceptación física pendiente. Code 1 es diagnóstico y code 2 conserva un cierre conocido; no distribuirlos. Code 3 quedó anterior al acabado del selector. iOS para simulador compiló correctamente (cf066780-0f66-4f6b-bde1-6454071513a1); todavía no hay un instalador firmado para iPhone o envío a tiendas.
+Último Android preview construido antes de T210–T221: **0.1.0/code 4**, EAS 91d38132-87fe-4aca-aae4-368f0076dae8, fuente d34366d. Corrige comentarios, teclado, área segura y selector de tema con texto ampliado. Firma, permisos mínimos, bundle y arranque en frío offline comprobados en emuladores Android de 4 y 16 KB; aceptación física pendiente. Code 1 es diagnóstico y code 2 conserva un cierre conocido; no distribuirlos. Code 3 quedó anterior al acabado del selector. iOS para simulador compiló correctamente (cf066780-0f66-4f6b-bde1-6454071513a1); todavía no hay un instalador firmado para iPhone o envío a tiendas.
+
+El backend completo de T221 ya está publicado, pero ese preview histórico no contiene las funciones nuevas. Preparar un preview actualizado antes de entregarlo para esta etapa; APK quality7 es solo QA x86_64 y no lo reemplaza. La ejecución iOS y la aceptación física siguen pendientes. Ver specs/010-private-training/release.md.
 
 ## Variantes
 
