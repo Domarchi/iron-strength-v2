@@ -55,8 +55,16 @@ export async function resetAll(db = admin()): Promise<void> {
     if (data.users.length < 1000) break;
   }
   // Los ejercicios propios del coach tienen referencias RESTRICT desde sus sesiones.
-  // Retirar primero sus programas evita depender del orden de cascadas de Auth.
+  // Retirar sus resultados y programas evita depender del orden de cascadas de Auth.
   if (fixtureUsers.length) {
+    const removedWorkouts = await db
+      .from("workouts")
+      .delete()
+      .in(
+        "student_id",
+        fixtureUsers.map((user) => user.id),
+      );
+    if (removedWorkouts.error) throw removedWorkouts.error;
     const { error } = await db
       .from("programs")
       .delete()

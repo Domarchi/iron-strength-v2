@@ -357,11 +357,9 @@ test("referencia en lb: copiar mantiene kg canónicos y nunca convierte una seri
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
   const copy = page.getByRole("button", { name: "Copiar anterior a serie 1", exact: true });
   await expect(copy).toContainText("104,72 lb × 7");
-  await expect(page.getByRole("textbox", { name: "Peso serie 1", exact: true })).toHaveValue("55");
+  await expect(page.getByRole("textbox", { name: "KG serie 1", exact: true })).toHaveValue("55");
   await copy.click();
-  await expect(page.getByRole("textbox", { name: "Peso serie 1", exact: true })).toHaveValue(
-    "47,5",
-  );
+  await expect(page.getByRole("textbox", { name: "KG serie 1", exact: true })).toHaveValue("47,5");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
   await page.getByRole("button", { name: "Ir a Sentadilla", exact: true }).click();
   await expect(copy).toBeDisabled();

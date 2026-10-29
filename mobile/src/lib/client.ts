@@ -1,3 +1,4 @@
+import { assignedContextSchema } from "../../../src/lib/workout/training-context";
 import {
   workoutRemovalSnapshotSchema,
   workoutRemovalSchema,
@@ -598,6 +599,27 @@ export class MobileClient {
     );
     this.confirmedComment(workoutId, result.workoutId);
     return result;
+  }
+  async assignedRoutine(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Esa rutina no está disponible.", 404);
+    if (this.state.status !== "authenticated")
+      throw new MobileError("unauthorized", "Vuelve a iniciar sesión.", 401);
+    const owner = this.state.session.profile.id,
+      generation = this.generation,
+      normalized = id.toLowerCase();
+    const parsed = assignedContextSchema.safeParse(
+      await this.read("training-sessions/" + normalized),
+    );
+    this.current(generation);
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La rutina recibida necesita una versión compatible de la app.",
+      );
+    if (parsed.data.userId !== owner || parsed.data.session.id !== normalized)
+      throw new MobileError("identity", "La rutina recibida no coincide con tu cuenta. Reintenta.");
+    return parsed.data;
   }
   async routine(id: string) {
     if (!z.uuid().safeParse(id).success)

@@ -37,6 +37,9 @@ export function isMobileEndpointPath(path: string): boolean {
       "/api/mobile/v1/library/export",
       "/api/mobile/v1/library/mutations",
     ].includes(path) ||
+    /^\/api\/mobile\/v1\/training-sessions\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+      path,
+    ) ||
     SESSION.test(path) ||
     WORKOUT.test(path) ||
     /^\/api\/mobile\/v1\/workout-corrections\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(

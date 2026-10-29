@@ -36,7 +36,7 @@ for (const theme of ["light", "dark"] as const) {
     await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
     await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
     await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
-    const weight = page.getByRole("textbox", { name: "Peso serie 1", exact: true });
+    const weight = page.getByRole("textbox", { name: "KG serie 1", exact: true });
     await expect(weight).toHaveValue("55");
     const copy = page.getByRole("button", { name: "Copiar anterior a serie 1", exact: true });
     await expect(copy).toContainText("47,5 kg × 7");
@@ -46,17 +46,13 @@ for (const theme of ["light", "dark"] as const) {
     await copy.click();
     await expect(page.getByRole("alert")).toHaveCount(0);
     await expect(weight).toHaveValue("47,5");
-    await expect(
-      page.getByRole("textbox", { name: "Repeticiones serie 1", exact: true }),
-    ).toHaveValue("7");
+    await expect(page.getByRole("textbox", { name: "REPS serie 1", exact: true })).toHaveValue("7");
     await page.getByRole("button", { name: "Opciones de serie 1", exact: true }).click();
-    await page
-      .getByRole("button", { name: "Usar como calentamiento serie 1", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Calentamiento", exact: true }).click();
     await expect(copy).toContainText("20 kg × 12");
     await copy.click();
     await expect(weight).toHaveValue("20");
-    await page.getByRole("button", { name: "Usar como trabajo serie 1", exact: true }).click();
+    await page.getByRole("button", { name: "Trabajo", exact: true }).click();
     await expect(copy).toContainText("47,5 kg × 7");
     await expect(
       page.getByRole("button", { name: "Copiar anterior a serie 2", exact: true }),
@@ -70,11 +66,11 @@ for (const theme of ["light", "dark"] as const) {
     ).toHaveCount(0);
     await page.getByRole("button", { name: "Ir a Sentadilla", exact: true }).click();
     await expect(copy).toBeDisabled();
-    await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
+    await page.getByRole("button", { name: "Detalles del ejercicio", exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Cambiar a Prensa", exact: true }),
     ).toBeDisabled();
-    await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
+    await page.getByRole("button", { name: "Detalles del ejercicio", exact: true }).click();
     await expect
       .poll(() =>
         page.evaluate(

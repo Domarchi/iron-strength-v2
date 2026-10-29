@@ -134,7 +134,7 @@ test("copia vencida se consulta sin iniciar; un borrador previo sigue recuperabl
     page.getByRole("button", { name: "Empezar entrenamiento", exact: true }),
   ).toBeDisabled();
   await page.getByRole("button", { name: "Retomar entrenamiento pendiente", exact: true }).click();
-  await expect(page.getByRole("textbox", { name: "Peso serie 1", exact: true })).toHaveValue("55");
+  await expect(page.getByRole("textbox", { name: "KG serie 1", exact: true })).toHaveValue("55");
   expect(
     await page.evaluate(
       (k) => JSON.parse(localStorage.getItem(k)!).active.draft.workoutId,

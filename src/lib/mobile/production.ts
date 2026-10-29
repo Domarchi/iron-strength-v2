@@ -1,3 +1,5 @@
+import { createAssignedTrainingApi } from "./assigned-training-api";
+import { getAssignedTrainingContext } from "../data/assigned-training-context";
 import { createWorkoutRemovalApi } from "./workout-removal-api";
 import { readOwnWorkoutRemoval, removeOwnWorkout } from "../data/workout-removals";
 import { createTrainingProgressApi } from "./training-progress-api";
@@ -485,6 +487,18 @@ export function mobileWorkoutRemovalApi() {
         read: (id) => readOwnWorkoutRemoval(db, id, identity.profile.id),
         remove: (input) => removeOwnWorkout(db, input),
       };
+    },
+  });
+}
+
+export function mobileAssignedTrainingApi() {
+  return createAssignedTrainingApi({
+    authorize: async (token) => {
+      const actor = await mobileProductionDependencies().authorize(token);
+      if (!actor) return null;
+      const db = client(token),
+        userId = actor.profile.id;
+      return { userId, read: (id) => getAssignedTrainingContext(db, userId, id) };
     },
   });
 }

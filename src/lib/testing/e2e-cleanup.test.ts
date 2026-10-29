@@ -7,7 +7,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:55321");
   vi.stubEnv("SUPABASE_SECRET_KEY", "isolated-test-only");
 });
-function setup(failPrograms = false) {
+function setup(failTable: "programs" | "workouts" | null = null) {
   const events: unknown[] = [];
   const client = {
     auth: {
@@ -32,7 +32,7 @@ function setup(failPrograms = false) {
       delete: () => ({
         in: async (field: string, ids: string[]) => {
           events.push([table, field, ids]);
-          return { error: table === "programs" && failPrograms ? Error("cleanup failed") : null };
+          return { error: table === failTable ? Error("cleanup failed") : null };
         },
       }),
     }),
@@ -43,12 +43,22 @@ function setup(failPrograms = false) {
 it("limpia referencias de los programas antes del coach y nunca incluye cuentas ajenas a E2E", async () => {
   const { events, client } = setup();
   await resetAll(client);
-  expect(events[0]).toEqual(["programs", "coach_id", [fixtureId]]);
-  expect(events[1]).toEqual(["user", fixtureId]);
+  expect(events[0]).toEqual(["workouts", "student_id", [fixtureId]]);
+  expect(events[1]).toEqual(["programs", "coach_id", [fixtureId]]);
+  expect(events[2]).toEqual(["user", fixtureId]);
   expect(JSON.stringify(events)).not.toContain("real-user");
 });
 it("detiene la limpieza antes de borrar usuarios si falla retirar las referencias", async () => {
-  const { events, client } = setup(true);
+  const { events, client } = setup("programs");
   await expect(resetAll(client)).rejects.toThrow("cleanup failed");
-  expect(events).toEqual([["programs", "coach_id", [fixtureId]]]);
+  expect(events).toEqual([
+    ["workouts", "student_id", [fixtureId]],
+    ["programs", "coach_id", [fixtureId]],
+  ]);
+});
+
+it("no borra programas ni cuentas si no pudo retirar los resultados fixture referenciados", async () => {
+  const { events, client } = setup("workouts");
+  await expect(resetAll(client)).rejects.toThrow("cleanup failed");
+  expect(events).toEqual([["workouts", "student_id", [fixtureId]]]);
 });

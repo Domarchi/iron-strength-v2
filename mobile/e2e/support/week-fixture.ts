@@ -1,9 +1,14 @@
+import { assignedFromLegacy, assignedFixtureResult } from "./assigned-context";
+import {
+  typedRecordingRequestSchema,
+  type TypedRecordingPayload,
+} from "../../../src/lib/mobile/typed-recording-contracts";
+import type { QueuedWorkoutPayload } from "../../src/lib/queued-recording";
 import { progressFromResults, fixtureTrainingSetId } from "./training-progress-results";
 import {
   recordingRequestSchema,
   type RecordingPayload,
 } from "../../../src/lib/mobile/recording-contracts";
-import type { NativeWorkoutPayload } from "../../src/lib/personal-training";
 import { expect, type Page } from "@playwright/test";
 import { santiagoDate } from "../../../src/domain/dates";
 import { downloadId, weekDownloadFixture } from "../../../src/test/fixtures/week-download";
@@ -27,8 +32,8 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
     requests: 0,
     pack: weekDownloadFixture(userId, timestamp),
     saved: new Map<string, WorkoutPayload>(),
-    saveRequests: [] as NativeWorkoutPayload[],
-    recordings: new Map<string, RecordingPayload>(),
+    saveRequests: [] as QueuedWorkoutPayload[],
+    recordings: new Map<string, RecordingPayload | TypedRecordingPayload>(),
     calls: [] as string[],
   };
   function result(payload: WorkoutPayload): MobileWorkout {
@@ -53,13 +58,12 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
       groups.set(set.position, row);
     });
     const working = payload.sets.filter((s) => !s.isWarmup);
+    const recording = control.recordings.get(payload.id);
     return {
       version: 1,
       workout: {
         id: payload.id,
-        ...(control.recordings.has(payload.id)
-          ? { structure: control.recordings.get(payload.id)!.structure }
-          : {}),
+        ...(recording?.version === 2 ? { structure: recording.structure } : {}),
         programName: control.pack.program.name,
         sessionLabel: payload.sessionLabel,
         startedAt: payload.startedAt,
@@ -137,11 +141,87 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
           exerciseNames: context.exercises.map((e) => e.name),
         })),
       };
-    else if (path.includes("/sessions/")) {
+    else if (path.includes("/training-sessions/")) {
+      const found = control.pack.sessions.find((s) =>
+        path.endsWith("/training-sessions/" + s.context.session.id),
+      );
+      if (found)
+        json = assignedFromLegacy(
+          { version: 1, ...found.context },
+          userId,
+          control.pack.program,
+          found.revision,
+          control.pack.history,
+        );
+    } else if (path.includes("/sessions/")) {
       const found = control.pack.sessions.find((s) =>
         path.endsWith("/sessions/" + s.context.session.id),
       );
       if (found) json = { version: 1, ...found.context };
+    } else if (path.endsWith("/typed-recordings") && req.method() === "POST") {
+      const p = typedRecordingRequestSchema.parse(req.postDataJSON()).payload;
+      if (p.source !== "assigned") return route.fallback();
+      control.saveRequests.push(p);
+      control.recordings.set(p.id, p);
+      const duplicate = control.saved.has(p.id);
+      // This legacy package fixture has only null-kind exercises. Modern dimensions use their own fixture.
+      const sets = p.workout.sets.map((s) => {
+        if (s.metrics.recordType !== null || s.metrics.weightKg === null || s.metrics.reps === null)
+          throw Error("legacy fixture only");
+        return {
+          exerciseId: s.exerciseId,
+          sessionExerciseId: s.sessionExerciseId,
+          prescribedExerciseId: s.prescribedExerciseId,
+          exerciseName: s.exerciseName,
+          position: s.position,
+          setNumber: s.setNumber,
+          weightKg: s.metrics.weightKg,
+          reps: s.metrics.reps,
+          isWarmup: s.setType === "warmup",
+        };
+      });
+      if (!duplicate)
+        control.saved.set(p.id, {
+          id: p.id,
+          programId: p.workout.programId,
+          programSessionId: p.workout.programSessionId,
+          sessionLabel: p.workout.sessionLabel,
+          startedAt: p.workout.startedAt,
+          finishedAt: p.workout.finishedAt,
+          durationSeconds: p.workout.durationSeconds,
+          perceivedEffort: p.workout.perceivedEffort,
+          note: p.workout.note,
+          sets,
+        });
+      if (control.saveLost) {
+        control.saveLost = false;
+        await route.abort("failed");
+        return;
+      }
+      json = { version: 3, ok: true, status: duplicate ? "duplicate" : "created", workoutId: p.id };
+    } else if (/\/typed-recordings\/[a-f0-9-]+$/.test(path)) {
+      const p = control.recordings.get(path.split("/").at(-1)!);
+      if (p?.version === 3) {
+        const found = control.pack.sessions.find(
+          (s) => p.source === "assigned" && s.context.session.id === p.workout.programSessionId,
+        );
+        if (!found) throw Error("fixture source");
+        json = assignedFixtureResult(
+          assignedFromLegacy(
+            { version: 1, ...found.context },
+            userId,
+            control.pack.program,
+            found.revision,
+          ),
+          p,
+        );
+      } else {
+        await route.fulfill({
+          status: 404,
+          json: { version: 1, error: { code: "not_found", message: "Resultado anterior" } },
+        });
+        return;
+      }
     } else if (path.endsWith("auth/logout")) json = { version: 1, ok: true };
     else if (
       (path.endsWith("/workouts") || path.endsWith("/recordings")) &&

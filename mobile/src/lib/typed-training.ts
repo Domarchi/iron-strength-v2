@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   athleteNoteSchema,
-  trainingMetricsSchema,
   trainingPrescriptionSchema,
   trainingRecordedSetSchema,
   trainingSetDetailsSchema,
@@ -14,11 +13,10 @@ import {
   type TrainingInputField,
   type TrainingSetInput,
 } from "../../../src/domain/training-input";
-import { validRestSeconds, validSupersetLayout } from "../../../src/domain/supersets";
+import { validRestSeconds } from "../../../src/domain/supersets";
 import { finishedSupersetRound, nextSupersetSet } from "../../../src/domain/superset-rounds";
 import { restAfterSet } from "../../../src/domain/rest-timer";
 import { mobileRoutineSchema, type MobileRoutine } from "../../../src/lib/mobile/contracts";
-import { personalWorkoutOriginSchema } from "../../../src/lib/mobile/personal-workout-contracts";
 import {
   typedRecordingPayloadSchema,
   type TypedRecordingPayload,
@@ -31,63 +29,19 @@ import {
 } from "./personal-training";
 import { buildTrainingRecording } from "./recording";
 
+import {
+  trainingChoiceSchema as choice,
+  trainingContextIdentity as identity,
+  validTrainingRows as validRows,
+  typedContextSchema,
+  type TypedTrainingContext,
+} from "../../../src/lib/workout/training-context";
+export {
+  typedContextSchema,
+  type TypedTrainingContext,
+} from "../../../src/lib/workout/training-context";
 const uuid = z.uuid().transform((value) => value.toLowerCase());
 const rest = z.number().int().nullable().refine(validRestSeconds);
-const origin = z.union([
-  personalWorkoutOriginSchema,
-  z.object({ kind: z.literal("assigned"), programId: uuid, programSessionId: uuid }).strict(),
-]);
-const choice = z
-  .object({
-    exerciseId: uuid,
-    name: z.string().min(1).max(100),
-    isBodyweight: z.boolean(),
-    prescribed: trainingPrescriptionSchema,
-    lastMetrics: trainingMetricsSchema.nullable(),
-    legacyLastWeightKg: z.number().min(0).max(500).nullable().optional(),
-  })
-  .strict()
-  .refine((r) => r.lastMetrics === null || r.lastMetrics.recordType === r.prescribed.recordType)
-  .refine((r) => r.legacyLastWeightKg == null || r.prescribed.recordType === null);
-const row = choice
-  .safeExtend({
-    sessionExerciseId: uuid,
-    note: athleteNoteSchema,
-    restSeconds: rest,
-    supersetId: uuid.nullable(),
-    supersetRestSeconds: rest,
-    alternatives: z.array(choice).max(3),
-  })
-  .refine(
-    (r) =>
-      new Set([r.exerciseId, ...r.alternatives.map((c) => c.exerciseId)]).size ===
-      r.alternatives.length + 1,
-  );
-const validRows = (
-  rows: {
-    sessionExerciseId: string;
-    name: string;
-    supersetId: string | null;
-    supersetRestSeconds: number | null;
-  }[],
-) => validSupersetLayout(rows.map((r) => ({ ...r, id: r.sessionExerciseId })));
-const identity = {
-  origin,
-  title: z.string().trim().min(1).max(100).nullable(),
-  sessionLabel: z.string().min(1).max(10),
-};
-export const typedContextSchema = z
-  .object({ version: z.literal(3), ...identity, exercises: z.array(row).max(15) })
-  .strict()
-  .refine((c) => validRows(c.exercises))
-  .refine(
-    (c) =>
-      c.origin.kind === "assigned" ||
-      (c.title !== null &&
-        c.sessionLabel === (c.origin.kind === "personal" ? "Personal" : "Libre")),
-  )
-  .refine((c) => c.origin.kind === "assigned" || c.exercises.every((e) => !e.alternatives.length));
-export type TypedTrainingContext = z.infer<typeof typedContextSchema>;
 const raw = z.string().max(100);
 const draftSet = z
   .object({
@@ -148,6 +102,8 @@ export function createTypedDraft(input: {
   now: Date;
 }): TypedTrainingDraft {
   const c = typedContextSchema.parse(input.context);
+  if (c.version !== 3 && c.userId !== input.userId)
+    throw Error("La rutina no corresponde a esta cuenta.");
   return typedDraftSchema.parse({
     version: 4,
     origin: c.origin,
@@ -219,6 +175,49 @@ export function setTypedSetType(
     ...s,
     setType: kind,
     done: (kind === "warmup") !== (s.setType === "warmup") ? false : s.done,
+  }));
+}
+/** Historical results keep their own kind; a current catalog type never reinterprets them. */
+export function previousTypedSet(
+  exercise: TypedDraftExercise,
+  setIndex: number,
+  previous: TrainingRecordedSet[],
+): TrainingRecordedSet | null {
+  const current = exercise.sets[setIndex];
+  if (!current) return null;
+  const warm = current.setType === "warmup",
+    ordinal = exercise.sets
+      .slice(0, setIndex)
+      .filter((s) => (s.setType === "warmup") === warm).length;
+  const rows = z.array(trainingRecordedSetSchema).max(300).parse(previous);
+  return (
+    rows.filter(
+      (s) => s.recordType === exercise.prescribed.recordType && (s.setType === "warmup") === warm,
+    )[ordinal] ?? null
+  );
+}
+/** Explicit copy updates only one unfinished set's metrics; classification and own effort remain. */
+export function copyTypedSetPerformance(
+  input: TypedTrainingDraft,
+  ex: number,
+  setIndex: number,
+  previous: TrainingRecordedSet[],
+): TypedTrainingDraft {
+  const d = typedDraftSchema.parse(input),
+    exercise = d.exercises[ex],
+    current = exercise?.sets[setIndex];
+  if (d.status !== "in_progress" || !current || exercise.skipped)
+    throw Error("Retoma una serie pendiente antes de copiar valores.");
+  if (current.done) return d;
+  const match = previousTypedSet(exercise, setIndex, previous);
+  if (!match) return d;
+  const text = (value: number | null) => (value === null ? "" : String(value).replace(".", ","));
+  return mapSet(d, ex, setIndex, (s) => ({
+    ...s,
+    weight: text(match.weightKg),
+    reps: text(match.reps),
+    duration: text(match.durationSeconds),
+    distance: text(match.distanceMeters),
   }));
 }
 /** Copy metrics only, matched by warmup/work ordinal. Own effort and classification stay put. */
@@ -360,6 +359,7 @@ export function buildTypedRecording(
     const c = typedContextSchema.parse(context),
       d = typedDraftSchema.parse(input);
     if (
+      (c.version !== 3 && c.userId !== d.userId) ||
       JSON.stringify(c.origin) !== JSON.stringify(d.origin) ||
       c.title !== d.title ||
       c.sessionLabel !== d.sessionLabel ||

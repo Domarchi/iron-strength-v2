@@ -1,10 +1,14 @@
+import { assignedFromLegacy, assignedFixtureResult } from "./support/assigned-context";
+import {
+  typedRecordingRequestSchema,
+  type TypedRecordingPayload,
+} from "../../src/lib/mobile/typed-recording-contracts";
 import {
   buildTrainingProgress,
   type TrainingProgressSource,
 } from "../../src/domain/training-progress";
 import { downloadId } from "../../src/test/fixtures/week-download";
 import { fulfillLegacyTypedResult } from "./support/legacy-result";
-import type { RecordingPayload } from "../../src/lib/mobile/recording-contracts";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import { fulfillEmptyCommentReads } from "./support/comment-fixture";
@@ -114,7 +118,9 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
                 },
               ],
             }
-          : routine;
+          : path.includes("/training-sessions/")
+            ? assignedFromLegacy(routine, id, program)
+            : routine;
     await route.fulfill({ json: data, headers: { "Access-Control-Allow-Origin": "*" } });
   });
   await enter(page);
@@ -333,7 +339,8 @@ test("superserie demo avanza por ronda y bloquea sustitución después de comple
 test("registro real conserva el payload ante respuesta perdida y confirma un único resultado", async ({
   page,
 }) => {
-  const sent: unknown[] = [],
+  await page.clock.setFixedTime(new Date("2026-10-24T15:00:00Z"));
+  const sent: { version: number; payload: TypedRecordingPayload }[] = [],
     activeWeek = {
       version: 1,
       kind: "active",
@@ -354,20 +361,29 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
       ],
     };
   await page.route("https://iron-strength-seven.vercel.app/api/mobile/v1/**", async (route) => {
+    const previous = sent[0]?.payload;
+    if (
+      route.request().method() === "GET" &&
+      route.request().url().includes("/typed-recordings/") &&
+      previous
+    )
+      return route.fulfill({
+        json: assignedFixtureResult(assignedFromLegacy(routine, id, program), previous),
+      });
     if (await fulfillLegacyTypedResult(route)) return;
     const request = route.request(),
       path = new URL(request.url()).pathname;
     if (await fulfillEmptyCommentReads(route)) return;
     if (path.endsWith("recordings") && request.method() === "POST") {
-      const body = request.postDataJSON();
+      const body = typedRecordingRequestSchema.parse(request.postDataJSON());
       sent.push(body);
       if (sent.length === 1) return route.abort("internetdisconnected");
       return route.fulfill({
-        json: { version: 2, ok: true, status: "duplicate", workoutId: body.payload.id },
+        json: { version: 3, ok: true, status: "duplicate", workoutId: body.payload.id },
         headers: { "Access-Control-Allow-Origin": "*" },
       });
     }
-    const payload = (sent[0] as { payload: RecordingPayload } | undefined)?.payload.workout;
+    const payload = sent[0]?.payload.workout;
     const data = /auth\/(login|refresh)$/.test(path)
       ? session
       : path.endsWith("week")
@@ -378,8 +394,8 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
               status: sent.length > 1 ? "done" : "pending",
             })),
           }
-        : path.includes("/sessions/")
-          ? routine
+        : path.includes("/training-sessions/")
+          ? assignedFromLegacy(routine, id, program)
           : {
               version: 1,
               workout: {
@@ -407,10 +423,11 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
   await enter(page);
   await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
-  await page.getByLabel("Peso serie 1", { exact: true }).fill("55");
+  await page.getByLabel("KG serie 1", { exact: true }).fill("55");
+  await page.getByLabel("REPS serie 1", { exact: true }).fill("6");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
   await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
-  await page.getByRole("button", { name: "Guardar entrenamiento", exact: true }).click();
+  await page.getByRole("button", { name: "Confirmar y guardar", exact: true }).click();
   await expect.poll(() => sent.length).toBe(1);
   await setWeekConnectivity(page, false);
   const syncKey = `is:native-sync:v1:${id}`;

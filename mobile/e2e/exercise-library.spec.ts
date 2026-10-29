@@ -54,7 +54,9 @@ async function library(
   if (options.active) {
     await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
     await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
+    await page.getByLabel("REPS serie 1", { exact: true }).fill("8");
     await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
+    await page.getByLabel("REPS serie 1", { exact: true }).fill("8");
     await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
     await expect(
       page.getByLabel("Tiempo de descanso restante").filter({ visible: true }),

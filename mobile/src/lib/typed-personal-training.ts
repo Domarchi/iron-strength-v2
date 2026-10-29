@@ -3,7 +3,7 @@ import {
   type TypedPersonalRoutine,
 } from "../../../src/lib/mobile/typed-personal-contracts";
 import { personalRoutineContext } from "./personal-training";
-import { typedContextSchema } from "./typed-training";
+import { previousTypedContextSchema } from "../../../src/lib/workout/training-context";
 export function personalRoutineTrainingContext(value: TypedPersonalRoutine) {
   const routine = typedPersonalRoutineSchema.parse(value);
   if (!routine.items.length) throw Error("Agrega ejercicios a la rutina antes de empezar.");
@@ -24,7 +24,7 @@ export function personalRoutineTrainingContext(value: TypedPersonalRoutine) {
           })) ?? null,
       })),
     });
-  return typedContextSchema.parse({
+  return previousTypedContextSchema.parse({
     version: 3,
     origin: { kind: "personal", routineId: routine.id, revision: routine.revision },
     title: routine.name,

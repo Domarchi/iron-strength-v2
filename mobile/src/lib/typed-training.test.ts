@@ -11,6 +11,8 @@ import {
   upgradeLegacyTraining,
   typedPrescriptionFromLegacy,
   copyTypedPerformance,
+  previousTypedSet,
+  copyTypedSetPerformance,
   chooseTypedAlternative,
 } from "./typed-training";
 import { RECORD_TYPES, type RecordType } from "../../../src/domain/training-metrics";
@@ -414,4 +416,60 @@ it("un cierre congelado no admite ediciones de métricas, clases ni copias poste
   expect(() => copyTypedPerformance(draft, 0, [])).toThrow();
   expect(() => completeTypedSet(draft, 0, 0, now, 0)).toThrow();
   expect(draft).toEqual(before);
+});
+
+it("referencia por serie distingue calentamiento/trabajo, conserva objetivos/esfuerzo y protege series hechas", () => {
+  const x = make("weight_duration");
+  const history = [
+    {
+      recordType: "weight_duration" as const,
+      weightKg: 10,
+      reps: null,
+      durationSeconds: 20,
+      distanceMeters: null,
+      setType: "warmup" as const,
+      effort: 2,
+    },
+    {
+      recordType: "weight_duration" as const,
+      weightKg: 40,
+      reps: null,
+      durationSeconds: 60,
+      distanceMeters: null,
+      setType: "working" as const,
+      effort: 8,
+    },
+    {
+      recordType: "weight_duration" as const,
+      weightKg: 35,
+      reps: null,
+      durationSeconds: 45,
+      distanceMeters: null,
+      setType: "drop" as const,
+      effort: 9,
+    },
+  ];
+  x.draft.exercises[0].sets[0].effort = "7,5";
+  expect(previousTypedSet(x.draft.exercises[0], 0, history)).toEqual(history[1]);
+  expect(previousTypedSet(x.draft.exercises[0], 1, history)).toEqual(history[2]);
+  const copied = copyTypedSetPerformance(x.draft, 0, 0, history);
+  expect(copied.exercises[0].sets[0]).toMatchObject({
+    weight: "40",
+    duration: "60",
+    effort: "7,5",
+    setType: "working",
+    done: false,
+  });
+  expect(copied.exercises[0].sets[1]).toEqual(x.draft.exercises[0].sets[1]);
+  expect(copied.exercises[0].prescribed).toEqual(x.draft.exercises[0].prescribed);
+  const warm = setTypedSetType(copied, 0, 0, "warmup");
+  expect(previousTypedSet(warm.exercises[0], 0, history)).toEqual(history[0]);
+  expect(previousTypedSet(warm.exercises[0], 1, history)).toEqual(history[1]);
+  const finished = completeTypedSet(copied, 0, 0, now, 0).draft;
+  expect(copyTypedSetPerformance(finished, 0, 0, history)).toEqual(finished);
+  expect(
+    previousTypedSet(finished.exercises[0], 0, [
+      { ...history[0], recordType: "duration", weightKg: null },
+    ]),
+  ).toBeNull();
 });

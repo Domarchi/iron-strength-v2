@@ -1,3 +1,5 @@
+import { assignedCanStart } from "../../../src/lib/workout/training-context";
+import { santiagoDate } from "../../../src/domain/dates";
 import {
   applyWarmupProposal,
   applySessionRest,
@@ -446,6 +448,13 @@ export class TrainingController {
     if (this.state.active || this.state.busy || this.state.closing)
       throw Error("Retoma o resuelve primero el entrenamiento actual.");
     const routine = typedContextSchema.parse(value);
+    if (
+      routine.origin.kind === "assigned" &&
+      (routine.version === 3 || !assignedCanStart(routine, this.userId, santiagoDate(this.now())))
+    )
+      throw Error(
+        "La rutina no corresponde a tu cuenta o a la semana vigente. Vuelve a consultarla.",
+      );
     const draft = captureRestPreference(
       createTypedDraft({
         context: routine,

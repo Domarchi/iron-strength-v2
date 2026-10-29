@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { setupDownloadedWeek, enterWeekUser } from "./support/week-fixture";
+import { setupDownloadedWeek, enterWeekUser, setWeekConnectivity } from "./support/week-fixture";
 import { downloadId } from "../../src/test/fixtures/week-download";
 import { trainingMetricCases } from "../../src/test/fixtures/training-metrics";
 import { createTypedDraft, typedContextSchema } from "../src/lib/typed-training";
@@ -220,10 +220,13 @@ for (const theme of ["light", "dark"] as const)
 test("convierte explícitamente un registro anterior en curso y conserva sus series y origen", async ({
   page,
 }) => {
-  await setupDownloadedWeek(page);
+  const control = await setupDownloadedWeek(page);
   await page.getByRole("button", { name: "Descargar semana", exact: true }).click();
   await expect(page.getByText(/Descarga guardada:/)).toBeVisible();
-  await page.getByRole("button", { name: "Ver rutina A", exact: true }).click();
+  control.offline = true;
+  await setWeekConnectivity(page, false);
+  await expect(page.getByRole("button", { name: "Conectar", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Consultar rutina descargada A", exact: true }).click();
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
   const before = await page.evaluate((k) => localStorage.getItem(k)!, key);

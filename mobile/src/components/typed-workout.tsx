@@ -23,6 +23,8 @@ import {
   setTypedSetType,
   typedSetTarget,
   chooseTypedAlternative,
+  previousTypedSet,
+  copyTypedSetPerformance,
 } from "../lib/typed-training";
 import {
   trainingTotals,
@@ -68,6 +70,14 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
     index = Math.max(0, Math.min(a.activeIndex, d.exercises.length - 1)),
     exercise = d.exercises[index],
     source = a.routine.exercises[index];
+  const previousSets =
+    a.routine.version === 5
+      ? (a.routine.previousSets.find(
+          (r) =>
+            r.exerciseId === exercise?.exerciseId &&
+            r.recordType === exercise?.prescribed.recordType,
+        )?.sets ?? [])
+      : [];
   const pending = d.status === "pending_save",
     paused = !pending && a.pause?.pausedAtMs != null,
     offline = state.status === "authenticated" && state.mode === "offline";
@@ -233,7 +243,8 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
               </Text>
             ) : null}
             {exercise.sets.map((set, si) => {
-              const target = typedSetTarget(exercise, si);
+              const target = typedSetTarget(exercise, si),
+                previous = previousTypedSet(exercise, si, previousSets);
               return (
                 <View
                   key={set.id}
@@ -334,10 +345,29 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                       checked={set.done}
                       disabled={locked}
                       onPress={() => {
-                        void act(() => controller.complete(index, si));
+                        void act(async () => {
+                          try {
+                            await controller.complete(index, si);
+                          } catch (error) {
+                            throw Error(
+                              `Serie ${si + 1}: ${error instanceof Error ? error.message : "Revisa los valores."}`,
+                            );
+                          }
+                        });
                       }}
                     />
                   </View>
+                  {preferences.value.showPrevious && previous ? (
+                    <Action
+                      accessibilityLabel={`Copiar anterior a serie ${si + 1}`}
+                      label={`Anterior · ${formatTrainingMetrics({ recordType: previous.recordType, weightKg: previous.weightKg, reps: previous.reps, durationSeconds: previous.durationSeconds, distanceMeters: previous.distanceMeters }, preferences.value)}`}
+                      quiet
+                      disabled={locked || set.done}
+                      onPress={() =>
+                        update((draft) => copyTypedSetPerformance(draft, index, si, previousSets))
+                      }
+                    />
+                  ) : null}
                   {options === set.id ? (
                     <View style={{ gap: 8, padding: 8 }}>
                       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
