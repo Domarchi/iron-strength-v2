@@ -2,7 +2,6 @@ import { workoutTitle } from "@/domain/workout-title";
 import {
   navigationContext,
   studentHref,
-  progressHref,
   programHref,
   adaptHref,
   workoutHref,
@@ -24,7 +23,9 @@ import { programState } from "@/domain/program-weeks";
 import { getAchievementsOverview } from "@/lib/data/achievements";
 import { listUnread } from "@/lib/data/unread";
 import { listAssignedPrograms } from "@/lib/data/programs";
-import { listExerciseProgress } from "@/lib/data/progress";
+import { getVisibleTrainingProgress } from "@/lib/data/training-review";
+import { TrainingExerciseList } from "@/components/progress/typed-exercise-list";
+import { ProgressReadFailure } from "@/components/progress/read-failure";
 import { getStreakSummary } from "@/lib/data/streak";
 import { listWorkouts } from "@/lib/data/workouts";
 import { createClient } from "@/lib/supabase/server";
@@ -40,14 +41,18 @@ const day = new Intl.DateTimeFormat("es-CL", {
   timeZone: "UTC",
 });
 const fmt = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
-const round1 = (n: number) => Math.round(n * 10) / 10;
 
 export default async function StudentDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ semanas?: string; vista?: string }>;
+  searchParams: Promise<{
+    semanas?: string | string[];
+    vista?: string | string[];
+    tipo?: string | string[];
+    metrica?: string | string[];
+  }>;
 }) {
   const navigation = navigationContext(await searchParams);
   const { id } = await params;
@@ -62,10 +67,13 @@ export default async function StudentDetailPage({
     .maybeSingle();
   if (!student) notFound();
 
-  const [streak, workouts, records, programs] = await Promise.all([
+  const [streak, workouts, reviewResult, programs] = await Promise.all([
     getStreakSummary(db, id, today),
     listWorkouts(db, id, { limit: 10 }),
-    listExerciseProgress(db, id),
+    getVisibleTrainingProgress(db, id).then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({ ok: false as const, error }),
+    ),
     listAssignedPrograms(db, id),
   ]);
 
@@ -361,26 +369,19 @@ export default async function StudentDetailPage({
         <h2 id="records-heading" className="text-lg font-medium">
           Mejores marcas
         </h2>
-        {records.length === 0 ? (
+        {!reviewResult.ok || !reviewResult.value ? (
+          <ProgressReadFailure
+            error={reviewResult.ok ? new Error("No disponible") : reviewResult.error}
+            retryHref={studentHref(id, navigation)}
+          />
+        ) : reviewResult.value.progress.exercises.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aún no hay marcas registradas.</p>
         ) : (
-          <ul className="flow-list divide-y rounded-lg border">
-            {records.map((r) => (
-              <li key={r.exerciseId}>
-                <Link
-                  href={progressHref(r.exerciseId, navigation, id)}
-                  className="flex min-h-14 flex-col justify-center gap-0.5 p-3 hover:bg-muted/50"
-                >
-                  <span className="font-medium">{r.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {r.isBodyweight
-                      ? `Mejor serie: ${r.bestReps} repeticiones`
-                      : `Mejor peso ${formatKg(r.bestWeightKg)} · 1RM estimado ${formatKg(round1(r.bestEstimated1RM))}`}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <TrainingExerciseList
+            exercises={reviewResult.value.progress.exercises}
+            navigation={navigation}
+            studentId={id}
+          />
         )}
       </section>
 

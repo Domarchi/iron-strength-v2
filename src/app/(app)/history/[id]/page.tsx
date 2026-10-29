@@ -38,14 +38,17 @@ export default async function WorkoutDetailPage({
   searchParams: Promise<{
     nuevo?: string;
     logros?: string;
-    semanas?: string;
-    vista?: string;
+    semanas?: string | string[];
+    vista?: string | string[];
+    tipo?: string | string[];
+    metrica?: string | string[];
     desde?: string;
     ejercicio?: string;
   }>;
 }) {
   const [{ id }, query, user] = await Promise.all([params, searchParams, requireUser()]);
-  const { nuevo, logros } = query;
+  const nuevo = typeof query.nuevo === "string" ? query.nuevo : undefined,
+    logros = typeof query.logros === "string" ? query.logros : undefined;
   const db = await createClient();
   const result = await getWorkoutResult(db, id);
   if (!result) notFound();

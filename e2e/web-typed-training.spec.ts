@@ -63,10 +63,19 @@ test.beforeEach(async () => {
           })
       ).error,
     ).toBeNull();
-    const goal = {
-      ...parsePrescriptionInput(defaultPrescriptionInput(m.recordType)),
-      sets: i === 0 ? 2 : 1,
-    };
+    const goal =
+      i === 0
+        ? parsePrescriptionInput({
+            mode: "series",
+            recordType: m.recordType,
+            series: ["30", "35"].map((weight) => ({
+              ...defaultPrescriptionInput(m.recordType).target,
+              repsMin: "8",
+              repsMax: "10",
+              targetWeightKg: weight,
+            })),
+          })
+        : { ...parsePrescriptionInput(defaultPrescriptionInput(m.recordType)), sets: 1 };
     rows.push({
       program_session_id: sessionId,
       exercise_id: exerciseId,
@@ -146,6 +155,20 @@ test("consulta sin iniciar, registra nueve dimensiones y revisa el resultado rea
   await expect(page.getByText("Guardado en tu cuenta", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Ver resultado", exact: true }).click();
   await expect(page).toHaveURL(/\/history\//);
+  const result = page.getByRole("region", { name: "Web tipo 0", exact: true });
+  await expect(result.getByText("Superserie A", { exact: true })).toBeVisible();
+  await result.getByText("Objetivos e indicaciones", { exact: true }).click();
+  await expect(result.getByText("2 series · Objetivos por serie", { exact: true })).toBeVisible();
+  await expect(result.getByText("Serie 1 · 8–10 reps · 30 kg", { exact: true })).toBeVisible();
+  await expect(result.getByText("Serie 2 · 8–10 reps · 35 kg", { exact: true })).toBeVisible();
+  await expect(result.getByText("Indicación 0", { exact: true })).toBeVisible();
+  await expect(result.getByText("Descanso de la ronda: 45 s", { exact: true })).toBeVisible();
+  await expect(result.getByRole("listitem").filter({ hasText: "Serie 1 · Trabajo" })).toContainText(
+    "30 kg × 8",
+  );
+  await expect(result.getByRole("listitem").filter({ hasText: "Serie 2 · Trabajo" })).toHaveCount(
+    0,
+  );
   const workouts = await admin()
     .from("workouts")
     .select(

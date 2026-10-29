@@ -774,6 +774,9 @@ isOneToOne: false
 "correct_own_workout":
 { Args: { "p_correction": Json }; Returns: Json
                            },
+"count_visible_workouts":
+{ Args: { "p_student_id": string }; Returns: number
+                           },
 "current_coach_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },

@@ -13,6 +13,8 @@ import type { TypedWorkout } from "@/lib/mobile/typed-recording-contracts";
 import { listComments } from "@/lib/data/comments";
 import { getUnreadSummary } from "@/lib/data/unread";
 import { createClient } from "@/lib/supabase/server";
+import type { ProgressQuery } from "@/lib/navigation/training-context";
+import { TrainingPrescriptionSummary } from "@/components/coach/training-prescription-summary";
 import { evidenceReturn, navigationContext } from "@/lib/navigation/training-context";
 
 const classes = {
@@ -33,7 +35,7 @@ export async function TypedWorkoutResult({
   workout: TypedWorkout["workout"];
   studentId: string;
   user: CurrentUser;
-  query: { semanas?: string; vista?: string; desde?: string; ejercicio?: string };
+  query: ProgressQuery & { desde?: unknown; ejercicio?: unknown };
 }) {
   const db = await createClient();
   const [comments, unread] = await Promise.all([
@@ -46,9 +48,16 @@ export async function TypedWorkoutResult({
     studentId,
     own,
     query,
-    workout.exercises.map((row) => row.exerciseId),
+    workout.exercises.map((row) => ({
+      exerciseId: row.exerciseId,
+      recordType: row.prescribed.recordType,
+    })),
   );
   const summary = workout.summary;
+  const groups = new Map<string, string>();
+  for (const row of workout.exercises)
+    if (row.supersetId && !groups.has(row.supersetId))
+      groups.set(row.supersetId, String.fromCharCode(65 + groups.size));
   return (
     <div className="flow-page flex flex-col gap-4">
       <MarkRead workoutId={workout.id} unread={unread?.byWorkout.get(workout.id) ?? 0} />
@@ -99,6 +108,11 @@ export async function TypedWorkoutResult({
         <Card key={exercise.id} role="region" aria-label={exercise.name}>
           <CardHeader>
             <h2 className="text-base font-medium wrap-anywhere">{exercise.name}</h2>
+            {exercise.supersetId ? (
+              <p className="text-xs font-medium text-primary">
+                Superserie {groups.get(exercise.supersetId)}
+              </p>
+            ) : null}
             {exercise.prescribedExerciseName &&
             exercise.prescribedExerciseId !== exercise.exerciseId ? (
               <p className="text-sm text-muted-foreground">
@@ -107,6 +121,32 @@ export async function TypedWorkoutResult({
             ) : null}
           </CardHeader>
           <CardContent className="space-y-3">
+            <details>
+              <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">
+                Objetivos e indicaciones
+              </summary>
+              <div className="space-y-3 border-t pt-3">
+                <div>
+                  <h3 className="mb-1 text-sm font-medium">Series de trabajo previstas</h3>
+                  <TrainingPrescriptionSummary prescribed={exercise.prescribed} />
+                </div>
+                {exercise.note ? (
+                  <div>
+                    <h3 className="text-sm font-medium">Indicación de la rutina</h3>
+                    <p className="whitespace-pre-wrap text-sm text-muted-foreground wrap-anywhere">
+                      {exercise.note}
+                    </p>
+                  </div>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  Descanso {exercise.supersetId ? "de la ronda" : "del ejercicio"}:{" "}
+                  {(exercise.supersetId ? exercise.supersetRestSeconds : exercise.restSeconds) ===
+                  null
+                    ? "Sin prescribir"
+                    : `${exercise.supersetId ? exercise.supersetRestSeconds : exercise.restSeconds} s`}
+                </p>
+              </div>
+            </details>
             {exercise.sets.length ? (
               <ol className="divide-y">
                 {exercise.sets.map((set) => (
@@ -132,7 +172,10 @@ export async function TypedWorkoutResult({
               <p className="text-sm text-muted-foreground">Sin series realizadas</p>
             )}
             {exercise.athleteNote ? (
-              <p className="whitespace-pre-wrap text-sm wrap-anywhere">{exercise.athleteNote}</p>
+              <div>
+                <p className="text-xs text-muted-foreground">Nota del ejercicio</p>
+                <p className="whitespace-pre-wrap text-sm wrap-anywhere">{exercise.athleteNote}</p>
+              </div>
             ) : null}
           </CardContent>
         </Card>

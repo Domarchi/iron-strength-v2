@@ -19,7 +19,7 @@ import { readVisibleTrainingHistory } from "./training-history";
 import { getHistoryExport } from "./export";
 import { getWeeklySummary } from "./weekly-summary";
 import { getTrainingWorkoutRecordCount } from "./training-review";
-import { syncAchievements, listAchievements } from "./achievements";
+import { syncAchievements, listAchievements, countWorkouts } from "./achievements";
 import { mutatePersonalExercise } from "./personal-exercises";
 const admin = adminClient();
 let coach: AdminClient, coachId: string;
@@ -374,6 +374,23 @@ it("supera1000encabezados/series por RPC y CSV sin perder una fila", async () =>
   const exported = await getHistoryExport(students[1], owners[2]);
   if (!exported.ok) throw Error("historial ausente");
   expect(exported.rows).toHaveLength(1011);
+});
+it("el recuento de logros sigue completo con10001encabezados y1002entrenamientos con series", async () => {
+  for (let from = 0; from < 8999; from += 500) {
+    const result = await admin.from("workouts").insert(
+      Array.from({ length: Math.min(500, 8999 - from) }, () => ({
+        id: randomUUID(),
+        student_id: owners[2],
+        started_at: "2026-10-01T15:00:00Z",
+        finished_at: "2026-10-01T16:00:00Z",
+        duration_seconds: 3600,
+      })),
+    );
+    if (result.error) throw result.error;
+  }
+  expect(await countWorkouts(coach, owners[2])).toBe(1002);
+  expect(await countWorkouts(students[1], owners[2])).toBe(1002);
+  expect(await countWorkouts(students[0], owners[2])).toBe(0);
 });
 it("anónimo/inactivo no reciben un snapshot vacío exitoso ni filtran la existencia de otro perfil", async () => {
   await expect(readVisibleTrainingHistory(anonClient(), owners[1])).rejects.toMatchObject({

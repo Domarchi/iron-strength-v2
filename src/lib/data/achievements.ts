@@ -35,12 +35,12 @@ export async function listAchievements(
 
 // Entrenamientos con al menos una serie guardada (los vacíos no cuentan).
 export async function countWorkouts(db: Client, studentId: string): Promise<number> {
-  const { count, error } = await db
-    .from("workouts")
-    .select("id, workout_sets!inner(id)", { count: "exact", head: true })
-    .eq("student_id", studentId);
-  if (error) throw new Error(`No se pudieron contar los entrenamientos: ${error.message}`);
-  return count ?? 0;
+  const { data, error } = await db.rpc("count_visible_workouts", {
+    p_student_id: studentId,
+  });
+  if (error || typeof data !== "number" || !Number.isSafeInteger(data) || data < 0)
+    throw new Error("No se pudieron contar los entrenamientos.");
+  return data;
 }
 
 // Estadísticas para evaluar. Solo calcula lo caro (racha, récords) si el logro aún no se tiene.
