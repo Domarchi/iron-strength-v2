@@ -52,7 +52,7 @@ describe("buildHistoryCsv (RF-47)", () => {
     const csv = buildHistoryCsv([]);
     expect(csv.startsWith(BOM)).toBe(true);
     expect(csv).toBe(
-      `${BOM}Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento;Origen;Título\r\n`,
+      `${BOM}Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento;Origen;Título;Tipo de registro;Duración (s);Distancia (m);Esfuerzo de serie (1–10);Nota del ejercicio;Fila;Entrenamiento ID;Ejercicio ID;Ejercicio prescrito ID\r\n`,
     );
   });
 
@@ -62,9 +62,9 @@ describe("buildHistoryCsv (RF-47)", () => {
       row({ setNumber: 2, isWarmup: true, weightKg: 40, reps: 12 }),
     ]);
     expect(csv.slice(BOM.length).split("\r\n")).toEqual([
-      "Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento;Origen;Título",
-      "2026-10-05;A;Sentadilla;1;Trabajo;62,5;10;Sentadilla;;;Programa del coach;",
-      "2026-10-05;A;Sentadilla;2;Calentamiento;40;12;Sentadilla;;;Programa del coach;",
+      "Fecha;Sesión;Ejercicio;Serie;Tipo;Kg;Reps;Ejercicio prescrito;Esfuerzo (1–10);Nota del entrenamiento;Origen;Título;Tipo de registro;Duración (s);Distancia (m);Esfuerzo de serie (1–10);Nota del ejercicio;Fila;Entrenamiento ID;Ejercicio ID;Ejercicio prescrito ID",
+      "2026-10-05;A;Sentadilla;1;Trabajo;62,5;10;Sentadilla;;;Programa del coach;;;;;;;Serie;;;",
+      "2026-10-05;A;Sentadilla;2;Calentamiento;40;12;Sentadilla;;;Programa del coach;;;;;;;Serie;;;",
       "",
     ]);
   });
@@ -108,6 +108,6 @@ describe("csvFileName", () => {
 
 it("exporta esfuerzo y nota del entrenamiento con neutralización (T156)", () => {
   expect(buildHistoryCsv([row({ perceivedEffort: 8, workoutNote: "=1+1" })])).toContain(
-    ";8;'=1+1;Programa del coach;\r\n",
+    ";8;'=1+1;Programa del coach;;;;;;;Serie;;;\r\n",
   );
 });
