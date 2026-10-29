@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   readLegacyRoutinePrescription,
   readStoredTrainingPrescription,
+  readRepetitionContextPrescription,
 } from "./stored-prescription";
 import { defaultPrescriptionInput, parsePrescriptionInput } from "./prescription-input";
 import { RECORD_TYPES } from "./training-metrics";
@@ -15,6 +16,46 @@ const legacy = {
   typed_prescription: null,
 };
 describe("prescripción almacenada del coach", () => {
+  it("el contexto anterior admite una fuente canónica solo cuando conserva el tipo legado null", () => {
+    expect(readRepetitionContextPrescription(legacy)).toEqual(
+      readLegacyRoutinePrescription(legacy),
+    );
+    const prescribed = parsePrescriptionInput(defaultPrescriptionInput(null));
+    const row = {
+      sets: prescribed.sets,
+      reps_min: null,
+      reps_max: null,
+      target_weight_kg: null,
+      prescription_sets: null,
+      typed_prescription: prescribed,
+    };
+    expect(readRepetitionContextPrescription(row)).toEqual({
+      sets: 3,
+      repsMin: 8,
+      repsMax: 12,
+      targetWeightKg: null,
+    });
+    const detail = [
+      { ...prescribed.target, targetWeightKg: 0 },
+      { ...prescribed.target, targetWeightKg: 20 },
+    ];
+    expect(
+      readRepetitionContextPrescription({
+        ...row,
+        sets: 2,
+        typed_prescription: { ...prescribed, sets: 2, series: detail, target: prescribed.target },
+      }).series,
+    ).toEqual([
+      { repsMin: 8, repsMax: 12, targetWeightKg: 0 },
+      { repsMin: 8, repsMax: 12, targetWeightKg: 20 },
+    ]);
+    for (const kind of RECORD_TYPES) {
+      const modern = parsePrescriptionInput(defaultPrescriptionInput(kind));
+      expect(() =>
+        readRepetitionContextPrescription({ ...row, typed_prescription: modern }),
+      ).toThrow("contexto");
+    }
+  });
   it("proyecta un objetivo anterior sin inferir tipo ni métricas nuevas", () => {
     expect(readStoredTrainingPrescription(legacy)).toEqual({
       recordType: null,

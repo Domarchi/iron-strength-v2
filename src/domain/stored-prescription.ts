@@ -66,3 +66,22 @@ export function readLegacyRoutinePrescription(row: StoredPrescription): SeriesPr
       : {}),
   };
 }
+
+/** Transitional v1 context: only the explicit legacy kind has identical recording semantics. */
+export function readRepetitionContextPrescription(row: StoredPrescription): SeriesPrescription {
+  if (row.typed_prescription == null) return readLegacyRoutinePrescription(row);
+  const prescribed = readStoredTrainingPrescription(row);
+  if (prescribed.recordType !== null)
+    throw Error("Esta rutina requiere el contexto de entrenamiento tipado.");
+  const target = (value: TrainingPrescription["target"]) =>
+    seriesTargetSchema.parse({
+      repsMin: value.repsMin,
+      repsMax: value.repsMax,
+      targetWeightKg: value.targetWeightKg,
+    });
+  return {
+    sets: prescribed.sets,
+    ...target(prescribed.target),
+    ...(prescribed.series ? { series: prescribed.series.map(target) } : {}),
+  };
+}

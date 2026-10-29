@@ -3,6 +3,7 @@ import { expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { admin, COACH, resetAll, seedCoach, seedProgram, seedWorkout } from "./support/db";
 import { login } from "./support/ui";
+import { readStoredTrainingPrescription } from "../src/domain/stored-prescription";
 const targets = [
   { repsMin: 6, repsMax: 8, targetWeightKg: 75 },
   { repsMin: 8, repsMax: 10, targetWeightKg: 70 },
@@ -57,8 +58,9 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   expect(
-    (await admin().from("session_exercises").select("prescription_sets").eq("id", row.id).single())
-      .data!.prescription_sets,
+    readStoredTrainingPrescription(
+      (await admin().from("session_exercises").select("*").eq("id", row.id).single()).data!,
+    ).series?.map(({ repsMin, repsMax, targetWeightKg }) => ({ repsMin, repsMax, targetWeightKg })),
   ).toEqual(targets);
   const detailedRow = page.locator('.coach-exercise-row[data-detailed="true"]').first();
   const rowBox = await detailedRow.boundingBox(),
@@ -81,8 +83,9 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
   await page.getByRole("button", { name: "Guardar sesión", exact: true }).click();
   await expect(page.getByText("Cambios guardados.", { exact: true })).toBeVisible();
   expect(
-    (await admin().from("session_exercises").select("prescription_sets").eq("id", row.id).single())
-      .data!.prescription_sets,
+    readStoredTrainingPrescription(
+      (await admin().from("session_exercises").select("*").eq("id", row.id).single()).data!,
+    ).series,
   ).toBeNull();
   await page.getByText("Alternativas de Sentadilla (0/3)", { exact: true }).click();
   await page
@@ -105,13 +108,15 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
     .click();
   await expect(page.getByText("Alternativas guardadas.", { exact: true })).toBeVisible();
   expect(
-    (
-      await admin()
-        .from("session_exercise_alternatives")
-        .select("prescription_sets")
-        .eq("session_exercise_id", row.id)
-        .single()
-    ).data!.prescription_sets,
+    readStoredTrainingPrescription(
+      (
+        await admin()
+          .from("session_exercise_alternatives")
+          .select("*")
+          .eq("session_exercise_id", row.id)
+          .single()
+      ).data!,
+    ).series?.map(({ repsMin, repsMax, targetWeightKg }) => ({ repsMin, repsMax, targetWeightKg })),
   ).toEqual([
     { repsMin: 8, repsMax: 12, targetWeightKg: 25 },
     { repsMin: 8, repsMax: 12, targetWeightKg: 20 },

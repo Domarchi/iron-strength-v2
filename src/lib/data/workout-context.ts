@@ -2,7 +2,7 @@ import { repetitionValues } from "./stored-training-set";
 // Contexto de una sesión a entrenar (RF-19, RF-20, RF-15b, DC-9): ejercicios en orden con su
 // prescripción, "última vez", peso previo para precargar y la sugerencia de progresión.
 import { isUniformPrescription } from "@/domain/prescription-series";
-import { readLegacyRoutinePrescription } from "@/domain/stored-prescription";
+import { readRepetitionContextPrescription } from "@/domain/stored-prescription";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, mondayOf, santiagoDate, type DateString } from "../../domain/dates.ts";
 import { lastByExercise, type HistoryWorkout, type LastPerformance } from "../../domain/history.ts";
@@ -101,11 +101,13 @@ export async function getWorkoutContext(
   const history: HistoryWorkout[] = recent.map((w) => ({
     id: w.id,
     startedAt: w.started_at,
-    sets: w.workout_sets.map((s) => ({
-      exerciseId: s.exercise_id,
-      ...repetitionValues(s),
-      isWarmup: s.is_warmup,
-    })),
+    sets: w.workout_sets
+      .filter((s) => s.record_type === null)
+      .map((s) => ({
+        exerciseId: s.exercise_id,
+        ...repetitionValues(s),
+        isWarmup: s.is_warmup,
+      })),
   }));
   const lastBy = lastByExercise(history);
 
@@ -119,14 +121,14 @@ export async function getWorkoutContext(
         is_bodyweight: boolean;
         progression_increment_kg: number;
       };
-      const prescribed = readLegacyRoutinePrescription(row);
+      const prescribed = readRepetitionContextPrescription(row);
       const last = lastBy.get(row.exercise_id) ?? null;
       return {
         alternatives: [...row.session_exercise_alternatives]
           .sort((a, b) => a.position - b.position)
           .map((a) => {
             const catalog = a.exercises!;
-            const rx = readLegacyRoutinePrescription(a);
+            const rx = readRepetitionContextPrescription(a);
             const previous = lastBy.get(a.exercise_id) ?? null;
             return {
               sessionExerciseId: row.id,

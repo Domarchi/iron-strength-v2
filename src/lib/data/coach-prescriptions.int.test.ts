@@ -167,7 +167,7 @@ describe("T219 · modelo del coach y copias con la identidad real", () => {
   });
   it("el contexto anterior no degrada una rutina asignada moderna a repeticiones", async () => {
     await expect(getWorkoutContext(student, studentId, assignedSession)).rejects.toThrow(
-      "formato de entrenamiento actualizado",
+      "contexto de entrenamiento tipado",
     );
   });
   it("la copia completa conserva objetivos e identifica el mismo intento", async () => {

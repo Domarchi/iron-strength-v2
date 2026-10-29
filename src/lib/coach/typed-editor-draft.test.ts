@@ -3,6 +3,7 @@ import { defaultPrescriptionInput, parsePrescriptionInput } from "@/domain/presc
 import type { EditorDraft } from "./editor-draft";
 import type { CoachSessionRow, CoachCatalogExercise } from "@/lib/data/coach-programs";
 import {
+  coachEditorBase,
   coachEditorDraftSchema,
   decodeCoachEditorDraft,
   coachEditorDraftKey,
@@ -103,6 +104,21 @@ function store(initial: string | null = null) {
   };
 }
 describe("T219 · borrador canónico del coach", () => {
+  it("conserva una base de comparación canónica vinculada a la misma revisión", () => {
+    const value = current(),
+      base = coachEditorBase(source);
+    expect(coachEditorDraftSchema.parse({ ...value, base }).base).toEqual(base);
+    expect(
+      coachEditorDraftSchema.safeParse({ ...value, base: { ...base, revision: 9 } }).success,
+    ).toBe(false);
+    expect(
+      coachEditorDraftSchema.safeParse({
+        ...value,
+        base: { ...base, exercises: [...base.exercises, base.exercises[0]] },
+      }).success,
+    ).toBe(false);
+    expect(coachEditorDraftSchema.safeParse(value).success).toBe(true);
+  });
   it("migra texto parcial y conserva el original exacto sin cambiar revisión o identidad", () => {
     const result = migrated();
     expect(result.ok).toBe(true);

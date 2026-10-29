@@ -1,21 +1,21 @@
 import { navigationContext, studentHref, adaptHref } from "@/lib/navigation/training-context";
-import { PrescriptionTargets } from "@/components/workout/prescription-targets";
+import { TrainingPrescriptionSummary } from "@/components/coach/training-prescription-summary";
 import { WEEKDAYS } from "@/domain/session-schedule";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
+import { requireCoach } from "@/lib/auth/session";
+import { OrphanDraftRecovery } from "./orphan-draft-recovery";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { defaultStartDate, santiagoDate } from "@/domain/dates";
-import { formatPrescription } from "@/domain/format";
 import {
   isWeekEditable,
   programWeekNumber,
   programState,
   type ProgramRange,
 } from "@/domain/program-weeks";
-import { listExercises } from "@/lib/data/exercises";
-import { getProgramTree } from "@/lib/data/programs";
+import { getCoachProgramTree, listCoachCatalog } from "@/lib/data/coach-programs";
 import { createClient } from "@/lib/supabase/server";
 import { addSessionAction, deleteTemplateAction } from "../actions";
 import { ActionForm } from "../action-form";
@@ -23,7 +23,7 @@ import { AssignForm } from "./assign-form";
 import { CopyWeeksForm } from "./copy-weeks-form";
 import { z } from "zod";
 import { SessionWorkspace } from "./session-workspace";
-import { SessionEditor } from "./session-editor";
+import { CanonicalSessionEditor as SessionEditor } from "./canonical-session-editor";
 import { DuplicateProgramForm } from "../duplicate-program-form";
 import { CleanEditor, WeekWorkspace } from "./week-workspace";
 
@@ -44,9 +44,23 @@ export default async function ProgramEditorPage({
   searchParams: Promise<{ alumno?: string; semanas?: string; vista?: string }>;
 }) {
   const { id } = await params;
+  if (!z.uuid().safeParse(id).success) notFound();
+  const coach = await requireCoach();
   const db = await createClient();
-  const tree = await getProgramTree(db, id);
-  if (!tree) notFound();
+  const tree = await getCoachProgramTree(db, id);
+  if (!tree)
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" render={<Link href="/coach/programs" />}>
+          Volver a programas
+        </Button>
+        <h1 className="text-xl font-semibold">Programa no disponible</h1>
+        <p className="text-sm text-muted-foreground">
+          Se eliminó o ya no está disponible para tu cuenta.
+        </p>
+        <OrphanDraftRecovery userId={coach.id} programId={id} sessionIds={[]} />
+      </div>
+    );
 
   const query = await searchParams;
   const navigation = navigationContext(query);
@@ -77,16 +91,7 @@ export default async function ProgramEditorPage({
     isWeekEditable(range, w, today),
   );
   const [pickerExercises, studentProfile, assignTargets] = await Promise.all([
-    anyEditable
-      ? listExercises(db, { limit: 1000 }).then((list) =>
-          list.map((e) => ({
-            id: e.id,
-            name: e.name,
-            muscleGroup: e.muscleGroup,
-            equipment: e.equipment,
-          })),
-        )
-      : Promise.resolve([]),
+    anyEditable ? listCoachCatalog(db) : Promise.resolve([]),
     tree.studentId
       ? db
           .from("profiles")
@@ -157,6 +162,11 @@ export default async function ProgramEditorPage({
             : `${tree.weeksCount} semanas · Diseña la rutina y luego asígnala a un alumno.`}
         </p>
       </header>
+      <OrphanDraftRecovery
+        userId={coach.id}
+        programId={id}
+        sessionIds={tree.sessions.map((session) => session.id)}
+      />
       <WeekWorkspace
         key={tree.id}
         initialWeek={currentWeek ?? 1}
@@ -287,10 +297,7 @@ export default async function ProgramEditorPage({
                           {session.exercises.map((exercise) => (
                             <li key={exercise.id} className="py-3 first:pt-0">
                               <p className="text-sm font-medium">{exercise.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {formatPrescription(exercise)}
-                              </p>
-                              <PrescriptionTargets series={exercise.series} />
+                              <TrainingPrescriptionSummary prescribed={exercise.prescribed} />
                               {exercise.supersetId ? (
                                 <p className="mt-1 text-xs font-medium text-primary">
                                   Superserie{" "}
@@ -314,11 +321,10 @@ export default async function ProgramEditorPage({
                                   {exercise.alternatives!.map((alt) => (
                                     <li key={alt.id} className="text-sm">
                                       <span className="font-medium">Alternativa: {alt.name}</span>
-                                      <p className="text-xs text-muted-foreground">
-                                        {formatPrescription(alt)}
-                                        {alt.archived ? " · Archivado" : ""}
-                                      </p>
-                                      <PrescriptionTargets series={alt.series} />
+                                      <TrainingPrescriptionSummary prescribed={alt.prescribed} />
+                                      {alt.archived ? (
+                                        <p className="text-xs text-muted-foreground">Archivado</p>
+                                      ) : null}
                                     </li>
                                   ))}
                                 </ul>

@@ -10,6 +10,8 @@ import {
 } from "./typed-prescription";
 import type { CoachCatalogExercise, CoachSessionRow } from "@/lib/data/coach-programs";
 import type { PrescriptionDraft } from "./routine-editor";
+import { trainingPrescriptionSchema, athleteNoteSchema } from "@/domain/training-metrics";
+import { restSchema } from "./routine-layout";
 
 type Scope = { userId: string; programId: string; sessionId: string };
 const ids = z
@@ -57,6 +59,48 @@ function hasLegacyRequest(draft: EditorDraft): boolean {
     draft.additionRequest
   );
 }
+const baseRowSchema = z
+  .object({
+    id: z.uuid(),
+    exerciseId: z.uuid(),
+    prescribed: trainingPrescriptionSchema,
+    note: athleteNoteSchema,
+    restSeconds: restSchema,
+    supersetId: z.uuid().nullable(),
+    supersetRestSeconds: restSchema,
+  })
+  .strict();
+const baseSchema = z
+  .object({
+    id: z.uuid(),
+    revision: z.number().int().min(0).max(2147483647),
+    title: z.string().nullable(),
+    weekday: z.number().int().min(0).max(6).nullable(),
+    exercises: z
+      .array(baseRowSchema)
+      .max(15)
+      .refine((rows) => new Set(rows.map((row) => row.id.toLowerCase())).size === rows.length),
+  })
+  .strict();
+export function coachEditorBase(source: CoachSessionRow): z.infer<typeof baseSchema> {
+  return baseSchema.parse({
+    id: source.id,
+    revision: source.revision,
+    title: source.title,
+    weekday: source.weekday,
+    exercises: source.exercises.map(
+      ({ id, exerciseId, prescribed, note, restSeconds, supersetId, supersetRestSeconds }) => ({
+        id,
+        exerciseId,
+        prescribed,
+        note,
+        restSeconds,
+        supersetId,
+        supersetRestSeconds,
+      }),
+    ),
+  });
+}
 export const coachEditorDraftSchema = z
   .object({
     version: z.literal(4),
@@ -84,13 +128,15 @@ export const coachEditorDraftSchema = z
     order: ids.nullable(),
     pending: coachSessionRequestSchema.nullable(),
     previousRaw: z.string().nullable(),
+    base: baseSchema.nullable().optional(),
   })
   .strict()
   .superRefine((value, context) => {
     if (
       Object.values(value).some((v) => v === undefined) ||
       Object.entries(value.edits).some(([key, edit]) => key !== edit.id) ||
-      (value.pending && value.pending.revision !== value.revision)
+      (value.pending && value.pending.revision !== value.revision) ||
+      (value.base && (value.base.id !== value.sessionId || value.base.revision !== value.revision))
     )
       context.addIssue({
         code: "custom",
@@ -241,6 +287,7 @@ export function migrateCoachEditorDraft(
       order: old.order,
       pending: null,
       previousRaw: entry.raw,
+      base: old.revision === source.revision ? coachEditorBase(source) : null,
     });
     return { ok: true, draft };
   } catch {
