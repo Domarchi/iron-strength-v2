@@ -6,27 +6,29 @@ const {
   verifySimulatorTarget,
   chooseSimulatorTemplate,
   parseLaunchPid,
+  previewCaptureFlow,
+  verifyCaptureSequence,
 } = require("../../scripts/smoke-ios-simulator.cjs");
 const bundle = Buffer.concat([Buffer.from("c61fbc03c103191f", "hex"), Buffer.alloc(64, 1)]);
 const hash = createHash("sha256").update(bundle).digest("hex");
 const info = {
   CFBundleIdentifier: "com.domarchis.ironstrength.preview",
   CFBundleShortVersionString: "0.1.0",
-  CFBundleVersion: "7",
+  CFBundleVersion: "8",
   CFBundleSupportedPlatforms: ["iPhoneSimulator"],
   CFBundleExecutable: "IronStrengthPreview",
 };
 it("reconoce solo el preview de simulador y bytes seleccionados", () => {
   expect(verifySimulatorTarget(info, bundle, hash)).toEqual({
     appId: info.CFBundleIdentifier,
-    buildNumber: "7",
+    buildNumber: "8",
     bundleSha256: hash,
     executable: "IronStrengthPreview",
   });
 });
 it.each([
   { CFBundleIdentifier: "com.domarchis.ironstrength" },
-  { CFBundleVersion: "6" },
+  { CFBundleVersion: "7" },
   { CFBundleSupportedPlatforms: ["iPhoneOS"] },
   { CFBundleShortVersionString: "0.2.0" },
   { CFBundleExecutable: "../another" },
@@ -85,4 +87,43 @@ it("extrae el PID únicamente del identificador seleccionado", () => {
   expect(parseLaunchPid("com.domarchis.ironstrength.preview: 12345")).toBe(12345);
   expect(() => parseLaunchPid("another.app: 12345")).toThrow();
   expect(() => parseLaunchPid("com.domarchis.ironstrength.preview: nope")).toThrow();
+});
+
+const captures = ["login-dark.png", "login-light.png", "login-reopened.png"].map((name, i) => ({
+  name,
+  sha256: String(i + 1).repeat(64),
+  bytes: 12000,
+}));
+it("exige la secuencia completa y diferencias entre oscuro y claro", () => {
+  expect(verifyCaptureSequence(captures)).toBe(true);
+});
+it("rechaza las tres capturas idénticas que produjo simctl", () => {
+  expect(() =>
+    verifyCaptureSequence(captures.map((p) => ({ ...p, sha256: "a".repeat(64) }))),
+  ).toThrow();
+});
+it("rechaza capturas incompletas o nombres ajenos", () => {
+  expect(() => verifyCaptureSequence(captures.slice(0, 2))).toThrow();
+  expect(() =>
+    verifyCaptureSequence([{ ...captures[0], name: "other.png" }, ...captures.slice(1)]),
+  ).toThrow();
+});
+it("rechaza hash o tamaño inválidos sin afirmar aceptación visual", () => {
+  expect(() =>
+    verifyCaptureSequence([{ ...captures[0], sha256: "" }, ...captures.slice(1)]),
+  ).toThrow();
+  expect(() =>
+    verifyCaptureSequence([{ ...captures[0], bytes: 1 }, ...captures.slice(1)]),
+  ).toThrow();
+});
+it("la captura de preview solo activa y observa acceso sin credenciales o borrado", () => {
+  const flow = previewCaptureFlow("login-dark");
+  expect(flow).toContain("clearState: false");
+  expect(flow).toContain("stopApp: false");
+  expect(flow).toContain('assertVisible: "Inicia sesión"');
+  expect(flow).toContain("takeScreenshot: login-dark");
+  expect(flow).not.toMatch(/inputText|tapOn|clearState: true|stopApp: true|openLink/);
+});
+it("no genera rutas de captura fuera del conjunto cerrado", () => {
+  expect(() => previewCaptureFlow("../another")).toThrow();
 });
