@@ -64,6 +64,28 @@
           ".build-evidence/ios-proof.json"
         ]
       }
+    },
+    "quality-simulator": {
+      "developmentClient": false,
+      "distribution": "internal",
+      "environment": "preview",
+      "env": {
+        "APP_VARIANT": "quality",
+        "IRON_QUALITY_SIMULATOR": "1",
+        "EXPO_PUBLIC_ALLOW_LOCAL_API": "0"
+      },
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Release",
+        "env": {
+          "IRON_CAPTURE_IOS_BUILD_EVIDENCE": "1"
+        },
+        "buildArtifactPaths": [
+          ".build-evidence/ios.map",
+          ".build-evidence/ios.hbc",
+          ".build-evidence/ios-proof.json"
+        ]
+      }
     }
   }
 }

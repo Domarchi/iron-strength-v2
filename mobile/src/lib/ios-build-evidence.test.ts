@@ -57,6 +57,42 @@ it("conserva los mismos bytes y huellas del producto y mapa, sin variables priva
   expect(saved).not.toContain("private-never-record");
   expect(saved).not.toContain(f.root);
 });
+it("captura quality solo con el perfil remoto cerrado de simulador", () => {
+  const f = fixture();
+  const proof = require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence({
+    ...f.env,
+    PRODUCT_BUNDLE_IDENTIFIER: "com.domarchis.ironstrength.quality",
+    EAS_BUILD: "true",
+    EAS_BUILD_PLATFORM: "ios",
+    EAS_BUILD_PROFILE: "quality-simulator",
+    IRON_QUALITY_SIMULATOR: "1",
+  });
+  expect(proof.applicationId).toBe("com.domarchis.ironstrength.quality");
+  expect(readFileSync(join(f.root, ".build-evidence/ios.hbc"))).toEqual(f.bundle);
+});
+it.each([
+  { EAS_BUILD: undefined },
+  { EAS_BUILD_PLATFORM: "android" },
+  { EAS_BUILD_PLATFORM: undefined },
+  { EAS_BUILD_PROFILE: "production" },
+  { EAS_BUILD_PROFILE: undefined },
+  { IRON_QUALITY_SIMULATOR: "0" },
+  { IRON_QUALITY_SIMULATOR: undefined },
+])("no genera un recibo quality fuera de la excepción cerrada: %j", (patch) => {
+  const f = fixture();
+  expect(() =>
+    require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence({
+      ...f.env,
+      PRODUCT_BUNDLE_IDENTIFIER: "com.domarchis.ironstrength.quality",
+      EAS_BUILD: "true",
+      EAS_BUILD_PLATFORM: "ios",
+      EAS_BUILD_PROFILE: "quality-simulator",
+      IRON_QUALITY_SIMULATOR: "1",
+      ...patch,
+    }),
+  ).toThrow("identity");
+  expect(existsSync(join(f.root, ".build-evidence/ios-proof.json"))).toBe(false);
+});
 it.each(["missing", "invalid", "empty", "wrong-version", "missing-content"])(
   "rechaza mapa %s sin acreditar el build",
   (mode) => {

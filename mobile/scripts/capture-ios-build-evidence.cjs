@@ -50,7 +50,16 @@ function captureIosBuildEvidence(env = process.env) {
   if (!/^[a-f0-9-]{36}$/i.test(buildId ?? "") || !/^[a-f0-9]{40}$/i.test(sourceCommit ?? ""))
     throw new Error("Missing build identity");
   const applicationId = env.PRODUCT_BUNDLE_IDENTIFIER;
-  if (!["com.domarchis.ironstrength", "com.domarchis.ironstrength.preview"].includes(applicationId))
+  const qualitySimulator =
+    applicationId === "com.domarchis.ironstrength.quality" &&
+    env.EAS_BUILD === "true" &&
+    env.EAS_BUILD_PLATFORM === "ios" &&
+    env.EAS_BUILD_PROFILE === "quality-simulator" &&
+    env.IRON_QUALITY_SIMULATOR === "1";
+  if (
+    !["com.domarchis.ironstrength", "com.domarchis.ironstrength.preview"].includes(applicationId) &&
+    !qualitySimulator
+  )
     throw new Error("Unexpected application identity");
   const outputBundle = path.join(directory, "ios.hbc");
   const outputProof = path.join(directory, "ios-proof.json");

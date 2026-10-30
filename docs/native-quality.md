@@ -7,7 +7,7 @@ La revisión de dependencias JavaScript por ubicación de módulos se describe e
 ## Entorno seguro
 
 - La variante `quality` usa `com.domarchis.ironstrength.quality`, nombre Iron Strength Pruebas y esquema iron-strength-quality. No comparte SQLite ni SecureStore con preview/producción.
-- Exige EXPO_PUBLIC_API_URL explícita: origen HTTPS de un túnel temporal trycloudflare.com, sin credenciales, puerto, ruta, consulta ni fragmento. Rechaza el dominio productivo y APP_VARIANT desconocida. EAS_BUILD=true rechaza esta variante local.
+- Exige EXPO_PUBLIC_API_URL explícita: origen HTTPS de un túnel temporal trycloudflare.com, sin credenciales, puerto, ruta, consulta ni fragmento. Rechaza el dominio productivo y APP_VARIANT desconocida. EAS_BUILD=true rechaza esta variante salvo la excepción cerrada quality-simulator/ios/IRON_QUALITY_SIMULATOR=1 descrita abajo.
 - El backend debe usar Supabase `http://127.0.0.1:55321`. La excepción 54321 solo es válida dentro del runner efímero alojado por GitHub, con las guardas de src/lib/testing/mobile-backend.ts. CI=1 por sí solo no concede esa excepción.
 - Antes de preparar cuentas ficticias, verificar el destino. No ejecutar otras suites que limpien esa base mientras dura la prueba nativa. Nunca usar seeds, reset o credenciales administrativas contra producción o la base interactiva.
 - El túnel solo expone el Next de pruebas, con autenticación/RLS actuales, datos ficticios y puerto propio. Contrastar BUILD_ID local y remoto antes de compilar. Detenerlo y cerrar el servidor al terminar.
@@ -56,3 +56,11 @@ El workflow descarga exactamente el simulador EAS df9f77c5-9b74-4659-bde0-9cce10
 El estado del proceso y las imágenes tienen evidencias separadas: revisar las capturas antes de acreditar la pantalla. No convertir este arranque en aprobación del registro autenticado, modo avión, teléfono real o candidato de tienda. No hay triggers automáticos: el operador selecciona esta prueba manualmente desde mobile con `eas workflow:run .eas/workflows/ios-preview-smoke.yml`. Los pins del script/workflow se actualizan deliberadamente después de verificar otro artefacto; nunca se usa latest como versión de la app.
 
 Comprobado el 30-oct: workflow 01a18b0e-7058-7278-b10c-69a2823028a9 aprobado, build 7 instalado/abierto/reabierto y tres capturas originales revisadas en iPhone Duo/iOS 27.1, con limpieza del dispositivo propio. No representa el circuito autenticado o un iPhone físico. El primer intento falló por interpolación literal de env; la ruta de download_build debe exportarse dentro de run. Detalles, hashes y límites en specs/009-product-quality/validation.md.
+
+## Simulador iOS autenticado de QA
+
+La variante quality puede construirse como artefacto privado de simulador en EAS con el perfil quality-simulator. Mantiene su identificador .quality y la misma lógica de acceso/registro; nunca se distribuye a alumnos o tiendas. La excepción exige simultáneamente EAS_BUILD=true, EAS_BUILD_PLATFORM=ios, EAS_BUILD_PROFILE=quality-simulator e IRON_QUALITY_SIMULATOR=1. Todo otro build remoto quality se rechaza, y el origen HTTPS de pruebas sigue siendo obligatorio.
+
+El workflow manual mobile/.eas/workflows/ios-quality-build.yml recibe qa_api_origin, que se contrasta antes con el backend Next conectado únicamente a 55321. Sin origen por defecto, triggers de push, envío a tiendas, cuentas reales o nuevos secretos. No apuntar a producción. Conservar el ID del job y descargar app/mapa/bundle/recibo del mismo trabajo; cotejar API, permisos y fuentes antes de probar. Si la cuota o el plan exige un gasto, detener la compilación sin contratar capacidad.
+
+Este artefacto permite probar SQLite, SecureStore y el registro autenticado en un simulador remoto sin introducir cuentas ficticias en producción. La demo en la pila aislada se conserva; no se resetea ni se ejecutan suites destructivas mientras el propietario la usa. Las pruebas deben ser aditivas y usar cuentas técnicas ficticias existentes. La ejecución, el circuito autenticado y los teléfonos se acreditan por separado.
