@@ -3,18 +3,27 @@
 - extendedWaitUntil:
     visible: Inicia sesión
     timeout: 30000
-- tapOn: Correo
+- tapOn:
+    text: Correo
+    height: 50
+    tolerance: 3
 - inputText:
     text: ${QA_EMAIL}
     label: Correo de la cuenta técnica aislada
 - pressKey: Enter
 - tapOn: Mostrar contraseña
-- tapOn: Contraseña
+- tapOn:
+    text: Contraseña
+    height: 50
+    tolerance: 3
 - inputText:
     text: ${QA_PASSWORD}
     label: Clave ficticia de QA
 - tapOn: Ocultar contraseña
 - hideKeyboard
+- assertVisible:
+    text: Entrar
+    enabled: true
 - tapOn: Entrar
 - extendedWaitUntil:
     visible: Inicio
