@@ -14,10 +14,9 @@ jobs:
           extensions: [app]
       - name: Comprobar arranque, apariencia y reapertura
         id: probe
-        env:
-          IOS_SMOKE_APP_PATH: ${{ steps.download.outputs.artifact_path }}
         run: |
           set -e
+          export IOS_SMOKE_APP_PATH="${{ steps.download.outputs.artifact_path }}"
           set-output evidence_dir "$PWD/.simulator-evidence"
           if [ -f scripts/smoke-ios-simulator.cjs ]; then
             node scripts/smoke-ios-simulator.cjs
