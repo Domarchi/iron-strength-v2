@@ -1,0 +1,53 @@
+name: Capturas funcionales iOS aisladas
+on:
+  workflow_dispatch:
+    inputs:
+      qa_api_origin:
+        type: string
+        required: true
+      backend_origin:
+        type: string
+        required: true
+      backend_build_id:
+        type: string
+        required: true
+      qa_account_id:
+        type: string
+        required: true
+jobs:
+  capture:
+    name: Quality8 con datos ficticios existentes
+    runs_on: macos-medium
+    image: latest
+    environment: preview
+    env:
+      IOS_CAPTURE_API_ORIGIN: ${{ inputs.qa_api_origin }}
+      IOS_CAPTURE_BACKEND_ORIGIN: ${{ inputs.backend_origin }}
+      IOS_CAPTURE_BACKEND_BUILD_ID: ${{ inputs.backend_build_id }}
+      IOS_CAPTURE_ACCOUNT_ID: ${{ inputs.qa_account_id }}
+    steps:
+      - uses: eas/checkout
+      - uses: eas/download_build
+        id: download
+        with:
+          build_id: 70774fb1-e41e-4e7c-9b87-97369911900a
+          extensions: [app]
+      - name: Capturar la interfaz y descartar solo su borrador
+        id: capture
+        run: |
+          set -e
+          export IOS_CAPTURE_APP_PATH="${{ steps.download.outputs.artifact_path }}"
+          set-output evidence_dir "$PWD/.ios-quality-evidence/store-captures"
+          if [ -f scripts/run-ios-store-captures.cjs ]; then
+            node scripts/run-ios-store-captures.cjs
+          elif [ -f mobile/scripts/run-ios-store-captures.cjs ]; then
+            node mobile/scripts/run-ios-store-captures.cjs
+          else
+            exit 2
+          fi
+      - uses: eas/upload_artifact
+        if: ${{ always() }}
+        with:
+          type: other
+          name: ios-store-capture-evidence
+          path: ${{ steps.capture.outputs.evidence_dir }}/*
