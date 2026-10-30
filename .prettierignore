@@ -14,3 +14,6 @@ mobile/package-lock.json
 mobile/expo-env.d.ts
 
 .next-*/
+
+# Private diagnostics generated with each native build.
+.build-evidence/

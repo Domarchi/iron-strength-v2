@@ -313,3 +313,11 @@ Validar check móvil, compatibilidad SDK58, Hermes Android/iOS y auditoría por 
 Referencias: [versiones Expo](https://docs.expo.dev/build-reference/app-versions/), [distribución interna](https://docs.expo.dev/build/internal-distribution/), [monorepos](https://docs.expo.dev/build-reference/build-with-monorepos/) y [Forge1.4.2](https://github.com/digitalbazaar/forge/releases/tag/v1.4.2), consultadas29-oct.
 
 Los directorios generados .next-* de verificación privada se excluyen de Git, formato y ESLint, igual que los dos nombres de build ya previstos. No excluir fuentes de aplicación para obtener un control verde.
+
+### T202 · Evidencia de compilación iOS del mismo artefacto
+
+Los builds iOS release de preview/production deben conservar el mapa compuesto de Hermes y una copia exacta del main.jsbundle producido por Xcode, junto a hashes, versión del formato e identidad del trabajo. Configurar mediante plugin CNG y artefactos adicionales cerrados de EAS; no editar el proyecto iOS generado, cambiar el registro, añadir telemetría, credenciales o enviar mapas a Observe. Los builds Debug y Android conservan su comportamiento.
+
+La captura falla ante mapa inválido/ausente, binario sin cabecera Hermes, rutas que escapan del producto o destinos simbólicos. No crear evidencia positiva si falta un archivo. El empaquetado público de la app no incluye estos diagnósticos; se descargan separadamente del mismo trabajo y se comparan con el bundle extraído del archivo de aplicación. El mapa debe contener las fuentes y poder auditarse con el control existente. No atribuir esa evidencia al simulador anterior, a un iPhone, a una ejecución nativa iOS o al candidato de tienda.
+
+Antes de consumir una compilación remota comprobar cuota gratuita, cuenta/proyecto y archivo real de subida. Conservar preview5 Android y la demo activa; incrementar únicamente el build iOS de la nueva referencia. El resultado sigue siendo un simulador, sin membresía, firma de dispositivo, invitaciones o publicación de tienda.
