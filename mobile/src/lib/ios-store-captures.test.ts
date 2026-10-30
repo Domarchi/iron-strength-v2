@@ -146,3 +146,10 @@ it("las fases usan la UI, conservan estado y descartan sin finalizar o enviar un
     );
   expect(() => captureFlow("unexpected")).toThrow();
 });
+
+it("cierra solo la oferta nativa de guardar la clave ficticia, sin almacenarla", () => {
+  const login = captureFlow("login");
+  expect(login).toContain('visible: "Save Password.*"');
+  expect(login).toContain('tapOn: "Not Now"');
+  expect(login).not.toContain('tapOn: "Save"');
+});
