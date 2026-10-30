@@ -3,11 +3,9 @@
 - tapOn: (KG|Peso) serie 2
 - eraseText
 - inputText: "32"
-- hideKeyboard
 - tapOn: (REPS|Repeticiones) serie 2
 - eraseText
 - inputText: "9"
-- hideKeyboard
 - tapOn: Completar serie 2
 - scrollUntilVisible:
     element: Finalizar entrenamiento
