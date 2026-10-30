@@ -5,10 +5,10 @@ const { spawnSync } = require("node:child_process");
 const TARGET = Object.freeze({
   appId: "com.domarchis.ironstrength.preview",
   version: "0.1.0",
-  buildNumber: "7",
-  buildId: "df9f77c5-9b74-4659-bde0-9cce10d81eae",
-  sourceCommit: "a31c565c0dbded76bb2486a08d3df10d8b085441",
-  bundleSha256: "0fa84e0edb8f7fd73d5b8cb1b2d1306ce5ad3e0368d8af1659013168d2909b6c",
+  buildNumber: "8",
+  buildId: "2833dbc9-ade5-4535-a847-86336bf43244",
+  sourceCommit: "7d9a7e85d086a5cb8f339b24028eff031ce76319",
+  bundleSha256: "7abc046875d8908508451560cccfe5580c4124e3d896bc18a4dedd6cb7596b47",
 });
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 function verifySimulatorTarget(info, bundle, expectedHash = TARGET.bundleSha256) {

@@ -12,21 +12,21 @@ const hash = createHash("sha256").update(bundle).digest("hex");
 const info = {
   CFBundleIdentifier: "com.domarchis.ironstrength.preview",
   CFBundleShortVersionString: "0.1.0",
-  CFBundleVersion: "7",
+  CFBundleVersion: "8",
   CFBundleSupportedPlatforms: ["iPhoneSimulator"],
   CFBundleExecutable: "IronStrengthPreview",
 };
 it("reconoce solo el preview de simulador y bytes seleccionados", () => {
   expect(verifySimulatorTarget(info, bundle, hash)).toEqual({
     appId: info.CFBundleIdentifier,
-    buildNumber: "7",
+    buildNumber: "8",
     bundleSha256: hash,
     executable: "IronStrengthPreview",
   });
 });
 it.each([
   { CFBundleIdentifier: "com.domarchis.ironstrength" },
-  { CFBundleVersion: "6" },
+  { CFBundleVersion: "7" },
   { CFBundleSupportedPlatforms: ["iPhoneOS"] },
   { CFBundleShortVersionString: "0.2.0" },
   { CFBundleExecutable: "../another" },

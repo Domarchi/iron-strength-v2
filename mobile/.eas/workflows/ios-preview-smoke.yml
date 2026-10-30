@@ -1,7 +1,7 @@
 name: Arranque del simulador iOS verificado
 jobs:
   ios_smoke:
-    name: Preview7 en iPhone Simulator
+    name: Preview8 en iPhone Simulator
     runs_on: macos-medium
     image: latest
     environment: preview
@@ -10,7 +10,7 @@ jobs:
       - uses: eas/download_build
         id: download
         with:
-          build_id: df9f77c5-9b74-4659-bde0-9cce10d81eae
+          build_id: 2833dbc9-ade5-4535-a847-86336bf43244
           extensions: [app]
       - name: Comprobar arranque, apariencia y reapertura
         id: probe
@@ -29,5 +29,5 @@ jobs:
         if: ${{ always() }}
         with:
           type: other
-          name: ios-preview7-smoke
+          name: ios-preview8-smoke
           path: ${{ steps.probe.outputs.evidence_dir }}/*
