@@ -277,9 +277,50 @@ async function run() {
       fs.writeFileSync(path.join(out, name + ".xml"), scrub(fs.readFileSync(junit, "utf8")), {
         mode: 0o600,
       });
-    if (result.error || result.status !== 0) throw new Error("native_flow_failed:" + name);
+    if (result.error || result.status !== 0) {
+      const hierarchy = spawnSync(maestro, ["--udid", owned, "hierarchy"], {
+        encoding: "utf8",
+        timeout: 20_000,
+        maxBuffer: 4 * 1024 * 1024,
+        env,
+      });
+      fs.writeFileSync(
+        path.join(out, name + "-hierarchy.txt"),
+        scrub(hierarchy.stdout + "\n" + hierarchy.stderr),
+        { mode: 0o600 },
+      );
+      const text = [];
+      let total = 0;
+      function collect(dir, depth) {
+        if (depth > 5 || !fs.existsSync(dir) || text.length >= 24) return;
+        for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+          if (item.isSymbolicLink()) continue;
+          const file = path.join(dir, item.name);
+          if (item.isDirectory()) collect(file, depth + 1);
+          else if (item.isFile() && /\.(json|xml|log|txt)$/.test(item.name)) {
+            const size = fs.statSync(file).size;
+            if (size > 1024 * 1024 || total + size > 4 * 1024 * 1024 || text.length >= 24) continue;
+            total += size;
+            text.push({
+              file: path.relative(debug, file),
+              content: scrub(fs.readFileSync(file, "utf8")),
+            });
+          }
+        }
+      }
+      collect(debug, 0);
+      fs.writeFileSync(
+        path.join(out, name + "-diagnostics.json"),
+        JSON.stringify(text, null, 2) + "\n",
+        { mode: 0o600 },
+      );
+      throw new Error("native_flow_failed:" + name);
+    }
   }
   try {
+    report.harnessSourceCommit = command("git", ["rev-parse", "HEAD"]);
+    if (!/^[a-f0-9]{40}$/.test(report.harnessSourceCommit))
+      throw new Error("invalid_harness_source");
     const app = fs.realpathSync(process.env.IOS_QUALITY_APP_PATH ?? "");
     if (!app.endsWith(".app")) throw new Error("expected_quality_app");
     const info = JSON.parse(

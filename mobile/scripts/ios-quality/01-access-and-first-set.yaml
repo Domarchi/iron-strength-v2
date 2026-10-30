@@ -8,10 +8,12 @@
     text: ${QA_EMAIL}
     label: Correo de la cuenta técnica aislada
 - pressKey: Enter
+- tapOn: Mostrar contraseña
 - tapOn: Contraseña
 - inputText:
     text: ${QA_PASSWORD}
     label: Clave ficticia de QA
+- tapOn: Ocultar contraseña
 - hideKeyboard
 - tapOn: Entrar
 - extendedWaitUntil:
