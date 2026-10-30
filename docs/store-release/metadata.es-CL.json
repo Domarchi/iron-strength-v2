@@ -11,7 +11,7 @@
   "supportUrl": "https://iron-strength-seven.vercel.app/support",
   "accountDeletionUrl": "https://iron-strength-seven.vercel.app/delete-account",
   "reviewAccount": "Pendiente; credenciales por canal privado de la tienda",
-  "iosScreenshots": "Pendientes de captura iOS real/simulador y revisión",
+  "iosScreenshots": "Cuatro candidatos nativos iPhone Air/iOS27.0 desde quality8/T222, originales revisados y procedencia en assets/app-store; recapturar con el candidato de producción antes de enviar",
   "androidScreenshots": "Cuatro candidatos nativos actualizados con quality9/T222 y procedencia verificable en assets/google-play; recapturar con el candidato de producción antes de enviar",
   "contentLocale": "es-CL",
   "storeLocaleSelection": "Pendiente de confirmar idiomas disponibles en ambas consolas"
