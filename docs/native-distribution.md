@@ -1,6 +1,6 @@
 # Preparar e instalar las versiones móviles
 
-El [preview Android actual, 0.1.0/build 5](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/3bf1efbc-2481-45eb-af86-a39783b9af39) incluye T210–T221 y usa la API publicada en https://iron-strength-seven.vercel.app. El preview 4 queda como referencia histórica. El simulador iOS vigente es build 7, con mapa/bundle del mismo trabajo y permisos verificados. El build 6 se conserva como diagnóstico por sus permisos restrictivos. T201–T205 siguen abiertos para ejecución iOS, teléfonos reales, candidato de producción, beta y tiendas.
+El [preview Android actual, 0.1.0/build 5](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/3bf1efbc-2481-45eb-af86-a39783b9af39) incluye T210–T221 y usa la API publicada en https://iron-strength-seven.vercel.app. El preview 4 queda como referencia histórica. El simulador iOS vigente es build 7, con mapa/bundle del mismo trabajo y permisos verificados. El build 6 se conserva como diagnóstico por sus permisos restrictivos. Su arranque y reapertura sin sesión están comprobados en un simulador remoto. T201–T205 siguen abiertos para circuito autenticado iOS, teléfonos reales, candidato de producción, beta y tiendas.
 
 ## Preview5 · 29 de octubre de 2026
 
@@ -16,7 +16,7 @@ Actualización 4→5 sin desinstalar en emuladores propios de 4096/16384 bytes p
 
 [Build EAS df9f77c5-9b74-4659-bde0-9cce10d81eae](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/df9f77c5-9b74-4659-bde0-9cce10d81eae), fuente `a31c565c0dbded76bb2486a08d3df10d8b085441`, 0.1.0/build 7. Archivo de 28387419 bytes, SHA-256 `955d88089e0febc037d687b9adbae53242c830fe37fbd7c70c8c9e59ff3b413a`. Info.plist y Mach-O arm64/x86_64 declaran simulador. Bundle 0644, todos los recursos de la app con lectura y tres diagnósticos separados en 0600, verificados en los tar originales. No se modificó el paquete descargado.
 
-Bundle y mapa coinciden con sus hashes/196 fuentes y contexto Router de 30 rutas: conservan los mismos bytes del diagnóstico 6 porque no cambió el JavaScript. El recibo pertenece al nuevo ID/commit. Auditoría de ubicaciones afectadas sobre mapas reales Android preview5 e iOS build 7 aprobada; diez avisos de herramientas se conservan. Sin ejecución nativa de iOS acreditada todavía, firma de iPhone o envío a tiendas. El campo de cifrado de App Store Connect sigue sin declararse en este simulador y se revisará antes del candidato de producción.
+Bundle y mapa coinciden con sus hashes/196 fuentes y contexto Router de 30 rutas: conservan los mismos bytes del diagnóstico 6 porque no cambió el JavaScript. El recibo pertenece al nuevo ID/commit. Auditoría de ubicaciones afectadas sobre mapas reales Android preview5 e iOS build 7 aprobada; diez avisos de herramientas se conservan. Arranque y reapertura nativos sin sesión comprobados en el workflow `01a18b0e-7058-7278-b10c-69a2823028a9`, con tres capturas originales revisadas en iPhone Duo/iOS 27.1. No acredita entrenamiento autenticado, un iPhone físico, firma de dispositivo o envío a tiendas. El campo de cifrado de App Store Connect sigue sin declararse en este simulador y se revisará antes del candidato de producción.
 
 ## Simulador iOS build 6 · diagnóstico · 30 de octubre de 2026
 
