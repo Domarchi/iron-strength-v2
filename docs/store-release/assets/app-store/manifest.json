@@ -1,0 +1,92 @@
+{
+  "status": "Borradores QA; recapturar y revisar con el candidato de producción antes de enviar",
+  "platform": "iOS",
+  "captureSource": {
+    "formatVersion": 1,
+    "platform": "iOS",
+    "method": "maestro-takeScreenshot",
+    "capturedAt": "2026-10-30T12:04:33.095Z",
+    "fictitiousData": true,
+    "productionCandidate": false,
+    "originalsReviewed": true,
+    "artifact": {
+      "applicationId": "com.domarchis.ironstrength.quality",
+      "version": "0.1.0",
+      "buildNumber": "8",
+      "buildId": "70774fb1-e41e-4e7c-9b87-97369911900a",
+      "sourceCommit": "c3505b00302ef23d1c7cb00eeda81e6ee3af1d26",
+      "archiveSha256": "9b36249a515fbda541bde92d32ff156a477edfdcfeef4e2a531b8a900d337630",
+      "bundleSha256": "e90bd3593e311e39d759e2236485dcbaf08de4ff32517645a7abd9c66e78800b",
+      "mapSha256": "6b190eadb2521896b8e95e8c8b66eafad0de386ce1f35f4c03219bf247f764c7",
+      "expoVersion": "58.0.21",
+      "reactNativeVersion": "0.88.1",
+      "mappedSourceContents": 197
+    },
+    "capture": {
+      "workflowId": "01a18cad-967d-7739-99b5-2e893bc64065",
+      "harnessSourceCommit": "fe6db7b6750a3ae8628e0f28910df46e7ffa60f7",
+      "device": "iPhone Air",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-27-0"
+    },
+    "images": {
+      "home-dark": "a74fdce45f8555e83ab8c8539d00ec86d65ef447581693063a4c569188de916a",
+      "workout": "8cdf9950e7106f72719e83e841244d903dd392edf07552fe49b326cf28efdfa1",
+      "progress": "56e36e4323d53d35bcaee21b3b792df0ae33cf89b6c8dfd21dd5ef1068250037",
+      "home-light": "84d97f92ebda2dc5d0242c7785ca05b09ce7c948b4cee4258bc62081d875f53d"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "01-home-dark.png",
+      "title": "Tu semana a mano",
+      "altText": "Semana con siguiente rutina y avance de sesiones en tema oscuro.",
+      "width": 1260,
+      "height": 2736,
+      "channels": 3,
+      "bytes": 204682,
+      "sha256": "a74fdce45f8555e83ab8c8539d00ec86d65ef447581693063a4c569188de916a",
+      "source": "source/home-dark.png",
+      "sourceSha256": "a74fdce45f8555e83ab8c8539d00ec86d65ef447581693063a4c569188de916a",
+      "originalBytesPreserved": true
+    },
+    {
+      "file": "02-workout.png",
+      "title": "Registra cada serie",
+      "altText": "Registro de entrenamiento con peso, repeticiones y descanso.",
+      "width": 1260,
+      "height": 2736,
+      "channels": 3,
+      "bytes": 173917,
+      "sha256": "8cdf9950e7106f72719e83e841244d903dd392edf07552fe49b326cf28efdfa1",
+      "source": "source/workout.png",
+      "sourceSha256": "8cdf9950e7106f72719e83e841244d903dd392edf07552fe49b326cf28efdfa1",
+      "originalBytesPreserved": true
+    },
+    {
+      "file": "03-progress.png",
+      "title": "Progreso con contexto",
+      "altText": "Volumen del ejercicio en doce semanas, con resultados existentes de demostración.",
+      "width": 1260,
+      "height": 2736,
+      "channels": 3,
+      "bytes": 156098,
+      "sha256": "56e36e4323d53d35bcaee21b3b792df0ae33cf89b6c8dfd21dd5ef1068250037",
+      "source": "source/progress.png",
+      "sourceSha256": "56e36e4323d53d35bcaee21b3b792df0ae33cf89b6c8dfd21dd5ef1068250037",
+      "originalBytesPreserved": true
+    },
+    {
+      "file": "04-home-light.png",
+      "title": "Elige claro u oscuro",
+      "altText": "Inicio en tema claro con siguiente rutina y avance semanal.",
+      "width": 1260,
+      "height": 2736,
+      "channels": 3,
+      "bytes": 214006,
+      "sha256": "84d97f92ebda2dc5d0242c7785ca05b09ce7c948b4cee4258bc62081d875f53d",
+      "source": "source/home-light.png",
+      "sourceSha256": "84d97f92ebda2dc5d0242c7785ca05b09ce7c948b4cee4258bc62081d875f53d",
+      "originalBytesPreserved": true
+    }
+  ]
+}

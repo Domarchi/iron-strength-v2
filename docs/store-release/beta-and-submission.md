@@ -16,7 +16,7 @@ Los textos propuestos están en metadata.es-CL.json: nombre, subtítulo, descrip
 
 Seleccionar capturas funcionales, legibles y sin datos personales. Android se captura del APK; iPhone de la app iOS o simulador válido. No presentar capturas Android rotuladas como iPhone, pantallas del prototipo como funciones publicadas, ni indicadores ficticios como resultados de alumnos. Mantener el estilo negro/claro aceptado. Tamaños/formatos y cuestionarios se contrastan de nuevo con la consola del propietario al preparar el envío.
 
-Hay [cuatro candidatos Android y un gráfico](assets/google-play/README.md) con datos de demostración y fuentes conservadas. Su interfaz proviene de QA nativo; antes del envío recapturar desde el candidato de producción y despejar notificaciones. No son capturas iPhone ni materiales aprobados por la tienda.
+Hay [cuatro candidatos Android y un gráfico](assets/google-play/README.md), además de [cuatro capturas nativas iPhone Air](assets/app-store/README.md), con datos de demostración y fuentes conservadas. Su interfaz proviene de QA nativo; antes del envío recapturar desde el candidato de producción y despejar notificaciones. Cada plataforma conserva su procedencia; no son materiales aprobados por la tienda.
 
 Preparar una cuenta de revisión dedicada y sin acceso a alumnos reales. Su programa debe permitir revisar el circuito vigente durante la revisión, sin depender de una semana ya vencida. Las credenciales se entregan por el campo privado de la tienda; no van al repo, capturas o chat. El acceso de revisión y los contenidos no se crean en producción sin su preparación concreta y autorización dentro de la entrega final.
 
