@@ -2,6 +2,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHash, randomUUID } = require("node:crypto");
 const { spawnSync } = require("node:child_process");
+const MAESTRO_SHA = "5384593cb4e7a106489e75a821d157dd43f4e438df6bc308b72e82c685e1283a";
+const CAPTURE_NAMES = ["login-dark", "login-light", "login-reopened"];
 const TARGET = Object.freeze({
   appId: "com.domarchis.ironstrength.preview",
   version: "0.1.0",
@@ -11,6 +13,31 @@ const TARGET = Object.freeze({
   bundleSha256: "7abc046875d8908508451560cccfe5580c4124e3d896bc18a4dedd6cb7596b47",
 });
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
+function previewCaptureFlow(name) {
+  if (!CAPTURE_NAMES.includes(name)) throw new Error("unexpected_preview_capture_name");
+  return (
+    `appId: ${TARGET.appId}\nname: ${name}\n---\n` +
+    "- launchApp:\n    clearState: false\n    clearKeychain: false\n    stopApp: false\n" +
+    '- assertVisible: "Inicia sesión"\n- assertVisible: "Correo"\n- assertVisible: "Contraseña"\n' +
+    `- takeScreenshot: ${name}\n`
+  );
+}
+function verifyCaptureSequence(captures) {
+  if (
+    !Array.isArray(captures) ||
+    captures.length !== CAPTURE_NAMES.length ||
+    captures.some(
+      (capture, index) =>
+        capture?.name !== CAPTURE_NAMES[index] + ".png" ||
+        !/^[a-f0-9]{64}$/.test(capture.sha256 ?? "") ||
+        !Number.isInteger(capture.bytes) ||
+        capture.bytes < 10000,
+    ) ||
+    captures[0].sha256 === captures[1].sha256
+  )
+    throw new Error("invalid_preview_capture_sequence");
+  return true;
+}
 function verifySimulatorTarget(info, bundle, expectedHash = TARGET.bundleSha256) {
   if (
     info?.CFBundleIdentifier !== TARGET.appId ||
@@ -70,9 +97,13 @@ async function runSimulatorSmoke() {
   if (process.platform !== "darwin") throw new Error("ios_smoke_requires_macos");
   const appPath = fs.realpathSync(process.env.IOS_SMOKE_APP_PATH ?? "");
   if (!appPath.endsWith(".app")) throw new Error("expected_app_directory");
-  const deadline = Date.now() + 240_000;
+  const deadline = Date.now() + 600_000;
   const out = path.resolve(".simulator-evidence");
   fs.mkdirSync(out, { mode: 0o700 });
+  const raw = path.resolve(".ios-quality-raw"),
+    tools = path.resolve(".ios-quality-tools");
+  fs.mkdirSync(raw, { mode: 0o700 });
+  fs.mkdirSync(tools, { mode: 0o700 });
   const report = {
     version: 1,
     buildId: TARGET.buildId,
@@ -81,11 +112,14 @@ async function runSimulatorSmoke() {
     runtimeProcessChecksPassed: false,
     uiContentVerified: false,
     authenticatedFlowTested: false,
+    nativeLoginUiAssertionsPassed: false,
+    captureSequenceVerified: false,
     physicalAcceptance: false,
     screenshots: [],
     cleanupComplete: false,
   };
-  let ownedSimulator = null;
+  let ownedSimulator = null,
+    maestro = null;
   function command(file, args, timeout = 30_000) {
     const remaining = deadline - Date.now();
     if (remaining <= 0) throw new Error("ios_smoke_deadline");
@@ -118,13 +152,52 @@ async function runSimulatorSmoke() {
     }
   }
   function screenshot(name) {
+    const flow = path.join(raw, name + ".yaml"),
+      debug = path.join(raw, name);
+    fs.writeFileSync(flow, previewCaptureFlow(name), { mode: 0o600 });
+    command(
+      maestro,
+      [
+        "--udid",
+        ownedSimulator,
+        "test",
+        "--no-ansi",
+        "--test-output-dir",
+        debug,
+        "--debug-output",
+        path.join(debug, "debug"),
+        "--format",
+        "JUNIT",
+        "--output",
+        path.join(debug, "report.xml"),
+        flow,
+      ],
+      210_000,
+    );
+    const matches = [];
+    function find(dir, depth) {
+      if (depth > 7) return;
+      for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (item.isSymbolicLink()) continue;
+        const file = path.join(dir, item.name);
+        if (item.isDirectory()) find(file, depth + 1);
+        else if (item.isFile() && item.name === name + ".png") matches.push(file);
+      }
+    }
+    find(debug, 0);
+    if (matches.length !== 1) throw new Error("explicit_preview_capture_not_unique");
     const file = path.join(out, name + ".png");
-    command("xcrun", ["simctl", "io", ownedSimulator, "screenshot", "--type=png", file]);
+    fs.copyFileSync(matches[0], file);
     const bytes = fs.readFileSync(file);
     if (bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a" || bytes.length < 10000)
       throw new Error("invalid_simulator_screenshot");
     fs.chmodSync(file, 0o600);
-    report.screenshots.push({ name: name + ".png", sha256: sha(bytes), bytes: bytes.length });
+    report.screenshots.push({
+      name: name + ".png",
+      method: "maestro-takeScreenshot",
+      sha256: sha(bytes),
+      bytes: bytes.length,
+    });
     save();
   }
   try {
@@ -138,6 +211,29 @@ async function runSimulatorSmoke() {
     if ((fs.statSync(path.join(appPath, "main.jsbundle")).mode & 0o777) !== 0o644)
       throw new Error("unexpected_application_permissions");
     report.target = target;
+    const zip = path.join(tools, "maestro.zip");
+    command(
+      "curl",
+      [
+        "--fail",
+        "--location",
+        "--silent",
+        "--show-error",
+        "--max-time",
+        "120",
+        "--output",
+        zip,
+        "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.11.0/maestro.zip",
+      ],
+      125_000,
+    );
+    if (sha(fs.readFileSync(zip)) !== MAESTRO_SHA) throw new Error("maestro_archive_hash_mismatch");
+    command("ditto", ["-x", "-k", zip, tools], 60_000);
+    maestro = path.join(tools, "maestro/bin/maestro");
+    process.env.MAESTRO_CLI_NO_ANALYTICS = "true";
+    process.env.MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED = "true";
+    process.env.MAESTRO_DISABLE_UPDATE_CHECK = "true";
+    report.maestro = { version: "2.11.0", archiveSha256: MAESTRO_SHA };
     report.toolchain = command("xcodebuild", ["-version"]);
     const template = chooseSimulatorTemplate(
       JSON.parse(command("xcrun", ["simctl", "list", "devices", "available", "--json"])),
@@ -176,6 +272,8 @@ async function runSimulatorSmoke() {
     pid = parseLaunchPid(command("xcrun", ["simctl", "launch", ownedSimulator, target.appId]));
     await aliveFor(pid, target.executable, 8);
     screenshot("login-reopened");
+    report.captureSequenceVerified = verifyCaptureSequence(report.screenshots);
+    report.nativeLoginUiAssertionsPassed = true;
     report.runtimeProcessChecksPassed = true;
   } catch (error) {
     report.error = error.message;
@@ -204,7 +302,13 @@ async function runSimulatorSmoke() {
   );
   if (!report.runtimeProcessChecksPassed || !report.cleanupComplete) process.exitCode = 1;
 }
-module.exports = { verifySimulatorTarget, chooseSimulatorTemplate, parseLaunchPid };
+module.exports = {
+  verifySimulatorTarget,
+  chooseSimulatorTemplate,
+  parseLaunchPid,
+  previewCaptureFlow,
+  verifyCaptureSequence,
+};
 if (require.main === module)
   runSimulatorSmoke().catch((error) => {
     console.error(error.message);
