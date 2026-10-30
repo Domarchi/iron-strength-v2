@@ -1,7 +1,34 @@
 {
   "status": "Borradores; revisar con el candidato de producción antes de subir",
   "platform": "Android",
-  "captureOrigin": "APK quality de T202; datos ficticios en instancia aislada",
+  "captureOrigin": "APK quality actual de T203; cuenta ficticia existente en instancia aislada",
+  "captureSource": {
+    "formatVersion": 1,
+    "platform": "Android",
+    "method": "adb-exec-out-screencap",
+    "capturedAt": "2026-10-30T10:13:57.504747+00:00",
+    "fictitiousData": true,
+    "productionCandidate": false,
+    "artifact": {
+      "applicationId": "com.domarchis.ironstrength.quality",
+      "versionName": "0.1.0",
+      "versionCode": 9,
+      "sourceCommit": "a1c5d27225a1e28179cb098564a410db3fe75e96",
+      "apkSha256": "664f2e8d742f8aafd360d99c8932fddeeb134bca223b006af6b6e5ece29d8c32",
+      "bundleSha256": "871a43eca86e67ac0c8b5781ddeb9c4bfcc0a06f0c976abda9b3e6aff6b04019",
+      "mapSha256": "c8df6d45edac8fe82c463ed68d115f11d611aa5379a43f4ad23702d91a3f5daa",
+      "certificateSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+      "expoVersion": "58.0.21",
+      "reactNativeVersion": "0.88.1",
+      "mappedSourceContents": 197
+    },
+    "images": {
+      "home-dark": "4a117fd327f0cad2fdd7e8a176b56ab30def7b09ac389bea041e55157e4928cc",
+      "workout": "5dd30a5006dd6542a1eb3a66682b8220ef57243e8cfac6d878da284fbb26f47a",
+      "progress": "dc87c95f99212d193852937344110e18a6d5fa13d1c13e9157c6944668281bd8",
+      "home-light": "c0d56d1f10dd508b1d64dcf57ef47f49bc803523d9663a100a60481a303c2105"
+    }
+  },
   "font": "Noto Sans instalada en el sistema de generación",
   "featureGraphic": {
     "file": "feature-graphic.png",
@@ -19,12 +46,12 @@
       "width": 1440,
       "height": 2560,
       "channels": 3,
-      "bytes": 210791,
-      "sha256": "5f283ea4cb4df006c2a096c65957f26d0bb1cf7a44bc2d6a23d2a9fc515051bd",
+      "bytes": 207390,
+      "sha256": "8b924c710e05b1b26b293995fab2b12cb062cf31b7049cb1f9441597761891d1",
       "title": "Tu semana a mano",
       "altText": "Semana con siguiente rutina y avance de sesiones en tema oscuro.",
       "source": "source/home-dark.png",
-      "sourceSha256": "e3051c2a413bdb1d1404d6ac1c3455d82cdd23c13646e8b12b4acad254f28448",
+      "sourceSha256": "4a117fd327f0cad2fdd7e8a176b56ab30def7b09ac389bea041e55157e4928cc",
       "originalPixelsPreserved": true
     },
     {
@@ -32,12 +59,12 @@
       "width": 1440,
       "height": 2560,
       "channels": 3,
-      "bytes": 219298,
-      "sha256": "e4aeeb316d2cd2718bd021cb43601fc538e327f90614e7f943eb07647127cedc",
+      "bytes": 167764,
+      "sha256": "6b548be51d62aa9607966e4dc4392ff4f0c61add95bc6e1621990ff5dc24d7e6",
       "title": "Registra cada serie",
-      "altText": "Registro de sentadilla con objetivos distintos por serie y superserie.",
+      "altText": "Registro de entrenamiento con peso, repeticiones y descanso.",
       "source": "source/workout.png",
-      "sourceSha256": "05641005159d23d5f299c6fc3229b04a05967df6d63386c5c592d536a09bc515",
+      "sourceSha256": "5dd30a5006dd6542a1eb3a66682b8220ef57243e8cfac6d878da284fbb26f47a",
       "originalPixelsPreserved": true
     },
     {
@@ -45,12 +72,12 @@
       "width": 1440,
       "height": 2560,
       "channels": 3,
-      "bytes": 231078,
-      "sha256": "62a668b5a2b06e8e080a9b81ad9107838d14bec60a5dc8497342381941a02da5",
+      "bytes": 152322,
+      "sha256": "d79a7766c6bbbcc7f84bcdbfc123c94ed43be7f336a2d1682e4a2e2eef8b5708",
       "title": "Progreso con contexto",
-      "altText": "Volumen de press de banca en doce semanas con gráfico y registros de origen.",
+      "altText": "Volumen del ejercicio en doce semanas, con los resultados existentes de demostración.",
       "source": "source/progress.png",
-      "sourceSha256": "838e5a41aa2da4a3561852892c4e4c092802900ad641cf90d1ed05233d82fe94",
+      "sourceSha256": "dc87c95f99212d193852937344110e18a6d5fa13d1c13e9157c6944668281bd8",
       "originalPixelsPreserved": true
     },
     {
@@ -58,12 +85,12 @@
       "width": 1440,
       "height": 2560,
       "channels": 3,
-      "bytes": 199060,
-      "sha256": "bd53556a8b63cbdbeb28144c4db55afdcded27a2d21c95ddba315092894b6e3c",
+      "bytes": 219950,
+      "sha256": "27a31ff7e644ae0ee88de1a172f142b7cd2edd500923402adad29cf77f2826c5",
       "title": "Elige claro u oscuro",
-      "altText": "Inicio en tema claro con texto ampliado y avance semanal.",
+      "altText": "Inicio en tema claro con siguiente rutina y avance semanal.",
       "source": "source/home-light.png",
-      "sourceSha256": "35071c119df8fb19f382cd2594f4eaaa4fa44b4650e2cdb9adba0f4fe244f3f9",
+      "sourceSha256": "c0d56d1f10dd508b1d64dcf57ef47f49bc803523d9663a100a60481a303c2105",
       "originalPixelsPreserved": true
     }
   ]
