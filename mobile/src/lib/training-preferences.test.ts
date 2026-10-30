@@ -140,6 +140,34 @@ it("no inicia con un valor provisional mientras se leen o guardan preferencias",
   expect(c.restForNewSession()).toBe(0);
 });
 
+it.each(['{"version":99}', "{"])(
+  "no inicia con un descanso supuesto si las preferencias no se pueden interpretar: %s",
+  async (raw) => {
+    const x = setup();
+    x.values.set(trainingPreferencesKey(id), raw);
+    const c = new TrainingPreferencesController(id, x.storage);
+    await c.restore();
+    expect(() => c.restForNewSession()).toThrow(/Cuenta.*Releer preferencias/);
+    expect(x.values.get(trainingPreferencesKey(id))).toBe(raw);
+  },
+);
+
+it("relee un descanso confirmado después de fallar la lectura sin iniciar con90segundos", async () => {
+  const x = setup(),
+    previous = new TrainingPreferencesController(id, x.storage);
+  await previous.restore();
+  await previous.save({ ...defaultTrainingPreferences(), restSeconds: 120 });
+  const raw = x.values.get(trainingPreferencesKey(id));
+  const c = new TrainingPreferencesController(id, x.storage);
+  x.loseRead();
+  await c.restore();
+  expect(() => c.restForNewSession()).toThrow(/Cuenta.*Releer preferencias/);
+  expect(x.values.get(trainingPreferencesKey(id))).toBe(raw);
+  await c.restore();
+  expect(c.restForNewSession()).toBe(120);
+  expect(x.values.get(trainingPreferencesKey(id))).toBe(raw);
+});
+
 it("coordina escrituras con eliminación de cuenta: no repone preferencias después de limpiar", async () => {
   const x = setup(),
     c = new TrainingPreferencesController(id, x.storage);

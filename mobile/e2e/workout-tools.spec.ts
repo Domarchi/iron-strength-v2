@@ -246,6 +246,50 @@ test("legado: calentamientos cancelables sin migrar formato ni tocar rutina", as
   expect(after.draft.exercises[0].sets.slice(1)).toEqual(before.draft.exercises[0].sets);
 });
 
+test("preferencias no leídas detienen un inicio nuevo y releer permite continuar sin sobrescribir", async ({
+  page,
+}) => {
+  await setupDownloadedWeek(page);
+  const unknown = JSON.stringify({ version: 99, userId, value: { future: true } });
+  await page.evaluate(({ prefKey, unknown }) => localStorage.setItem(prefKey, unknown), {
+    prefKey,
+    unknown,
+  });
+  await page.reload();
+  await enterWeekUser(page);
+  await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
+  await page.getByRole("button", { name: "Entrenamiento libre", exact: true }).click();
+  await page.getByRole("button", { name: "Empezar libre", exact: true }).click();
+  await expect(page.getByText(/Abre Cuenta y usa Releer preferencias/)).toBeVisible();
+  expect(await page.evaluate((key) => localStorage.getItem(key), prefKey)).toBe(unknown);
+  expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBeNull();
+  await page.getByRole("button", { name: "Cancelar inicio libre", exact: true }).click();
+
+  await page.getByRole("tab", { name: "Cuenta", exact: true }).click();
+  const confirmed = JSON.stringify({
+    version: 1,
+    userId,
+    value: { ...defaultTrainingPreferences(), restSeconds: 120 },
+  });
+  await page.evaluate(({ prefKey, confirmed }) => localStorage.setItem(prefKey, confirmed), {
+    prefKey,
+    confirmed,
+  });
+  await page.getByRole("button", { name: "Releer preferencias", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Preferencias de entrenamiento", exact: true }),
+  ).toBeEnabled();
+  await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
+  await page.getByRole("button", { name: "Entrenamiento libre", exact: true }).click();
+  await page.getByRole("button", { name: "Empezar libre", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Entrenamiento libre", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Agregar ejercicios", exact: true })).toBeVisible();
+  expect((await getActive(page)).draft.status).toBe("in_progress");
+  expect(await page.evaluate((key) => localStorage.getItem(key), prefKey)).toBe(confirmed);
+});
+
 test("preferencias futuras intactas; no impiden recuperar registro ni permiten sobrescritura", async ({
   page,
 }) => {
