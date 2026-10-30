@@ -1,4 +1,6 @@
-- tapOn: Conectar
+- tapOn:
+    text: Conectar
+    optional: true
 - extendedWaitUntil:
     visible: ÚLTIMO ENVÍO CONFIRMADO
     timeout: 90000
