@@ -17,7 +17,7 @@ function fixture() {
   const root = mkdtempSync(join(tmpdir(), "iron-ios-proof-"));
   paths.push(root);
   mkdirSync(join(root, "ios"));
-  mkdirSync(join(root, ".build-evidence"));
+  mkdirSync(join(root, ".build-evidence"), { mode: 0o700 });
   mkdirSync(join(root, "products", "Iron.app"), { recursive: true });
   const bundle = Buffer.concat([Buffer.from("c61fbc03c103191f", "hex"), Buffer.alloc(64, 7)]);
   writeFileSync(join(root, "products/Iron.app/main.jsbundle"), bundle);
@@ -226,3 +226,72 @@ it.each([
     ).not.toThrow();
   },
 );
+
+it("conserva 644 en el bundle de la app y restringe solo los diagnósticos", () => {
+  const f = fixture();
+  mkdirSync(join(f.root, "scripts"));
+  writeFileSync(
+    join(f.root, "scripts/capture-ios-build-evidence.cjs"),
+    readFileSync(new URL("../../scripts/capture-ios-build-evidence.cjs", import.meta.url)),
+  );
+  writeFileSync(
+    join(f.root, "map-input.json"),
+    readFileSync(join(f.root, ".build-evidence/ios.map")),
+  );
+  writeFileSync(join(f.root, "bundle-input"), f.bundle);
+  rmSync(join(f.root, "products/Iron.app/main.jsbundle"));
+  rmSync(join(f.root, ".build-evidence"), { recursive: true });
+  const script = require("../../plugins/with-ios-build-evidence.cjs").decorateBundlePhase(
+    ': react-native-xcode.sh\ncat "$PROJECT_DIR/../map-input.json" > "$SOURCEMAP_FILE"\ncat "$PROJECT_DIR/../bundle-input" > "$CONFIGURATION_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/main.jsbundle"\n',
+  );
+  const { execFileSync } = require("node:child_process");
+  execFileSync("/bin/bash", ["-c", "umask 022\n" + script], {
+    env: {
+      ...process.env,
+      ...f.env,
+      NODE_BINARY: process.execPath,
+      CONFIGURATION: "Release",
+      IRON_CAPTURE_IOS_BUILD_EVIDENCE: "1",
+    },
+  });
+  const { statSync } = require("node:fs");
+  expect(statSync(join(f.root, "products/Iron.app/main.jsbundle")).mode & 0o777).toBe(0o644);
+  expect(statSync(join(f.root, ".build-evidence")).mode & 0o777).toBe(0o700);
+  for (const name of ["ios.map", "ios.hbc", "ios-proof.json"])
+    expect(statSync(join(f.root, ".build-evidence", name)).mode & 0o777).toBe(0o600);
+});
+it("rechaza acreditar un bundle de aplicación vuelto privado", () => {
+  const f = fixture();
+  require("node:fs").chmodSync(join(f.root, "products/Iron.app/main.jsbundle"), 0o600);
+  expect(() =>
+    require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence(f.env),
+  ).toThrow("Application bundle must remain readable");
+  expect(existsSync(join(f.root, ".build-evidence/ios-proof.json"))).toBe(false);
+});
+
+it("rechaza diagnósticos en una carpeta con lectura pública", () => {
+  const f = fixture();
+  require("node:fs").chmodSync(join(f.root, ".build-evidence"), 0o755);
+  expect(() =>
+    require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence(f.env),
+  ).toThrow("Evidence directory must be private");
+  expect(existsSync(join(f.root, ".build-evidence/ios-proof.json"))).toBe(false);
+});
+it.each([
+  ["Debug", "1"],
+  ["Release", "0"],
+])("conserva el fallo final de la fase original en %s con captura %s", (configuration, enabled) => {
+  const script = require("../../plugins/with-ios-build-evidence.cjs").decorateBundlePhase(
+    "false # react-native-xcode.sh\n",
+  );
+  const { execFileSync } = require("node:child_process");
+  expect(() =>
+    execFileSync("/bin/bash", ["-c", script], {
+      env: {
+        ...process.env,
+        CONFIGURATION: configuration,
+        IRON_CAPTURE_IOS_BUILD_EVIDENCE: enabled,
+      },
+    }),
+  ).toThrow();
+});

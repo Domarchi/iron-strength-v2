@@ -11,9 +11,9 @@ function decorateBundlePhase(script) {
     "    *Debug*) ;;",
     "    *)",
     "      set -e",
-    "      umask 077",
     '      if [ -L "$PROJECT_DIR/../.build-evidence" ]; then exit 1; fi',
-    '      mkdir -p "$PROJECT_DIR/../.build-evidence"',
+    '      (umask 077; mkdir -p "$PROJECT_DIR/../.build-evidence")',
+    '      chmod 700 "$PROJECT_DIR/../.build-evidence"',
     '      export SOURCEMAP_FILE="$PROJECT_DIR/../.build-evidence/ios.map"',
     '      if [ -e "$SOURCEMAP_FILE" ] || [ -L "$SOURCEMAP_FILE" ]; then exit 1; fi',
     "      ;;",
@@ -23,6 +23,8 @@ function decorateBundlePhase(script) {
   ].join("\n");
   const after = [
     "",
+    "IRON_NATIVE_BUNDLE_STATUS=$?",
+    'if [ "$IRON_NATIVE_BUNDLE_STATUS" -ne 0 ]; then exit "$IRON_NATIVE_BUNDLE_STATUS"; fi',
     'if [ "${IRON_CAPTURE_IOS_BUILD_EVIDENCE:-0}" = "1" ]; then',
     '  case "$CONFIGURATION" in',
     "    *Debug*) ;;",

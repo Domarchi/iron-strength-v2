@@ -1,6 +1,6 @@
 # Preparar e instalar las versiones móviles
 
-El [preview Android actual, 0.1.0/build 5](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/3bf1efbc-2481-45eb-af86-a39783b9af39) incluye T210–T221 y usa la API publicada en https://iron-strength-seven.vercel.app. El preview 4 queda como referencia histórica. T201–T205 siguen abiertos para ejecución iOS, teléfonos reales, candidato de producción, beta y tiendas.
+El [preview Android actual, 0.1.0/build 5](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/3bf1efbc-2481-45eb-af86-a39783b9af39) incluye T210–T221 y usa la API publicada en https://iron-strength-seven.vercel.app. El preview 4 queda como referencia histórica. El simulador build 6 conserva evidencia de mapa/bundle, pero su distribución queda bloqueada por el permiso 0600 del bundle; build 7 está preparado como corrección. T201–T205 siguen abiertos para ejecución iOS, teléfonos reales, candidato de producción, beta y tiendas.
 
 ## Preview5 · 29 de octubre de 2026
 
@@ -11,6 +11,16 @@ La construcción local empezó con el árbol preparado antes del commit; sus 899
 Actualización 4→5 sin desinstalar en emuladores propios de 4096/16384 bytes por página: un marcador privado creado antes de actualizar se conserva y se retira al finalizar; apertura fría en modo avión, acceso visible, proceso vivo y sin fatal propio. La primera observación de 4 KB encontró un diálogo de System UI; se conservó la evidencia, se eligió Wait y se repitió el arranque. Esto acredita instalación/apertura en emuladores, no un entrenamiento contra producción ni aceptación física.
 
 [iOS para simulador, 0.1.0/build 5](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/ca6664d1-9c61-4c59-b0db-21d40871f374): fuente b081be5, archivo de 28817702 bytes, SHA-256 `eb20076a55bd1723032269494a9ebd851d577b956eb88a281264a047bef67e73`. Info.plist y ambas arquitecturas Mach-O (arm64/x86_64) declaran simulador; Hermes usa la API publicada. Once manifiestos de privacidad inspeccionados. No se ejecutó en este host Linux, no se obtuvo el mapa de su build real y no es un instalador firmado para iPhone.
+
+## Simulador iOS build 6 · diagnóstico · 30 de octubre de 2026
+
+[Build EAS 76c753ec-7dc9-4bb8-b5aa-dfafe757dac0](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/76c753ec-7dc9-4bb8-b5aa-dfafe757dac0), fuente `423aa6e49b57a58ae1ea4762c309826a8bd830a0`, 0.1.0/build 6. Archivo de 28387500 bytes, SHA-256 `66b390569a70f307be79c1fd34d660847f45036084e9a12d9335605d073be2da`. Info.plist y Mach-O arm64/x86_64 declaran iPhoneSimulator; API productiva y once manifiestos de privacidad inspeccionados. Es una referencia de simulador sin ejecución en este host Linux ni firma para un iPhone.
+
+Los tres artefactos adicionales se descargaron del mismo trabajo: bundle Hermes de 3822564 bytes, mapa de 10656158 bytes/1575 fuentes y recibo con ID/commit/hashes. El bundle es idéntico byte por byte al extraído de la aplicación, y los 196 contenidos propios coinciden con la fuente. El contexto virtual de Router reproduce exactamente la plantilla Metro instalada y sus 30 rutas. Los diagnósticos están fuera de la app; no hay mapa incorporado ni datos de usuarios. Auditoría sobre mapas reales Android preview5/iOS build 6: los módulos afectados conocidos no aparecen; diez avisos del árbol instalado se conservan. Detalles en docs/native-dependency-audit.md.
+
+La inspección posterior detectó main.jsbundle con permiso 0600 frente al 0644 de build 5. No se distribuye como candidato: la captura se corrige para que umask solo afecte al directorio privado y el capturador rechace bundles sin lectura estándar. Se prepara build 7 y se exige comprobar sus permisos en el archivo real.
+
+El aviso de EAS sobre ITSAppUsesNonExemptEncryption sigue pendiente para la preparación de App Store Connect; ese campo no está declarado en este simulador. No se presenta el recibo de código o los manifiestos de privacidad como formularios de tienda completados. El build5 iOS anterior se conserva como referencia histórica sin su mapa propio.
 
 El registro con los SDK actuales se comprueba aparte usando quality8, firma de depuración y la instancia aislada 55321. Ese APK no se distribuye a alumnos. El preview usa datos reales al entrar con una cuenta real: nunca ejecutar semillas o pruebas destructivas contra su API. Conservar los pendientes y actualizar sobre la instalación existente. Ver docs/native-quality.md y specs/010-private-training/release.md.
 

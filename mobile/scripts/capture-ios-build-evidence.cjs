@@ -20,12 +20,15 @@ function captureIosBuildEvidence(env = process.env) {
   const directoryStat = fs.lstatSync(directory);
   if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink())
     throw new Error("Invalid evidence directory");
+  if ((directoryStat.mode & 0o077) !== 0) throw new Error("Evidence directory must be private");
   const productRoot = fs.realpathSync(env.CONFIGURATION_BUILD_DIR);
   const bundlePath = path.join(env.CONFIGURATION_BUILD_DIR, resources, "main.jsbundle");
   const realBundle = fs.realpathSync(bundlePath);
   if (!realBundle.startsWith(productRoot + path.sep))
     throw new Error("Product escaped build directory");
   const bundle = regularFile(bundlePath);
+  if ((fs.lstatSync(bundlePath).mode & 0o444) !== 0o444)
+    throw new Error("Application bundle must remain readable");
   if (bundle.length < 32 || bundle.subarray(0, 8).toString("hex") !== "c61fbc03c103191f")
     throw new Error("Expected a Hermes bundle");
   const mapBytes = regularFile(path.join(directory, "ios.map"));
