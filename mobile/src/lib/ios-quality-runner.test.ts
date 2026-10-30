@@ -7,6 +7,8 @@ const {
   verifyQualitySimulator,
   summarizeNativeStorage,
   redactQualityOutput,
+  qualityResultRoute,
+  verifyQualityResult,
 } = require("../../scripts/run-ios-quality.cjs");
 const id = "11111111-1111-4111-8111-111111111111";
 const env = {
@@ -127,8 +129,41 @@ it("distingue un pendiente de una confirmación y compara el cuerpo congelado", 
     id,
   );
   expect(pending.entries[0].phase).toBe("pending");
+  expect(pending.entries[0].payloadVersion).toBe(3);
   expect(confirmed.entries[0].phase).toBe("confirmed");
   expect(pending.entries[0].payloadSha256).toBe(confirmed.entries[0].payloadSha256);
+});
+it.each([1, 2, 3])(
+  "verifica las dos métricas sin reinterpretar el contrato %i",
+  (payloadVersion) => {
+    const entry = { workoutId: id, payloadVersion };
+    const metrics = [
+      { weightKg: 30, reps: 8 },
+      { weightKg: 32, reps: 9 },
+    ];
+    const result = {
+      workout: {
+        id,
+        exercises: [{ sets: metrics.map((s) => (payloadVersion === 3 ? { metrics: s } : s)) }],
+      },
+    };
+    expect(qualityResultRoute(entry)).toBe(
+      `/api/mobile/v1/${payloadVersion === 3 ? "typed-recordings" : "workouts"}/${id}`,
+    );
+    expect(verifyQualityResult(result, entry)).toBe(2);
+    expect(() =>
+      verifyQualityResult({ workout: { ...result.workout, id: "other" } }, entry),
+    ).toThrow();
+    expect(() =>
+      verifyQualityResult(
+        { workout: { id, exercises: [{ sets: [{ weightKg: 32, reps: 98 }] }] } },
+        entry,
+      ),
+    ).toThrow();
+  },
+);
+it("rechaza contratos de resultado desconocidos en la evidencia", () => {
+  expect(() => qualityResultRoute({ workoutId: id, payloadVersion: 99 })).toThrow();
 });
 it("retira credenciales en texto, JSON y XML sin ocultar un fallo técnico", () => {
   const secret = 'test<&"\\value';

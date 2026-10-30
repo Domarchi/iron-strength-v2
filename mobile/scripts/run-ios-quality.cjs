@@ -103,16 +103,45 @@ function summarizeNativeStorage(trainingRaw, queueRaw, userId) {
         }
       : null,
     entries: (queue?.entries ?? []).map((e) => {
-      if (!uuid.test(e.payload?.id ?? "") || !["pending", "confirmed"].includes(e.phase))
+      if (
+        !uuid.test(e.payload?.id ?? "") ||
+        ![1, 2, 3].includes(e.payload?.version) ||
+        !["pending", "confirmed"].includes(e.phase)
+      )
         throw new Error("invalid_native_queue_entry");
       return {
         workoutId: e.payload.id,
+        payloadVersion: e.payload.version,
         phase: e.phase,
         payloadSha256: sha(JSON.stringify(e.payload)),
         setCount: (e.payload.workout ?? e.payload).sets.length,
       };
     }),
   };
+}
+function qualityResultRoute(entry) {
+  if (!uuid.test(entry?.workoutId ?? "") || ![1, 2, 3].includes(entry?.payloadVersion))
+    throw new Error("unknown_quality_result_contract");
+  return (
+    "/api/mobile/v1/" +
+    (entry.payloadVersion === 3 ? "typed-recordings/" : "workouts/") +
+    entry.workoutId
+  );
+}
+function verifyQualityResult(result, entry) {
+  qualityResultRoute(entry);
+  const sets = result.workout?.exercises?.flatMap((e) => e.sets) ?? [];
+  const metrics = sets.map((s) => (entry.payloadVersion === 3 ? s.metrics : s));
+  if (
+    result.workout?.id !== entry.workoutId ||
+    metrics.length !== 2 ||
+    metrics[0]?.weightKg !== 30 ||
+    metrics[0]?.reps !== 8 ||
+    metrics[1]?.weightKg !== 32 ||
+    metrics[1]?.reps !== 9
+  )
+    throw new Error("authenticated_result_does_not_match_native_sets");
+  return sets.length;
 }
 async function run() {
   if (process.platform !== "darwin") throw new Error("ios_quality_requires_macos");
@@ -185,12 +214,31 @@ async function run() {
   }
   function screenshot(name) {
     const p = path.join(out, name + ".png");
-    command("xcrun", ["simctl", "io", owned, "screenshot", "--type=png", p]);
+    const captureName = "capture-" + name;
+    flow(captureName, "- takeScreenshot: " + name + "\n");
+    const matches = [];
+    function find(dir, depth) {
+      if (depth > 7) return;
+      for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (item.isSymbolicLink()) continue;
+        const file = path.join(dir, item.name);
+        if (item.isDirectory()) find(file, depth + 1);
+        else if (item.isFile() && item.name === name + ".png") matches.push(file);
+      }
+    }
+    find(path.join(raw, captureName), 0);
+    if (matches.length !== 1) throw new Error("explicit_native_capture_not_unique");
+    fs.copyFileSync(matches[0], p);
     const bytes = fs.readFileSync(p);
     if (bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a")
       throw new Error("invalid_screenshot");
     fs.chmodSync(p, 0o600);
-    report.screenshots.push({ name: name + ".png", bytes: bytes.length, sha256: sha(bytes) });
+    report.screenshots.push({
+      name: name + ".png",
+      method: "maestro-takeScreenshot",
+      bytes: bytes.length,
+      sha256: sha(bytes),
+    });
     save();
   }
   function storage(name) {
@@ -443,19 +491,10 @@ async function run() {
     const confirmed = storage("confirmed").entries.find((e) => e.workoutId === entry.workoutId);
     if (confirmed?.phase !== "confirmed" || confirmed.payloadSha256 !== entry.payloadSha256)
       throw new Error("native_receipt_or_payload_changed");
-    const result = await request("/api/mobile/v1/typed-recordings/" + entry.workoutId, {
+    const result = await request(qualityResultRoute(entry), {
       token: accessToken,
     });
-    const sets = result.workout?.exercises?.flatMap((e) => e.sets) ?? [];
-    if (
-      result.workout?.id !== entry.workoutId ||
-      sets.length !== 2 ||
-      sets[0].metrics?.weightKg !== 30 ||
-      sets[0].metrics?.reps !== 8 ||
-      sets[1].metrics?.weightKg !== 32 ||
-      sets[1].metrics?.reps !== 9
-    )
-      throw new Error("authenticated_result_does_not_match_native_sets");
+    const setCount = verifyQualityResult(result, entry);
     const proxy = await request("/__quality/control", { control: true });
     const events = proxy.events.filter((e) => e.workoutId === entry.workoutId);
     if (
@@ -465,7 +504,8 @@ async function run() {
       throw new Error("lost_response_replay_not_verified");
     report.workoutId = entry.workoutId;
     report.payloadSha256 = entry.payloadSha256;
-    report.authenticatedResultSetCount = sets.length;
+    report.payloadVersion = entry.payloadVersion;
+    report.authenticatedResultSetCount = setCount;
     report.proxyEvents = events;
     screenshot("confirmed-result-dark");
     command("xcrun", ["simctl", "ui", owned, "appearance", "light"]);
@@ -505,6 +545,8 @@ module.exports = {
   verifyQualitySimulator,
   summarizeNativeStorage,
   redactQualityOutput,
+  qualityResultRoute,
+  verifyQualityResult,
 };
 if (require.main === module)
   run().catch((error) => {

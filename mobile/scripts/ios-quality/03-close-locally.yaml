@@ -7,6 +7,9 @@
 - eraseText
 - inputText: "9"
 - tapOn: Completar serie 2
+- tapOn:
+    text: KG
+    index: 0
 - scrollUntilVisible:
     element: Finalizar entrenamiento
 - tapOn: Finalizar entrenamiento
