@@ -18,9 +18,9 @@ jobs:
       profile: quality-simulator
     hooks:
       before_install_node_modules:
-        - name: Conservar el commit provisto por Expo
+        - name: Conservar el commit del checkout verificado
           run: |
             set -e
-            IRON_SOURCE_COMMIT="${{ metadata.gitCommitHash }}"
+            IRON_SOURCE_COMMIT="$(git rev-parse HEAD)"
             if ! [[ "$IRON_SOURCE_COMMIT" =~ ^[a-f0-9]{40}$ ]]; then exit 2; fi
             set-env IRON_IOS_WORKFLOW_SOURCE_COMMIT "$IRON_SOURCE_COMMIT"

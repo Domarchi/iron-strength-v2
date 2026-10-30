@@ -82,7 +82,7 @@ function captureIosBuildEvidence(env = process.env) {
     platform: "ios",
     buildId,
     sourceCommit,
-    ...(workflowFallback ? { sourceCommitOrigin: "workflow-metadata" } : {}),
+    ...(workflowFallback ? { sourceCommitOrigin: "workflow-checkout" } : {}),
     applicationId,
     bundleSha256: digest(bundle),
     bundleBytes: bundle.length,

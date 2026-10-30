@@ -70,7 +70,7 @@ it("captura quality solo con el perfil remoto cerrado de simulador", () => {
   expect(proof.applicationId).toBe("com.domarchis.ironstrength.quality");
   expect(readFileSync(join(f.root, ".build-evidence/ios.hbc"))).toEqual(f.bundle);
 });
-it("admite el commit de metadata del workflow solo cuando falta la variable del build quality", () => {
+it("admite el commit del checkout del workflow solo cuando falta la variable del build quality", () => {
   const f = fixture();
   const proof = require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence({
     ...f.env,
@@ -83,9 +83,9 @@ it("admite el commit de metadata del workflow solo cuando falta la variable del 
     IRON_IOS_WORKFLOW_SOURCE_COMMIT: "b".repeat(40),
   });
   expect(proof.sourceCommit).toBe("b".repeat(40));
-  expect(proof.sourceCommitOrigin).toBe("workflow-metadata");
+  expect(proof.sourceCommitOrigin).toBe("workflow-checkout");
 });
-it("no usa metadata de QA para suplir el commit de un preview", () => {
+it("no usa procedencia de QA para suplir el commit de un preview", () => {
   const f = fixture();
   expect(() =>
     require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence({
@@ -95,7 +95,7 @@ it("no usa metadata de QA para suplir el commit de un preview", () => {
     }),
   ).toThrow("identity");
 });
-it("rechaza commits de build y metadata contradictorios en lugar de escoger uno", () => {
+it("rechaza commits de build y checkout contradictorios en lugar de escoger uno", () => {
   const f = fixture();
   expect(() =>
     require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence({
