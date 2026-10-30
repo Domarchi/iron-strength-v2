@@ -1,0 +1,9 @@
+# Evidencia y límites
+
+30 de octubre de 2026: spec, plan detallado y tareas preparados. No se modificó la interfaz funcional ni se ejecutaron migraciones. T224 documentada en baseline.md: siete recorridos móviles medidos en Chromium/WebKit y claro/oscuro, ocho pruebas del colector aprobadas en 38,1 s; navegación del coach de solo lectura como octavo recorrido. Doce capturas originales con dimensiones, alcance y SHA-256 en docs/design-refresh/baseline/capture.json. La primera pasada falló por un selector del colector y no se acredita como aprobada.
+
+Las capturas móviles usan APIs simuladas; la navegación del coach bloqueó escrituras después del acceso. No se ejecutó el benchmark completo actual del coach ni se atribuye al presente el resultado histórico T177. La demo y su base en uso se conservaron. Los 87 archivos visuales contrastados coinciden entre las fuentes; T223 del controlador aún no se entrega a la demo.
+
+T225–T233 no implementadas. Aprobación visual y aceptación física no recibidas. La publicación en tiendas conserva sus pendientes separados. No se atribuye a la app un rediseño por preparar este plan.
+
+Cierre documental: `npm run check` terminó con código 0 el 30-oct a las 22:52:25 UTC en copia propia equivalente, 1321 archivos de fuente iguales antes/después. Formato, lint, tipos, 1430 pruebas raíz, 14 Python y build aprobados; avisos de lint preexistentes conservados, sin nuevos cambios de aplicación. Las doce huellas SHA-256 y dimensiones PNG coinciden con el manifiesto. Tras registrar este resultado solo se modificó documentación, con formato y diff comprobados. Evidencia privada: `t224-baseline-check-state.json`, `t224-baseline-root-check.log` y `t224-baseline-check-source-private.json`. No se ejecutaron suites destructivas o nuevos builds nativos por estos documentos.
