@@ -14,3 +14,9 @@ mobile/package-lock.json
 mobile/expo-env.d.ts
 
 .next-*/
+
+# Private diagnostics generated with each native build.
+.build-evidence/
+
+# Screenshots and process evidence from an owned iOS simulator.
+.simulator-evidence/

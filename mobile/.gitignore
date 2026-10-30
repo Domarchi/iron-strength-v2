@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Private diagnostics generated with each native build.
+.build-evidence/
+
+# Screenshots and process evidence from an owned iOS simulator.
+.simulator-evidence/

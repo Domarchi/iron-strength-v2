@@ -1,0 +1,33 @@
+name: Arranque del simulador iOS verificado
+jobs:
+  ios_smoke:
+    name: Preview7 en iPhone Simulator
+    runs_on: macos-medium
+    image: latest
+    environment: preview
+    steps:
+      - uses: eas/checkout
+      - uses: eas/download_build
+        id: download
+        with:
+          build_id: df9f77c5-9b74-4659-bde0-9cce10d81eae
+          extensions: [app]
+      - name: Comprobar arranque, apariencia y reapertura
+        id: probe
+        run: |
+          set -e
+          export IOS_SMOKE_APP_PATH="${{ steps.download.outputs.artifact_path }}"
+          set-output evidence_dir "$PWD/.simulator-evidence"
+          if [ -f scripts/smoke-ios-simulator.cjs ]; then
+            node scripts/smoke-ios-simulator.cjs
+          elif [ -f mobile/scripts/smoke-ios-simulator.cjs ]; then
+            node mobile/scripts/smoke-ios-simulator.cjs
+          else
+            exit 2
+          fi
+      - uses: eas/upload_artifact
+        if: ${{ always() }}
+        with:
+          type: other
+          name: ios-preview7-smoke
+          path: ${{ steps.probe.outputs.evidence_dir }}/*

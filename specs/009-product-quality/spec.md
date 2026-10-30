@@ -313,3 +313,25 @@ Validar check móvil, compatibilidad SDK58, Hermes Android/iOS y auditoría por 
 Referencias: [versiones Expo](https://docs.expo.dev/build-reference/app-versions/), [distribución interna](https://docs.expo.dev/build/internal-distribution/), [monorepos](https://docs.expo.dev/build-reference/build-with-monorepos/) y [Forge1.4.2](https://github.com/digitalbazaar/forge/releases/tag/v1.4.2), consultadas29-oct.
 
 Los directorios generados .next-* de verificación privada se excluyen de Git, formato y ESLint, igual que los dos nombres de build ya previstos. No excluir fuentes de aplicación para obtener un control verde.
+
+### T202 · Evidencia de compilación iOS del mismo artefacto
+
+Los builds iOS release de preview/production deben conservar el mapa compuesto de Hermes y una copia exacta del main.jsbundle producido por Xcode, junto a hashes, versión del formato e identidad del trabajo. Configurar mediante plugin CNG y artefactos adicionales cerrados de EAS; no editar el proyecto iOS generado, cambiar el registro, añadir telemetría, credenciales o enviar mapas a Observe. Los builds Debug y Android conservan su comportamiento.
+
+La captura falla ante mapa inválido/ausente, binario sin cabecera Hermes, rutas que escapan del producto o destinos simbólicos. No crear evidencia positiva si falta un archivo. El empaquetado público de la app no incluye estos diagnósticos; se descargan separadamente del mismo trabajo y se comparan con el bundle extraído del archivo de aplicación. El mapa debe contener las fuentes y poder auditarse con el control existente. No atribuir esa evidencia al simulador anterior, a un iPhone, a una ejecución nativa iOS o al candidato de tienda.
+
+Antes de consumir una compilación remota comprobar cuota gratuita, cuenta/proyecto y archivo real de subida. Conservar preview5 Android y la demo activa; incrementar únicamente el build iOS de la nueva referencia. El resultado sigue siendo un simulador, sin membresía, firma de dispositivo, invitaciones o publicación de tienda.
+
+Los permisos de diagnóstico no deben propagarse al producto: crear el directorio privado con umask en un subshell, sin alterar la máscara de la fase React Native. El main.jsbundle de la aplicación conserva lectura 0644; mapas, copia y recibo quedan 0600 en carpeta 0700. El capturador rechaza un bundle sin permisos de lectura estándar. Validar esos modos en el archivo real; conservar un build que falle como diagnóstico y generar otro con buildNumber superior.
+
+La envoltura conserva también el código de salida final del script original cuando la captura está deshabilitada o se usa Debug. No convertir un fallo de la fase en éxito por ejecutar después una condición vacía.
+
+### T202 · Arranque iOS en un Mac efímero de EAS
+
+Preparar una prueba manual de arranque del build de simulador ya verificado, usando un job custom macos-medium dentro del plan Free de EAS. No usar Maestro Cloud, jobs premium, otro proveedor, compra, inscripción Apple o envío a tiendas. La ejecución exige el ID del build 7 y su hash verificado; no reconstruye ni elige latest.
+
+Descargar con la función oficial, validar identificador preview, versión/build, plataforma iPhoneSimulator y hash del bundle antes de instalar. Crear un simulador nuevo desde un modelo/runtime iPhone disponible; operar y limpiar únicamente ese UDID. No borrar, reutilizar o apagar dispositivos anteriores. Guardar evidencia del proceso y capturas de acceso en claro/oscuro, terminar de forma deliberada y reabrir. No introducir credenciales, pulsar Entrar, abrir enlaces de recuperación o escribir en la base real. El proceso vivo y las imágenes se revisan por separado: no inferir que el login o entrenamiento autenticados pasaron por un arranque sin sesión.
+
+Sin disparadores automáticos o secretos nuevos; carpeta de evidencia cerrada y excluida de Git/subidas futuras. El script acota comandos/tiempo y conserva el fallo con evidencia. Si el plan o worker no permite ejecutar sin coste, conservar la preparación y no ampliar recursos o contratar. No marcar aceptación física, beta o distribución por una prueba de simulador remoto.
+
+La ruta producida por download_build se interpola dentro del comando run y se exporta allí para el script. No depender de expresiones en env del paso: una ejecución remota reprodujo su entrega literal antes de instalar. Conservar ese fallo y seguir el identificador de cada ejecución hasta su estado terminal antes de repetir.
