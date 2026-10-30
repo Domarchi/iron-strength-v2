@@ -135,7 +135,7 @@ function captureFlow(name) {
     "home-dark":
       '- tapOn: "Cuenta, tab,.*"\n- tapOn: "Oscuro"\n- tapOn: "Inicio, tab,.*"\n- assertVisible: "Hola, Gabriel"\n- assertVisible: "Ver rutina C"\n',
     workout:
-      '- tapOn: "Ver rutina C"\n- tapOn: "Empezar entrenamiento"\n- extendedWaitUntil:\n    visible: "Hip thrust"\n    timeout: 30000\n- tapOn: "KG serie 1"\n- eraseText\n- inputText: "40"\n- tapOn: "REPS serie 1"\n- eraseText\n- inputText: "10"\n- tapOn: "Completar serie 1"\n- hideKeyboard\n- assertVisible: "1/3"\n- assertVisible: "Guardado en este dispositivo"\n',
+      '- tapOn: "Ver rutina C"\n- tapOn: "Empezar entrenamiento"\n- extendedWaitUntil:\n    visible: "Hip thrust"\n    timeout: 30000\n- tapOn: "KG serie 1"\n- eraseText\n- inputText: "40"\n- tapOn: "REPS serie 1"\n- eraseText\n- inputText: "10"\n- tapOn: "Completar serie 1"\n- tapOn: "Hip thrust"\n- assertVisible: "1/3"\n- assertVisible: "Guardado en este dispositivo"\n',
     discard:
       marginSwipe +
       '- assertVisible: "Descartar registro local"\n- tapOn: "Descartar registro local"\n' +
