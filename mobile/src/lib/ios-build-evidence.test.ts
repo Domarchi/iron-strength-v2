@@ -70,6 +70,45 @@ it("captura quality solo con el perfil remoto cerrado de simulador", () => {
   expect(proof.applicationId).toBe("com.domarchis.ironstrength.quality");
   expect(readFileSync(join(f.root, ".build-evidence/ios.hbc"))).toEqual(f.bundle);
 });
+it("admite el commit de metadata del workflow solo cuando falta la variable del build quality", () => {
+  const f = fixture();
+  const proof = require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence({
+    ...f.env,
+    PRODUCT_BUNDLE_IDENTIFIER: "com.domarchis.ironstrength.quality",
+    EAS_BUILD: "true",
+    EAS_BUILD_PLATFORM: "ios",
+    EAS_BUILD_PROFILE: "quality-simulator",
+    IRON_QUALITY_SIMULATOR: "1",
+    EAS_BUILD_GIT_COMMIT_HASH: undefined,
+    IRON_IOS_WORKFLOW_SOURCE_COMMIT: "b".repeat(40),
+  });
+  expect(proof.sourceCommit).toBe("b".repeat(40));
+  expect(proof.sourceCommitOrigin).toBe("workflow-metadata");
+});
+it("no usa metadata de QA para suplir el commit de un preview", () => {
+  const f = fixture();
+  expect(() =>
+    require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence({
+      ...f.env,
+      EAS_BUILD_GIT_COMMIT_HASH: undefined,
+      IRON_IOS_WORKFLOW_SOURCE_COMMIT: "b".repeat(40),
+    }),
+  ).toThrow("identity");
+});
+it("rechaza commits de build y metadata contradictorios en lugar de escoger uno", () => {
+  const f = fixture();
+  expect(() =>
+    require("../../scripts/capture-ios-build-evidence.cjs").captureIosBuildEvidence({
+      ...f.env,
+      PRODUCT_BUNDLE_IDENTIFIER: "com.domarchis.ironstrength.quality",
+      EAS_BUILD: "true",
+      EAS_BUILD_PLATFORM: "ios",
+      EAS_BUILD_PROFILE: "quality-simulator",
+      IRON_QUALITY_SIMULATOR: "1",
+      IRON_IOS_WORKFLOW_SOURCE_COMMIT: "b".repeat(40),
+    }),
+  ).toThrow("identity");
+});
 it.each([
   { EAS_BUILD: undefined },
   { EAS_BUILD_PLATFORM: "android" },

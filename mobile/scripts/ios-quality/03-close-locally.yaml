@@ -1,0 +1,22 @@
+- scrollUntilVisible:
+    element: (KG|Peso) serie 2
+- tapOn: (KG|Peso) serie 2
+- eraseText
+- inputText: "32"
+- hideKeyboard
+- tapOn: (REPS|Repeticiones) serie 2
+- eraseText
+- inputText: "9"
+- hideKeyboard
+- tapOn: Completar serie 2
+- scrollUntilVisible:
+    element: Finalizar entrenamiento
+- tapOn: Finalizar entrenamiento
+- scrollUntilVisible:
+    element: Guardar en este dispositivo
+- tapOn: Guardar en este dispositivo
+- extendedWaitUntil:
+    visible: Tu registro está protegido
+    timeout: 30000
+- tapOn: Volver a Inicio
+- assertVisible: 1 registro pendiente

@@ -1,0 +1,49 @@
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: Inicia sesión
+    timeout: 30000
+- tapOn: Correo
+- inputText:
+    text: ${QA_EMAIL}
+    label: Correo de la cuenta técnica aislada
+- pressKey: Enter
+- tapOn: Contraseña
+- inputText:
+    text: ${QA_PASSWORD}
+    label: Clave ficticia de QA
+- hideKeyboard
+- tapOn: Entrar
+- extendedWaitUntil:
+    visible: Inicio
+    timeout: 30000
+- tapOn: Entrenar
+- scrollUntilVisible:
+    element: Entrenamiento libre
+- tapOn: Entrenamiento libre
+- tapOn: Nombre del entrenamiento
+- inputText: ${QA_TITLE}
+- hideKeyboard
+- tapOn: Empezar libre
+- scrollUntilVisible:
+    element: Agregar ejercicios
+- tapOn: Agregar ejercicios
+- tapOn: Buscar ejercicios
+- inputText: Press de banca
+- hideKeyboard
+- tapOn: Seleccionar Press de banca
+- scrollUntilVisible:
+    element: Agregar 1 ejercicio
+- tapOn: Agregar 1 ejercicio
+- scrollUntilVisible:
+    element: (KG|Peso) serie 1
+- tapOn: (KG|Peso) serie 1
+- eraseText
+- inputText: "30"
+- hideKeyboard
+- tapOn: (REPS|Repeticiones) serie 1
+- eraseText
+- inputText: "8"
+- hideKeyboard
+- tapOn: Completar serie 1
+- assertVisible: Pausar entrenamiento

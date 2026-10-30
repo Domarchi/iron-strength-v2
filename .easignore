@@ -45,3 +45,8 @@ expo-env.d.ts
 
 # Screenshots and process evidence from an owned iOS simulator.
 .simulator-evidence/
+
+# Owned iOS quality runner data and downloaded tools.
+.ios-quality-evidence/
+.ios-quality-raw/
+.ios-quality-tools/

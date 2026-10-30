@@ -1,0 +1,10 @@
+- tapOn: Conectar
+- extendedWaitUntil:
+    visible: ÚLTIMO ENVÍO CONFIRMADO
+    timeout: 90000
+- scrollUntilVisible:
+    element: Ver resultado del último envío
+- tapOn: Ver resultado del último envío
+- extendedWaitUntil:
+    visible: ${QA_TITLE}
+    timeout: 30000

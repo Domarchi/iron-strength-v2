@@ -1,0 +1,67 @@
+name: Circuito iOS de QA aislado
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        type: string
+        required: true
+        description: ID del artefacto quality verificado
+      bundle_sha256:
+        type: string
+        required: true
+        description: Hash del bundle extraído del artefacto y cotejado con su recibo
+      source_commit:
+        type: string
+        required: true
+        description: Commit cotejado con el build y el mapa
+      backend_build_id:
+        type: string
+        required: true
+        description: BUILD_ID del backend aislado previamente verificado
+      qa_api_origin:
+        type: string
+        required: true
+        description: Origen HTTPS efímero exclusivo de QA
+      qa_account_id:
+        type: string
+        required: true
+        description: UUID de la cuenta técnica ficticia existente
+jobs:
+  ios_quality:
+    name: Registro y recuperación en simulador propio
+    runs_on: macos-medium
+    image: latest
+    environment: preview
+    env:
+      IOS_QUALITY_BUILD_ID: ${{ inputs.build_id }}
+      IOS_QUALITY_BUNDLE_SHA256: ${{ inputs.bundle_sha256 }}
+      IOS_QUALITY_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      IOS_QUALITY_BACKEND_BUILD_ID: ${{ inputs.backend_build_id }}
+      IOS_QUALITY_API_ORIGIN: ${{ inputs.qa_api_origin }}
+      IOS_QUALITY_ACCOUNT_ID: ${{ inputs.qa_account_id }}
+    steps:
+      - uses: eas/checkout
+      - uses: eas/download_build
+        id: download
+        with:
+          build_id: ${{ inputs.build_id }}
+          extensions: [app]
+      - name: Acceso, SQLite, corte de API y confirmación
+        id: circuit
+        run: |
+          set -e
+          export IOS_QUALITY_APP_PATH="${{ steps.download.outputs.artifact_path }}"
+          set-output evidence_dir "$PWD/.ios-quality-evidence"
+          if [ -f scripts/run-ios-quality.cjs ]; then
+            node scripts/run-ios-quality.cjs
+          elif [ -f mobile/scripts/run-ios-quality.cjs ]; then
+            node mobile/scripts/run-ios-quality.cjs
+          else
+            exit 2
+          fi
+      - uses: eas/upload_artifact
+        if: ${{ always() }}
+        with:
+          type: other
+          name: ios-quality-circuit-evidence
+          path: ${{ steps.circuit.outputs.evidence_dir }}/*
