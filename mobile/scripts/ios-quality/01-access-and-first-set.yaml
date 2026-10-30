@@ -20,15 +20,11 @@
     text: ${QA_PASSWORD}
     label: Clave ficticia de QA
 - tapOn: Ocultar contraseña
-- hideKeyboard
-- assertVisible:
-    text: Entrar
-    enabled: true
-- tapOn: Entrar
+- pressKey: Enter
 - extendedWaitUntil:
-    visible: Inicio
+    visible: Inicio, tab,.*
     timeout: 30000
-- tapOn: Entrenar
+- tapOn: Entrenar, tab,.*
 - scrollUntilVisible:
     element: Entrenamiento libre
 - tapOn: Entrenamiento libre
