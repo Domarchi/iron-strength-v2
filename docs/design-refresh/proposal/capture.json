@@ -1,0 +1,59 @@
+{
+  "formatVersion": 1,
+  "status": "Propuesta visual pendiente de aprobación; no implementada en Expo",
+  "capturedAt": "2026-10-30T23:02:09.416580+00:00",
+  "engine": "webkit",
+  "platform": "HTML/CSS/JS web prototype; not native",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "sourceFiles": {
+    "prototype/app.js": "6efff0905e79bde105b0306c0d5a39feb129e84460ee127ec68a724515b9d0a6",
+    "prototype/styles.css": "5c456f3130a4a64216895c80c4bebb5aed08469b686578d17db26b3d586ac0f6",
+    "prototype/index.html": "b2bf4506fe1878643897077c8f4352bb8ccf9aa719e00f22a2014f17443b4321"
+  },
+  "fixture": "weekDownloadFixture: Fuerza, Piernas, Sentadilla con objetivos distintos, Remo, descanso60s. Sin historial previo. Primera ronda completada en registro.",
+  "baseline": "../baseline/capture.json",
+  "persistentStorage": false,
+  "realBackendRequests": false,
+  "physicalAcceptance": false,
+  "images": [
+    {
+      "file": "dark-home.png",
+      "sha256": "aab2cf0a0bbc7768980be59713a08c26fa7a8a66964a13db4a751944a2a49c20",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "dark-routine.png",
+      "sha256": "75ab44ab5342ee4cc23a94059c0c26f26b75293f3adaa077f5f1b5c7f4071d5b",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "dark-workout.png",
+      "sha256": "57f8f5006ca40c460e8554945ea983a8791d159163a464858258964457410930",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "light-home.png",
+      "sha256": "68919ff2585c410567e16fe507cc589349f903e5c890ddf0fbaba8100841d2f9",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "light-routine.png",
+      "sha256": "e6da50c3362073810ab7bbb0acab5af5ea67bb456794b0b88ab48b4ac183814e",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "light-workout.png",
+      "sha256": "a229e1de2b9dc79ec05e7cbf0beb7ea3d49ac03998bc68cccbba37699f4cacdb",
+      "width": 390,
+      "height": 844
+    }
+  ]
+}

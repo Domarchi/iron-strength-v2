@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Iron Strength · propuesta de diseño</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <header class="review-bar" aria-label="Controles de la propuesta">
+      <span>Propuesta · no guarda</span>
+      <div class="review-actions">
+        <label class="sr-only" for="scenario">Estado de demostración</label>
+        <select id="scenario">
+          <option value="ready">Normal</option>
+          <option value="active">En curso</option>
+          <option value="pending">Pendiente</option>
+          <option value="error">Error</option>
+        </select>
+        <button id="theme-toggle" class="icon-button" aria-label="Cambiar tema"></button>
+      </div>
+    </header>
+    <div class="phone">
+      <main id="app" data-view="home" aria-label="Iron Strength, propuesta interactiva"></main>
+      <div id="navigation"></div>
+    </div>
+    <footer class="review-footer">
+      <a id="comparison" href="../comparison.html">Comparar antes y después</a>
+      <span>Datos ficticios · al recargar se reinicia</span>
+    </footer>
+    <div id="dialog-root"></div>
+    <noscript>Activa JavaScript para probar esta propuesta. No utiliza tu cuenta.</noscript>
+  </body>
+</html>
