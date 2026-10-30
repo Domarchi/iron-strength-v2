@@ -1,0 +1,27 @@
+{
+  "formatVersion": 1,
+  "platform": "Android",
+  "method": "adb-exec-out-screencap",
+  "capturedAt": "2026-10-30T10:13:57.504747+00:00",
+  "fictitiousData": true,
+  "productionCandidate": false,
+  "artifact": {
+    "applicationId": "com.domarchis.ironstrength.quality",
+    "versionName": "0.1.0",
+    "versionCode": 9,
+    "sourceCommit": "a1c5d27225a1e28179cb098564a410db3fe75e96",
+    "apkSha256": "664f2e8d742f8aafd360d99c8932fddeeb134bca223b006af6b6e5ece29d8c32",
+    "bundleSha256": "871a43eca86e67ac0c8b5781ddeb9c4bfcc0a06f0c976abda9b3e6aff6b04019",
+    "mapSha256": "c8df6d45edac8fe82c463ed68d115f11d611aa5379a43f4ad23702d91a3f5daa",
+    "certificateSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+    "expoVersion": "58.0.21",
+    "reactNativeVersion": "0.88.1",
+    "mappedSourceContents": 197
+  },
+  "images": {
+    "home-dark": "4a117fd327f0cad2fdd7e8a176b56ab30def7b09ac389bea041e55157e4928cc",
+    "workout": "5dd30a5006dd6542a1eb3a66682b8220ef57243e8cfac6d878da284fbb26f47a",
+    "progress": "dc87c95f99212d193852937344110e18a6d5fa13d1c13e9157c6944668281bd8",
+    "home-light": "c0d56d1f10dd508b1d64dcf57ef47f49bc803523d9663a100a60481a303c2105"
+  }
+}

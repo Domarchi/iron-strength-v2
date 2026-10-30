@@ -12,7 +12,7 @@
   "accountDeletionUrl": "https://iron-strength-seven.vercel.app/delete-account",
   "reviewAccount": "Pendiente; credenciales por canal privado de la tienda",
   "iosScreenshots": "Pendientes de captura iOS real/simulador y revisión",
-  "androidScreenshots": "Cuatro candidatos Android y gráfico en assets/google-play; recapturar con producción y revisar antes de enviar",
+  "androidScreenshots": "Cuatro candidatos nativos actualizados con quality9/T222 y procedencia verificable en assets/google-play; recapturar con el candidato de producción antes de enviar",
   "contentLocale": "es-CL",
   "storeLocaleSelection": "Pendiente de confirmar idiomas disponibles en ambas consolas"
 }

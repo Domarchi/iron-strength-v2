@@ -6,6 +6,73 @@ import { format } from "prettier";
 
 const directory = new URL("./assets/google-play/", import.meta.url);
 const escape = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+const captureSource = JSON.parse(
+  await fs.readFile(new URL("source/capture.json", directory), "utf8"),
+);
+function exactKeys(value, keys) {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === keys.length &&
+    Object.keys(value).every((key) => keys.includes(key))
+  );
+}
+const artifactKeys = [
+  "applicationId",
+  "versionName",
+  "versionCode",
+  "sourceCommit",
+  "apkSha256",
+  "bundleSha256",
+  "mapSha256",
+  "certificateSha256",
+  "expoVersion",
+  "reactNativeVersion",
+  "mappedSourceContents",
+];
+const names = ["home-dark", "workout", "progress", "home-light"];
+if (
+  !exactKeys(captureSource, [
+    "formatVersion",
+    "platform",
+    "method",
+    "capturedAt",
+    "fictitiousData",
+    "productionCandidate",
+    "artifact",
+    "images",
+  ]) ||
+  captureSource.formatVersion !== 1 ||
+  captureSource.platform !== "Android" ||
+  captureSource.method !== "adb-exec-out-screencap" ||
+  !Number.isFinite(Date.parse(captureSource.capturedAt)) ||
+  captureSource.fictitiousData !== true ||
+  captureSource.productionCandidate !== false ||
+  !exactKeys(captureSource.artifact, artifactKeys) ||
+  captureSource.artifact.applicationId !== "com.domarchis.ironstrength.quality" ||
+  !/^\d+\.\d+\.\d+$/.test(captureSource.artifact.versionName) ||
+  !Number.isInteger(captureSource.artifact.versionCode) ||
+  captureSource.artifact.versionCode < 1 ||
+  !/^[a-f0-9]{40}$/.test(captureSource.artifact.sourceCommit) ||
+  !["apkSha256", "bundleSha256", "mapSha256", "certificateSha256"].every((key) =>
+    /^[a-f0-9]{64}$/.test(captureSource.artifact[key]),
+  ) ||
+  !["expoVersion", "reactNativeVersion"].every((key) =>
+    /^\d+\.\d+\.\d+$/.test(captureSource.artifact[key]),
+  ) ||
+  !Number.isInteger(captureSource.artifact.mappedSourceContents) ||
+  captureSource.artifact.mappedSourceContents < 1 ||
+  !exactKeys(captureSource.images, names) ||
+  !names.every((name) => /^[a-f0-9]{64}$/.test(captureSource.images[name]))
+)
+  throw Error("Procedencia nativa incompleta o campos privados/no previstos");
+// Verify every source before replacing any generated composition.
+for (const name of names) {
+  const bytes = await fs.readFile(new URL("source/" + name + ".png", directory));
+  if (crypto.createHash("sha256").update(bytes).digest("hex") !== captureSource.images[name])
+    throw Error("La captura no coincide con la procedencia del APK verificado");
+}
 const items = [
   {
     file: "home-dark",
@@ -15,23 +82,24 @@ const items = [
   {
     file: "workout",
     title: "Registra cada serie",
-    alt: "Registro de sentadilla con objetivos distintos por serie y superserie.",
+    alt: "Registro de entrenamiento con peso, repeticiones y descanso.",
   },
   {
     file: "progress",
     title: "Progreso con contexto",
-    alt: "Volumen de press de banca en doce semanas con gráfico y registros de origen.",
+    alt: "Volumen del ejercicio en doce semanas, con los resultados existentes de demostración.",
   },
   {
     file: "home-light",
     title: "Elige claro u oscuro",
-    alt: "Inicio en tema claro con texto ampliado y avance semanal.",
+    alt: "Inicio en tema claro con siguiente rutina y avance semanal.",
   },
 ];
 const manifest = {
   status: "Borradores; revisar con el candidato de producción antes de subir",
   platform: "Android",
-  captureOrigin: "APK quality de T202; datos ficticios en instancia aislada",
+  captureOrigin: "APK quality actual de T203; cuenta ficticia existente en instancia aislada",
+  captureSource,
   font: "Noto Sans instalada en el sistema de generación",
   featureGraphic: null,
   screenshots: [],
