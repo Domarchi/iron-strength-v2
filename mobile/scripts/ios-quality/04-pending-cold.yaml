@@ -1,0 +1,5 @@
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: 1 registro pendiente
+    timeout: 40000

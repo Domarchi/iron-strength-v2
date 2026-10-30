@@ -1,0 +1,7 @@
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: Retomar entrenamiento
+    timeout: 40000
+- tapOn: Retomar entrenamiento
+- assertVisible: ${QA_TITLE}

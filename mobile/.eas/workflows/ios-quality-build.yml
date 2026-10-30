@@ -1,0 +1,26 @@
+name: Construir simulador iOS de pruebas aisladas
+on:
+  workflow_dispatch:
+    inputs:
+      qa_api_origin:
+        type: string
+        required: true
+        description: Origen HTTPS temporal del backend aislado verificado
+jobs:
+  quality_build:
+    name: Simulador quality sin datos de producción
+    type: build
+    environment: preview
+    env:
+      EXPO_PUBLIC_API_URL: ${{ inputs.qa_api_origin }}
+    params:
+      platform: ios
+      profile: quality-simulator
+    hooks:
+      before_install_node_modules:
+        - name: Conservar el commit del checkout verificado
+          run: |
+            set -e
+            IRON_SOURCE_COMMIT="$(git rev-parse HEAD)"
+            if ! [[ "$IRON_SOURCE_COMMIT" =~ ^[a-f0-9]{40}$ ]]; then exit 2; fi
+            set-env IRON_IOS_WORKFLOW_SOURCE_COMMIT "$IRON_SOURCE_COMMIT"

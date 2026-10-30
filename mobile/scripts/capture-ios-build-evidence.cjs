@@ -46,11 +46,25 @@ function captureIosBuildEvidence(env = process.env) {
   )
     throw new Error("Invalid composed source map");
   const buildId = env.EAS_BUILD_ID;
-  const sourceCommit = env.EAS_BUILD_GIT_COMMIT_HASH;
+  const applicationId = env.PRODUCT_BUNDLE_IDENTIFIER;
+  const qualitySimulator =
+    applicationId === "com.domarchis.ironstrength.quality" &&
+    env.EAS_BUILD === "true" &&
+    env.EAS_BUILD_PLATFORM === "ios" &&
+    env.EAS_BUILD_PROFILE === "quality-simulator" &&
+    env.IRON_QUALITY_SIMULATOR === "1";
+  const workflowCommit = qualitySimulator ? env.IRON_IOS_WORKFLOW_SOURCE_COMMIT : undefined;
+  const workflowFallback =
+    env.EAS_BUILD_GIT_COMMIT_HASH === undefined && workflowCommit !== undefined;
+  const sourceCommit = workflowFallback ? workflowCommit : env.EAS_BUILD_GIT_COMMIT_HASH;
   if (!/^[a-f0-9-]{36}$/i.test(buildId ?? "") || !/^[a-f0-9]{40}$/i.test(sourceCommit ?? ""))
     throw new Error("Missing build identity");
-  const applicationId = env.PRODUCT_BUNDLE_IDENTIFIER;
-  if (!["com.domarchis.ironstrength", "com.domarchis.ironstrength.preview"].includes(applicationId))
+  if (workflowCommit !== undefined && workflowCommit !== sourceCommit)
+    throw new Error("Conflicting build identity");
+  if (
+    !["com.domarchis.ironstrength", "com.domarchis.ironstrength.preview"].includes(applicationId) &&
+    !qualitySimulator
+  )
     throw new Error("Unexpected application identity");
   const outputBundle = path.join(directory, "ios.hbc");
   const outputProof = path.join(directory, "ios-proof.json");
@@ -68,6 +82,7 @@ function captureIosBuildEvidence(env = process.env) {
     platform: "ios",
     buildId,
     sourceCommit,
+    ...(workflowFallback ? { sourceCommitOrigin: "workflow-checkout" } : {}),
     applicationId,
     bundleSha256: digest(bundle),
     bundleBytes: bundle.length,

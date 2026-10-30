@@ -10,7 +10,14 @@ module.exports = ({ config }) => {
   const variantName = process.env.APP_VARIANT ?? "production";
   if (!Object.hasOwn(variants, variantName)) throw new Error("APP_VARIANT no reconocida");
   if (variantName === "quality") {
-    if (process.env.EAS_BUILD === "true") throw new Error("La variante de pruebas es solo local");
+    const qualitySimulator =
+      process.env.EAS_BUILD_PLATFORM === "ios" &&
+      process.env.EAS_BUILD_PROFILE === "quality-simulator" &&
+      process.env.IRON_QUALITY_SIMULATOR === "1";
+    if (process.env.EAS_BUILD === "true" && !qualitySimulator)
+      throw new Error(
+        "La variante de pruebas es solo local salvo el perfil quality-simulator de iOS",
+      );
     let origin;
     try {
       origin = new URL(process.env.EXPO_PUBLIC_API_URL);

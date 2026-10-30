@@ -1,0 +1,15 @@
+- tapOn:
+    text: Conectar
+    optional: true
+- extendedWaitUntil:
+    visible: ÚLTIMO ENVÍO CONFIRMADO
+    timeout: 90000
+- scrollUntilVisible:
+    element: Ver resultado del último envío
+- tapOn: Ver resultado del último envío
+- extendedWaitUntil:
+    visible: ${QA_TITLE} · .*
+    timeout: 30000
+- assertVisible: ENTRENAMIENTO CONFIRMADO
+- assertVisible: 30 kg × 8 reps
+- assertVisible: 32 kg × 9 reps
