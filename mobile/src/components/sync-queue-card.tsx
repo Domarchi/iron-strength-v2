@@ -7,25 +7,28 @@ import { useWorkoutSyncQueue } from "../lib/sync-context";
 import { useTraining } from "../lib/training-context";
 import { useSession } from "../lib/session";
 import { Action, Notice, day, s, usePalette } from "./ui";
+import { syncIssue } from "../lib/sync-failure";
 export function SyncQueueIssue() {
-  const { queue, error, recover, syncing, transferring } = useWorkoutSyncQueue(),
+  const { queue, failure, recover, syncing, transferring } = useWorkoutSyncQueue(),
     [localError, setLocalError] = useState<string | null>(null);
-  const message = localError ?? error ?? queue.error;
-  if (!message && !queue.blocked) return null;
+  const issue = syncIssue({ failure, queueError: queue.error, blocked: queue.blocked, localError });
+  if (!issue) return null;
   return (
     <View style={{ gap: 8 }}>
-      <Notice message={message ?? "Comprueba la cola local. Conservamos los datos guardados."} />
-      <Action
-        label="Comprobar cola local"
-        secondary
-        disabled={queue.busy || syncing || transferring}
-        onPress={() => {
-          setLocalError(null);
-          void recover().catch((e) =>
-            setLocalError(e instanceof Error ? e.message : "No pudimos comprobar los registros."),
-          );
-        }}
-      />
+      <Notice message={issue.message} />
+      {issue.repairLocal ? (
+        <Action
+          label="Comprobar cola local"
+          secondary
+          disabled={queue.busy || syncing || transferring}
+          onPress={() => {
+            setLocalError(null);
+            void recover().catch((e) =>
+              setLocalError(e instanceof Error ? e.message : "No pudimos comprobar los registros."),
+            );
+          }}
+        />
+      ) : null}
     </View>
   );
 }

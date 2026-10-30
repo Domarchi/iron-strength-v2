@@ -16,6 +16,7 @@ import { useSession } from "./session";
 import { handoffPending } from "./queue-transfer";
 import { SyncScheduler } from "./sync-scheduler";
 import { useSyncEnvironment } from "./sync-environment";
+import { syncFailure, type SyncFailure } from "./sync-failure";
 function useWorkoutSync(userId: string) {
   const { client, state: session } = useSession(),
     { controller: source, training } = useTraining(),
@@ -33,7 +34,7 @@ function useWorkoutSync(userId: string) {
   );
   const [transferring, setTransferring] = useState(false),
     [syncing, setSyncing] = useState(false),
-    [error, setError] = useState<string | null>(null),
+    [failure, setFailure] = useState<SyncFailure | null>(null),
     [paused, setPaused] = useState(false);
   const live = useRef(true),
     transfer = useRef<Promise<unknown> | null>(null),
@@ -83,7 +84,7 @@ function useWorkoutSync(userId: string) {
           ? e.message
           : "No pudimos mover el cierre a la cola. Conservamos el original.";
       transferFailure.current = message;
-      if (live.current) setError(message);
+      if (live.current) setFailure({ kind: "local", message });
       throw e;
     });
     transfer.current = operation;
@@ -111,9 +112,11 @@ function useWorkoutSync(userId: string) {
         )
           return false;
         setSyncing(true);
-        setError(null);
+        setFailure((previous) => (previous?.kind === "local" ? previous : null));
+        let stage: SyncFailure["kind"] = "connection";
         try {
           if (s.mode === "offline") await client.reconnect();
+          stage = "local";
           if (!canSend()) return false;
           await archive();
           const q = controller.getSnapshot();
@@ -132,10 +135,7 @@ function useWorkoutSync(userId: string) {
                 .entries.some((item) => item.phase === "pending" && !item.error?.blocked))
           );
         } catch (error) {
-          if (live.current)
-            setError(
-              error instanceof Error ? error.message : "No pudimos confirmar la sincronización.",
-            );
+          if (live.current) setFailure((previous) => syncFailure(previous, stage, error));
           return live.current && !controller.getSnapshot().blocked && !transferFailure.current;
         } finally {
           if (live.current) setSyncing(false);
@@ -213,7 +213,7 @@ function useWorkoutSync(userId: string) {
     await controller.restore();
     if (!live.current) throw Error("La cuenta cambió. Conservamos los registros.");
     transferFailure.current = null;
-    setError(null);
+    setFailure(null);
     await archive();
   }, [archive, controller, source]);
   const synchronize = useCallback(() => scheduler.current?.manual() ?? Promise.resolve(null), []);
@@ -225,7 +225,7 @@ function useWorkoutSync(userId: string) {
       if (a?.mode === "real" && a.draft.workoutId === id) await source.discard();
       await controller.discard(id);
       transferFailure.current = null;
-      setError(null);
+      setFailure(null);
     },
     [controller, source],
   );
@@ -260,7 +260,8 @@ function useWorkoutSync(userId: string) {
     queue,
     transferring,
     syncing,
-    error,
+    failure,
+    error: failure?.message ?? null,
     recover,
     synchronize,
     discard,

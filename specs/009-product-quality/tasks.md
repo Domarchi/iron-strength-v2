@@ -27,3 +27,5 @@ Acceso Supabase desde Codex resuelto el 25-oct-2026 mediante el conector autoriz
 - [x] T208 · Hevy web analizado con REA y referencia aplicada al cliente móvil: temas, rutinas, métricas, tabla con anterior y descanso compacto. Software verificado; identidad propia, controles y datos conservados. Evidencia web y aceptación física separadas.
 
 Actualización 29-oct T221: web/API publicadas con 56 migraciones, permisos y datos conservados; copia manual posterior de 66 tablas/698 filas restaurada con metadatos/RLS y roles globales intactos. No acredita la primera copia semanal programada, beta real o tiendas. Los pendientes T201–T205 conservan su alcance; detalles en specs/010-private-training/release.md.
+
+- [ ] T222 · Distinguir reconexión y recuperación local de cola: no presentar un cierre guardado como fallo local cuando solo falta conexión; conservar errores reales y verificación de reenvío único.
