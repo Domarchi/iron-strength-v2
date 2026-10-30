@@ -325,3 +325,11 @@ Antes de consumir una compilación remota comprobar cuota gratuita, cuenta/proye
 Los permisos de diagnóstico no deben propagarse al producto: crear el directorio privado con umask en un subshell, sin alterar la máscara de la fase React Native. El main.jsbundle de la aplicación conserva lectura 0644; mapas, copia y recibo quedan 0600 en carpeta 0700. El capturador rechaza un bundle sin permisos de lectura estándar. Validar esos modos en el archivo real; conservar un build que falle como diagnóstico y generar otro con buildNumber superior.
 
 La envoltura conserva también el código de salida final del script original cuando la captura está deshabilitada o se usa Debug. No convertir un fallo de la fase en éxito por ejecutar después una condición vacía.
+
+### T202 · Arranque iOS en un Mac efímero de EAS
+
+Preparar una prueba manual de arranque del build de simulador ya verificado, usando un job custom macos-medium dentro del plan Free de EAS. No usar Maestro Cloud, jobs premium, otro proveedor, compra, inscripción Apple o envío a tiendas. La ejecución exige el ID del build 7 y su hash verificado; no reconstruye ni elige latest.
+
+Descargar con la función oficial, validar identificador preview, versión/build, plataforma iPhoneSimulator y hash del bundle antes de instalar. Crear un simulador nuevo desde un modelo/runtime iPhone disponible; operar y limpiar únicamente ese UDID. No borrar, reutilizar o apagar dispositivos anteriores. Guardar evidencia del proceso y capturas de acceso en claro/oscuro, terminar de forma deliberada y reabrir. No introducir credenciales, pulsar Entrar, abrir enlaces de recuperación o escribir en la base real. El proceso vivo y las imágenes se revisan por separado: no inferir que el login o entrenamiento autenticados pasaron por un arranque sin sesión.
+
+Sin disparadores automáticos o secretos nuevos; carpeta de evidencia cerrada y excluida de Git/subidas futuras. El script acota comandos/tiempo y conserva el fallo con evidencia. Si el plan o worker no permite ejecutar sin coste, conservar la preparación y no ampliar recursos o contratar. No marcar aceptación física, beta o distribución por una prueba de simulador remoto.

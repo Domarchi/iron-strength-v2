@@ -46,3 +46,11 @@ Conservar capturas/jerarquías y errores del paquete de pruebas fuera de Git; nu
 Registrar qué plataformas usan realmente los participantes; no inventar un dispositivo de cada tipo por persona. iPhone necesita Apple Developer/perfil válido para instalar preview o TestFlight. La aceptación física la realiza el propietario con sus participantes y se registra aparte.
 
 GitHub Actions 40169728166 no creó trabajos: la UI indica pagos/límite de gasto. YAML y referencias se comprobaron con actionlint y API; no atribuirlo a un test fallido ni marcarlo verde. El propietario debe revisar Billing & plans. No modificar pagos/límites, crear checks de éxito manuales o disparar repetidamente el mismo bloqueo. Tras resolverlo, ejecutar la configuración vigente y conservar los resultados.
+
+## Arranque remoto de preview7 con herramientas de Apple
+
+La prueba manual `.eas/workflows/ios-preview-smoke.yml` (dentro de mobile) usa un job custom macos-medium, sin job Maestro premium o servicio Maestro Cloud. El plan Free publicado incluye hasta 60 minutos de CI/CD y una concurrencia macOS; comprobar la cuenta/cuota antes de ejecutar, sin contratar capacidad. [Precios de Expo](https://expo.dev/pricing), [workers y funciones oficiales](https://docs.expo.dev/eas/workflows/syntax/).
+
+El workflow descarga exactamente el simulador EAS df9f77c5-9b74-4659-bde0-9cce10d81eae. El script valida identificador, plataforma, versión/build y hash de Hermes, crea un simulador nuevo y guarda capturas de acceso en oscuro/claro y tras una reapertura. Solo opera y retira el UDID recién creado; no usa dispositivos anteriores. No introduce cuentas, pulsa Entrar o escribe datos de usuarios. Los comandos tienen tiempos acotados y la evidencia queda fuera de Git/subidas de código.
+
+El estado del proceso y las imágenes tienen evidencias separadas: revisar las capturas antes de acreditar la pantalla. No convertir este arranque en aprobación del registro autenticado, modo avión, teléfono real o candidato de tienda. No hay triggers automáticos: el operador selecciona esta prueba manualmente desde mobile con `eas workflow:run .eas/workflows/ios-preview-smoke.yml`. Los pins del script/workflow se actualizan deliberadamente después de verificar otro artefacto; nunca se usa latest como versión de la app.

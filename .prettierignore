@@ -17,3 +17,6 @@ mobile/expo-env.d.ts
 
 # Private diagnostics generated with each native build.
 .build-evidence/
+
+# Screenshots and process evidence from an owned iOS simulator.
+.simulator-evidence/
