@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "status": "Propuesta visual pendiente de aprobación; no implementada en Expo",
-  "capturedAt": "2026-10-30T23:02:09.416580+00:00",
+  "capturedAt": "2026-10-30T23:10:39.091907+00:00",
   "engine": "webkit",
   "platform": "HTML/CSS/JS web prototype; not native",
   "viewport": {
@@ -9,7 +9,7 @@
     "height": 844
   },
   "sourceFiles": {
-    "prototype/app.js": "6efff0905e79bde105b0306c0d5a39feb129e84460ee127ec68a724515b9d0a6",
+    "prototype/app.js": "e2332e915019defc3116fcbb3918b2a800a289f4a216cf6445e7534bfc602b9d",
     "prototype/styles.css": "5c456f3130a4a64216895c80c4bebb5aed08469b686578d17db26b3d586ac0f6",
     "prototype/index.html": "b2bf4506fe1878643897077c8f4352bb8ccf9aa719e00f22a2014f17443b4321"
   },
@@ -55,5 +55,11 @@
       "width": 390,
       "height": 844
     }
-  ]
+  ],
+  "verification": {
+    "cases": 88,
+    "engines": ["chromium", "webkit"],
+    "referenceImagesUnchanged": true,
+    "approvalReceived": false
+  }
 }

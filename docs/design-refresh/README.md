@@ -10,6 +10,8 @@ Abrir `prototype/index.html` mediante un servidor HTTP estático. Acepta `view=h
 
 El prototipo permite consultar, comenzar, completar checks, avanzar entre integrantes, ajustar/pausar el descanso, volver/retomar, cambiar tema, abrir contexto y simular cierre/reintento. Todo vive solo en memoria: recargar lo reinicia. Las herramientas que todavía no tienen una pantalla prototipada abren un aviso honesto; no se presentan como funciones nativas implementadas. CSP bloquea conexiones; no hay API, autenticación, localStorage, cookies, analítica, service worker o envío real.
 
+Al completar las cuatro series se indica que están terminadas. Después de simular el envío, empezar otro entrenamiento prepara valores iniciales, checks vacíos y ningún descanso activo; Retomar conserva el registro de la simulación en curso. Este comportamiento no añade persistencia o sincronización real al prototipo.
+
 El enlace remoto temporal y sus verificaciones se guardan fuera de Git. Para servirlo, copiar únicamente HTML/CSS/JS y las doce imágenes necesarias a un directorio nuevo del servidor de vistas previas. No sustituir la raíz, los bundles, la demo o los datos existentes. Una futura implementación debe preservar los contratos de la app, no reutilizar este estado volátil como almacenamiento real.
 
 ## Decisiones de diseño para aprobar

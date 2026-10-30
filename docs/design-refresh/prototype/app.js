@@ -2,6 +2,18 @@
 const query = new URLSearchParams(window.location.search);
 const allowedViews = ["home", "workout", "routine"];
 const allowedStates = ["ready", "active", "pending", "error"];
+function initialValues() {
+  return [
+    [
+      { weight: "55", reps: "8" },
+      { weight: "50", reps: "10" },
+    ],
+    [
+      { weight: "40", reps: "10" },
+      { weight: "40", reps: "10" },
+    ],
+  ];
+}
 const state = {
   view: allowedViews.includes(query.get("view")) ? query.get("view") : "home",
   theme: query.get("theme") === "light" ? "light" : "dark",
@@ -15,16 +27,7 @@ const state = {
     [false, false],
     [false, false],
   ],
-  values: [
-    [
-      { weight: "55", reps: "8" },
-      { weight: "50", reps: "10" },
-    ],
-    [
-      { weight: "40", reps: "10" },
-      { weight: "40", reps: "10" },
-    ],
-  ],
+  values: initialValues(),
 };
 const exercises = ["Sentadilla", "Remo"];
 const app = document.querySelector("#app");
@@ -81,7 +84,11 @@ function workout() {
   const e = state.exercise;
   const name = exercises[e];
   const round = Math.min(...state.completed.map((sets) => sets.filter(Boolean).length)) + 1;
-  return `${header("Piernas", `${doneCount()} de 4 series · sesión de prueba`, true)}<div class="superset-heading"><span class="eyebrow">Superserie A</span><span class="muted small">Ronda ${Math.min(round, 2)} / 2</span></div><nav class="exercise-index" aria-label="Ejercicios de la superserie">${exercises.map((exercise, i) => `<button type="button" data-action="focus-${i}" aria-current="${i === e}">${exercise}<span class="small number">${state.completed[i].filter(Boolean).length} / 2 series</span></button>`).join("")}</nav><section aria-label="Ejercicio actual"><div class="exercise-heading"><div><h2>${name}</h2><p class="muted small">${e === 0 ? "Objetivos por serie" : "Objetivo · 2 × 8–12 rep · 40 kg"}</p></div>${button("context", icon("more"), "icon-button", "Abrir contexto del ejercicio")}</div><div class="sets"><div class="set-grid set-labels" aria-hidden="true"><span>#</span><span>ANT.</span><span>KG</span><span>REPS</span><span>${icon("check")}</span></div>${state.values[e].map((value, i) => `<div class="set-grid set-row${state.completed[e][i] ? " is-done" : ""}"><span>${i + 1}</span><span class="reference">—</span><input type="text" inputmode="decimal" autocomplete="off" aria-label="Peso de ${name}, serie ${i + 1}" data-field="weight" data-set="${i}" value="${escape(value.weight)}" /><input type="text" inputmode="numeric" autocomplete="off" aria-label="Repeticiones de ${name}, serie ${i + 1}" data-field="reps" data-set="${i}" value="${escape(value.reps)}" /><label class="set-check"><input type="checkbox" data-set="${i}" aria-label="Completar serie ${i + 1} de ${name}" ${state.completed[e][i] ? "checked" : ""}/><span class="circle">${icon("check")}</span></label>${e === 0 ? `<span class="series-target">Objetivo · ${i === 0 ? "6–8 rep · 55 kg" : "8–10 rep · 50 kg"}</span>` : ""}</div>`).join("")}</div><p class="set-note">Sigue ${exercises[e === 0 ? 1 : 0]} · descanso al terminar la ronda</p></section>${state.restEnd || state.pausedSeconds !== null ? rest() : `<div class="rest"><div class="rest-head"><div><p class="small">Descanso de ronda</p><span class="muted small number">60 segundos</span></div>${button("rest-start", "Iniciar", "text-button")}</div></div>`}<div class="workout-footer">${button("add-set", "+ Agregar serie")}${button("context", "Historial y notas")}</div>`;
+  const next =
+    doneCount() === 4
+      ? "Todas las series completadas"
+      : `Sigue ${exercises[e === 0 ? 1 : 0]} · descanso al terminar la ronda`;
+  return `${header("Piernas", `${doneCount()} de 4 series · sesión de prueba`, true)}<div class="superset-heading"><span class="eyebrow">Superserie A</span><span class="muted small">Ronda ${Math.min(round, 2)} / 2</span></div><nav class="exercise-index" aria-label="Ejercicios de la superserie">${exercises.map((exercise, i) => `<button type="button" data-action="focus-${i}" aria-current="${i === e}">${exercise}<span class="small number">${state.completed[i].filter(Boolean).length} / 2 series</span></button>`).join("")}</nav><section aria-label="Ejercicio actual"><div class="exercise-heading"><div><h2>${name}</h2><p class="muted small">${e === 0 ? "Objetivos por serie" : "Objetivo · 2 × 8–12 rep · 40 kg"}</p></div>${button("context", icon("more"), "icon-button", "Abrir contexto del ejercicio")}</div><div class="sets"><div class="set-grid set-labels" aria-hidden="true"><span>#</span><span>ANT.</span><span>KG</span><span>REPS</span><span>${icon("check")}</span></div>${state.values[e].map((value, i) => `<div class="set-grid set-row${state.completed[e][i] ? " is-done" : ""}"><span>${i + 1}</span><span class="reference">—</span><input type="text" inputmode="decimal" autocomplete="off" aria-label="Peso de ${name}, serie ${i + 1}" data-field="weight" data-set="${i}" value="${escape(value.weight)}" /><input type="text" inputmode="numeric" autocomplete="off" aria-label="Repeticiones de ${name}, serie ${i + 1}" data-field="reps" data-set="${i}" value="${escape(value.reps)}" /><label class="set-check"><input type="checkbox" data-set="${i}" aria-label="Completar serie ${i + 1} de ${name}" ${state.completed[e][i] ? "checked" : ""}/><span class="circle">${icon("check")}</span></label>${e === 0 ? `<span class="series-target">Objetivo · ${i === 0 ? "6–8 rep · 55 kg" : "8–10 rep · 50 kg"}</span>` : ""}</div>`).join("")}</div><p class="set-note">${next}</p></section>${state.restEnd || state.pausedSeconds !== null ? rest() : `<div class="rest"><div class="rest-head"><div><p class="small">Descanso de ronda</p><span class="muted small number">60 segundos</span></div>${button("rest-start", "Iniciar", "text-button")}</div></div>`}<div class="workout-footer">${button("add-set", "+ Agregar serie")}${button("context", "Historial y notas")}</div>`;
 }
 function rest() {
   return `<section class="rest" aria-label="Descanso"><div class="rest-head"><div><p class="small muted">${state.pausedSeconds !== null ? "Descanso pausado" : "Descanso"}</p><span class="rest-time" role="timer" aria-label="Tiempo restante"></span></div><div class="rest-buttons">${button("rest-less", "−15", "", "Restar 15 segundos")}${button("rest-more", "+15", "", "Agregar 15 segundos")}${button("rest-pause", state.pausedSeconds !== null ? "Seguir" : "Pausar")}</div></div><div class="rest-line" aria-hidden="true"><span id="rest-progress"></span></div></section>`;
@@ -159,7 +166,21 @@ function send() {
 }
 function act(action) {
   if (action === "home" || action === "routine") return go(action);
-  if (action === "start" || action === "resume") {
+  if (action === "start") {
+    state.exercise = 0;
+    state.completed = [
+      [false, false],
+      [false, false],
+    ];
+    state.values = initialValues();
+    state.restEnd = 0;
+    state.restTotal = 60;
+    state.pausedSeconds = null;
+    state.scenario = "ready";
+    state.started = true;
+    return go("workout");
+  }
+  if (action === "resume") {
     state.started = true;
     return go("workout");
   }

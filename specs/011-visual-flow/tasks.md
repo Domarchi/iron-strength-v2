@@ -1,7 +1,7 @@
 # Tareas
 
 - [x] T224 · Registrar versión real, capturas y ocho recorridos; separar medidas actuales, código y evidencia histórica. Referencia completa del coach reservada a T232 antes de afirmar mejoras.
-- [ ] T225 · Prototipo y comparación preparados en docs/design-refresh, seis capturas claro/oscuro, 52 E2E aprobadas y HTTPS verificado. Aprobación visual solicitada y pendiente antes de implementar T226–T232.
+- [ ] T225 · Prototipo y comparación preparados en docs/design-refresh, seis capturas claro/oscuro, 88 E2E aprobadas y HTTPS verificado. Aprobación visual solicitada y pendiente antes de implementar T226–T232.
 - [ ] T226 · Componentes y lenguaje visual unificados.
 - [ ] T227 · Inicio, navegación y Cuenta simplificados.
 - [ ] T228 · Registro/descanso/contexto/cierre mejorados.
