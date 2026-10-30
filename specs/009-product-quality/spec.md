@@ -311,3 +311,5 @@ Se justifica una compilación iOS preview-simulator actual y, si se necesita par
 Validar check móvil, compatibilidad SDK58, Hermes Android/iOS y auditoría por rutas reales. Mantener los controles actuales de datos y las regresiones de T221 sobre la misma lógica. Probar APK release sin Metro, actualización con certificado idéntico y ausencia de permisos bloqueados. La entrega sigue sujeta a validación física y T201–T205 permanecen abiertos donde falte evidencia.
 
 Referencias: [versiones Expo](https://docs.expo.dev/build-reference/app-versions/), [distribución interna](https://docs.expo.dev/build/internal-distribution/), [monorepos](https://docs.expo.dev/build-reference/build-with-monorepos/) y [Forge1.4.2](https://github.com/digitalbazaar/forge/releases/tag/v1.4.2), consultadas29-oct.
+
+Los directorios generados .next-* de verificación privada se excluyen de Git, formato y ESLint, igual que los dos nombres de build ya previstos. No excluir fuentes de aplicación para obtener un control verde.

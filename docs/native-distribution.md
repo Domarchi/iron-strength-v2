@@ -1,8 +1,18 @@
 # Preparar e instalar las versiones móviles
 
-Último Android preview construido antes de T210–T221: **0.1.0/code 4**, EAS 91d38132-87fe-4aca-aae4-368f0076dae8, fuente d34366d. Corrige comentarios, teclado, área segura y selector de tema con texto ampliado. Firma, permisos mínimos, bundle y arranque en frío offline comprobados en emuladores Android de 4 y 16 KB; aceptación física pendiente. Code 1 es diagnóstico y code 2 conserva un cierre conocido; no distribuirlos. Code 3 quedó anterior al acabado del selector. iOS para simulador compiló correctamente (cf066780-0f66-4f6b-bde1-6454071513a1); todavía no hay un instalador firmado para iPhone o envío a tiendas.
+El [preview Android actual, 0.1.0/build 5](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/3bf1efbc-2481-45eb-af86-a39783b9af39) incluye T210–T221 y usa la API publicada en https://iron-strength-seven.vercel.app. El preview 4 queda como referencia histórica. T201–T205 siguen abiertos para ejecución iOS, teléfonos reales, candidato de producción, beta y tiendas.
 
-El backend completo de T221 ya está publicado, pero ese preview histórico no contiene las funciones nuevas. Preparar un preview actualizado antes de entregarlo para esta etapa; APK quality7 es solo QA x86_64 y no lo reemplaza. La ejecución iOS y la aceptación física siguen pendientes. Ver specs/010-private-training/release.md.
+## Preview5 · 29 de octubre de 2026
+
+Android: paquete com.domarchis.ironstrength.preview, versionCode 5, Expo 58.0.21 / React Native 0.88.1. APK de 111861087 bytes, SHA-256 `cd74aee20149d407e4c43e8905ac7b79920bc5c4d6bd2f65a3fc920fd076b3e8`. Conserva el certificado EAS de preview 4 y los mismos siete permisos efectivos; almacenamiento externo y superposición ausentes. Incluye arm64-v8a, armeabi-v7a, x86 y x86_64; las 56 bibliotecas de 64 bits cumplen alineación ELF/empaquetado de 16 KB.
+
+La construcción local empezó con el árbol preparado antes del commit; sus 899 archivos de cliente/reglas y 196 contenidos de fuentes del mapa real se contrastaron con b081be512c3c1b98ed20cac2053425d4d4e36aec. Bundle Hermes extraído del APK idéntico al generado por Gradle. La subida local informa fingerprint Unknown: no se inventa ese metadato. La copia redescargada de EAS tiene el mismo SHA-256 que el APK instalado en ambos emuladores.
+
+Actualización 4→5 sin desinstalar en emuladores propios de 4096/16384 bytes por página: un marcador privado creado antes de actualizar se conserva y se retira al finalizar; apertura fría en modo avión, acceso visible, proceso vivo y sin fatal propio. La primera observación de 4 KB encontró un diálogo de System UI; se conservó la evidencia, se eligió Wait y se repitió el arranque. Esto acredita instalación/apertura en emuladores, no un entrenamiento contra producción ni aceptación física.
+
+[iOS para simulador, 0.1.0/build 5](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/ca6664d1-9c61-4c59-b0db-21d40871f374): fuente b081be5, archivo de 28817702 bytes, SHA-256 `eb20076a55bd1723032269494a9ebd851d577b956eb88a281264a047bef67e73`. Info.plist y ambas arquitecturas Mach-O (arm64/x86_64) declaran simulador; Hermes usa la API publicada. Once manifiestos de privacidad inspeccionados. No se ejecutó en este host Linux, no se obtuvo el mapa de su build real y no es un instalador firmado para iPhone.
+
+El registro con los SDK actuales se comprueba aparte usando quality8, firma de depuración y la instancia aislada 55321. Ese APK no se distribuye a alumnos. El preview usa datos reales al entrar con una cuenta real: nunca ejecutar semillas o pruebas destructivas contra su API. Conservar los pendientes y actualizar sobre la instalación existente. Ver docs/native-quality.md y specs/010-private-training/release.md.
 
 ## Variantes
 
@@ -55,7 +65,7 @@ T201 bloquea en preview/producción los permisos heredados de almacenamiento ext
 
 [Estado del build anterior en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/7372df00-928f-4dc6-a714-4760fd192147): versión 0.1.0/code 2, paquete com.domarchis.ironstrength.preview, compilación de 5077116. Firma y manifiesto comprobados; actualizado en emulador Android 16 y abierto en frío en modo avión. Es un APK Android, no una instalación para iPhone ni un envío a Google Play. No usar este instalador para una nueva beta: el cierre de confirmación se corrigió en el código T202 y el reemplazo code 3 debe verificarse antes de distribuir. El cliente usa la API real al entrar con tu cuenta. La prueba completa del registro/offline y los teléfonos reales se documentan por separado. iPhone necesita la membresía/perfil de dispositivo del propietario antes de construir.
 
-## Android preview vigente · 25 de octubre de 2026
+## Android preview histórico · 25 de octubre de 2026
 
 [Build 4 en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/91d38132-87fe-4aca-aae4-368f0076dae8). APK de 111167087 bytes, SHA-256 66d70d4505a64b5cb5674238112a2b5edf0247b74bbd5bf0cf724bece6d5056f. Paquete com.domarchis.ironstrength.preview y mismo certificado EAS anterior. Siete permisos efectivos; almacenamiento externo y superposición ausentes. Bibliotecas de 64 bits con LOAD y empaquetado alineados a 16 KB.
 
@@ -63,8 +73,16 @@ Instalado sin desinstalar en AVD propios: de code 2 a 4 en 16 KB y de 3 a 4 en 4
 
 Este APK es para Android y usa la cuenta real existente. La versión preview mantiene una instalación separada de Expo Go, quality y la futura versión de tienda; sus datos locales no se trasladan automáticamente. Consultar docs/native-quality.md antes de las pruebas y conservar cualquier pendiente al actualizar. iPhone necesita su propio binario y provisión; no intentar instalar este APK allí.
 
-## iOS para simulador
+## iOS para simulador histórico · 25 de octubre
 
 [Build de simulador en Expo](https://expo.dev/accounts/domarchis/projects/iron-strength-mobile/builds/cf066780-0f66-4f6b-bde1-6454071513a1): 0.1.0/build 1, fuente d34366d, paquete .app universal arm64/x86_64, SDK iphonesimulator27.1 y mínimo iOS 16.4. Info.plist, plataforma Mach-O y bundle Hermes/API verificados. Archivo de 27972086 bytes/SHA-256 b7d8fbf66455352832b524cfb45890f58e3ff120db88f81829044c0172d1d00b. No hay provisión de dispositivo.
 
 Se puede usar con un simulador compatible en macOS; no se ejecutó en este host Linux. El binario para iPhone necesita Apple Developer, registro/provisión apropiados o TestFlight y su propia comprobación. No se solicitó una contraseña Apple, UDID o compra para obtener esta compilación.
+
+## Expo Go remoto con el SDK actual
+
+La copia aislada b081be5 también sirve Expo 58.0.21/RN 0.88.1 en el puerto propio 8087, con la API publicada y sin CI=1. Conserva los Metro anteriores. La conexión actual usa `expo start --go --tunnel ngrok --port 8087 --max-workers 2`: el proveedor predeterminado de este SDK entregó manifiestos, pero su enlace oficial de apertura devolvió 504; ngrok conserva el 307 hacia exps al solicitar HTTPS.
+
+Se comprobaron la página oficial de carga, los manifiestos SDK 58 de ambas plataformas, sus bundles por el túnel y el manifiesto firmado de iOS para el mismo proyecto EAS. El enlace vigente se entrega con el preview y se registra fuera de Git en preview5-go-remote-proof.json. Es temporal mientras este computador y Metro estén activos; no reutilizar enlaces de túneles anteriores. En iPhone, elegir Expo Go y usar la misma cuenta Expo que la CLI (domarchi; el owner del proyecto es domarchis). La cuenta de Iron Strength se usa después dentro de la app y conserva su contraseña propia.
+
+Esto permite revisar el código actual con Expo Go; no es TestFlight, no acredita aceptación física y no sustituye el binario firmado o las pruebas de apertura iPhone sin Metro.
