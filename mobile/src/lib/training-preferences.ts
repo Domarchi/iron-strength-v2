@@ -63,6 +63,10 @@ export class TrainingPreferencesController {
       throw Error(
         "Espera a que terminen de cargarse o guardarse tus preferencias antes de iniciar.",
       );
+    if (this.state.blocked)
+      throw Error(
+        "No pudimos leer tus preferencias. Abre Cuenta y usa Releer preferencias antes de iniciar.",
+      );
     return this.state.value.restSeconds;
   };
   /** Account removal holds this lease before any awaited cleanup or request. */

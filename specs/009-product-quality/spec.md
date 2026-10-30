@@ -1,5 +1,11 @@
 # Calidad de producto de Iron Strength
 
+## T223 · Inicio con preferencias verificadas
+
+Si falla la lectura de preferencias o su formato no es compatible, no iniciar un entrenamiento nuevo usando silenciosamente el descanso predeterminado de90segundos. Mantener intacto el almacenamiento y mostrar cómo abrir Cuenta/Releer preferencias; una relectura correcta recupera el valor confirmado, incluido0. No cambiar el snapshot o descanso de un entrenamiento ya iniciado ni impedir recuperarlo por ese fallo de preferencias. Conservar las guardas durante lectura/guardado/eliminación y los errores de escritura existentes.
+
+Reproducir primero el inicio con JSON roto, formato futuro y fallo transitorio de lectura sobre un valor confirmado distinto del predeterminado. Verificar después recuperación y ausencia de escrituras; comprobar en Chromium/WebKit que el inicio queda detenido y la relectura permite continuar, además de conservar el caso existente de recuperación de un registro con preferencias futuras. Ejecutar las comprobaciones sobre fuentes propias y APIs simuladas, sin tocar la base55321 o la demo que está probando el propietario. No actualizar o reiniciar sus servidores durante esta revisión.
+
 ## T208 · Referencia directa de Hevy mediante REA
 
 El propietario solicita acercar la app móvil a Hevy y usar REA. Analizar la distribución web pública con el CLI oficial ya instalado, sin ejecutar sus bundles, entrar en cuentas o modificar la configuración MCP. Conservar inventario, hashes y Evidence completos fuera del repositorio; registrar módulos, rangos y límites en docs/research/hevy-rea.md. La evidencia web no acredita el paquete móvil ni su comportamiento en ejecución.
