@@ -12,3 +12,5 @@ mobile/.expo/
 mobile/dist/
 mobile/package-lock.json
 mobile/expo-env.d.ts
+
+.next-*/

@@ -20,3 +20,5 @@ __pycache__/
 public/offline-workers/
 .next-interactive/
 .next-native-e2e/
+
+.next-*/

@@ -7,7 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "buildNumber": "5"
     },
     "android": {
       "adaptiveIcon": {
@@ -15,7 +16,7 @@
         "foregroundImage": "./assets/icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 4
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/icon.png",
@@ -30,7 +31,8 @@
         }
       ],
       "expo-font",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-image"
     ],
     "scheme": "iron-strength",
     "experiments": {
