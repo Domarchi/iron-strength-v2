@@ -1,0 +1,225 @@
+{
+  "formatVersion": 1,
+  "status": "Borrador técnico T203; no importado, enviado o aprobado",
+  "reviewedAt": "2026-10-30",
+  "canSubmit": false,
+  "scope": "Cliente nativo actual y API propia; revisar de nuevo con AAB/IPA final y las consolas del titular",
+  "officialSources": {
+    "apple": "https://developer.apple.com/app-store/app-privacy-details/",
+    "google": "https://support.google.com/googleplay/android-developer/answer/10787469?hl=en",
+    "exportCompliance": "https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/"
+  },
+  "dataSets": [
+    {
+      "id": "account-name",
+      "dataInCurrentCode": "Nombre visible del perfil y registro por invitación; no es una lista de contactos del teléfono.",
+      "appleProposal": {
+        "category": "Contact Info / Name",
+        "collected": true,
+        "linkedToUser": true,
+        "purposes": ["App Functionality"],
+        "usedForTrackingByFirstParty": false
+      },
+      "googleProposal": {
+        "category": "Personal info / Name",
+        "collected": true,
+        "ephemeral": false,
+        "required": true,
+        "purposes": ["App functionality", "Account management"]
+      },
+      "finalConsoleSelection": null,
+      "evidenceFiles": [
+        "mobile/src/lib/client.ts",
+        "src/lib/mobile/production.ts",
+        "src/lib/mobile/access-api.ts"
+      ]
+    },
+    {
+      "id": "account-email",
+      "dataInCurrentCode": "Correo de acceso/invitación. login_attempts conserva SHA-256 del correo para limitar fallos; no es un dato anónimo.",
+      "appleProposal": {
+        "category": "Contact Info / Email Address",
+        "collected": true,
+        "linkedToUser": true,
+        "purposes": ["App Functionality"],
+        "usedForTrackingByFirstParty": false
+      },
+      "googleProposal": {
+        "category": "Personal info / Email address",
+        "collected": true,
+        "ephemeral": false,
+        "required": true,
+        "purposes": [
+          "App functionality",
+          "Account management",
+          "Fraud prevention, security, and compliance"
+        ]
+      },
+      "finalConsoleSelection": null,
+      "evidenceFiles": [
+        "mobile/src/lib/client.ts",
+        "src/lib/mobile/access-api.ts",
+        "src/lib/auth/rate-limit.ts"
+      ]
+    },
+    {
+      "id": "account-id",
+      "dataInCurrentCode": "ID del usuario que relaciona programas, entrenamientos, permisos y contenido. Los UUID de registros no son identificadores publicitarios del dispositivo.",
+      "appleProposal": {
+        "category": "Identifiers / User ID",
+        "collected": true,
+        "linkedToUser": true,
+        "purposes": ["App Functionality"],
+        "usedForTrackingByFirstParty": false
+      },
+      "googleProposal": {
+        "category": "Personal info / User IDs",
+        "collected": true,
+        "ephemeral": false,
+        "required": true,
+        "purposes": ["App functionality", "Account management"]
+      },
+      "finalConsoleSelection": null,
+      "evidenceFiles": [
+        "src/lib/mobile/production.ts",
+        "mobile/src/lib/client.ts",
+        "src/lib/mobile/typed-recording-api.ts"
+      ]
+    },
+    {
+      "id": "fitness",
+      "dataInCurrentCode": "Rutinas y ejercicios, series, cargas, repeticiones, peso corporal del ejercicio, duración, distancia y esfuerzo; referencias históricas y progresión propia.",
+      "appleProposal": {
+        "category": "Health & Fitness / Fitness",
+        "collected": true,
+        "linkedToUser": true,
+        "purposes": ["App Functionality", "Product Personalization"],
+        "usedForTrackingByFirstParty": false
+      },
+      "googleProposal": {
+        "category": "Health and fitness / Fitness info",
+        "collected": true,
+        "ephemeral": false,
+        "required": true,
+        "purposes": ["App functionality", "Personalization"]
+      },
+      "finalConsoleSelection": null,
+      "evidenceFiles": [
+        "src/lib/mobile/typed-recording-api.ts",
+        "src/lib/mobile/typed-personal-api.ts",
+        "src/lib/mobile/training-progress-api.ts",
+        "mobile/src/lib/client.ts"
+      ]
+    },
+    {
+      "id": "free-text",
+      "dataInCurrentCode": "Notas opcionales y nombres/descripciones propios de rutinas y ejercicios. No se pide introducir diagnósticos médicos en estos campos.",
+      "appleProposal": {
+        "category": "User Content / Other User Content",
+        "collected": true,
+        "linkedToUser": true,
+        "purposes": ["App Functionality"],
+        "usedForTrackingByFirstParty": false
+      },
+      "googleProposal": {
+        "category": "App activity / Other user-generated content",
+        "collected": true,
+        "ephemeral": false,
+        "required": false,
+        "purposes": ["App functionality"]
+      },
+      "finalConsoleSelection": null,
+      "evidenceFiles": [
+        "src/lib/mobile/typed-recording-api.ts",
+        "src/lib/mobile/personal-exercise-api.ts",
+        "src/lib/mobile/typed-personal-api.ts"
+      ]
+    },
+    {
+      "id": "coach-comments",
+      "dataInCurrentCode": "Contenido de comentarios del entrenamiento y conversación privada entre el alumno y su coach.",
+      "appleProposal": {
+        "category": "User Content / Other User Content",
+        "collected": true,
+        "linkedToUser": true,
+        "purposes": ["App Functionality"],
+        "usedForTrackingByFirstParty": false
+      },
+      "googleProposal": {
+        "category": "Messages / Other in-app messages",
+        "collected": true,
+        "ephemeral": false,
+        "required": false,
+        "purposes": ["App functionality"]
+      },
+      "finalConsoleSelection": null,
+      "evidenceFiles": ["src/lib/mobile/comments-api.ts", "mobile/src/lib/client.ts"]
+    }
+  ],
+  "crossCutting": {
+    "collectsAccountAndTrainingData": true,
+    "doNotSelectNoDataCollected": true,
+    "firstPartyAdvertisingObservedInCode": false,
+    "trackingSdkObservedInAppDependencies": false,
+    "googleSharingSelection": null,
+    "sharingReason": "Coach y alumno usan el servicio privado. Evaluar condiciones actuales de Vercel/Supabase como proveedores antes de aplicar excepciones; no concluir no compartimos solo por usar nube.",
+    "allSdkDataEncryptedInTransitFinalSelection": null,
+    "ownApiTransport": "Cliente exige HTTPS y usa Bearer sin cookies; Info.plistpreview8 bloquea cargas arbitrarias, permite red local. Falta contrastar todo el tráfico del candidato final/SDK.",
+    "accountCreation": "Por invitación, nombre/correo y contraseña. Google de Expo Go autentica herramientas de desarrollo, no la cuenta de Iron Strength.",
+    "deletion": "Alumno: Cuenta/Borrar mi cuenta con confirmación y borrado de datos/fotos en servidor. Coach propietario: soporte con verificación; no se elimina desde la app.",
+    "deletionUrl": "https://iron-strength-seven.vercel.app/delete-account",
+    "privacyUrl": "https://iron-strength-seven.vercel.app/privacy",
+    "backupRetention": "Objetivo30días, local cifrado; excepciones de última copia válida y solicitudes reconciliadas antes de restaurar según procedimiento. No es retención de telemetría."
+  },
+  "localOnlyObserved": [
+    {
+      "data": "Término de búsqueda del catálogo",
+      "evidenceFiles": ["mobile/src/components/exercise-catalog.tsx", "mobile/src/lib/client.ts"],
+      "boundary": "Filtra el catálogo recibido en memoria; no se transmite el texto de búsqueda. Consultar un ejercicio por ID sí genera una petición."
+    },
+    {
+      "data": "Apariencia y preferencias de entrenamiento",
+      "evidenceFiles": ["mobile/src/lib/appearance.ts", "mobile/src/lib/training-preferences.ts"],
+      "boundary": "Preferencias locales. No confundir con entrenamientos y borradores que se envían al confirmar."
+    },
+    {
+      "data": "Conectividad",
+      "evidenceFiles": ["mobile/src/lib/sync-environment.ts"],
+      "boundary": "Solo estado conectado/alcanzable. No consulta IP/MAC por API; el transporte HTTP y proveedores pueden recibir IP y metadatos de red."
+    }
+  ],
+  "separateOrUnverified": [
+    {
+      "topic": "Medidas y fotos",
+      "currentEvidence": "Solo web externa, abierta con Linking.openURL; no WebView controlada ni subida nativa de fotos.",
+      "consoleSelection": null,
+      "remaining": "Revisar alcance del servicio web y comportamiento final; no deducir ausencia de estos datos solo por permisos del binario."
+    },
+    {
+      "topic": "Diagnósticos, interacción, IP, identificadores técnicos y soporte externo",
+      "currentEvidence": "No se encontró SDK dedicado de anuncios/analítica en dependencias propias. Proveedores y correo de soporte pueden conservar datos técnicos.",
+      "consoleSelection": null,
+      "remaining": "Confirmar categorías, fines y conservación real de proveedores/servicio; no trasladar30días del respaldo a logs."
+    },
+    {
+      "topic": "Biometría",
+      "currentEvidence": "PermisosUSE_BIOMETRIC/USE_FINGERPRINT y claveFaceID del SDK presentes. La app usa SecureStore sin requireAuthentication; no recibe muestras biométricas.",
+      "consoleSelection": null,
+      "remaining": "Revisar candidato de dispositivo. Presencia de permiso no acredita recopilación."
+    },
+    {
+      "topic": "Cifrado",
+      "currentEvidence": "HTTPS, SecureStore y expo-crypto.randomUUID. No se observó cifrado propio de mensajes ni E2EE. ITSAppUsesNonExemptEncryption ausente en preview8.",
+      "consoleSelection": null,
+      "remaining": "Determinar declaración de exportación para países y binario final; no establecer una exención sin esa comprobación."
+    }
+  ],
+  "releaseGates": {
+    "storeAccountAndPublisherVerified": false,
+    "productionDeviceArtifactsVerified": false,
+    "providerDataPracticesFullyVerified": false,
+    "consoleQuestionnairesReviewed": false,
+    "ownerFinalSubmissionApproval": false
+  },
+  "outOfScopeHere": "No se decide audiencia infantil, clasificación por edad, estatus médico, países, titular legal o declaración fiscal sin la consola y decisiones del propietario."
+}

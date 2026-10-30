@@ -1,6 +1,6 @@
 # Beta y preparación de envío
 
-Estado del 25 de octubre de 2026: hay un APK Android preview y controles de software/native QA; no hay IPA, envío a tiendas o aceptación física completa. T201/T202 conservan sus pendientes. Esta guía prepara el recorrido y no declara una beta ya ejecutada.
+Estado del 30 de octubre de 2026: hay Androidpreview6, iOSpreview8 de simulador y controles nativos; no hay IPA de dispositivo, envío a tiendas o aceptación física completa. T201/T202 conservan sus pendientes. Esta guía prepara el recorrido y no declara una beta ya ejecutada.
 
 ## Cuentas y participantes
 
@@ -11,6 +11,8 @@ Google Play tiene una tarifa única de registro de 25 USD y exige verificación 
 Mantener la primera validación del producto con el coach y sus tres alumnos. Registrar plataforma/dispositivo/build, acciones, problemas y feedback en cada recorrido de docs/native-quality.md y docs/phone-validation.md. Asignar programas reales solo a sus propietarios. Las cuentas/semillas de QA no se trasladan a producción.
 
 ## Artefacto y ficha
+
+La matriz de categorías y el inventario de permisos/manifiestos actuales están en [privacy-support-draft.md](privacy-support-draft.md), con propuestas por dato y respuestas finales pendientes. No declarar ausencia de recopilación por los manifiestos de SDK.
 
 Los textos propuestos están en metadata.es-CL.json: nombre, subtítulo, descripción breve y completa. Responsable y contacto fueron autorizados el 25-oct-2026; privacyUrl, supportUrl y accountDeletionUrl apuntan a las páginas públicas verificadas de M. No son formularios de tienda enviados. Texto revisado con límites actuales de nombre 30, subtítulo Apple 30, breve Google 80 y descripción Google 4000. [Ficha Google](https://support.google.com/googleplay/android-developer/answer/9859152?hl=en-EN), [página de producto Apple](https://developer.apple.com/app-store/product-page/).
 

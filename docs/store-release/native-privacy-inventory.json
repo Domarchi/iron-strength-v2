@@ -1,0 +1,244 @@
+{
+  "formatVersion": 1,
+  "status": "Inventario técnico de previews; no declaración final ni binario de dispositivo iOS",
+  "reviewedAt": "2026-10-30",
+  "repositoryCommit": "f7f4095738469c72cb854e10f3340c0cb0fbec98",
+  "applicationSourceCommit": "7d9a7e85d086a5cb8f339b24028eff031ce76319",
+  "productionCandidate": false,
+  "android": {
+    "applicationId": "com.domarchis.ironstrength.preview",
+    "versionCode": 6,
+    "artifactSha256": "ee56da331bd2a432b0b0f9c7f27980190e6b6876b7722316e45244b6be290107",
+    "permissions": [
+      "android.permission.INTERNET",
+      "android.permission.VIBRATE",
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.ACCESS_WIFI_STATE",
+      "android.permission.USE_BIOMETRIC",
+      "android.permission.USE_FINGERPRINT",
+      "com.domarchis.ironstrength.preview.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+    ],
+    "easUploadId": "29cc234b-c9b8-4643-8df5-1c0b45066575"
+  },
+  "ios": {
+    "easBuildId": "2833dbc9-ade5-4535-a847-86336bf43244",
+    "applicationId": "com.domarchis.ironstrength.preview",
+    "buildNumber": "8",
+    "artifactSha256": "81e0e39c6b0a6e7d863cdfbdec20fe80362c9ee7fae3e9c1d79d7036efa9571d",
+    "bundleSha256": "7abc046875d8908508451560cccfe5580c4124e3d896bc18a4dedd6cb7596b47",
+    "mapSha256": "6b190eadb2521896b8e95e8c8b66eafad0de386ce1f35f4c03219bf247f764c7",
+    "platform": "iPhoneSimulator",
+    "infoPlist": {
+      "CFBundleIdentifier": "com.domarchis.ironstrength.preview",
+      "CFBundleVersion": "8",
+      "CFBundleShortVersionString": "0.1.0",
+      "ITSAppUsesNonExemptEncryption": null,
+      "NSFaceIDUsageDescription": "Allow IronStrengthPreview to access your Face ID biometric data.",
+      "NSCameraUsageDescription": null,
+      "NSPhotoLibraryUsageDescription": null,
+      "NSMicrophoneUsageDescription": null,
+      "NSLocationWhenInUseUsageDescription": null,
+      "NSHealthShareUsageDescription": null,
+      "NSHealthUpdateUsageDescription": null,
+      "NSAppTransportSecurity": {
+        "NSAllowsArbitraryLoads": false,
+        "NSAllowsLocalNetworking": true
+      },
+      "usageDescriptions": {
+        "NSFaceIDUsageDescription": "Allow IronStrengthPreview to access your Face ID biometric data."
+      },
+      "NSPhotoLibraryAddUsageDescription": null,
+      "NSLocationAlwaysUsageDescription": null,
+      "NSLocationAlwaysAndWhenInUseUsageDescription": null,
+      "NSUserTrackingUsageDescription": null
+    },
+    "privacyManifests": [
+      {
+        "path": "PrivacyInfo.xcprivacy",
+        "sha256": "06949f6d09a83cea00c3a4895bb7300f2580d52852c6ade1a9caa169934a1001",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          }
+        ]
+      },
+      {
+        "path": "ExpoConstants_privacy.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "2b2d8edb71d51c5b1f1ace4cdb28a94baf22fdde9bbf2e2bfc17d187ff7b5f47",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
+      },
+      {
+        "path": "ExpoSystemUI_privacy.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "2b2d8edb71d51c5b1f1ace4cdb28a94baf22fdde9bbf2e2bfc17d187ff7b5f47",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
+      },
+      {
+        "path": "React-cxxreact_privacy.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "0587d155c56a6f4f0647ebc6b6a0bd026615cd610ee8f209a9786b79a96ad335",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          }
+        ]
+      },
+      {
+        "path": "React-timing_privacy.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "23ddfa062a6d4392e65882d151fdececbd29904a227ad8918c0144ebc777ee61",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          }
+        ]
+      },
+      {
+        "path": "Frameworks/React.framework/PrivacyInfo.xcprivacy",
+        "sha256": "677d9a3f1f255ad8e2c918982b385d801fc0fd0d37c2026ab3259c910fde28c4",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          }
+        ]
+      },
+      {
+        "path": "Frameworks/ExpoFileSystem.framework/expo-file-system_ExpoFileSystem.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "33b0e074f273f588a64ba5632909c6a8cf1f16db8e4cd84c6978bd222dfd65bd",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["0A2A.1", "3B52.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1", "85F4.1"]
+          }
+        ]
+      },
+      {
+        "path": "Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_SocketRocket.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "97e32f473284df703a5fc921076956ef84a765ca9e7ba2e7ba61350652d12727",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": []
+      },
+      {
+        "path": "Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_boost.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "d3559c988dff940d4f758f37a0ba1863208304e33ab0b97c0e3dd5d3762f5f1d",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          }
+        ]
+      },
+      {
+        "path": "Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_folly.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "0587d155c56a6f4f0647ebc6b6a0bd026615cd610ee8f209a9786b79a96ad335",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          }
+        ]
+      },
+      {
+        "path": "Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle/PrivacyInfo.xcprivacy",
+        "sha256": "0587d155c56a6f4f0647ebc6b6a0bd026615cd610ee8f209a9786b79a96ad335",
+        "tracking": false,
+        "trackingDomains": [],
+        "collected": [],
+        "requiredApis": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          }
+        ]
+      }
+    ]
+  },
+  "limitations": [
+    "Los SDK no declaran los datos que transmite la lógica de Iron Strength",
+    "Presencia de permisos no acredita uso o recopilación del dato",
+    "No ejecución/tráfico del binario de dispositivo final",
+    "ITSAppUsesNonExemptEncryption ausente no equivale a exención aprobada"
+  ],
+  "javascriptMapsReview": {
+    "status": "passed",
+    "scope": "Known dedicated analytics/ads SDK package paths in exact current preview JavaScript maps; not every native SDK or network flow",
+    "maps": [
+      {
+        "platform": "android",
+        "mapSha256": "cd9988e67489aa49186bc6acd7f90460bd5419b9614aa1ae7aa5b9488bdf9873",
+        "mappedSources": 1568,
+        "dedicatedSdkNameMatches": []
+      },
+      {
+        "platform": "ios",
+        "mapSha256": "6b190eadb2521896b8e95e8c8b66eafad0de386ce1f35f4c03219bf247f764c7",
+        "mappedSources": 1576,
+        "dedicatedSdkNameMatches": []
+      }
+    ]
+  }
+}
