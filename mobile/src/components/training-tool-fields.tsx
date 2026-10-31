@@ -1,5 +1,5 @@
-import { Pressable, Text, TextInput, View } from "react-native";
-import { Action, s, usePalette } from "./ui";
+import { Pressable, Text, View } from "react-native";
+import { Action, Input, s, usePalette } from "./ui";
 import { plateEquipmentSchema, type PlateEquipment } from "../../../src/domain/training-tools";
 export function ToolField({
   label,
@@ -18,16 +18,13 @@ export function ToolField({
   return (
     <View style={{ flex: 1, minWidth: 90, gap: 4 }}>
       <Text style={[s.caption, { color: p.muted }]}>{label}</Text>
-      <TextInput
+      <Input
         accessibilityLabel={label}
         value={value}
         onChangeText={onChange}
         editable={!disabled}
         keyboardType={integer ? "number-pad" : "decimal-pad"}
-        keyboardAppearance={p.dark ? "dark" : "light"}
-        selectionColor={p.blue}
         maxLength={16}
-        style={[s.input, { color: p.ink, borderColor: p.control }]}
       />
     </View>
   );

@@ -72,12 +72,13 @@ describe("apariencia del dispositivo", () => {
     "mantiene contraste AA en textos y controles de %s",
     (mode) => {
       const p = palettes[mode];
-      for (const bg of [p.bg, p.card, p.raised, p.tint])
+      for (const bg of [p.bg, p.card, p.raised, p.tint, p.field, p.completed])
         for (const fg of [p.ink, p.muted, p.blue, p.success, p.danger])
           expect(contrast(fg, bg), `${fg} / ${bg}`).toBeGreaterThanOrEqual(4.5);
-      for (const bg of [p.bg, p.card, p.raised, p.tint])
+      for (const bg of [p.bg, p.card, p.raised, p.tint, p.field, p.completed])
         expect(contrast(p.control, bg)).toBeGreaterThanOrEqual(3);
       expect(contrast("#ffffff", p.button)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(p.dark ? p.bg : "#ffffff", p.completedMark)).toBeGreaterThanOrEqual(3);
     },
   );
 });
