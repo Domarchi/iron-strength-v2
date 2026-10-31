@@ -45,7 +45,7 @@ export function SetCheck({
           justifyContent: "center",
         }}
       >
-        {checked ? <Icon name="check" color="#fff" size={16} /> : null}
+        {checked ? <Icon name="check" color={p.dark ? p.bg : "#fff"} size={15} /> : null}
       </View>
     </Pressable>
   );

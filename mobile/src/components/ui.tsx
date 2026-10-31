@@ -1,17 +1,26 @@
 import { ConnectionStatus } from "./connection-status";
-import type { PropsWithChildren } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState, type PropsWithChildren } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type TextInputProps,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePalette } from "../lib/appearance-context";
 import { Icon, type IconName } from "./icon";
 export { usePalette } from "../lib/appearance-context";
 export type { Palette } from "../lib/appearance";
 export const s = StyleSheet.create({
-  body: { fontSize: 15, lineHeight: 21 },
+  body: { fontSize: 15, lineHeight: 22 },
   caption: { fontSize: 13, lineHeight: 18, fontWeight: "400" },
-  heading: { fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -0.6 },
-  subheading: { fontSize: 18, lineHeight: 24, fontWeight: "600", letterSpacing: -0.3 },
-  card: { borderRadius: 12, padding: 16, borderWidth: StyleSheet.hairlineWidth, gap: 10 },
+  heading: { fontSize: 30, lineHeight: 34, fontWeight: "700", letterSpacing: -0.8 },
+  subheading: { fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.4 },
+  card: { borderRadius: 16, padding: 16, borderWidth: 0, gap: 12 },
   number: { fontVariant: ["tabular-nums"], fontWeight: "600" },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 18, gap: 12 },
   row: {
@@ -24,7 +33,7 @@ export const s = StyleSheet.create({
   button: {
     maxWidth: "100%",
     minHeight: 48,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: "center",
@@ -33,12 +42,13 @@ export const s = StyleSheet.create({
   },
   buttonText: { fontSize: 15, lineHeight: 22, fontWeight: "600" },
   input: {
-    minHeight: 52,
+    minHeight: 48,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 16,
+    lineHeight: 22,
   },
   label: { fontSize: 15, lineHeight: 21, fontWeight: "500" },
   screen: { flex: 1 },
@@ -91,27 +101,58 @@ export function Action({
       ]}
     >
       {busy ? (
-        <ActivityIndicator color={secondary || quiet ? p.blue : "#fff"} />
-      ) : (
-        <>
-          {icon ? (
-            <Icon name={icon} size={19} color={quiet ? p.blue : secondary ? p.ink : "#fff"} />
-          ) : null}
-          <Text
-            style={[
-              s.buttonText,
-              {
-                color: quiet ? p.blue : secondary ? p.ink : "#fff",
-                textAlign: "center",
-                flexShrink: 1,
-              },
-            ]}
-          >
-            {label}
-          </Text>
-        </>
-      )}
+        <ActivityIndicator size="small" color={secondary || quiet ? p.blue : "#fff"} />
+      ) : icon ? (
+        <Icon name={icon} size={19} color={quiet ? p.blue : secondary ? p.ink : "#fff"} />
+      ) : null}
+      <Text
+        style={[
+          s.buttonText,
+          {
+            color: quiet ? p.blue : secondary ? p.ink : "#fff",
+            textAlign: "center",
+            flexShrink: 1,
+          },
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
+  );
+}
+export function Input({
+  style,
+  placeholderTextColor,
+  selectionColor,
+  keyboardAppearance,
+  onFocus,
+  onBlur,
+  ...props
+}: TextInputProps & { accessibilityLabel: string }) {
+  const p = usePalette();
+  const [focused, setFocused] = useState(false);
+  return (
+    <TextInput
+      {...props}
+      placeholderTextColor={placeholderTextColor ?? p.muted}
+      selectionColor={selectionColor ?? p.blue}
+      keyboardAppearance={keyboardAppearance ?? (p.dark ? "dark" : "light")}
+      underlineColorAndroid="transparent"
+      onFocus={(event) => {
+        setFocused(true);
+        onFocus?.(event);
+      }}
+      onBlur={(event) => {
+        setFocused(false);
+        onBlur?.(event);
+      }}
+      style={[
+        s.input,
+        { color: p.ink, backgroundColor: p.field, borderColor: p.control },
+        style,
+        focused ? { borderColor: p.blue } : null,
+      ]}
+    />
   );
 }
 export function Page({ children, compact = false }: PropsWithChildren<{ compact?: boolean }>) {
@@ -234,10 +275,9 @@ export function SessionMark({ label }: { label: string }) {
   return (
     <View
       style={{
-        height: 36,
-        width: 36,
-        borderRadius: 11,
-        borderWidth: StyleSheet.hairlineWidth,
+        height: 32,
+        width: 32,
+        borderRadius: 8,
         borderColor: p.border,
         backgroundColor: p.raised,
         alignItems: "center",
