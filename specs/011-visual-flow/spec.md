@@ -20,7 +20,7 @@ Aprobación recibida el 31-oct-2026: «Sí, aplica ese diseño y sigue con el pl
 
 Unificar texto, números tabulares, espacios, superficies, botones, campos, filas, paneles, cargas/errores y estados vacíos. El azul expresa acción/selección; menos bordes y contenedores anidados. Check visible pequeño, objetivo táctil mínimo44px (conservar48donde ya existe), contrasteAA, foco visible, texto ampliado y movimiento reducido.
 
-Inicio prioriza Retomar o próxima rutina, mantiene avance semanal y agrupa disponibilidad/sincronización sin duplicar pendientes. Cinco destinos con propósito: Inicio, Entrenar, Historial, Progreso y Cuenta. Cuenta agrupa preferencias, datos y sesión; los pendientes reales permanecen accesibles.
+Inicio prioriza Retomar o próxima rutina, mantiene avance semanal y agrupa disponibilidad/sincronización sin duplicar pendientes. Cinco destinos con propósito: Inicio, Entrenar, Historial, Progreso y Cuenta. En pantallas anchas, la etiqueta al lado del icono mantiene altura natural: medir su contenido nunca debe crear crecimiento de la barra sobre sí misma. Cambiar orientación o escala conserva el contenido visible y los controles dentro de su área táctil. Cuenta agrupa preferencias, datos y sesión; los pendientes reales permanecen accesibles.
 
 Registro compacta cabecera/índice y etiquetas repetidas, conserva objetivo/última ejecución/valores diferentes por serie, foco, posición y término absoluto del descanso. Superserie mantiene miembros y siguiente ronda. Teclado/descanso/acciones no se superponen. Historial, alternativas, indicaciones y herramientas se reúnen de forma consistente; la copia sigue explícita y no modifica series hechas. Cierre distingue lo realizado/pendiente, guardado local, envío y confirmación.
 
