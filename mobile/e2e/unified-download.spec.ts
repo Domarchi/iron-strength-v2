@@ -16,7 +16,7 @@ test("misma descarga completa en Inicio, Entrenar y Cuenta sin crear un paquete 
       "true",
     );
     await expect(
-      page.getByRole("heading", { name: name === "Inicio" ? "Hola, Ana" : name, exact: true }),
+      page.getByRole("heading", { name: name === "Inicio" ? "Tu semana" : name, exact: true }),
     ).toBeVisible();
     await expect(
       downloadCard(page).getByRole("button", {

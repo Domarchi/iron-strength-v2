@@ -33,6 +33,7 @@ function ActiveTrainingCard() {
         {
           backgroundColor: p.card,
           borderColor: p.border,
+          padding: 20,
         },
       ]}
     >
@@ -42,12 +43,10 @@ function ActiveTrainingCard() {
           ? "PENDIENTE DE ENVIAR"
           : a.pause?.pausedAtMs != null
             ? "ENTRENAMIENTO EN PAUSA"
-            : "ENTRENAMIENTO EN CURSO"}
+            : "EN CURSO"}
       </Text>
-      <Text style={[s.heading, { color: p.ink, fontSize: 24, lineHeight: 30 }]}>
-        {trainingTitle(a)}
-      </Text>
-      <Text style={[s.body, { color: p.muted }]}>
+      <Text style={[s.heading, { color: p.ink }]}>{trainingTitle(a)}</Text>
+      <Text style={[s.caption, { color: p.muted }]}>
         {a.draft.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0)} series
         registradas ·{" "}
         {training.blocked
@@ -59,7 +58,11 @@ function ActiveTrainingCard() {
       {training.error ? <Notice message={training.error} /> : null}
       <Action
         icon="arrow"
-        label={a.draft.status === "pending_save" ? "Revisar envío" : "Retomar entrenamiento"}
+        iconPosition="end"
+        label={a.draft.status === "pending_save" ? "Revisar envío" : "Retomar"}
+        accessibilityLabel={
+          a.draft.status === "pending_save" ? "Revisar envío" : "Retomar entrenamiento"
+        }
         onPress={() =>
           router.push({ pathname: "/workout/[id]", params: { id: a.draft.workoutId } })
         }

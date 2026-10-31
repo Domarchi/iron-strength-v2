@@ -3,7 +3,7 @@
 - [x] T224 · Registrar versión real, capturas y ocho recorridos; separar medidas actuales, código y evidencia histórica. Referencia completa del coach reservada a T232 antes de afirmar mejoras.
 - [x] T225 · Seis capturas claro/oscuro, prototipo/comparación, 88 E2E y HTTPS verificado. Diseño aprobado expresamente el 31-oct-2026: «Sí, aplica ese diseño y sigue con el plan completo».
 - [x] T226 · Paletas y estilos compartidos, Input accesible adoptado en ToolField, botones busy con texto y check compacto contrastado. Verificación: check raíz/móvil, 66 E2E y dos exportaciones Hermes.
-- [ ] T227 · Inicio, navegación y Cuenta simplificados.
+- [x] T227 · Inicio/variante offline y Cuenta reorganizados, prioridad Retomar, progreso accesible y disponibilidad compacta. 118 E2E actuales y controles de código aprobados; entrega final en T233.
 - [ ] T228 · Registro/descanso/contexto/cierre mejorados.
 - [ ] T229 · Creación/edición de rutinas más directa.
 - [ ] T230 · Historial, progreso y resultados coherentes.

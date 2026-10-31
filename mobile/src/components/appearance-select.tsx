@@ -8,7 +8,7 @@ const options: { value: AppearancePreference; label: string }[] = [
   { value: "dark", label: "Oscuro" },
   { value: "system", label: "Sistema" },
 ];
-export function AppearanceSelect() {
+export function AppearanceSelect({ plain = false }: { plain?: boolean }) {
   const p = usePalette(),
     a = useAppearance(),
     { fontScale } = useWindowDimensions(),
@@ -20,8 +20,13 @@ export function AppearanceSelect() {
         ? "Tema oscuro"
         : "Tema claro";
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-      <Text style={[s.subheading, { color: p.ink }]}>Apariencia</Text>
+    <View
+      style={[
+        plain ? { gap: 12 } : s.card,
+        { backgroundColor: plain ? "transparent" : p.card, borderColor: p.border },
+      ]}
+    >
+      <Text style={[plain ? s.label : s.subheading, { color: p.ink }]}>Apariencia</Text>
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel="Tema de la app"

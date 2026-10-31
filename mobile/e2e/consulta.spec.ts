@@ -126,7 +126,9 @@ test("acceso → semana → rutina y alternativas; consulta sin escrituras ni to
   await enter(page);
   await expect(page.getByText("Hola, Ana")).toBeVisible();
   await expect(page.getByText("SIGUIENTE SESIÓN", { exact: true })).toBeVisible();
-  await expect(page.getByText("0 de 1 sesiones completadas")).toBeVisible();
+  await expect(
+    page.getByRole("progressbar", { name: "Avance semanal", exact: true }),
+  ).toHaveAttribute("aria-valuenow", "0");
   for (const tab of await page.getByRole("tab").all()) {
     const box = await tab.boundingBox();
     expect(box).not.toBeNull();
@@ -461,7 +463,9 @@ test("registro real conserva el payload ante respuesta perdida y confirma un ún
     }),
   ).toBeNull();
   await page.getByRole("button", { name: "Volver a mi semana", exact: true }).click();
-  await expect(page.getByText("1 de 1 sesiones completadas", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("progressbar", { name: "Avance semanal", exact: true }),
+  ).toHaveAttribute("aria-valuenow", "1");
 });
 test("fallo de almacenamiento bloquea inicio silencioso y permite recuperar el guardado", async ({
   page,
@@ -568,7 +572,7 @@ test("apariencia clara y negra persiste sin tocar el entrenamiento; sistema resp
     page
       .getByTestId("app-page")
       .filter({ has: page.getByRole("radiogroup", { name: "Tema de la app" }) }),
-  ).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  ).toHaveCSS("background-color", "rgb(11, 12, 14)");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 });
 
@@ -627,10 +631,10 @@ test("salir conserva apariencia oscura y la apertura siguiente la recupera", asy
   await expect(page.getByRole("radio", { name: "Oscuro", exact: true })).toBeChecked();
   await page.getByRole("button", { name: "Salir", exact: true }).click();
   await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
-  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(11, 12, 14)");
   await page.reload();
   await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
-  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(11, 12, 14)");
   await page.screenshot({ path: test.info().outputPath("login-dark.png") });
 });
 

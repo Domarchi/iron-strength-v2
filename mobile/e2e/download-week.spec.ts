@@ -60,10 +60,9 @@ test("descarga completa, recarga y eliminación conservan el entrenamiento inici
     })
     .click();
   await expect(
-    page
-      .getByText("Descarga tus entrenamientos para usarlos sin Internet.", { exact: true })
-      .filter({ visible: true }),
-  ).toBeVisible();
+    downloadCard(page).getByRole("button", { name: download, exact: true }),
+  ).toBeEnabled();
+  await expect(downloadCard(page).getByText(/Disponible sin conexión/)).toHaveCount(0);
   const removed = JSON.parse((await readDownloadCache(page, userId))!);
   expect(removed.bundle).toBeNull();
   expect(removed.previousBundle).toBeNull();
@@ -187,7 +186,7 @@ for (const theme of ["light", "dark"] as const)
     await setup(page);
     await page.getByRole("button", { name: download, exact: true }).click();
     await expect(downloadCard(page).getByText(/Disponible sin conexión/)).toBeVisible();
-    const card = page.getByRole("heading", { name: "Sin conexión", exact: true }).locator("..");
+    const card = downloadCard(page);
     await expect(card.getByRole("button", { name: update, exact: true })).toBeVisible();
     await card.screenshot({ path: test.info().outputPath(`download-${theme}-360.png`) });
     expect(
