@@ -97,6 +97,7 @@ for (const theme of ["light", "dark"] as const)
     await expect(
       page.getByRole("heading", { name: "Historial descargado", exact: true }),
     ).toBeVisible();
+    await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
     await expect(page.getByRole("button", { name: "Omitir descanso", exact: true })).toBeVisible();
     await page.screenshot({
       path: test.info().outputPath(`downloaded-personal-${theme}.png`),
@@ -368,6 +369,7 @@ test("historial descargado conserva tiempo, esfuerzo y notas; actualizar la copi
     page.getByText(/Al fallo 1 · 90 s · Esfuerzo 8,5\/10|Al fallo 1 · 90 s · Esfuerzo 8.5\/10/),
   ).toBeVisible();
   const original = await page.evaluate((k) => localStorage.getItem(k), key);
+  await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
   await page.getByRole("button", { name: "Volver a Inicio", exact: true }).click();
   control.offline = false;
   await setWeekConnectivity(page, true);

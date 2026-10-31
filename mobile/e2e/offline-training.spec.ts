@@ -24,6 +24,7 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
   await page.getByRole("button", { name: "Cambiar a Prensa", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Peso serie 1", exact: true })).toHaveValue("60");
   await page.getByLabel("Repeticiones serie 1", { exact: true }).fill("10");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();

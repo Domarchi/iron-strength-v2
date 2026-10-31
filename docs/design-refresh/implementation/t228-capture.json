@@ -1,0 +1,24 @@
+{
+  "formatVersion": 1,
+  "task": "T228",
+  "status": "Registro implementado en cliente Expo; entrega f\u00edsica final pendiente",
+  "platform": "Expo web / WebKit with synthetic API fixtures; not physical iPhone",
+  "capturedAt": "2026-10-31T16:36:29.616021+00:00",
+  "themes": ["dark", "light"],
+  "tests": "210 E2E Chromium/WebKit; t228-regression-second.log; 12.2 minutes",
+  "nativePhysicalAcceptance": false,
+  "images": [
+    {
+      "file": "t228-workout-dark-360.png",
+      "sha256": "daa678fe56f604377e1bec96a63d07f7a1835f891a6deae81cadcb11f2bfc986",
+      "width": 360,
+      "height": 844
+    },
+    {
+      "file": "t228-workout-light-360.png",
+      "sha256": "a8a03ec0ad19a75f113140748d603d4b7ececbec3c5cc61f741a6d056ddbd9ae",
+      "width": 360,
+      "height": 844
+    }
+  ]
+}

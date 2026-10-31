@@ -530,8 +530,11 @@ test("cambiar alternativa cancela la previa de calentamiento del tipo anterior s
   await page.getByLabel("KG calentamiento 1").fill("20");
   await page.getByLabel("REPS calentamiento 1").fill("5");
   await page.getByRole("button", { name: "Revisar calentamientos", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
   await page.getByRole("button", { name: "Detalles del ejercicio", exact: true }).click();
   await page.getByRole("button", { name: "Cambiar a Plancha", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
+  await page.getByRole("button", { name: "Herramientas del ejercicio", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Preparar calentamientos", exact: true }),
   ).toBeVisible();

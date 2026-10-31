@@ -75,7 +75,7 @@ for (const theme of ["light", "dark"] as const) {
     await expect(
       page.getByRole("button", { name: "Cambiar a Prensa", exact: true }),
     ).toBeDisabled();
-    await page.getByRole("button", { name: "Detalles del ejercicio", exact: true }).click();
+    await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
     await expect
       .poll(() =>
         page.evaluate(

@@ -318,12 +318,15 @@ test("superserie demo avanza por ronda y bloquea sustitución después de comple
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
   await page.getByRole("button", { name: "Cambiar a Remo en polea", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
   await expect(page.getByRole("button", { name: "Ir a Remo en polea", exact: true })).toBeVisible();
   await page.getByLabel("Peso serie 1", { exact: true }).fill("20");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
+  await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Cambiar a Jalón al pecho", exact: true }),
   ).toBeDisabled();
+  await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
   await page.getByRole("button", { name: "Omitir descanso", exact: true }).click();
   await page.getByRole("button", { name: "Ir a Curl de bíceps", exact: true }).click();
   await page.getByLabel("Peso serie 1", { exact: true }).fill("10");
@@ -920,6 +923,7 @@ for (const theme of ["light", "dark"] as const) {
     await reps.fill("8");
     await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
     await expect(weight).toHaveValue("23");
+    await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
     await check.click();
     await expect(check).toBeChecked();
     await expect(page.getByLabel("Tiempo de descanso restante")).toBeVisible();

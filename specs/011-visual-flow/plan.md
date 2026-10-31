@@ -36,7 +36,7 @@ Conservar Inicio, Entrenar, Historial, Progreso y Cuenta, con títulos y retorno
 
 Compactar la cabecera para acercar la primera serie al inicio. Usar una tabla clara de serie, referencia, peso/repeticiones u otro tipo de registro y check. Reducir etiquetas repetidas conservando nombres accesibles. Mantener el ejercicio actual y el índice compacto; las superseries muestran integrantes, ronda y siguiente ejercicio.
 
-Reunir historial, indicaciones, alternativas y herramientas en un contexto consistente. Mantener la copia de valores como acción explícita. El descanso debe ser visible y ajustable sin tapar el teclado o las series. Revisar el cierre con lo realizado/pendiente y esfuerzo/nota opcionales. En el resultado priorizar volver a la semana; agrupar acciones infrecuentes como corregir o eliminar.
+Reunir historial, indicaciones, alternativas y herramientas en un contexto consistente. Mantener la copia de valores como acción explícita. El descanso debe ser visible y ajustable sin tapar el teclado o las series. Revisar el cierre con lo realizado/pendiente y esfuerzo/nota opcionales. La composición del resultado se completa con T230 para revisar sus acciones y el retorno al historial/progreso en una misma entrega. Allí se prioriza volver a la semana y se agrupan acciones infrecuentes como corregir o eliminar.
 
 **Aceptación:** registrar, desmarcar, pasar de ejercicio, pausar y retomar conserva el estado correcto. Completar calentamientos no avanza una ronda. Recargar no reinicia el descanso. El teclado no cubre el campo ni su acción. Guardado local, pendiente de enviar y confirmado por servidor se distinguen; cerrar no duplica resultados.
 

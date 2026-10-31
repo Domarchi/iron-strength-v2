@@ -183,6 +183,7 @@ for (const theme of ["light", "dark"] as const)
       (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
         .violations,
     ).toEqual([]);
+    await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
     await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
     await expect(
       page.getByText("9 series realizadas · 18 pendientes", { exact: true }),
