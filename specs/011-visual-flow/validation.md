@@ -1,5 +1,9 @@
 # Evidencia y límites
 
+## Aprobación vigente · 31 de octubre de 2026
+
+El propietario respondió: «Sí, aplica ese diseño y sigue con el plan completo». T225 queda aprobada sobre c6621b3 y las seis imágenes de proposal/capture.json. Los párrafos históricos que registran aprobación pendiente describen el estado anterior; ya no bloquean T226–T233. No confundir aprobación del prototipo con implementación o aceptación física final. La demo activa y su base se conservan durante las entregas.
+
 30 de octubre de 2026: spec, plan detallado y tareas preparados. No se modificó la interfaz funcional ni se ejecutaron migraciones. T224 documentada en baseline.md: siete recorridos móviles medidos en Chromium/WebKit y claro/oscuro, ocho pruebas del colector aprobadas en 38,1 s; navegación del coach de solo lectura como octavo recorrido. Doce capturas originales con dimensiones, alcance y SHA-256 en docs/design-refresh/baseline/capture.json. La primera pasada falló por un selector del colector y no se acredita como aprobada.
 
 Las capturas móviles usan APIs simuladas; la navegación del coach bloqueó escrituras después del acceso. No se ejecutó el benchmark completo actual del coach ni se atribuye al presente el resultado histórico T177. La demo y su base en uso se conservaron. Los 87 archivos visuales contrastados coinciden entre las fuentes; T223 del controlador aún no se entrega a la demo.

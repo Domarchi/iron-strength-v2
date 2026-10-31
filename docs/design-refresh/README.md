@@ -22,7 +22,7 @@ El enlace remoto temporal y sus verificaciones se guardan fuera de Git. Para ser
 - Negro/grafito y claro neutro, azul para acción/selección, tipografía del sistema y cifras tabulares. Sin imágenes decorativas.
 - Panel contextual y señales de pulsación discretas; movimiento reducido. No extrapolar fluidez nativa de esta simulación web.
 
-La aprobación visual del propietario sigue pendiente antes de T226–T232. Registrar qué versión aprobó y los ajustes solicitados; una prueba automatizada no sustituye esa decisión.
+La propuesta fue aprobada expresamente el 31-oct-2026: «Sí, aplica ese diseño y sigue con el plan completo», sobre c6621b3 y las seis capturas del manifiesto. Continuar con la implementación T226–T233. Esta aprobación no acredita todavía el funcionamiento nativo o la revisión física final.
 
 ## Verificación reproducible
 

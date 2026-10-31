@@ -14,6 +14,8 @@ T224 registra fuente real de la demo frente a código integrado, capturas y acci
 
 T225 presenta Inicio, Entrenamiento y Detalle de rutina en claro/oscuro, estados de activo/pendiente/error y capturas comparativas mediante HTTPS accesible desde iPhone remoto. El prototipo usa datos DEMO y no hace escrituras, peticiones de API o persistencia de cuenta; no equivale a implementación nativa. La aprobación visual del propietario es una puerta explícita antes de T226–T232. Preparar el resultado concreto antes de pedirla; registrar correcciones y referencia aprobada.
 
+Aprobación recibida el 31-oct-2026: «Sí, aplica ese diseño y sigue con el plan completo». Se aprueba la propuesta de docs/design-refresh/proposal y su prototipo de c6621b3, con seis capturas verificadas y los ajustes de simulación ya incluidos. La puerta T225 está cumplida; continuar T226–T233 sin repetir esta pregunta. La revisión física de la implementación final permanece separada.
+
 ## Contratos visuales y de flujo
 
 Unificar texto, números tabulares, espacios, superficies, botones, campos, filas, paneles, cargas/errores y estados vacíos. El azul expresa acción/selección; menos bordes y contenedores anidados. Check visible pequeño, objetivo táctil mínimo44px (conservar48donde ya existe), contrasteAA, foco visible, texto ampliado y movimiento reducido.

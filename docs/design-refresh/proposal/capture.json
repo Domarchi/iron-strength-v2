@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "status": "Propuesta visual pendiente de aprobación; no implementada en Expo",
+  "status": "Propuesta visual aprobada el 31-oct-2026; implementación Expo pendiente",
   "capturedAt": "2026-10-30T23:10:39.091907+00:00",
   "engine": "webkit",
   "platform": "HTML/CSS/JS web prototype; not native",
@@ -60,6 +60,11 @@
     "cases": 88,
     "engines": ["chromium", "webkit"],
     "referenceImagesUnchanged": true,
-    "approvalReceived": false
+    "approvalReceived": true
+  },
+  "approval": {
+    "date": "2026-10-31",
+    "sourceCommit": "c6621b3fbc0b1b453a34c2796b1bc3c448c9d4e0",
+    "statement": "Sí, aplica ese diseño y sigue con el plan completo."
   }
 }
