@@ -26,7 +26,7 @@ Registro compacta cabecera/índice y etiquetas repetidas, conserva objetivo/últ
 
 Rutinas: elegir base, selección múltiple, ajuste, revisión y guardado con contexto conservado. Campos frecuentes primero, notas/alternativas en detalle; conservar agrupaciones, orden, teclado, borradores y revisión de conflictos. Historial/progreso/cierre mantienen ejercicio/periodo/posición y evidencia real. No dibujar tendencias sin datos.
 
-Fluidez: diagnosticar carga/re-render/layout antes de cambiar duraciones. Conservar contenido válido al actualizar, respuesta inmediata a acciones frecuentes, gestos predecibles, sin envíos dobles y con movimiento reducido. No animar cada dato o esperar una animación para persistir. En coach conservar semana/sesión/alumno, biblioteca vinculada, acciones colectivas, guardado y revisión; no rediseñar las reglas de edición de programas activos.
+Fluidez: etiquetas de navegación ajustan su altura al texto real y vuelven al tamaño habitual al reducirlo; cabecera/descanso y detalle de edición pueden ocupar otra fila sin disminuir la letra ni el área táctil. Diagnosticar carga/re-render/layout antes de cambiar duraciones. Conservar contenido válido al actualizar, respuesta inmediata a acciones frecuentes, gestos predecibles, sin envíos dobles y con movimiento reducido. No animar cada dato o esperar una animación para persistir. En coach conservar semana/sesión/alumno, biblioteca vinculada, acciones colectivas, guardado y revisión; no rediseñar las reglas de edición de programas activos.
 
 ## Validación y entrega
 

@@ -247,7 +247,7 @@ export function PersonalEditorRow({
           ) : null}
         </>
       )}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
         {item.supersetId ? (
           <Text style={[s.caption, { color: p.muted }]}>Descanso por ronda</Text>
         ) : (
