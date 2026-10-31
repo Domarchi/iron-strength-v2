@@ -194,6 +194,16 @@ test("alternativa de otro tipo conserva grupo, avanza rondas desiguales y recupe
   );
   await page.getByLabel("SEGUNDOS serie 2", { exact: true }).fill("45");
   await page.getByRole("checkbox", { name: "Completar serie 2", exact: true }).click();
+  await expect
+    .poll(() =>
+      page.evaluate((k) => {
+        const active = JSON.parse(localStorage.getItem(k)!).active;
+        return active.draft.exercises.map(
+          (e: { sets: { done: boolean }[] }) => e.sets.filter((set) => set.done).length,
+        );
+      }, key),
+    )
+    .toEqual([2, 1]);
   const after = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).active, key);
   expect(
     after.draft.exercises.map(
@@ -201,6 +211,12 @@ test("alternativa de otro tipo conserva grupo, avanza rondas desiguales y recupe
     ),
   ).toEqual([2, 1]);
   expect(after.routine).toEqual(c);
+  await page.reload();
+  await enterWeekUser(page);
+  await page.getByRole("button", { name: "Retomar entrenamiento", exact: true }).click();
+  expect(await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).active, key)).toEqual(
+    after,
+  );
 });
 test("una respuesta de inicio recibida después de salir no crea un entrenamiento", async ({
   page,

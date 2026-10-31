@@ -17,6 +17,14 @@ async function start(page: Page, legacy = false, metric?: (typeof trainingMetric
     await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
     await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
     await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => Boolean(JSON.parse(localStorage.getItem(key) ?? "null")?.active),
+          key,
+        ),
+      )
+      .toBe(true);
   } else {
     const routine = typedContextSchema.parse({
       version: 3,

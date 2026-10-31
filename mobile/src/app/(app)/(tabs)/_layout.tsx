@@ -31,7 +31,12 @@ const icons = {
   account: icon("account"),
 };
 const LabelHeightContext = createContext<(label: string, height: number) => void>(() => {});
-function TabLabel({ color, children }: { color: ColorValue; children: string }) {
+type TabLabelProps = {
+  color: ColorValue;
+  children: string;
+  position: "beside-icon" | "below-icon";
+};
+function TabLabel({ color, children, position }: TabLabelProps) {
   const reportHeight = useContext(LabelHeightContext);
   return (
     <Text
@@ -43,16 +48,19 @@ function TabLabel({ color, children }: { color: ColorValue; children: string }) 
         fontSize: 11,
         lineHeight: 16,
         fontWeight: "500",
-        marginTop: 2,
+        marginTop: position === "below-icon" ? 2 : 0,
+        marginStart: position === "beside-icon" ? 6 : 0,
         textAlign: "center",
-        alignSelf: "stretch",
+        // Alongside the icon, measure intrinsic text rather than the bar's own height.
+        alignSelf: position === "beside-icon" ? "center" : "stretch",
+        flexShrink: position === "beside-icon" ? 1 : 0,
       }}
     >
       {children}
     </Text>
   );
 }
-function renderTabLabel(props: { color: ColorValue; children: string }) {
+function renderTabLabel(props: TabLabelProps) {
   return <TabLabel {...props} />;
 }
 export default function TabLayout() {
