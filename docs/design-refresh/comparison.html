@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Iron Strength · antes y propuesta</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./prototype/styles.css" />
+    <link rel="stylesheet" href="./comparison.css" />
+    <script src="./comparison.js" defer></script>
+  </head>
+  <body>
+    <main class="comparison-page">
+      <header>
+        <p class="eyebrow">Iron Strength · revisión de diseño</p>
+        <h1>Antes y propuesta</h1>
+        <p class="muted">
+          Misma rutina ficticia. Propuesta sin aprobar; no es una versión nativa implementada.
+        </p>
+      </header>
+      <nav class="compare-controls" aria-label="Pantalla y tema">
+        <label
+          >Pantalla<select id="view">
+            <option value="home">Inicio</option>
+            <option value="workout">Entrenamiento</option>
+            <option value="routine">Rutina</option>
+          </select></label
+        >
+        <label
+          >Tema<select id="theme">
+            <option value="dark">Oscuro</option>
+            <option value="light">Claro</option>
+          </select></label
+        >
+      </nav>
+      <div class="compare-grid">
+        <figure>
+          <figcaption><strong>Actual</strong><span>Expo web · WebKit</span></figcaption>
+          <a id="before-link"
+            ><img id="before" alt="Pantalla anterior al rediseño" width="390" height="844"
+          /></a>
+        </figure>
+        <figure>
+          <figcaption><strong>Propuesta</strong><span>Prototipo web · WebKit</span></figcaption>
+          <a id="after-link"
+            ><img id="after" alt="Propuesta visual de la misma pantalla" width="390" height="844"
+          /></a>
+        </figure>
+      </div>
+      <p class="muted small">
+        Toca una imagen para ampliarla. El registro muestra la primera ronda realizada; los
+        objetivos por serie y el descanso se conservan. Las capturas no acreditan funcionamiento
+        nativo o aceptación en un iPhone real.
+      </p>
+      <a id="interactive" class="try-prototype" href="./prototype/index.html"
+        >Probar la propuesta interactiva →</a
+      >
+    </main>
+  </body>
+</html>

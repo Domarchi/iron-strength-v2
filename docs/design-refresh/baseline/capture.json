@@ -1,0 +1,167 @@
+{
+  "formatVersion": 1,
+  "status": "Referencia anterior al rediseño; no propuesta aprobada ni aceptación física",
+  "capturedAt": "2026-10-30T22:47:03.148279+00:00",
+  "sourceCommit": "9a60876822a9a1ff262222d6051fcf6570e4eeb3",
+  "demoSourceCommit": "0770bf2ceb5bdff8ebf35727658540b7ee769300",
+  "identicalVisualSourceFiles": 87,
+  "mobileMeasurement": {
+    "engines": ["chromium", "webkit"],
+    "themes": ["dark", "light"],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "fixture": "week-download y typed-library existentes; fecha fija24-oct-2026",
+    "method": "Activación, selección o edición de campo cuenta1. No incluye login, preparación, esperas, capturas o desplazamiento.",
+    "actions": {
+      "consultRoutine": 1,
+      "startFromHomeIncludingConsult": 2,
+      "resumeFromHome": 1,
+      "completeTwoExerciseRoundIncludingFourFieldEdits": 6,
+      "finishAndReachResult": 2,
+      "additionalResultEntryAfterConfirmation": 0,
+      "createFourExerciseRoutineFromLibrary": 9,
+      "renameRoutineFromLibrary": 4
+    },
+    "countsSameAcrossFourCombinations": true,
+    "firstViewport": {
+      "home": {
+        "visibleTextWords": 58,
+        "firstInput": []
+      },
+      "routine": {
+        "visibleTextWords": 57,
+        "firstInput": []
+      },
+      "workout": {
+        "visibleTextWords": 55,
+        "firstInput": [
+          {
+            "label": "KG serie 1",
+            "height": 48,
+            "top": 354
+          }
+        ]
+      },
+      "close-review": {
+        "visibleTextWords": 71,
+        "firstInput": [
+          {
+            "label": "KG serie 1",
+            "height": 48,
+            "top": 354
+          }
+        ]
+      },
+      "confirmed": {
+        "visibleTextWords": 48,
+        "firstInput": []
+      }
+    },
+    "nativeAcceptance": false,
+    "realBackendMutations": false
+  },
+  "coach": {
+    "currentReadonlyNavigation": ["Semana2", "SesiónB"],
+    "activations": 2,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "fullCurrentAdaptationBenchmark": null,
+    "historicalReference": {
+      "task": "T177",
+      "actions": 40,
+      "document": "specs/007-training-flow/benchmark.md",
+      "notRevalidatedAsCurrent": true
+    },
+    "planMutationsPerformed": false
+  },
+  "images": [
+    {
+      "file": "dark-home.png",
+      "sha256": "d11d95e024d73a83c76af0d1d32df43b94a2832b59d03ba8ff667db092810adf",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "dark-routine.png",
+      "sha256": "eb86ab09240a51fd2c8b04f667c1a642e14bebb060fc024f71829a479b475caa",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "dark-workout.png",
+      "sha256": "f98f33ca4b7da58ed729ae9f06674d4d48a72ee6f9c4cc880cfc5d6ae937a44f",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "dark-confirmed.png",
+      "sha256": "181d88af9b2a882254ffc698dca53bd43cf032921ddb2084df40a9e1c3aa2f85",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "dark-personal-editor.png",
+      "sha256": "be1b0ceb7c42449ea15c7af3ca74310a2810be5e8895dd7ca1b423bff58369e4",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "light-home.png",
+      "sha256": "2b2680541854a8e8efb203485c9fade1cac6a7d7eb1be0b49855f47b09ef7ffe",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "light-routine.png",
+      "sha256": "a251e78bbffb13c9869174e9959cc7ae1cdf4f2476e8c03befd8c83939cebc74",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "light-workout.png",
+      "sha256": "8102d1f20387ab6ebe0fccf190e566a5161a7e914e8bc73c5c95d5b62e2bf8b8",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "light-confirmed.png",
+      "sha256": "6cbb949308255de11de476fd501a1139c0ced4398e4f8a51e89670304dd2bbe1",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "light-personal-editor.png",
+      "sha256": "f6d3ea544e7518285940f80c16f71eabc48b56a0a1ea2b9101d0b8c4510ac518",
+      "width": 390,
+      "height": 844,
+      "scope": "Expo web/WebKit, API simulada, datos ficticios; no captura nativa"
+    },
+    {
+      "file": "coach-current-week.png",
+      "sha256": "186b79e4914abf5dc3fb5ec7b56a3d747e2a850fc6a220dbcebd32882a896741",
+      "width": 1440,
+      "height": 1000,
+      "scope": "Coach web actual de demo; navegación solo lectura con cuenta ficticia"
+    },
+    {
+      "file": "coach-future-session.png",
+      "sha256": "bec7e132c7804c20d1e155dfd67bfecb1b6c0fde2f9b3cba047e5ecc8bb65eb9",
+      "width": 1440,
+      "height": 1000,
+      "scope": "Coach web actual de demo; navegación solo lectura con cuenta ficticia"
+    }
+  ]
+}
