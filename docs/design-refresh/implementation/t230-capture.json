@@ -1,0 +1,54 @@
+{
+  "formatVersion": 1,
+  "task": "T230",
+  "status": "Historial, progreso y resultados implementados en Expo; entrega f\u00edsica final pendiente",
+  "platform": "Expo web / WebKit with synthetic API fixtures; not physical iPhone",
+  "capturedAt": "2026-10-31T17:22:12.480898+00:00",
+  "themes": ["dark", "light"],
+  "tests": "202 E2E Chromium/WebKit; t230-regression-third.log; 6.5 minutes",
+  "nativePhysicalAcceptance": false,
+  "images": [
+    {
+      "file": "t230-result-dark-360.png",
+      "sha256": "01e585874f10bd9ad768a2f4064af164eae718a7e7dfc49c2787a3c2682c7c91",
+      "width": 360,
+      "height": 844,
+      "state": "Confirmed result, options closed"
+    },
+    {
+      "file": "t230-history-dark-360.png",
+      "sha256": "a2cb8516703fe8527640ce6b6b8272b5b70c6800887c595da352f81d4598c646",
+      "width": 360,
+      "height": 800,
+      "state": "Filtered calendar and retained scroll after returning from a result"
+    },
+    {
+      "file": "t230-progress-dark-360.png",
+      "sha256": "fc858a3e4759c41b65167e491b6d0b5cd1da6d37a14cb1899838ad84e4419d9f",
+      "width": 360,
+      "height": 800,
+      "state": "12-week volume, historical marks expanded, context retained after returning"
+    },
+    {
+      "file": "t230-result-light-360.png",
+      "sha256": "2ce7fe34ec262bf3149d5388236ba14d7b553a5e2fd1801986f83b2edaf735b9",
+      "width": 360,
+      "height": 844,
+      "state": "Confirmed result, options closed"
+    },
+    {
+      "file": "t230-history-light-360.png",
+      "sha256": "468e003a106d69fc2d387fbca70171d5f087e6b5112196c653235c7733eedfb2",
+      "width": 360,
+      "height": 800,
+      "state": "Filtered calendar and retained scroll after returning from a result"
+    },
+    {
+      "file": "t230-progress-light-360.png",
+      "sha256": "a497c6fc161c9c5577b2487910e62451db6ef8a71102cab0191e94a5722dc332",
+      "width": 360,
+      "height": 800,
+      "state": "12-week volume, historical marks expanded, context retained after returning"
+    }
+  ]
+}

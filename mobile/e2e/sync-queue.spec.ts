@@ -228,7 +228,7 @@ test("rechazo del servidor conserva el cierre, detiene el reintento automático 
   expect(frozen.error.blocked).toBe(true);
   permit = true;
   await page.getByRole("button", { name: "Reintentar envío", exact: true }).click();
-  await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+  await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
   expect(posts).toBe(2);
   expect(control.saved.size).toBe(1);
   expect(control.saveRequests[0]).toEqual(frozen.payload);

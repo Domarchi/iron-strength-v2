@@ -1,3 +1,4 @@
+import { openResultOptions } from "./support/result-options";
 import { progressFromResults } from "./support/training-progress-results";
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -129,6 +130,7 @@ async function setup(page: Page, orphanGroup = false) {
     })
     .click();
   await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Repetir entrenamiento", exact: true }),

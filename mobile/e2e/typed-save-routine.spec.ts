@@ -1,3 +1,4 @@
+import { openResultOptions } from "./support/result-options";
 import { progressFromResults } from "./support/training-progress-results";
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -100,6 +101,8 @@ for (const theme of ["light", "dark"] as const)
     const { state, fixture, base } = await setup(page),
       before = JSON.stringify(fixture.result),
       original = structuredClone(base);
+    await expect(page.getByText(/· 8 ejercicios ·/).filter({ visible: true })).toBeVisible();
+    await openResultOptions(page);
     await page.getByRole("button", { name: "Guardar como rutina", exact: true }).click();
     await expect(page.getByText("Nueva rutina · 9 ejercicios", { exact: true })).toBeVisible();
     await expect(
@@ -138,6 +141,7 @@ test("resultado3 actualiza tras comparar revisión y mantiene base/resultado ori
 }) => {
   const { state, fixture, base } = await setup(page),
     before = JSON.stringify(fixture.result);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Actualizar mi rutina", exact: true }).click();
   await expect(
     page.getByText("La base cambió desde este entrenamiento. Revisa lo que vas a reemplazar.", {

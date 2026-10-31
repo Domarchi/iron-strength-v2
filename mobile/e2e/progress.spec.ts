@@ -165,7 +165,7 @@ for (const theme of ["light", "dark"] as const) {
       await page.getByRole("button", { name: "Volumen", exact: true }).click();
       await expect(page.getByText("+162,5 %", { exact: true })).toBeVisible();
       await page.getByRole("button", { name: /Ver entrenamiento del 24/ }).click();
-      await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+      await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
       await page.getByRole("button", { name: "Volver al progreso", exact: true }).click();
       await expect(page.getByRole("button", { name: "4 semanas", exact: true })).toHaveAttribute(
         "aria-pressed",

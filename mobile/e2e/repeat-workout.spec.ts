@@ -1,3 +1,4 @@
+import { openResultOptions } from "./support/result-options";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupPersonalTraining } from "./support/personal-training-fixture";
@@ -39,7 +40,7 @@ async function setup(page: Page, structured = true, missing = false) {
   await page
     .getByRole("button", { name: "Ver entrenamiento del 23/10 · Superior", exact: true })
     .click();
-  await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+  await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
   return { ...fixture, doc };
 }
 test("descanso habitual de grupo incompleto anterior se conserva al repetir y registrar", async ({
@@ -52,6 +53,7 @@ test("descanso habitual de grupo incompleto anterior se conserva al repetir y re
   });
   doc.workout.sets = doc.workout.sets.filter((s) => s.position === 0);
   control.records.set(doc.id, doc.workout);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   await expect(
     page.getByText("Una superserie queda individual y conserva el descanso de la ronda.", {
@@ -83,6 +85,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
     const { control, doc, state } = await setup(page);
     const original = structuredClone(doc);
+    await openResultOptions(page);
     const repeat = page.getByRole("button", { name: "Repetir entrenamiento", exact: true });
     await expect(repeat).toBeVisible({ timeout: 2000 });
     await repeat.click();
@@ -132,7 +135,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
     await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
     await page.getByRole("button", { name: "Guardar entrenamiento", exact: true }).click();
-    await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+    await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
     expect(control.recordingCalls).toHaveLength(1);
     expect(control.recordingCalls[0]).toMatchObject({ source: "free" });
     expect(control.recordingCalls[0].id).not.toBe(doc.id);
@@ -144,6 +147,7 @@ test("histórico anterior prepara desde sus series, sin inventar la agrupación 
   page,
 }) => {
   const { control, doc } = await setup(page, false);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   await expect(
     page.getByText("Este resultado no guarda objetivos ni descansos.", { exact: true }),
@@ -166,6 +170,7 @@ test("un ejercicio no disponible bloquea la copia completa sin tocar el resultad
   page,
 }) => {
   const { control } = await setup(page, false, true);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "no está disponible" })).toBeVisible();
   await expect(
@@ -185,6 +190,7 @@ test("otro entrenamiento en curso ofrece retomar y no permite sobrescribirlo", a
   await page
     .getByRole("button", { name: "Ver entrenamiento del 23/10 · Superior", exact: true })
     .click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Empezar entrenamiento", exact: true }),
@@ -196,6 +202,7 @@ test("cuota al confirmar conserva la copia en memoria y reintentar no crea otro 
   page,
 }) => {
   await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   await page.evaluate(() => {
     const original = Storage.prototype.setItem;
@@ -226,6 +233,7 @@ test("si el catálogo cambia durante la revisión, pide actualizar antes de crea
   page,
 }) => {
   const { control } = await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Empezar entrenamiento", exact: true }),
@@ -250,6 +258,7 @@ test("volver atrás durante la comprobación no inicia una sesión al recibir la
   page,
 }) => {
   await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Repetir entrenamiento", exact: true }).click();
   const start = page.getByRole("button", { name: "Empezar entrenamiento", exact: true });
   await expect(start).toBeEnabled();
@@ -268,7 +277,7 @@ test("volver atrás durante la comprobación no inicia una sesión al recibir la
   await start.click();
   await expect(start).toBeDisabled();
   await page.goBack();
-  await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+  await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
   release();
   await response;
   await page.evaluate(

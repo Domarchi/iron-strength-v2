@@ -20,7 +20,7 @@ for (const theme of ["light", "dark"] as const) {
     await expect(page.getByText("1 resultado", { exact: true })).toBeVisible();
     expect(control.calls).toBe(calls);
     await page.getByRole("button", { name: /^Ver entrenamiento del 20\/10/ }).click();
-    await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+    await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Volver al historial", exact: true }).click();
     await expect(
       page.getByRole("textbox", { name: "Buscar en historial", exact: true }),

@@ -42,8 +42,10 @@ for (const theme of ["light", "dark"] as const) {
     await page.screenshot({ path: test.info().outputPath("free-workout.png"), fullPage: true });
     await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
     await page.getByRole("button", { name: "Guardar entrenamiento", exact: true }).click();
-    await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
-    await expect(page.getByText(/Mi libre ·/).filter({ visible: true })).toBeVisible();
+    await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Mi libre", exact: true }).filter({ visible: true }),
+    ).toBeVisible();
     expect(control.records.size).toBe(1);
     expect(control.calls[0]).not.toHaveProperty("programId");
     expect(control.calls[0].sets).toHaveLength(1);
@@ -152,7 +154,7 @@ test("rutina personal → ronda recuperada → respuesta perdida → resultado �
   control.loseResponse = true;
   await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Guardar entrenamiento", exact: true }).click();
-  await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible({
+  await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible({
     timeout: 30000,
   });
   expect(control.records.size).toBe(1);
@@ -253,7 +255,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.clock.setFixedTime(new Date(start + 75000));
     await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
     await page.getByRole("button", { name: "Guardar entrenamiento", exact: true }).click();
-    await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+    await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
     expect(control.calls[0]).toMatchObject({
       startedAt: before.active.draft.startedAt,
       finishedAt: new Date(start + 75000).toISOString(),

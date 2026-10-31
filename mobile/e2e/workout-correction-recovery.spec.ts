@@ -1,3 +1,4 @@
+import { openResultOptions } from "./support/result-options";
 import { expect, test, type Page } from "@playwright/test";
 import { setupCorrection } from "./support/correction-fixture";
 import { enterWeekUser } from "./support/week-fixture";
@@ -7,6 +8,7 @@ async function open(page: Page) {
   const fixture = await setupCorrection(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await expect(page.getByLabel("Peso en kg de serie 1", { exact: true })).toHaveValue("60");
   return fixture;

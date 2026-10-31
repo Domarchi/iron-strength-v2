@@ -76,8 +76,22 @@ export function TrainingProgressDetail() {
   };
   const format = (value: number) => formatProgressValue(metric, value, preferences.value);
   const header = (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 14 }}>
       <ConnectionStatus />
+      <Action
+        label={params.from === "exercise" ? "Volver a la ficha" : "Volver a mis ejercicios"}
+        quiet
+        onPress={() =>
+          router.canGoBack()
+            ? router.back()
+            : params.from === "exercise"
+              ? router.replace({
+                  pathname: "/exercises/[id]",
+                  params: { id: params.id, from: "catalog" },
+                })
+              : router.replace("/progress")
+        }
+      />
       {q.error ? (
         <>
           <Notice message={q.error} retry={q.retry} />
@@ -190,7 +204,7 @@ export function TrainingProgressDetail() {
                 <Polyline
                   points={coords.map((c) => `${c.x},${c.y}`).join(" ")}
                   stroke={p.blue}
-                  strokeWidth={2.5}
+                  strokeWidth={2}
                   fill="none"
                 />
                 {coords.map((c, i) => (
@@ -245,6 +259,7 @@ export function TrainingProgressDetail() {
   return (
     <View style={{ flex: 1, backgroundColor: p.bg, paddingTop: insets.top }}>
       <FlatList
+        testID="progress-detail-list"
         data={[...points].reverse()}
         keyExtractor={(r) => r.point.workoutId}
         renderItem={({ item: { point, value } }) => (
@@ -277,22 +292,6 @@ export function TrainingProgressDetail() {
           </View>
         )}
         ListHeaderComponent={header}
-        ListFooterComponent={
-          <Action
-            label={params.from === "exercise" ? "Volver a la ficha" : "Volver a mis ejercicios"}
-            secondary
-            onPress={() =>
-              router.canGoBack()
-                ? router.back()
-                : params.from === "exercise"
-                  ? router.replace({
-                      pathname: "/exercises/[id]",
-                      params: { id: params.id, from: "catalog" },
-                    })
-                  : router.replace("/progress")
-            }
-          />
-        }
         contentContainerStyle={{
           width: "100%",
           maxWidth: 560,
