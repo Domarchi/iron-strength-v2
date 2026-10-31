@@ -4,14 +4,14 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Text } from "react-native";
 import { parseProgressWeeks, type ProgressMetric } from "../../../../../src/domain/progress-period";
 import { ProgressDetail } from "../../../components/progress-detail";
-import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/ui";
+import { Action, Notice, Page, s, usePalette } from "../../../components/ui";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 export default function ExerciseProgress() {
   const params = useLocalSearchParams<{ progressVersion?: string }>();
   if (params.progressVersion !== undefined && params.progressVersion !== "2")
     return (
-      <Page>
+      <Page compact>
         <Notice message="Esta versión del progreso no es compatible." />
         <Action label="Volver a mis ejercicios" onPress={() => router.replace("/progress")} />
       </Page>
@@ -33,8 +33,8 @@ function LegacyExerciseProgress() {
       ? "volume"
       : "1rm";
   return (
-    <Page>
-      <Brand />
+    <Page compact>
+      <Action label="Volver a mis ejercicios" quiet onPress={() => router.navigate("/progress")} />
       {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
       {q.loading && !q.value ? (
         <Text style={[s.body, { color: p.muted }]}>Cargando progreso…</Text>
@@ -48,11 +48,6 @@ function LegacyExerciseProgress() {
           onMetric={(m) => router.setParams({ metric: m })}
         />
       ) : null}
-      <Action
-        label="Volver a mis ejercicios"
-        secondary
-        onPress={() => router.navigate("/progress")}
-      />
     </Page>
   );
 }

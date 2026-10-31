@@ -1,3 +1,4 @@
+import { openResultOptions } from "./support/result-options";
 import { expect, test } from "@playwright/test";
 import { setupRemoval } from "./support/removal-fixture";
 import { downloadId } from "../../src/test/fixtures/week-download";
@@ -7,6 +8,7 @@ const key = `is:workout-removal:v1:${downloadId(1)}`;
 async function open(page: Parameters<typeof setupRemoval>[0]) {
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Eliminar entrenamiento", exact: true }).click();
 }
 test("descartar intento incierto requiere aviso y conserva confirmación remota como desconocida", async ({
@@ -96,6 +98,7 @@ test("resultado tipado usa la misma confirmación sin convertir sus nueve métri
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
   await expect(page.getByText("Registro de todos los tipos", { exact: true })).toBeVisible();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Eliminar entrenamiento", exact: true }).click();
   await expect(page.getByText("9 series · 2 comentarios", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Eliminar para siempre", exact: true }).click();

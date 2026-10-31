@@ -1,3 +1,4 @@
+import { ResultHeading, ResultNote, ResultOptions } from "../../../components/result-presentation";
 import { useWorkoutRemoval } from "../../../lib/workout-removal-context";
 import { trainingProgressReturn } from "../../../lib/training-progress-view";
 import { useTrainingPreferences } from "../../../lib/training-preferences-context";
@@ -10,8 +11,7 @@ import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { Text, View, KeyboardAvoidingView, Platform } from "react-native";
 import { WorkoutComments } from "../../../components/workout-comments";
-import { Icon } from "../../../components/icon";
-import { Action, Brand, Notice, Page, day, s, usePalette } from "../../../components/ui";
+import { Action, Notice, Page, s, usePalette } from "../../../components/ui";
 import { useTraining } from "../../../lib/training-context";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
@@ -105,8 +105,7 @@ export default function Result() {
       style={{ flex: 1, backgroundColor: p.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Page>
-        <Brand />
+      <Page compact>
         {q.error ? <Notice message={q.error} retry={q.retry} /> : null}
         {q.loading && !q.value ? (
           <Text style={[s.body, { color: p.muted }]}>Cargando resultado…</Text>
@@ -114,7 +113,7 @@ export default function Result() {
         {trainingBack ? (
           <Action
             label="Volver al progreso"
-            secondary
+            quiet
             onPress={() =>
               router.canGoBack()
                 ? router.back()
@@ -134,68 +133,133 @@ export default function Result() {
         {params.from === "history" ? (
           <Action
             label="Volver al historial"
-            secondary
+            quiet
             onPress={() => (router.canGoBack() ? router.back() : router.replace("/history"))}
           />
         ) : params.from === "summary" ? (
           <Action
             label="Volver al resumen"
-            secondary
+            quiet
             onPress={() => (router.canGoBack() ? router.back() : router.replace("/progress"))}
+          />
+        ) : null}
+        {back && !trainingBack ? (
+          <Action
+            label="Volver al progreso"
+            quiet
+            onPress={() =>
+              router.navigate({
+                pathname: "/progress/[id]",
+                params: { id: back.exercise, weeks: String(back.weeks), metric: back.metric },
+              })
+            }
           />
         ) : null}
         {w ? (
           <>
-            <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
-                  backgroundColor: p.tint,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Icon name="check" color={p.success} size={26} />
-              </View>
-              <Text style={[s.caption, { color: p.success }]}>
-                {demo === "1" ? "DEMO GUARDADA EN ESTE DISPOSITIVO" : "ENTRENAMIENTO CONFIRMADO"}
-              </Text>
-              <Text style={[s.heading, { color: p.ink }]}>Sesión registrada</Text>
-              <Text style={[s.body, { color: p.muted }]}>
-                {demo === "1"
-                  ? "Esta prueba no se envió al coach y no cuenta en tus marcas reales."
-                  : "Tu entrenamiento está guardado en tu cuenta y tu coach puede revisarlo."}
-              </Text>
-            </View>
-            <Text style={[s.subheading, { color: p.ink }]}>
-              {w.sourceKind === "personal" || w.sourceKind === "free"
-                ? workoutTitle(w)
-                : (w.programName ?? "Tu entrenamiento")}{" "}
-              · {day(w.performedOn)}
-            </Text>
-            <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-              <Text style={[s.subheading, { color: p.ink }]}>
-                {w.summary.workingSets} {w.summary.workingSets === 1 ? "serie" : "series"} ·{" "}
-                {w.summary.exerciseCount}{" "}
-                {w.summary.exerciseCount === 1 ? "ejercicio" : "ejercicios"}
-              </Text>
-              <Text style={[s.body, { color: p.muted }]}>
-                {formatWeight(w.summary.volumeKg, preferences.value.weightUnit)} de volumen ·{" "}
-                {Math.max(1, Math.round(w.durationSeconds / 60))} min
+            <ResultHeading
+              title={
+                w.sourceKind === "personal" || w.sourceKind === "free"
+                  ? workoutTitle(w)
+                  : (w.programName ?? "Tu entrenamiento")
+              }
+              date={w.performedOn}
+              workingSets={w.summary.workingSets}
+              exerciseCount={w.summary.exerciseCount}
+              durationSeconds={w.durationSeconds}
+              demo={demo === "1"}
+            />
+            <View style={{ gap: 6 }}>
+              <Text style={[s.body, s.number, { color: p.ink }]}>
+                {formatWeight(w.summary.volumeKg, preferences.value.weightUnit)} de volumen
               </Text>
               {w.perceivedEffort ? (
-                <Text style={[s.body, { color: p.ink }]}>Esfuerzo: {w.perceivedEffort}/10</Text>
+                <Text style={[s.caption, { color: p.muted }]}>
+                  Esfuerzo: {w.perceivedEffort}/10
+                </Text>
               ) : null}
-              {w.note ? <Text style={[s.body, { color: p.ink }]}>{w.note}</Text> : null}
             </View>
+            <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              <Action label="Ver mi historial" quiet onPress={() => router.navigate("/history")} />
+              {demo !== "1" ? (
+                <ResultOptions>
+                  {demo !== "1" ? (
+                    <Action
+                      label="Corregir entrenamiento"
+                      secondary
+                      disabled={
+                        q.loading ||
+                        !!q.error ||
+                        w.id !== id ||
+                        removal.busy ||
+                        removal.pending?.request.workoutId === w.id
+                      }
+                      onPress={() =>
+                        router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })
+                      }
+                    />
+                  ) : null}
+                  {demo !== "1" ? (
+                    <Action
+                      label="Eliminar entrenamiento"
+                      quiet
+                      disabled={q.loading || !!q.error || w.id !== id || removal.busy}
+                      onPress={() =>
+                        router.push({ pathname: "/remove-result/[id]", params: { id: w.id } })
+                      }
+                    />
+                  ) : null}
+                  {demo !== "1" ? (
+                    <Action
+                      label="Repetir entrenamiento"
+                      secondary
+                      disabled={q.loading || !!q.error || w.id !== id}
+                      onPress={() =>
+                        router.push({ pathname: "/repeat/[id]", params: { id: w.id } })
+                      }
+                    />
+                  ) : null}
+                  {demo !== "1" ? (
+                    <Action
+                      label="Guardar como rutina"
+                      secondary
+                      disabled={q.loading || !!q.error || w.id !== id}
+                      onPress={() =>
+                        router.push({ pathname: "/save-routine/[id]", params: { id: w.id } })
+                      }
+                    />
+                  ) : null}
+                  {demo !== "1" && w.sourceKind === "personal" && w.personalRoutineId ? (
+                    <Action
+                      label="Actualizar mi rutina"
+                      quiet
+                      disabled={q.loading || !!q.error || w.id !== id}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/save-routine/[id]",
+                          params: { id: w.id, mode: "update" },
+                        })
+                      }
+                    />
+                  ) : null}
+                </ResultOptions>
+              ) : null}
+            </View>
+            <ResultNote note={w.note ?? null} />
             {w.exercises.map((e) => (
-              <View
-                key={e.position}
-                style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}
-              >
-                <Text style={[s.subheading, { color: p.ink }]}>{e.name}</Text>
+              <View key={e.position} style={[s.divider, { borderColor: p.border, gap: 8 }]}>
+                <Text style={[s.label, { color: p.ink, fontSize: 17, lineHeight: 23 }]}>
+                  {e.name}
+                </Text>
                 {e.prescribedExerciseName && e.prescribedExerciseId !== e.exerciseId ? (
                   <Text style={[s.caption, { color: p.blue }]}>
                     Alternativa a {e.prescribedExerciseName}
@@ -213,80 +277,11 @@ export default function Result() {
                 ))}
               </View>
             ))}
-            {demo !== "1" ? (
-              <Action
-                label="Corregir entrenamiento"
-                secondary
-                disabled={
-                  q.loading ||
-                  !!q.error ||
-                  w.id !== id ||
-                  removal.busy ||
-                  removal.pending?.request.workoutId === w.id
-                }
-                onPress={() =>
-                  router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })
-                }
-              />
-            ) : null}
-            {demo !== "1" ? (
-              <Action
-                label="Eliminar entrenamiento"
-                quiet
-                disabled={q.loading || !!q.error || w.id !== id || removal.busy}
-                onPress={() =>
-                  router.push({ pathname: "/remove-result/[id]", params: { id: w.id } })
-                }
-              />
-            ) : null}
-            {demo !== "1" ? (
-              <Action
-                label="Repetir entrenamiento"
-                secondary
-                disabled={q.loading || !!q.error || w.id !== id}
-                onPress={() => router.push({ pathname: "/repeat/[id]", params: { id: w.id } })}
-              />
-            ) : null}
-            {demo !== "1" ? (
-              <Action
-                label="Guardar como rutina"
-                secondary
-                disabled={q.loading || !!q.error || w.id !== id}
-                onPress={() =>
-                  router.push({ pathname: "/save-routine/[id]", params: { id: w.id } })
-                }
-              />
-            ) : null}
-            {demo !== "1" && w.sourceKind === "personal" && w.personalRoutineId ? (
-              <Action
-                label="Actualizar mi rutina"
-                quiet
-                disabled={q.loading || !!q.error || w.id !== id}
-                onPress={() =>
-                  router.push({
-                    pathname: "/save-routine/[id]",
-                    params: { id: w.id, mode: "update" },
-                  })
-                }
-              />
-            ) : null}
             {demo !== "1" ? <WorkoutComments key={w.id} workoutId={w.id} /> : null}
           </>
         ) : null}
-        {back && !trainingBack ? (
-          <Action
-            label="Volver al progreso"
-            onPress={() =>
-              router.navigate({
-                pathname: "/progress/[id]",
-                params: { id: back.exercise, weeks: String(back.weeks), metric: back.metric },
-              })
-            }
-          />
-        ) : null}
-        <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
-        <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
-        <Action label="Explorar otra rutina" secondary onPress={() => router.navigate("/train")} />
+        {!w ? <Action label="Volver a mi semana" onPress={() => router.navigate("/")} /> : null}
+        <Action label="Explorar otra rutina" quiet onPress={() => router.navigate("/train")} />
       </Page>
     </KeyboardAvoidingView>
   );

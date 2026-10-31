@@ -3,7 +3,7 @@ import { CorrectionDraftCard } from "./correction-draft-card";
 import { ProgressRefresh } from "./progress-refresh";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { router } from "expo-router";
-import { FlatList, Text, TextInput, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { filterTrainingActivity } from "../../../src/domain/training-progress";
 import { santiagoDate } from "../../../src/domain/dates";
@@ -11,7 +11,7 @@ import { useSession } from "../lib/session";
 import { useTraining } from "../lib/training-context";
 import { useQuery } from "../lib/use-query";
 import { queryPeriod } from "../lib/training-progress-view";
-import { Action, Notice, ScreenIntro, s, day, usePalette } from "./ui";
+import { Action, Input, Notice, ScreenIntro, s, day, usePalette } from "./ui";
 import { ConnectionStatus } from "./connection-status";
 import { UnreadComments } from "./unread-comments";
 import { CommentDraftCard } from "./comment-draft-card";
@@ -50,7 +50,7 @@ export function TrainingHistory() {
     setSelected(null);
   }
   const header = (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 14 }}>
       <ConnectionStatus />
       <ScreenIntro title="Historial" />
       <CommentDraftCard />
@@ -69,7 +69,7 @@ export function TrainingHistory() {
       ) : null}
       {q.value ? (
         <>
-          <TextInput
+          <Input
             keyboardAppearance={p.dark ? "dark" : "light"}
             selectionColor={p.blue}
             accessibilityLabel="Buscar en historial"
@@ -78,7 +78,7 @@ export function TrainingHistory() {
             value={search}
             maxLength={200}
             onChangeText={(value) => setSearch(value.slice(0, 200))}
-            style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.card }]}
+            style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.field }]}
           />
           <View style={s.row}>
             <View style={{ flexDirection: "row" }}>

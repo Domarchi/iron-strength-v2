@@ -1,3 +1,4 @@
+import { openResultOptions } from "./support/result-options";
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupRemoval } from "./support/removal-fixture";
@@ -13,6 +14,7 @@ for (const theme of ["light", "dark"] as const) {
     const c = await setupRemoval(page);
     await page.getByRole("tab", { name: "Historial", exact: true }).click();
     await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+    await openResultOptions(page);
     await page.getByRole("button", { name: "Eliminar entrenamiento", exact: true }).click();
     await expect(page.getByText("2 series · 2 comentarios", { exact: true })).toBeVisible();
     expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBeNull();
@@ -59,16 +61,19 @@ test("corrección pendiente impide eliminar y conserva texto; cancelar vista no 
   const c = await setupRemoval(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Eliminar entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Cancelar", exact: true }).click();
   expect(c.calls).toEqual([]);
   expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBeNull();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await page.getByLabel("Repeticiones de serie 1", { exact: true }).fill("9");
   await expect(page.getByLabel("Estado de corrección", { exact: true })).toHaveText(
     "Guardado en este dispositivo",
   );
   await page.getByRole("button", { name: "Volver sin descartar", exact: true }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Eliminar entrenamiento", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Eliminar para siempre", exact: true }),
@@ -83,6 +88,7 @@ test("conflicto requiere consultar y aceptar nueva versión antes de otro intent
   const c = await setupRemoval(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Eliminar entrenamiento", exact: true }).click();
   await expect(page.getByText("2 series · 2 comentarios", { exact: true })).toBeVisible();
   c.conflict = true;
@@ -104,6 +110,7 @@ test("cuota al congelar impide HTTP y después del commit solo reintenta limpiez
   const c = await setupRemoval(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Eliminar entrenamiento", exact: true }).click();
   await page.evaluate((k) => {
     const set = Storage.prototype.setItem;

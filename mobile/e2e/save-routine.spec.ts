@@ -1,3 +1,4 @@
+import { openResultOptions } from "./support/result-options";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupPersonalTraining } from "./support/personal-training-fixture";
@@ -72,7 +73,7 @@ async function setup(page: Page, draft = false) {
   await page
     .getByRole("button", { name: "Ver entrenamiento del 23/10 · Superior", exact: true })
     .click();
-  await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible();
+  await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible();
   return { ...f, doc, base };
 }
 for (const theme of ["light", "dark"] as const) {
@@ -90,6 +91,7 @@ for (const theme of ["light", "dark"] as const) {
     );
     const { state, control, doc, base } = await setup(page);
     const original = structuredClone(base);
+    await openResultOptions(page);
     await page.getByRole("button", { name: "Guardar como rutina", exact: true }).click();
     await expect(page.getByText("Nueva rutina · 2 ejercicios", { exact: true })).toBeVisible();
     expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBeNull();
@@ -128,6 +130,7 @@ test("actualizar compara revisiones y mantiene carpeta/nombre con revisión expl
   page,
 }) => {
   const { state, base, doc, control } = await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Actualizar mi rutina", exact: true }).click();
   await expect(
     page.getByText("La base cambió desde este entrenamiento. Revisa lo que vas a reemplazar.", {
@@ -165,6 +168,7 @@ test("base eliminada permite copia y un cambio después de revisar exige actuali
 }) => {
   const { state } = await setup(page);
   state.value.routines = [];
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Actualizar mi rutina", exact: true }).click();
   await expect(
     page.getByText("La base ya no está disponible. Puedes guardar una rutina independiente.", {
@@ -180,6 +184,7 @@ test("base eliminada permite copia y un cambio después de revisar exige actuali
 });
 test("un cambio mientras se revisa no crea borrador ni reemplaza la base", async ({ page }) => {
   const { state } = await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Actualizar mi rutina", exact: true }).click();
   await expect(
     page.getByText("Propuesta de reemplazo · 2 ejercicios", { exact: true }),
@@ -201,6 +206,7 @@ test("el borrador anterior se conserva y puede abrirse sin sustituir su contenid
   page,
 }) => {
   const { state } = await setup(page, true);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Actualizar mi rutina", exact: true }).click();
   await expect(
     page.getByText("Esta base ya tiene un borrador con cambios. Se conserva tu edición.", {
@@ -217,6 +223,7 @@ test("respuesta perdida al guardar la copia conserva un intento estable y se con
   page,
 }) => {
   const { state } = await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Guardar como rutina", exact: true }).click();
   await page.getByRole("button", { name: "Continuar al editor", exact: true }).click();
   state.loseResponse = true;
@@ -239,6 +246,7 @@ test("un conflicto posterior conserva los objetivos y permite guardar una copia"
   page,
 }) => {
   const { state, base } = await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Actualizar mi rutina", exact: true }).click();
   await page
     .getByRole("button", { name: "Revisar actualización en el editor", exact: true })
@@ -265,6 +273,7 @@ test("cuota conserva una propuesta completa y permite abrir/proteger el mismo bo
   page,
 }) => {
   const { state } = await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Guardar como rutina", exact: true }).click();
   await expect(page.getByText("Nueva rutina · 2 ejercicios", { exact: true })).toBeVisible();
   await page.evaluate(() => {
@@ -300,6 +309,7 @@ test("cuota conserva una propuesta completa y permite abrir/proteger el mismo bo
 
 test("salir mientras se comprueba la revisión no prepara un borrador tardío", async ({ page }) => {
   const { state } = await setup(page);
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Guardar como rutina", exact: true }).click();
   await expect(page.getByText("Nueva rutina · 2 ejercicios", { exact: true })).toBeVisible();
   let release!: () => void;
@@ -319,7 +329,7 @@ test("salir mientras se comprueba la revisión no prepara un borrador tardío", 
   await requested;
   await page.goBack();
   await expect(
-    page.getByText("Sesión registrada", { exact: true }).filter({ visible: true }),
+    page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true }).filter({ visible: true }),
   ).toBeVisible();
   const completed = page.waitForResponse((r) => r.url().endsWith("/api/mobile/v1/exercises"));
   release();

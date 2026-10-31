@@ -1,5 +1,6 @@
+import { ProgressChoice } from "./progress-choice";
 import { router } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import Svg, { Circle, Line, Polyline } from "react-native-svg";
 import {
   compareProgressPeriods,
@@ -10,40 +11,6 @@ import type { MobileProgressDetail } from "../../../src/lib/mobile/contracts";
 import { chartCoordinates } from "../lib/progress-view";
 import { Action, Notice, day, s, usePalette } from "./ui";
 const number = (value: number) => value.toLocaleString("es-CL", { maximumFractionDigits: 1 });
-function Choice({
-  label,
-  selected,
-  onPress,
-  compact = false,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  compact?: boolean;
-}) {
-  const p = usePalette();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ selected }}
-      aria-pressed={selected}
-      onPress={onPress}
-      style={{
-        minHeight: 48,
-        paddingHorizontal: compact ? 8 : 14,
-        paddingVertical: 12,
-        borderRadius: 24,
-        borderWidth: 1,
-        borderColor: selected ? p.blue : p.border,
-        backgroundColor: selected ? p.tint : p.card,
-        justifyContent: "center",
-      }}
-    >
-      <Text style={[s.label, { color: selected ? p.blue : p.ink }]}>{label}</Text>
-    </Pressable>
-  );
-}
 export function ProgressDetail({
   value,
   weeks,
@@ -81,9 +48,8 @@ export function ProgressDetail({
       </Text>
       <View style={[s.row, { justifyContent: "flex-start", gap: 8 }]}>
         {([4, 8, 12] as const).map((n) => (
-          <Choice
+          <ProgressChoice
             key={n}
-            compact
             label={`${n} semanas`}
             selected={weeks === n}
             onPress={() => onWeeks(n)}
@@ -94,12 +60,12 @@ export function ProgressDetail({
         <Text style={[s.caption, { color: p.blue }]}>REPETICIONES SIN CARGA</Text>
       ) : (
         <View style={[s.row, { justifyContent: "flex-start" }]}>
-          <Choice
+          <ProgressChoice
             label="1RM estimado"
             selected={metric === "1rm"}
             onPress={() => onMetric("1rm")}
           />
-          <Choice
+          <ProgressChoice
             label="Volumen"
             selected={metric === "volume"}
             onPress={() => onMetric("volume")}

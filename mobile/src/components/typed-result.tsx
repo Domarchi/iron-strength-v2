@@ -1,10 +1,11 @@
+import { ResultHeading, ResultNote, ResultOptions } from "./result-presentation";
 import { useWorkoutRemoval } from "../lib/workout-removal-context";
 import { trainingProgressReturn } from "../lib/training-progress-view";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
 import { router, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
-import { Action, Brand, Notice, Page, s, usePalette, day } from "./ui";
+import { Action, Notice, Page, s, usePalette } from "./ui";
 import { WorkoutComments } from "./workout-comments";
 import type { TypedWorkout as Result } from "../../../src/lib/mobile/typed-recording-contracts";
 import { formatPresentedTrainingMetrics as formatTrainingMetrics } from "../../../src/domain/training-metrics";
@@ -43,13 +44,12 @@ export function TypedResult({
     ),
   );
   return (
-    <Page>
-      <Brand />
+    <Page compact>
       {error ? <Notice message={error} retry={retry} /> : null}
       {back ? (
         <Action
           label="Volver al progreso"
-          secondary
+          quiet
           onPress={() =>
             router.canGoBack()
               ? router.back()
@@ -69,24 +69,23 @@ export function TypedResult({
       {params.from === "history" ? (
         <Action
           label="Volver al historial"
-          secondary
+          quiet
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/history"))}
         />
       ) : params.from === "summary" ? (
         <Action
           label="Volver al resumen"
-          secondary
+          quiet
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/progress"))}
         />
       ) : null}
-      <Text style={[s.caption, { color: p.success }]}>ENTRENAMIENTO CONFIRMADO</Text>
-      <Text style={[s.heading, { color: p.ink }]}>
-        {w.title ?? w.programName ?? "Entrenamiento"}
-      </Text>
-      <Text style={[s.caption, { color: p.muted }]}>
-        {day(w.performedOn)} · {w.summary.workingSets} series · {Math.round(w.durationSeconds / 60)}{" "}
-        min
-      </Text>
+      <ResultHeading
+        title={w.title ?? w.programName ?? "Entrenamiento"}
+        date={w.performedOn}
+        workingSets={w.summary.workingSets}
+        exerciseCount={w.summary.exerciseCount}
+        durationSeconds={w.durationSeconds}
+      />
       <View style={{ gap: 6 }}>
         {w.summary.volumeKg > 0 ? (
           <Text style={[s.body, { color: p.ink }]}>
@@ -104,17 +103,69 @@ export function TypedResult({
         {w.perceivedEffort != null ? (
           <Text style={[s.body, { color: p.ink }]}>Esfuerzo: {w.perceivedEffort}/10</Text>
         ) : null}
-        {w.note ? <Text style={[s.body, { color: p.muted }]}>{w.note}</Text> : null}
       </View>
+      <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        <Action label="Ver mi historial" quiet onPress={() => router.navigate("/history")} />
+        <ResultOptions>
+          <Action
+            label="Corregir entrenamiento"
+            secondary
+            disabled={
+              loading || !!error || removal.busy || removal.pending?.request.workoutId === w.id
+            }
+            onPress={() => router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })}
+          />
+          <Action
+            label="Eliminar entrenamiento"
+            quiet
+            disabled={loading || !!error || removal.busy}
+            onPress={() => router.push({ pathname: "/remove-result/[id]", params: { id: w.id } })}
+          />
+          <Action
+            label="Repetir entrenamiento"
+            secondary
+            onPress={() =>
+              router.push({ pathname: "/repeat-recording/[id]", params: { id: w.id } })
+            }
+          />
+          <Action
+            label="Guardar como rutina"
+            secondary
+            onPress={() => router.push({ pathname: "/save-routine/[id]", params: { id: w.id } })}
+          />
+          {w.sourceKind === "personal" ? (
+            <Action
+              label="Actualizar mi rutina"
+              quiet
+              onPress={() =>
+                router.push({
+                  pathname: "/save-routine/[id]",
+                  params: { id: w.id, mode: "update" },
+                })
+              }
+            />
+          ) : null}
+        </ResultOptions>
+      </View>
+      <ResultNote note={w.note} />
       {w.exercises.map((e) => (
         <View key={e.id} style={[s.divider, { borderColor: p.border, gap: 8 }]}>
-          <Text style={[s.subheading, { color: p.ink }]}>{e.name}</Text>
+          <Text style={[s.label, { color: p.ink, fontSize: 17, lineHeight: 23 }]}>{e.name}</Text>
           {e.prescribedExerciseName && e.exerciseId !== e.prescribedExerciseId ? (
             <Text style={[s.caption, { color: p.blue }]}>
               Alternativa a {e.prescribedExerciseName}
             </Text>
           ) : null}
-          {e.athleteNote ? <Text style={[s.body, { color: p.muted }]}>{e.athleteNote}</Text> : null}
+          <ResultNote note={e.athleteNote} label={`Nota de ${e.name}`} />
           {e.sets.map((set, i) => (
             <View key={set.id} style={{ gap: 2 }}>
               <View style={s.row}>
@@ -137,39 +188,6 @@ export function TypedResult({
           ) : null}
         </View>
       ))}
-      <Action
-        label="Corregir entrenamiento"
-        secondary
-        disabled={loading || !!error || removal.busy || removal.pending?.request.workoutId === w.id}
-        onPress={() => router.push({ pathname: "/correct-result/[id]", params: { id: w.id } })}
-      />
-      <Action
-        label="Eliminar entrenamiento"
-        quiet
-        disabled={loading || !!error || removal.busy}
-        onPress={() => router.push({ pathname: "/remove-result/[id]", params: { id: w.id } })}
-      />
-      <Action
-        label="Repetir entrenamiento"
-        secondary
-        onPress={() => router.push({ pathname: "/repeat-recording/[id]", params: { id: w.id } })}
-      />
-      <Action
-        label="Guardar como rutina"
-        secondary
-        onPress={() => router.push({ pathname: "/save-routine/[id]", params: { id: w.id } })}
-      />
-      {w.sourceKind === "personal" ? (
-        <Action
-          label="Actualizar mi rutina"
-          quiet
-          onPress={() =>
-            router.push({ pathname: "/save-routine/[id]", params: { id: w.id, mode: "update" } })
-          }
-        />
-      ) : null}
-      <Action label="Volver a mi semana" onPress={() => router.navigate("/")} />
-      <Action label="Ver mi historial" secondary onPress={() => router.navigate("/history")} />
       <WorkoutComments workoutId={w.id} />
     </Page>
   );

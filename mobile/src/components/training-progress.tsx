@@ -1,7 +1,7 @@
 import { ProgressRefresh } from "./progress-refresh";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { router } from "expo-router";
-import { FlatList, Pressable, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type {
   TrainingExerciseProgress,
@@ -17,7 +17,7 @@ import { RECORD_TYPE_LABELS } from "../lib/training-labels";
 import { useSession } from "../lib/session";
 import { useQuery } from "../lib/use-query";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
-import { Notice, ScreenIntro, s, day, usePalette } from "./ui";
+import { Input, Notice, ScreenIntro, s, day, usePalette } from "./ui";
 import { ConnectionStatus } from "./connection-status";
 import { ProgressChoice } from "./progress-choice";
 import { TrainingSummary } from "./training-summary";
@@ -46,16 +46,16 @@ function ExerciseRow({ exercise: e }: { exercise: TrainingExerciseProgress }) {
         s.divider,
         {
           borderColor: p.border,
-          paddingBottom: 20,
+          paddingBottom: 16,
           gap: 5,
           backgroundColor: pressed ? p.raised : "transparent",
         },
       ]}
     >
-      <Text style={[s.subheading, { color: p.ink }]}>{e.name}</Text>
+      <Text style={[s.label, { color: p.ink, fontSize: 17, lineHeight: 23 }]}>{e.name}</Text>
       <Text style={[s.caption, { color: p.muted }]}>{kind}</Text>
       {mark ? (
-        <Text style={[s.heading, s.number, { color: p.ink, fontSize: 26, lineHeight: 34 }]}>
+        <Text style={[s.heading, s.number, { color: p.ink, fontSize: 24, lineHeight: 30 }]}>
           {formatProgressValue(mark.metric, mark.value, preferences.value)}
         </Text>
       ) : null}
@@ -97,7 +97,7 @@ export function TrainingProgress() {
   const data: (TrainingExerciseProgress | TrainingActivity)[] =
     view === "exercises" ? exercises : activity;
   const header = (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 14 }}>
       <ConnectionStatus />
       <ScreenIntro title="Progreso" />
       {q.error ? (
@@ -132,7 +132,7 @@ export function TrainingProgress() {
             <ProgressRefresh label="Actualizar progreso" busy={q.loading} onPress={q.retry} />
           </View>
           {view === "exercises" ? (
-            <TextInput
+            <Input
               keyboardAppearance={p.dark ? "dark" : "light"}
               selectionColor={p.blue}
               accessibilityLabel="Buscar ejercicio en progreso"
@@ -141,7 +141,7 @@ export function TrainingProgress() {
               value={search}
               maxLength={200}
               onChangeText={(value) => setSearch(value.slice(0, 200))}
-              style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.card }]}
+              style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.field }]}
             />
           ) : (
             <>
@@ -175,6 +175,7 @@ export function TrainingProgress() {
   return (
     <View style={{ flex: 1, backgroundColor: p.bg, paddingTop: insets.top }}>
       <FlatList
+        testID="progress-list"
         data={data}
         keyExtractor={(e) =>
           "exerciseId" in e ? `${e.exerciseId}:${e.recordType ?? "legacy"}` : e.id

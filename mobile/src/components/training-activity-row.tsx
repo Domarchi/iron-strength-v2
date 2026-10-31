@@ -48,7 +48,9 @@ export const TrainingActivityRow = memo(function TrainingActivityRow({
         </Text>
       </View>
       <View style={[s.row, { flexWrap: "nowrap" }]}>
-        <Text style={[s.subheading, { color: p.ink, flex: 1 }]}>{workoutTitle(row)}</Text>
+        <Text style={[s.label, { color: p.ink, flex: 1, fontSize: 17, lineHeight: 23 }]}>
+          {workoutTitle(row)}
+        </Text>
         <Icon name="arrow" size={18} color={p.muted} />
       </View>
       <Text style={[s.caption, { color: p.muted }]}>

@@ -1,3 +1,4 @@
+import { openResultOptions } from "./support/result-options";
 import { enterWeekUser } from "./support/week-fixture";
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -13,6 +14,7 @@ for (const theme of ["light", "dark"] as const) {
     const c = await setupCorrection(page);
     await page.getByRole("tab", { name: "Historial", exact: true }).click();
     await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+    await openResultOptions(page);
     await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
     await page.getByLabel("Peso en kg de serie 1", { exact: true }).fill("62,");
     await expect(page.getByLabel("Estado de corrección", { exact: true })).toHaveText(
@@ -59,6 +61,7 @@ for (const theme of ["light", "dark"] as const) {
     ).toBeNull();
     await page.getByRole("button", { name: "Ver resultado", exact: true }).click();
     await expect(page.getByText("62,5 kg × 8 reps", { exact: true })).toBeVisible();
+    await openResultOptions(page);
     await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
     await expect(page.getByLabel("Peso en kg de serie 1", { exact: true })).toHaveValue("62,5");
   });
@@ -69,6 +72,7 @@ test("Cuenta protege corrección pendiente y descarte explícito conserva el res
   const c = await setupCorrection(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await page.getByLabel("Repeticiones de serie 1", { exact: true }).fill("9");
   await expect(page.getByLabel("Estado de corrección", { exact: true })).toHaveText(
@@ -93,6 +97,7 @@ test("conflicto conserva campos locales y exige revisar la versión actual", asy
   const c = await setupCorrection(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await page.getByLabel("Peso en kg de serie 1", { exact: true }).fill("65");
   await page.getByRole("button", { name: "Revisar corrección", exact: true }).click();
@@ -121,6 +126,7 @@ test("cuota conserva texto, impide enviar y permite proteger sin crear otro inte
   const c = await setupCorrection(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await expect(page.getByLabel("Peso en kg de serie 1", { exact: true })).toHaveValue("60");
   await page.evaluate((key) => {
@@ -153,6 +159,7 @@ test("otra ventana no se sobrescribe y releer exige confirmar la pérdida de mem
   const c = await setupCorrection(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await page.getByLabel("Peso en kg de serie 1", { exact: true }).fill("61");
   await expect(page.getByLabel("Estado de corrección", { exact: true })).toHaveText(
@@ -218,6 +225,7 @@ test("corrección de nueve tipos conserva dimensiones y notas de filas sin serie
   const c = await setupCorrection(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await expect(
     page.getByRole("button", { name: "Corregir entrenamiento", exact: true }),
   ).toBeVisible();
@@ -247,6 +255,7 @@ test("corrección de nueve tipos conserva dimensiones y notas de filas sin serie
       ),
     },
   });
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   const fields = ["weightKg", "reps", "durationSeconds", "distanceMeters"] as const;
   const labels = {
@@ -295,6 +304,7 @@ test("retirar series exige revisión y conserva al menos una sin borrar el entre
   const c = await setupCorrection(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Retirar serie 1", exact: true }).click();
   await expect(page.getByRole("button", { name: "Retirar serie 2", exact: true })).toBeDisabled();
@@ -313,6 +323,7 @@ test("borrar cuenta espera una escritura de corrección retenida antes de solici
   await setupCorrection(page);
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await expect(page.getByLabel("Peso en kg de serie 1", { exact: true })).toHaveValue("60");
   await page.evaluate((key) => {
@@ -383,6 +394,7 @@ test("corregir un resultado conserva íntegro el entrenamiento activo y su desca
   await page.getByRole("button", { name: "Volver a Inicio", exact: true }).click();
   await page.getByRole("tab", { name: "Historial", exact: true }).click();
   await page.getByRole("button", { name: /Ver entrenamiento del .*Fuerza revisada/ }).click();
+  await openResultOptions(page);
   await page.getByRole("button", { name: "Corregir entrenamiento", exact: true }).click();
   await page.getByLabel("Repeticiones de serie 1", { exact: true }).fill("9");
   await page.getByRole("button", { name: "Revisar corrección", exact: true }).click();

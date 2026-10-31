@@ -96,7 +96,7 @@ test("descarga → pérdida de red → alternativa y ronda → cierre local → 
   control.offline = false;
   control.saveLost = true;
   await setWeekConnectivity(page, true);
-  await expect(page.getByText("Sesión registrada", { exact: true })).toBeVisible({
+  await expect(page.getByText("ENTRENAMIENTO CONFIRMADO", { exact: true })).toBeVisible({
     timeout: 30000,
   });
   expect(control.saved.size).toBe(1);
