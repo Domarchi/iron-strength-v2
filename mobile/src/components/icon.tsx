@@ -6,6 +6,7 @@ const paths = {
   history: "M6 3h12a2 2 0 0 1 2 2v16H4V5a2 2 0 0 1 2-2ZM8 8h8M8 12h8M8 16h5",
   progress: "M4 4v16h16M7 14l4-5 4 3 5-8",
   account: "M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2",
+  chevronLeft: "m14 5-7 7 7 7",
   arrow: "M5 12h14m-5-5 5 5-5 5",
   download: "M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4",
   check: "m5 12 4 4L19 6",

@@ -179,6 +179,7 @@ for (const theme of ["light", "dark"] as const)
         await page.getByRole("button", { name: "Detalles del ejercicio", exact: true }).click();
         await page.getByLabel("Nota del ejercicio", { exact: true }).fill("Nota propia 💪");
         await expect(page.getByText("Indicación original", { exact: true })).toBeVisible();
+        await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
       }
       await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
       await expect(
@@ -217,6 +218,7 @@ for (const theme of ["light", "dark"] as const)
       path: test.info().outputPath(`typed-workout-${theme}-360.png`),
       fullPage: true,
     });
+    await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
     await page.getByRole("button", { name: "Finalizar entrenamiento", exact: true }).click();
     await expect(
       page.getByText("9 series realizadas · 0 pendientes", { exact: true }),

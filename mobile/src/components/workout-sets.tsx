@@ -2,8 +2,8 @@ import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight } from "../../../src/domain/training-tools";
 import { isTypedTraining } from "../lib/training";
 import { useState } from "react";
-import { Pressable, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { Action, s, usePalette } from "./ui";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Action, Input, s, usePalette } from "./ui";
 import { Icon } from "./icon";
 import { SetCheck } from "./set-check";
 import { useTraining } from "../lib/training-context";
@@ -67,7 +67,7 @@ export function WorkoutSets({
   return (
     <View style={{ gap: 2 }}>
       {preferences.value.showTargets && !exercise.prescribed.series ? (
-        <Text style={[s.caption, { color: p.muted, marginBottom: 8 }]}>
+        <Text style={[s.caption, { color: p.muted, marginBottom: 0 }]}>
           Objetivo{" "}
           {exercise.prescribed.repsMin === exercise.prescribed.repsMax
             ? exercise.prescribed.repsMin
@@ -79,7 +79,7 @@ export function WorkoutSets({
         </Text>
       ) : null}
       {last && preferences.value.showPrevious ? (
-        <Text style={[s.caption, { color: p.muted, marginBottom: 8 }]}>
+        <Text style={[s.caption, { color: p.muted, marginBottom: 0 }]}>
           Anterior · {last.date.split("-").reverse().slice(0, 2).join("/")} · copia descargada
         </Text>
       ) : null}
@@ -150,7 +150,7 @@ export function WorkoutSets({
               gap: 2,
               paddingVertical: 3,
               borderRadius: 6,
-              backgroundColor: set.done ? p.completed : "transparent",
+              backgroundColor: "transparent",
             }}
           >
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -178,7 +178,7 @@ export function WorkoutSets({
                 <Icon name="more" size={12} color={p.muted} />
               </Pressable>
               {previousColumn ? previousValue : null}
-              <TextInput
+              <Input
                 accessibilityLabel={`Peso serie ${si + 1}`}
                 editable={!blocked}
                 accessibilityState={{ disabled: blocked }}
@@ -205,14 +205,14 @@ export function WorkoutSets({
                     textAlign: "center",
                     color: p.ink,
                     borderColor: p.control,
-                    borderWidth: 0,
+                    borderWidth: 1,
                     borderBottomWidth: 1,
                     borderRadius: 6,
-                    backgroundColor: set.done ? p.completed : p.raised,
+                    backgroundColor: set.done ? p.completed : p.field,
                   },
                 ]}
               />
-              <TextInput
+              <Input
                 accessibilityLabel={`Repeticiones serie ${si + 1}`}
                 editable={!blocked}
                 accessibilityState={{ disabled: blocked }}
@@ -239,10 +239,10 @@ export function WorkoutSets({
                     textAlign: "center",
                     color: p.ink,
                     borderColor: p.control,
-                    borderWidth: 0,
+                    borderWidth: 1,
                     borderBottomWidth: 1,
                     borderRadius: 6,
-                    backgroundColor: set.done ? p.completed : p.raised,
+                    backgroundColor: set.done ? p.completed : p.field,
                   },
                 ]}
               />

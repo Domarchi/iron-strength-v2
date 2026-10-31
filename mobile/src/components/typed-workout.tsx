@@ -1,10 +1,12 @@
+import { WorkoutHeading } from "./workout-heading";
+import { WorkoutPanel } from "./workout-panel";
 import { useTrainingDownload } from "../lib/training-download-context";
 import { TrainingExerciseHistory } from "./training-exercise-history";
 import { WorkoutTools } from "./workout-tools";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { trainingFields } from "../lib/training-fields";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AppState,
   KeyboardAvoidingView,
@@ -12,10 +14,10 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useTraining } from "../lib/training-context";
 import type { TypedActiveTraining } from "../lib/training";
 import { useSession } from "../lib/session";
@@ -36,7 +38,7 @@ import { parseTrainingSetInput } from "../../../src/domain/training-input";
 import { formatClock, remainingSeconds } from "../../../src/domain/rest-timer";
 import { nextSupersetSet } from "../../../src/domain/superset-rounds";
 import { elapsedSessionSeconds } from "../../../src/domain/session-timer";
-import { Action, IconAction, Notice, Page, s, usePalette } from "./ui";
+import { Action, IconAction, Input, Notice, Page, s, usePalette } from "./ui";
 import { RestControls } from "./rest-controls";
 import { SetCheck } from "./set-check";
 import { formatTrainingTarget } from "../lib/training-labels";
@@ -48,6 +50,8 @@ const classes = {
 } as const;
 export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
   const { preferences } = useTrainingPreferences();
+  const { width, fontScale } = useWindowDimensions();
+  const previousColumn = preferences.value.showPrevious && width >= 360 && fontScale <= 1.15;
   const [tools, setTools] = useState(false);
   const p = usePalette(),
     { controller, training } = useTraining(),
@@ -69,6 +73,16 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
       listener.remove();
     };
   }, []);
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        setTools(false);
+        setDetails(false);
+        setClosing(false);
+      },
+      [],
+    ),
+  );
   const d = a.draft,
     index = Math.max(0, Math.min(a.activeIndex, d.exercises.length - 1)),
     exercise = d.exercises[index],
@@ -148,34 +162,41 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <Page compact>
-        <Action label="Volver a Inicio" quiet onPress={() => router.navigate("/")} />
-        <View style={s.row}>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text accessibilityRole="header" style={[s.caption, { color: p.muted }]}>
-              {a.routine.title ?? `Sesión ${d.sessionLabel}`}
-            </Text>
-            <Text
-              accessibilityLabel="Duración del entrenamiento"
-              style={[s.heading, s.number, { color: p.ink }]}
-            >
-              {formatClock(elapsed)}
-            </Text>
-          </View>
-          {!pending ? (
-            <IconAction
-              label={paused ? "Reanudar entrenamiento" : "Pausar entrenamiento"}
-              icon={paused ? "play" : "pause"}
-              disabled={training.dirty || training.busy || training.closing}
-              onPress={() => {
-                void act(() => (paused ? controller.resume() : controller.pause()));
-              }}
-            />
-          ) : null}
-        </View>
+        <WorkoutHeading
+          paused={paused}
+          title={a.routine.title ?? `Sesión ${d.sessionLabel}`}
+          elapsed={elapsed}
+          done={done}
+          total={total}
+          onBack={() => router.navigate("/")}
+          backDisabled={training.busy}
+          onFinish={
+            pending
+              ? undefined
+              : () => {
+                  setDetails(false);
+                  setTools(false);
+                  setClosing(true);
+                }
+          }
+          finishDisabled={locked || training.dirty}
+          pause={
+            !pending ? (
+              <IconAction
+                label={paused ? "Reanudar entrenamiento" : "Pausar entrenamiento"}
+                icon={paused ? "play" : "pause"}
+                disabled={training.dirty || training.busy || training.closing || training.blocked}
+                onPress={() => {
+                  void act(() => (paused ? controller.resume() : controller.pause()));
+                }}
+              />
+            ) : null
+          }
+        />
         <Text style={[s.caption, { color: training.dirty ? p.muted : p.success }]}>
           {training.dirty ? "Cambios pendientes" : "Guardado en este dispositivo"}
         </Text>
-        {training.error ? (
+        {training.error && !tools && !details && (!closing || pending) ? (
           <Notice
             message={training.error}
             retry={() => {
@@ -183,7 +204,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
             }}
           />
         ) : null}
-        {error ? <Notice message={error} /> : null}
+        {error && !tools && !details && (!closing || pending) ? <Notice message={error} /> : null}
         {paused ? <Notice message="Entrenamiento en pausa. Reanuda para continuar." /> : null}
         {pending ? (
           <Notice message="Guardado en este dispositivo. Pendiente de confirmar por el servidor." />
@@ -245,9 +266,91 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                 Anterior · {formatTrainingMetrics(exercise.lastMetrics, preferences.value)}
               </Text>
             ) : null}
+            <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+              <Text
+                style={[
+                  s.caption,
+                  { width: 44, textAlign: "center", color: p.muted, fontSize: 11 },
+                ]}
+              >
+                SERIE
+              </Text>
+              {previousColumn ? (
+                <Text
+                  style={[
+                    s.caption,
+                    { width: 72, textAlign: "center", color: p.muted, fontSize: 11 },
+                  ]}
+                >
+                  ANTERIOR
+                </Text>
+              ) : null}
+              {trainingFields(exercise.prescribed.recordType).map((f) => (
+                <Text
+                  key={f.field}
+                  style={[
+                    s.caption,
+                    { flex: 1, textAlign: "center", color: p.muted, fontSize: 11 },
+                  ]}
+                >
+                  {f.label}
+                </Text>
+              ))}
+              <View style={{ width: 48 }} />
+            </View>
             {exercise.sets.map((set, si) => {
               const target = typedSetTarget(exercise, si),
                 previous = previousTypedSet(exercise, si, previousSets);
+              const previousValue = previous ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Copiar anterior a serie ${si + 1}`}
+                  accessibilityState={{ disabled: locked || set.done }}
+                  disabled={locked || set.done}
+                  onPress={() =>
+                    update((draft) => copyTypedSetPerformance(draft, index, si, previousSets))
+                  }
+                  style={({ pressed }) => ({
+                    width: previousColumn ? 72 : undefined,
+                    minHeight: 48,
+                    justifyContent: "center",
+                    alignItems: previousColumn ? "center" : "flex-start",
+                    borderRadius: 6,
+                    backgroundColor: pressed ? p.raised : "transparent",
+                  })}
+                >
+                  <Text
+                    style={[
+                      s.caption,
+                      s.number,
+                      {
+                        color: p.muted,
+                        fontSize: 12,
+                        textAlign: previousColumn ? "center" : "left",
+                      },
+                    ]}
+                  >
+                    {previousColumn ? "" : "Anterior · "}
+                    {formatTrainingMetrics(
+                      {
+                        recordType: previous.recordType,
+                        weightKg: previous.weightKg,
+                        reps: previous.reps,
+                        durationSeconds: previous.durationSeconds,
+                        distanceMeters: previous.distanceMeters,
+                      },
+                      preferences.value,
+                    )}
+                  </Text>
+                </Pressable>
+              ) : previousColumn ? (
+                <Text
+                  accessibilityLabel={`Sin referencia anterior para serie ${si + 1}`}
+                  style={[s.caption, { width: 72, textAlign: "center", color: p.muted }]}
+                >
+                  —
+                </Text>
+              ) : null;
               return (
                 <View
                   key={set.id}
@@ -256,7 +359,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                     paddingVertical: 4,
                     borderBottomWidth: 0.5,
                     borderColor: p.border,
-                    backgroundColor: set.done ? p.completed : "transparent",
+                    backgroundColor: "transparent",
                     borderRadius: 6,
                   }}
                 >
@@ -289,14 +392,10 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                               : "D"}
                       </Text>
                     </Pressable>
+                    {previousColumn ? previousValue : null}
                     {trainingFields(exercise.prescribed.recordType).map((f) => (
                       <View key={f.field} style={{ flex: 1, gap: 2 }}>
-                        <Text
-                          style={[s.caption, { color: p.muted, fontSize: 10, textAlign: "center" }]}
-                        >
-                          {f.label}
-                        </Text>
-                        <TextInput
+                        <Input
                           accessibilityLabel={`${f.label} serie ${si + 1}`}
                           keyboardType={f.integer ? "number-pad" : "decimal-pad"}
                           keyboardAppearance={p.dark ? "dark" : "light"}
@@ -311,7 +410,8 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                             s.number,
                             {
                               color: p.ink,
-                              borderColor: p.control,
+                              borderColor: set.done ? p.completed : p.control,
+                              backgroundColor: set.done ? p.completed : p.field,
                               textAlign: "center",
                               paddingHorizontal: 4,
                               paddingVertical: 4,
@@ -360,17 +460,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                       }}
                     />
                   </View>
-                  {preferences.value.showPrevious && previous ? (
-                    <Action
-                      accessibilityLabel={`Copiar anterior a serie ${si + 1}`}
-                      label={`Anterior · ${formatTrainingMetrics({ recordType: previous.recordType, weightKg: previous.weightKg, reps: previous.reps, durationSeconds: previous.durationSeconds, distanceMeters: previous.distanceMeters }, preferences.value)}`}
-                      quiet
-                      disabled={locked || set.done}
-                      onPress={() =>
-                        update((draft) => copyTypedSetPerformance(draft, index, si, previousSets))
-                      }
-                    />
-                  ) : null}
+                  {preferences.value.showPrevious && !previousColumn ? previousValue : null}
                   {options === set.id ? (
                     <View style={{ gap: 8, padding: 8 }}>
                       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
@@ -388,7 +478,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                         ))}
                       </View>
                       <Text style={[s.caption, { color: p.muted }]}>Esfuerzo · 1–10, opcional</Text>
-                      <TextInput
+                      <Input
                         accessibilityLabel={`Esfuerzo de serie ${si + 1}`}
                         keyboardType="decimal-pad"
                         keyboardAppearance={p.dark ? "dark" : "light"}
@@ -452,7 +542,10 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                     accessibilityLabel="Herramientas del ejercicio"
                     quiet
                     disabled={locked || training.dirty}
-                    onPress={() => setTools((v) => !v)}
+                    onPress={() => {
+                      setDetails(false);
+                      setTools(true);
+                    }}
                   />
                 </View>
               ) : null}
@@ -461,20 +554,43 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                   label="Detalles"
                   accessibilityLabel="Detalles del ejercicio"
                   quiet
-                  onPress={() => setDetails((v) => !v)}
+                  onPress={() => {
+                    setTools(false);
+                    setDetails(true);
+                  }}
                 />
               </View>
             </View>
             {tools ? (
-              <WorkoutTools
-                key={`${d.workoutId}:${exercise.sessionExerciseId}:${exercise.exerciseId}`}
-                active={a}
-                index={index}
-                onClose={() => setTools(false)}
-              />
+              <WorkoutPanel title="Herramientas del ejercicio" onClose={() => setTools(false)}>
+                {training.error ? (
+                  <Notice
+                    message={training.error}
+                    retry={() => {
+                      void act(() => controller.retryStorage());
+                    }}
+                  />
+                ) : null}
+                {error ? <Notice message={error} /> : null}
+                <WorkoutTools
+                  key={`${d.workoutId}:${exercise.sessionExerciseId}:${exercise.exerciseId}`}
+                  active={a}
+                  index={index}
+                  onClose={() => setTools(false)}
+                />
+              </WorkoutPanel>
             ) : null}
             {details ? (
-              <View style={{ gap: 10 }}>
+              <WorkoutPanel title="Detalles del ejercicio" onClose={() => setDetails(false)}>
+                {training.error ? (
+                  <Notice
+                    message={training.error}
+                    retry={() => {
+                      void act(() => controller.retryStorage());
+                    }}
+                  />
+                ) : null}
+                {error ? <Notice message={error} /> : null}
                 <TrainingExerciseHistory
                   key={exercise.exerciseId}
                   exerciseId={exercise.exerciseId}
@@ -483,7 +599,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                   <Text style={[s.body, { color: p.muted }]}>{source.note}</Text>
                 ) : null}
                 <Text style={[s.label, { color: p.ink }]}>Tu nota · opcional</Text>
-                <TextInput
+                <Input
                   accessibilityLabel="Nota del ejercicio"
                   multiline
                   editable={!locked}
@@ -554,7 +670,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                         />
                       ))
                   : null}
-              </View>
+              </WorkoutPanel>
             ) : null}
           </>
         ) : (
@@ -583,8 +699,20 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
           </View>
         ) : null}
         {closing && !pending ? (
-          <View style={{ gap: 10 }}>
-            <Text style={[s.subheading, { color: p.ink }]}>Revisa antes de terminar</Text>
+          <WorkoutPanel
+            title="Revisa antes de terminar"
+            onClose={() => setClosing(false)}
+            dismissible={!training.closing && !training.busy}
+          >
+            {training.error ? (
+              <Notice
+                message={training.error}
+                retry={() => {
+                  void act(() => controller.retryStorage());
+                }}
+              />
+            ) : null}
+            {error ? <Notice message={error} /> : null}
             <Text style={[s.body, { color: p.muted }]}>
               {done} {done === 1 ? "serie realizada" : "series realizadas"} · {total - done}{" "}
               {total - done === 1 ? "pendiente" : "pendientes"}
@@ -594,7 +722,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
               {totals.durationSeconds} s registrados ·{" "}
               {formatDistance(totals.distanceMeters, preferences.value.distanceUnit)}
             </Text>
-            <TextInput
+            <Input
               accessibilityLabel="Esfuerzo percibido"
               placeholder="Esfuerzo 1–10 · opcional"
               placeholderTextColor={p.muted}
@@ -604,7 +732,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
               onChangeText={(v) => controller.review(v, a.review?.note ?? "")}
               style={[s.input, { color: p.ink, borderColor: p.control }]}
             />
-            <TextInput
+            <Input
               accessibilityLabel="Nota del entrenamiento"
               placeholder="Nota opcional"
               placeholderTextColor={p.muted}
@@ -621,8 +749,13 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                 void finish();
               }}
             />
-            <Action label="Seguir entrenando" quiet onPress={() => setClosing(false)} />
-          </View>
+            <Action
+              label="Seguir entrenando"
+              quiet
+              disabled={training.closing || training.busy}
+              onPress={() => setClosing(false)}
+            />
+          </WorkoutPanel>
         ) : pending ? (
           <Action
             label="Reintentar envío"
@@ -632,13 +765,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
               void act(() => sync.synchronize());
             }}
           />
-        ) : (
-          <Action
-            label="Finalizar entrenamiento"
-            disabled={locked}
-            onPress={() => setClosing(true)}
-          />
-        )}
+        ) : null}
         {discard ? (
           <>
             <Notice message="Se eliminará solo este registro local. Esta acción no borra resultados del servidor." />

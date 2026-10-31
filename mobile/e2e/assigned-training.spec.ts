@@ -166,6 +166,7 @@ test("alternativa de otro tipo conserva grupo, avanza rondas desiguales y recupe
   await page.getByRole("button", { name: "Empezar entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Detalles del ejercicio", exact: true }).click();
   await page.getByRole("button", { name: "Cambiar a Asignado 6", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
   await page.getByLabel("SEGUNDOS serie 1", { exact: true }).fill("60");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
   await expect(page.getByRole("button", { name: "Ir a Asignado 5", exact: true })).toHaveAttribute(

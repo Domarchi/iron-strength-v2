@@ -15,6 +15,7 @@ test("pausa asignada permite consultar el índice y bloquea sustituciones sin al
   await page.getByRole("button", { name: "Pausar entrenamiento", exact: true }).click();
   await page.getByRole("button", { name: "Detalles del ejercicio", exact: true }).click();
   await expect(page.getByRole("button", { name: "Cambiar a Prensa", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Cerrar panel", exact: true }).click();
   const next = control.pack.sessions[0].context.exercises[1].name;
   await page.getByRole("button", { name: `Ir a ${next}`, exact: true }).click();
   await expect(

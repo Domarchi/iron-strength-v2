@@ -1,3 +1,5 @@
+import { WorkoutHeading } from "../../../components/workout-heading";
+import { WorkoutPanel } from "../../../components/workout-panel";
 import { useTrainingDownload } from "../../../lib/training-download-context";
 import { WorkoutTools } from "../../../components/workout-tools";
 import { useTrainingPreferences } from "../../../lib/training-preferences-context";
@@ -8,8 +10,8 @@ import { useSession } from "../../../lib/session";
 import { useWorkoutSyncQueue } from "../../../lib/sync-context";
 import { QueuedWorkout } from "../../../components/queued-workout";
 import { SyncQueueIssue } from "../../../components/sync-queue-card";
-import { useEffect, useState } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   AppState,
   Keyboard,
@@ -18,13 +20,13 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { Icon } from "../../../components/icon";
 import {
   Action,
   IconAction,
+  Input,
   Notice,
   Page,
   ScreenIntro,
@@ -67,6 +69,16 @@ export default function Workout() {
     [closing, setClosing] = useState(false),
     [discard, setDiscard] = useState(false),
     [details, showDetails] = useState<string | null>(null);
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        setTools(false);
+        showDetails(null);
+        setClosing(false);
+      },
+      [],
+    ),
+  );
   const current = training.active;
   const a = current && !isTypedTraining(current) ? current : null,
     d = a?.draft,
@@ -205,62 +217,32 @@ export default function Workout() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <Page compact>
-        <View style={[s.row, { alignItems: "flex-start" }]}>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[s.caption, { color: p.blue }]}>
-              {a.mode === "demo" ? "DEMO · " : ""}
-              {d.version === 3
-                ? d.origin.kind === "free"
-                  ? "LIBRE"
-                  : "RUTINA PERSONAL"
-                : `SESIÓN ${d.sessionLabel}`}
-              {pending ? " · PENDIENTE DE ENVIAR" : ""}
-            </Text>
-            <Text style={[s.subheading, { color: p.ink }]}>
-              {a.routine.session.title ?? `Sesión ${d.sessionLabel}`}
-            </Text>
-          </View>
-          <View style={{ flexDirection: "row" }}>
-            {pauseControl}
-            <IconAction
-              label="Volver a Inicio"
-              icon="home"
-              disabled={training.busy}
-              onPress={back}
-            />
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            gap: 16,
-            borderBottomWidth: 0.5,
-            borderBottomColor: p.border,
-            paddingBottom: 12,
-          }}
-        >
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[s.caption, { color: p.muted }]}>{paused ? "En pausa" : "Duración"}</Text>
-            <Text
-              accessibilityLabel="Duración del entrenamiento"
-              style={[s.number, { color: p.blue, fontSize: 17 }]}
-            >
-              {formatClock(elapsed)}
-            </Text>
-          </View>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[s.caption, { color: p.muted }]}>Volumen</Text>
-            <Text style={[s.number, { color: p.ink, fontSize: 17 }]}>
-              {formatWeight(volume.loadKg, preferences.value.weightUnit)}
-            </Text>
-          </View>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[s.caption, { color: p.muted }]}>Series</Text>
-            <Text style={[s.number, { color: p.ink, fontSize: 17 }]}>
-              {summary.doneSets}/{summary.totalSets}
-            </Text>
-          </View>
-        </View>
+        <WorkoutHeading
+          paused={paused}
+          title={a.routine.session.title ?? `Sesión ${d.sessionLabel}`}
+          elapsed={elapsed}
+          done={summary.doneSets}
+          total={summary.totalSets}
+          onBack={back}
+          backDisabled={training.busy}
+          pause={pauseControl}
+          onFinish={
+            pending
+              ? undefined
+              : () => {
+                  setTools(false);
+                  showDetails(null);
+                  setClosing(true);
+                }
+          }
+          finishDisabled={
+            summary.doneSets === 0 ||
+            training.dirty ||
+            training.blocked ||
+            training.busy ||
+            training.closing
+          }
+        />
         <View style={{ gap: 4 }}>
           <Text
             accessibilityLiveRegion="polite"
@@ -276,7 +258,7 @@ export default function Workout() {
             <Text style={[s.caption, { color: p.blue }]}>PRUEBA LOCAL · No se envía al coach</Text>
           ) : null}
         </View>
-        {training.error ? (
+        {training.error && !tools && !details && (!closing || pending) ? (
           <Notice
             message={training.error}
             retry={() => {
@@ -284,7 +266,7 @@ export default function Workout() {
             }}
           />
         ) : null}
-        {error ? <Notice message={error} /> : null}
+        {error && !tools && !details && (!closing || pending) ? <Notice message={error} /> : null}
         {pending ? (
           <View style={[s.card, { backgroundColor: p.tint, borderColor: p.blue }]}>
             <SyncQueueIssue />
@@ -321,19 +303,6 @@ export default function Workout() {
           </View>
         ) : (
           <>
-            {personal ? (
-              <Action
-                label="Organizar ejercicios"
-                quiet
-                disabled={
-                  paused || training.dirty || training.blocked || training.busy || training.closing
-                }
-                onPress={() => {
-                  Keyboard.dismiss();
-                  router.push({ pathname: "/workout-organize/[id]", params: { id: d.workoutId } });
-                }}
-              />
-            ) : null}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -348,6 +317,8 @@ export default function Workout() {
                   accessibilityState={{ selected: i === index }}
                   aria-pressed={i === index}
                   onPress={() => {
+                    showDetails(null);
+                    setTools(false);
                     void act(() => controller.focus(i));
                   }}
                   style={{
@@ -374,7 +345,7 @@ export default function Workout() {
                 </Pressable>
               ))}
             </ScrollView>
-            <View style={{ gap: 16 }}>
+            <View style={{ gap: 8 }}>
               {exercise.supersetId ? (
                 <Text style={[s.caption, { color: p.blue }]}>
                   SUPERSERIE ·{" "}
@@ -391,22 +362,6 @@ export default function Workout() {
                     : `Descanso entre series: ${exercise.restSeconds ?? 90} s`}
                 </Text>
               </View>
-              <Action
-                label="Herramientas del ejercicio"
-                quiet
-                disabled={
-                  paused || training.dirty || training.busy || training.closing || training.blocked
-                }
-                onPress={() => setTools((v) => !v)}
-              />
-              {tools ? (
-                <WorkoutTools
-                  key={`${d.workoutId}:${exercise.sessionExerciseId}:${exercise.exerciseId}`}
-                  active={a}
-                  index={index}
-                  onClose={() => setTools(false)}
-                />
-              ) : null}
               <WorkoutSets
                 index={index}
                 onComplete={(si) => {
@@ -414,6 +369,36 @@ export default function Workout() {
                   return controller.complete(index, si);
                 }}
               />
+              <Action
+                label="Herramientas del ejercicio"
+                quiet
+                disabled={
+                  paused || training.dirty || training.busy || training.closing || training.blocked
+                }
+                onPress={() => {
+                  showDetails(null);
+                  setTools(true);
+                }}
+              />
+              {tools ? (
+                <WorkoutPanel title="Herramientas del ejercicio" onClose={() => setTools(false)}>
+                  {training.error ? (
+                    <Notice
+                      message={training.error}
+                      retry={() => {
+                        void act(() => controller.retryStorage());
+                      }}
+                    />
+                  ) : null}
+                  {error ? <Notice message={error} /> : null}
+                  <WorkoutTools
+                    key={`${d.workoutId}:${exercise.sessionExerciseId}:${exercise.exerciseId}`}
+                    active={a}
+                    index={index}
+                    onClose={() => setTools(false)}
+                  />
+                </WorkoutPanel>
+              ) : null}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={
@@ -421,11 +406,10 @@ export default function Workout() {
                 }
                 accessibilityState={{ expanded: details === exercise.sessionExerciseId }}
                 aria-expanded={details === exercise.sessionExerciseId}
-                onPress={() =>
-                  showDetails((current) =>
-                    current === exercise.sessionExerciseId ? null : exercise.sessionExerciseId,
-                  )
-                }
+                onPress={() => {
+                  setTools(false);
+                  showDetails(exercise.sessionExerciseId);
+                }}
                 style={({ pressed }) => ({
                   minHeight: 48,
                   paddingVertical: 12,
@@ -448,7 +432,19 @@ export default function Workout() {
                 />
               </Pressable>
               {details === exercise.sessionExerciseId ? (
-                <View style={{ gap: 12 }}>
+                <WorkoutPanel
+                  title={personal ? "Detalles del ejercicio" : "Indicaciones y alternativas"}
+                  onClose={() => showDetails(null)}
+                >
+                  {training.error ? (
+                    <Notice
+                      message={training.error}
+                      retry={() => {
+                        void act(() => controller.retryStorage());
+                      }}
+                    />
+                  ) : null}
+                  {error ? <Notice message={error} /> : null}
                   {a.mode === "real" && !pending ? (
                     <Action
                       label="Añadir esfuerzo por serie y notas"
@@ -492,9 +488,22 @@ export default function Workout() {
                         ))}
                     </>
                   ) : null}
-                </View>
+                </WorkoutPanel>
               ) : null}
             </View>
+            {personal ? (
+              <Action
+                label="Organizar ejercicios"
+                quiet
+                disabled={
+                  paused || training.dirty || training.blocked || training.busy || training.closing
+                }
+                onPress={() => {
+                  Keyboard.dismiss();
+                  router.push({ pathname: "/workout-organize/[id]", params: { id: d.workoutId } });
+                }}
+              />
+            ) : null}
             {index < d.exercises.length - 1 ? (
               <Action
                 label="Siguiente ejercicio"
@@ -505,8 +514,20 @@ export default function Workout() {
               />
             ) : null}
             {closing ? (
-              <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-                <Text style={[s.subheading, { color: p.ink }]}>Revisa antes de terminar</Text>
+              <WorkoutPanel
+                title="Revisa antes de terminar"
+                onClose={() => setClosing(false)}
+                dismissible={!training.busy && !training.closing}
+              >
+                {training.error ? (
+                  <Notice
+                    message={training.error}
+                    retry={() => {
+                      void act(() => controller.retryStorage());
+                    }}
+                  />
+                ) : null}
+                {error ? <Notice message={error} /> : null}
                 <Text style={[s.caption, { color: p.muted }]}>
                   {formatWeight(volume.loadKg, preferences.value.weightUnit)} de volumen registrado
                 </Text>
@@ -518,7 +539,7 @@ export default function Workout() {
                   guardarán solo las series completadas.
                 </Text>
                 <Text style={[s.label, { color: p.ink }]}>Esfuerzo de 1 a 10 · opcional</Text>
-                <TextInput
+                <Input
                   keyboardAppearance={p.dark ? "dark" : "light"}
                   selectionColor={p.blue}
                   accessibilityLabel="Esfuerzo percibido"
@@ -530,7 +551,7 @@ export default function Workout() {
                   style={[s.input, { color: p.ink, borderColor: p.border }]}
                 />
                 <Text style={[s.label, { color: p.ink }]}>¿Cómo te fue? · opcional</Text>
-                <TextInput
+                <Input
                   keyboardAppearance={p.dark ? "dark" : "light"}
                   selectionColor={p.blue}
                   accessibilityLabel="Nota del entrenamiento"
@@ -563,8 +584,13 @@ export default function Workout() {
                     void finish();
                   }}
                 />
-                <Action label="Seguir entrenando" secondary onPress={() => setClosing(false)} />
-              </View>
+                <Action
+                  label="Seguir entrenando"
+                  secondary
+                  disabled={training.busy || training.closing}
+                  onPress={() => setClosing(false)}
+                />
+              </WorkoutPanel>
             ) : (
               <View style={{ gap: 12 }}>
                 {personal ? (
@@ -582,11 +608,6 @@ export default function Workout() {
                     onPress={addExercises}
                   />
                 ) : null}
-                <Action
-                  label="Finalizar entrenamiento"
-                  disabled={summary.doneSets === 0 || training.dirty}
-                  onPress={() => setClosing(true)}
-                />
               </View>
             )}
           </>
