@@ -1,3 +1,4 @@
+import { RoutineExercisePreview } from "../../../../components/routine-exercise-preview";
 import { useTrainingLibraryQuery } from "../../../../lib/training-download-query";
 import { useTrainingDownload } from "../../../../lib/training-download-context";
 import {
@@ -6,7 +7,6 @@ import {
   verifiedDownloadedTraining,
   requireSamePersonalPreview,
 } from "../../../../lib/downloaded-training";
-import { useTrainingPreferences } from "../../../../lib/training-preferences-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
@@ -14,9 +14,9 @@ import { useSession } from "../../../../lib/session";
 import { useTraining } from "../../../../lib/training-context";
 import { useLibraryDrafts } from "../../../../lib/library-context";
 import { personalRoutineTrainingContext } from "../../../../lib/typed-personal-training";
-import { formatTrainingTarget } from "../../../../lib/training-labels";
 import {
   Action,
+  IconAction,
   Loading,
   Notice,
   Page,
@@ -31,15 +31,13 @@ export default function PersonalRoutinePreviewRoute() {
   return <PersonalRoutinePreview key={`${userId}:${id}`} id={id} />;
 }
 function PersonalRoutinePreview({ id }: { id: string }) {
-  const { preferences } = useTrainingPreferences();
   const p = usePalette(),
     { client, state } = useSession(),
     { controller: downloads } = useTrainingDownload(),
     { controller, training } = useTraining(),
     { controller: libraryController, library } = useLibraryDrafts();
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState<string | null>(null),
-    [details, setDetails] = useState<string | null>(null);
+    [error, setError] = useState<string | null>(null);
   const inFlight = useRef(false),
     offline = state.status === "authenticated" && state.mode === "offline";
   const mounted = useRef(true),
@@ -114,7 +112,11 @@ function PersonalRoutinePreview({ id }: { id: string }) {
   return (
     <Page compact>
       <View style={s.row}>
-        <Action label="Volver a mis rutinas" quiet onPress={() => router.navigate("/library")} />
+        <IconAction
+          label="Volver a mis rutinas"
+          icon="chevronLeft"
+          onPress={() => router.navigate("/library")}
+        />
         <Action
           label="Editar rutina"
           quiet
@@ -171,46 +173,19 @@ function PersonalRoutinePreview({ id }: { id: string }) {
             <Text style={[s.body, { color: p.muted }]}>Agrega ejercicios para empezar.</Text>
           ) : null}
           {routine.items.map((item, index) => (
-            <View
+            <RoutineExercisePreview
               key={item.id}
-              style={{ gap: 8, paddingVertical: 16, borderBottomWidth: 0.5, borderColor: p.border }}
-            >
-              {item.supersetId && item.supersetId !== routine.items[index - 1]?.supersetId ? (
-                <Text style={[s.caption, { color: p.blue }]}>
-                  Superserie · {item.supersetRestSeconds ?? 90} s entre rondas
-                </Text>
-              ) : null}
-              <Text style={[s.subheading, { color: p.ink }]}>{item.name}</Text>
-              <Text style={[s.body, { color: p.muted }]}>
-                {item.prescribed.sets} ×{" "}
-                {formatTrainingTarget(item.prescribed.target, preferences.value) ||
-                  "Objetivo libre"}
-                {item.prescribed.series ? " · Por serie" : ""}
-              </Text>
-              {!item.supersetId ? (
-                <Text style={[s.caption, { color: p.muted }]}>
-                  Descanso: {item.restSeconds ?? 90} s
-                </Text>
-              ) : null}
-              {item.note || item.prescribed.series ? (
-                <Action
-                  label={`Ver detalles de ${item.name}`}
-                  quiet
-                  onPress={() => setDetails(details === item.id ? null : item.id)}
-                />
-              ) : null}
-              {details === item.id ? (
-                <>
-                  {item.note ? <Text style={[s.body, { color: p.muted }]}>{item.note}</Text> : null}
-                  {item.prescribed.series?.map((target, i) => (
-                    <Text key={i} style={[s.caption, { color: p.ink }]}>
-                      Serie {i + 1} ·{" "}
-                      {formatTrainingTarget(target, preferences.value) || "Objetivo libre"}
-                    </Text>
-                  ))}
-                </>
-              ) : null}
-            </View>
+              name={item.name}
+              index={index}
+              prescribed={item.prescribed}
+              restSeconds={item.restSeconds}
+              note={item.note}
+              supersetId={item.supersetId}
+              supersetRestSeconds={item.supersetRestSeconds}
+              newGroup={
+                !!item.supersetId && item.supersetId !== routine.items[index - 1]?.supersetId
+              }
+            />
           ))}
         </>
       ) : !q.loading && !q.error ? (

@@ -266,7 +266,9 @@ test("sin programa: demo interactiva, recuperación, cierre y resultados separad
   await enter(page);
   await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
   await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
-  await expect(page.getByText(/Rutina de ejemplo. Sus resultados quedan/)).toBeVisible();
+  await expect(
+    page.getByText("DEMO · Guardado solo en este dispositivo", { exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByLabel("Peso serie 1", { exact: true }).fill("20");
   await page.getByLabel("Repeticiones serie 1", { exact: true }).fill("9");

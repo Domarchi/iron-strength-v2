@@ -91,15 +91,6 @@ export function PersonalEditorRow({
       </View>
       {menuOpen ? (
         <View style={{ backgroundColor: p.raised, borderRadius: 10, padding: 8, gap: 2 }}>
-          <Action
-            label="Detalles"
-            accessibilityLabel={`Editar detalles de ${item.name}`}
-            quiet
-            onPress={() => {
-              setDetails(!details);
-              onMenu();
-            }}
-          />
           <View style={s.row}>
             <Action
               label="Subir"
@@ -256,17 +247,49 @@ export function PersonalEditorRow({
           ) : null}
         </>
       )}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {item.supersetId ? (
+          <Text style={[s.caption, { color: p.muted }]}>Descanso por ronda</Text>
+        ) : (
+          <>
+            <Text style={[s.caption, { color: p.muted }]}>Descanso</Text>
+            <View style={{ width: 72 }}>
+              <PersonalField
+                label={`Descanso de ${item.name}`}
+                value={item.restSeconds}
+                numeric
+                maxLength={20}
+                disabled={disabled}
+                onChange={(restSeconds) => change({ restSeconds })}
+              />
+            </View>
+            <Text style={[s.caption, { color: p.muted }]}>s</Text>
+          </>
+        )}
+        <View style={{ flex: 1 }} />
+        <Action
+          label={details ? "Ocultar detalles" : "Detalles"}
+          accessibilityLabel={details ? "Ocultar detalles" : `Editar detalles de ${item.name}`}
+          quiet
+          onPress={() => {
+            setDetails(!details);
+            if (menuOpen) onMenu();
+          }}
+        />
+      </View>
       {details ? (
         <View style={{ gap: 12, paddingTop: 6 }}>
-          <PersonalField
-            title="Descanso (s)"
-            label={`Descanso de ${item.name}`}
-            value={item.restSeconds}
-            numeric
-            maxLength={20}
-            disabled={disabled}
-            onChange={(restSeconds) => change({ restSeconds })}
-          />
+          {item.supersetId ? (
+            <PersonalField
+              title="Descanso fuera del grupo (s)"
+              label={`Descanso de ${item.name}`}
+              value={item.restSeconds}
+              numeric
+              maxLength={20}
+              disabled={disabled}
+              onChange={(restSeconds) => change({ restSeconds })}
+            />
+          ) : null}
           <PersonalField
             title="Nota (opcional)"
             label={`Nota de ${item.name}`}
@@ -308,7 +331,6 @@ export function PersonalEditorRow({
               />
             </>
           ) : null}
-          <Action label="Ocultar detalles" quiet onPress={() => setDetails(false)} />
         </View>
       ) : null}
     </View>

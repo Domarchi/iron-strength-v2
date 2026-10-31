@@ -35,7 +35,7 @@ import {
   formatPresentedTrainingMetrics as formatTrainingMetrics,
 } from "../../../src/domain/training-metrics";
 import { parseTrainingSetInput } from "../../../src/domain/training-input";
-import { formatClock, remainingSeconds } from "../../../src/domain/rest-timer";
+import { remainingSeconds } from "../../../src/domain/rest-timer";
 import { nextSupersetSet } from "../../../src/domain/superset-rounds";
 import { elapsedSessionSeconds } from "../../../src/domain/session-timer";
 import { Action, IconAction, Input, Notice, Page, s, usePalette } from "./ui";

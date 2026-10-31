@@ -1,0 +1,25 @@
+{
+  "formatVersion": 1,
+  "task": "T229",
+  "status": "Rutinas implementadas en cliente Expo; entrega f\u00edsica final pendiente",
+  "platform": "Expo web / WebKit with synthetic API fixtures; not physical iPhone",
+  "capturedAt": "2026-10-31T16:52:01.567240+00:00",
+  "themes": ["dark", "light"],
+  "tests": "142 E2E Chromium/WebKit in t229-regression-first.log (4.8 minutes), plus 18 reorder cases in t229-reorder.log (41.7 seconds)",
+  "createFourExerciseActions": 9,
+  "nativePhysicalAcceptance": false,
+  "images": [
+    {
+      "file": "t229-routine-dark-360.png",
+      "sha256": "3c8326705128c059e5da4bb2b82717e55fa563efeff640cdb4545920e96e998d",
+      "width": 360,
+      "height": 844
+    },
+    {
+      "file": "t229-routine-light-360.png",
+      "sha256": "163e580bd575067ff9aa637ab90f53f1ca2afe0cc941d9ac7b5b0aa2dd116dd4",
+      "width": 360,
+      "height": 844
+    }
+  ]
+}

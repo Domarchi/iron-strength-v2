@@ -5,7 +5,7 @@
 - [x] T226 · Paletas y estilos compartidos, Input accesible adoptado en ToolField, botones busy con texto y check compacto contrastado. Verificación: check raíz/móvil, 66 E2E y dos exportaciones Hermes.
 - [x] T227 · Inicio/variante offline y Cuenta reorganizados, prioridad Retomar, progreso accesible y disponibilidad compacta. 118 E2E actuales y controles de código aprobados; entrega final en T233.
 - [x] T228 · Registro compacto en ambos formatos, referencia adaptable, paneles de contexto/herramientas/revisión y pausa visible. 210 E2E, check raíz/móvil y dos mapas Hermes exactos; composición de resultado en T230.
-- [ ] T229 · Creación/edición de rutinas más directa.
+- [x] T229 · Consulta compacta compartida, ficha durante selección, descanso y detalles directos; creación de cuatro ejercicios en nueve acciones. 142 E2E y 18 de arrastre/teclado, check raíz/móvil y mapas Hermes exactos.
 - [ ] T230 · Historial, progreso y resultados coherentes.
 - [ ] T231 · Fluidez, foco, scroll, teclado y movimiento reducido.
 - [ ] T232 · Planificación y revisión del coach web.
