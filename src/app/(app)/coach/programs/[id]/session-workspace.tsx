@@ -72,8 +72,7 @@ export function SessionWorkspace({
         ) : null}
         {sessions.some((s) => dirty(s.id)) ? (
           <p className="text-sm text-muted-foreground">
-            Las sesiones con cambios pendientes conservan su borrador al cambiar de pestaña. Guarda
-            cada sesión para habilitar las herramientas de copia y biblioteca.
+            Borradores conservados. Guarda cada sesión para copiar o agregar ejercicios.
           </p>
         ) : null}
         {children.map((child, index) => (
