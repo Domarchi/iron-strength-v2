@@ -1,0 +1,83 @@
+{
+  "formatVersion": 1,
+  "task": "T231",
+  "capturedAt": "2026-10-31T17:50:13.107676+00:00",
+  "platform": "Expo web / WebKit, synthetic API fixtures; text-only browser enlargement, not iOS Dynamic Type",
+  "nativePhysicalAcceptance": false,
+  "images": [
+    {
+      "file": "t231-home-dark-text200-360.png",
+      "sha256": "2798d2523ef51873a7212dcee115ca2598327c54c7341b1bd77bf6874dce575b",
+      "width": 360,
+      "height": 844,
+      "textScale": 2,
+      "state": "home; browser text-only enlargement"
+    },
+    {
+      "file": "t231-home-light-text200-360.png",
+      "sha256": "c3e8ce9012f15214b90887734761320125e891e30d4e614b9f13501696f452e7",
+      "width": 360,
+      "height": 844,
+      "textScale": 2,
+      "state": "home; browser text-only enlargement"
+    },
+    {
+      "file": "t231-workout-dark-text200-360.png",
+      "sha256": "38094f98bc3ef21a448025c9b4e4cc2c7265418a51e99bf73a34058db58f0160",
+      "width": 360,
+      "height": 844,
+      "textScale": 2,
+      "state": "workout; browser text-only enlargement"
+    },
+    {
+      "file": "t231-workout-light-text200-360.png",
+      "sha256": "5a45d97a652ef7b30a0eef2f3139c95801c49d8e46fcdf762ab7440bf3519ca9",
+      "width": 360,
+      "height": 844,
+      "textScale": 2,
+      "state": "workout; browser text-only enlargement"
+    },
+    {
+      "file": "t231-editor-dark-text200-360.png",
+      "sha256": "b349664b3e7e09bb776a7565d8296fd557bbaf13ae60d55fc77e25dc724aca01",
+      "width": 360,
+      "height": 844,
+      "textScale": 2,
+      "state": "editor; browser text-only enlargement"
+    },
+    {
+      "file": "t231-editor-light-text200-360.png",
+      "sha256": "8000ed41438c9ae6176ba69daad608e477b6aea9557926e7d54a16b2972136e3",
+      "width": 360,
+      "height": 844,
+      "textScale": 2,
+      "state": "editor; browser text-only enlargement"
+    }
+  ],
+  "before": {
+    "layoutSamples": 22,
+    "clippedSamples": 12,
+    "clippedElements": 40,
+    "searchShiftY": [0, 0],
+    "panelOpenObservedMs": {}
+  },
+  "beforeTiming": {
+    "fluidity-panel-conserva-de-a7586-y-registro-·-reducido-false-webkit": 379,
+    "fluidity-panel-conserva-de-96569--y-registro-·-reducido-true-chromium": 104,
+    "fluidity-panel-conserva-de-a7586-y-registro-·-reducido-false-chromium": 386,
+    "fluidity-panel-conserva-de-96569--y-registro-·-reducido-true-webkit": 91
+  },
+  "after": {
+    "layoutSamples": 22,
+    "clippedSamples": 0,
+    "clippedElements": 0,
+    "searchShiftY": [0, 0],
+    "panelOpenObservedMs": {
+      "fluidity-panel-conserva-de-a7586-y-registro-·-reducido-false-webkit": 400,
+      "fluidity-panel-conserva-de-96569--y-registro-·-reducido-true-chromium": 66,
+      "fluidity-panel-conserva-de-a7586-y-registro-·-reducido-false-chromium": 367,
+      "fluidity-panel-conserva-de-96569--y-registro-·-reducido-true-webkit": 75
+    }
+  },
+  "measurementLimits": "Single observations include Playwright and Expo web overhead; no native FPS or performance improvement claimed."
+}

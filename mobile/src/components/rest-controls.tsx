@@ -34,6 +34,7 @@ export function RestControls({
           maxWidth: 520,
           alignSelf: "center",
           flexDirection: "row",
+          flexWrap: "wrap",
           alignItems: "center",
           gap: 8,
         }}
@@ -53,7 +54,7 @@ export function RestControls({
         >
           <Text style={[s.label, { color: p.blue }]}>−15</Text>
         </Pressable>
-        <View style={{ flex: 1, gap: 0, alignItems: "center" }}>
+        <View style={{ flex: 1, minWidth: 110, gap: 0, alignItems: "center" }}>
           <Text style={[s.caption, { color: p.muted, fontSize: 11 }]}>Descanso</Text>
           <Text
             accessibilityLabel="Tiempo de descanso restante"
@@ -77,7 +78,9 @@ export function RestControls({
         >
           <Text style={[s.label, { color: p.blue }]}>+15</Text>
         </Pressable>
-        <Action label="Saltar" accessibilityLabel="Omitir descanso" onPress={onSkip} />
+        <View style={{ flexGrow: 1, minWidth: 76, maxWidth: "100%" }}>
+          <Action label="Saltar" accessibilityLabel="Omitir descanso" onPress={onSkip} />
+        </View>
       </View>
       <View
         testID="rest-progress"

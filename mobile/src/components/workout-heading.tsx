@@ -28,14 +28,14 @@ export function WorkoutHeading({
 }) {
   const p = usePalette();
   return (
-    <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
       <IconAction
         label="Volver a Inicio"
         icon="chevronLeft"
         onPress={onBack}
         disabled={backDisabled}
       />
-      <View style={{ flex: 1, gap: 3 }}>
+      <View style={{ flex: 1, minWidth: 80, gap: 3 }}>
         <Text accessibilityRole="header" style={[s.label, { color: p.ink }]}>
           {title}
         </Text>
