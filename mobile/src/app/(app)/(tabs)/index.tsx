@@ -1,3 +1,4 @@
+import { HomeHeading, WeeklyProgress } from "../../../components/home-heading";
 import { OfflineWeek } from "../../../components/offline-week";
 import { TrainingDownloadCard } from "../../../components/training-download-card";
 import { useCallback } from "react";
@@ -8,7 +9,6 @@ import {
   IconAction,
   Notice,
   Page,
-  ScreenIntro,
   SessionMark,
   day,
   s,
@@ -46,24 +46,45 @@ function OnlineWeek() {
     view = query.value;
   const active = view?.kind === "active" ? view : null;
   const next = active?.sessions.find((session) => session.status !== "done");
-  const completed = active?.sessions.filter((session) => session.status === "done").length ?? 0;
   return (
     <Page>
-      <View style={[s.row, { alignItems: "flex-start", flexWrap: "nowrap" }]}>
-        <View style={{ flex: 1, gap: 6 }}>
-          <ScreenIntro
-            eyebrow={
-              active
-                ? `Semana ${active.weekNumber} · ${day(active.weekStart)} — ${day(active.weekEnd)}`
-                : undefined
+      <HomeHeading fullName={person.fullName} onAccount={() => router.navigate("/account")} />
+      {active ? <WeeklyProgress week={active} /> : null}
+      <TrainingCard />
+      {active && !training.active && next ? (
+        <View
+          style={[
+            s.card,
+            {
+              backgroundColor: p.card,
+              borderColor: p.border,
+              gap: 12,
+              padding: 20,
+            },
+          ]}
+        >
+          <View style={s.row}>
+            <Text style={[s.caption, { color: p.muted, fontWeight: "500" }]}>SIGUIENTE SESIÓN</Text>
+            <SessionMark label={next.label} />
+          </View>
+          <Text accessibilityRole="header" style={[s.heading, { color: p.ink }]}>
+            {next.title ?? `Rutina ${next.label}`}
+          </Text>
+          <Text style={[s.caption, { color: p.muted }]}>
+            {next.exerciseCount} ejercicios · {next.setCount ?? 0} series
+            {next.scheduledOn ? ` · ${day(next.scheduledOn)}` : ""}
+          </Text>
+          <Action
+            label="Ver rutina"
+            accessibilityLabel={`Ver rutina ${next.label}`}
+            icon="arrow"
+            iconPosition="end"
+            onPress={() =>
+              router.push({ pathname: "/routine/[id]", params: { id: next.sessionId } })
             }
-            title={`Hola, ${person.fullName.trim().split(" ")[0]}`}
-            description={active?.program.name}
           />
         </View>
-        <IconAction label="Mi cuenta" icon="account" onPress={() => router.navigate("/account")} />
-      </View>
-      <TrainingCard />
+      ) : null}
       <CommentDraftCard />
       <UnreadComments />
       {query.error ? <Notice message={query.error} retry={query.retry} /> : null}
@@ -72,79 +93,10 @@ function OnlineWeek() {
       ) : null}
       {active ? (
         <>
-          {!training.active && next ? (
-            <View
-              style={[
-                s.card,
-                {
-                  backgroundColor: p.card,
-                  borderColor: p.border,
-                  gap: 12,
-                },
-              ]}
-            >
-              <View style={s.row}>
-                <Text style={[s.caption, { color: p.muted, fontWeight: "500" }]}>
-                  SIGUIENTE SESIÓN
-                </Text>
-                <SessionMark label={next.label} />
-              </View>
-              <Text
-                accessibilityRole="header"
-                style={[s.heading, { fontSize: 25, lineHeight: 31, color: p.ink }]}
-              >
-                {next.title ?? `Rutina ${next.label}`}
-              </Text>
-              <Text style={[s.body, { color: p.muted }]}>
-                {next.exerciseCount} ejercicios · {next.setCount ?? 0} series
-                {next.scheduledOn ? ` · ${day(next.scheduledOn)}` : ""}
-              </Text>
-              <Action
-                label="Ver rutina"
-                accessibilityLabel={`Ver rutina ${next.label}`}
-                icon="arrow"
-                onPress={() =>
-                  router.push({ pathname: "/routine/[id]", params: { id: next.sessionId } })
-                }
-              />
-            </View>
-          ) : null}
-          <View style={{ gap: 18 }}>
-            <View style={s.row}>
-              <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
-                Tu semana
-              </Text>
-              <Text style={[s.caption, { color: p.muted }]}>
-                Semana {active.weekNumber} de {active.program.weeksCount}
-              </Text>
-            </View>
-            <View
-              accessibilityRole="progressbar"
-              accessibilityLabel="Avance semanal"
-              accessibilityValue={{
-                min: 0,
-                max: Math.max(1, active.sessions.length),
-                now: completed,
-              }}
-              style={{ flexDirection: "row", gap: 5 }}
-            >
-              {active.sessions.map((session) => (
-                <View
-                  key={session.sessionId}
-                  style={{
-                    flex: 1,
-                    height: 4,
-                    borderRadius: 2,
-                    backgroundColor: session.status === "done" ? p.blue : p.border,
-                  }}
-                />
-              ))}
-            </View>
-            <Text style={[s.caption, { color: p.muted }]}>
-              {completed} de {active.sessions.length} sesiones completadas
-            </Text>
-          </View>
           <View style={{ gap: 0 }}>
+            <Text accessibilityRole="header" style={[s.label, { color: p.ink, marginBottom: 8 }]}>
+              Tu planificación
+            </Text>
             {active.sessions.map((session) => (
               <Pressable
                 key={session.sessionId}
@@ -154,12 +106,12 @@ function OnlineWeek() {
                   router.push({ pathname: "/routine/[id]", params: { id: session.sessionId } })
                 }
                 style={({ pressed }) => ({
-                  paddingVertical: 16,
+                  paddingVertical: 14,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 12,
-                  borderTopWidth: 0.5,
-                  borderTopColor: p.border,
+                  borderBottomWidth: 0.5,
+                  borderBottomColor: p.border,
                   backgroundColor: pressed ? p.raised : "transparent",
                 })}
               >
@@ -202,7 +154,7 @@ function OnlineWeek() {
           <Text style={[s.body, { color: p.muted }]}>
             {person.role === "coach"
               ? "Asígnate un programa desde la planificación web para verlo aquí."
-              : "Tu coach aún no te ha asignado un programa. Cuando esté listo, aparecerá aquí."}
+              : "Tu coach aún no te ha asignado un programa."}
           </Text>
         </View>
       ) : null}
@@ -220,17 +172,26 @@ function OnlineWeek() {
         </View>
       ) : null}
       <Action
-        label="Explorar rutinas y entrenar"
+        label="Explorar rutinas"
+        accessibilityLabel="Explorar rutinas y entrenar"
         icon="train"
-        secondary={!!active || !!training.active}
+        quiet={!!active || !!training.active}
         onPress={() => router.navigate("/train")}
       />
       <TrainingDownloadCard
+        compact
         expected={
           active ? { programId: active.program.id, weekStart: active.weekStart } : undefined
         }
       />
-      <Action label="Actualizar semana" quiet disabled={query.loading} onPress={query.retry} />
+      <View style={{ alignItems: "flex-end" }}>
+        <IconAction
+          label="Actualizar semana"
+          icon="refresh"
+          busy={query.loading}
+          onPress={query.retry}
+        />
+      </View>
     </Page>
   );
 }

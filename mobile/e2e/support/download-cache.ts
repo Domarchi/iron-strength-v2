@@ -52,5 +52,9 @@ export async function writeDownloadCache(page: Page, userId: string, raw: string
 
 /** Scope to the accessible route; inactive Expo screens may remain mounted offscreen. */
 export function downloadCard(page: Page) {
-  return page.getByRole("heading", { name: "Sin conexión", exact: true }).locator("..");
+  return page.getByTestId("training-download-card").filter({
+    has: page.getByRole("button", {
+      name: /^(Descargar entrenamientos|Actualizar entrenamientos descargados)$/,
+    }),
+  });
 }

@@ -115,7 +115,9 @@ test("dos cierres sin red, otro registro en curso y sincronización automática 
     fullPage: true,
   });
   await page.getByRole("button", { name: "Volver a Inicio", exact: true }).click();
-  await expect(page.getByText("2 de 2 sesiones completadas", { exact: true })).toBeVisible();
+  const progress = page.getByRole("progressbar", { name: "Avance semanal", exact: true });
+  await expect(progress).toHaveAttribute("aria-valuenow", "2");
+  await expect(progress).toHaveAttribute("aria-valuemax", "2");
 });
 async function prepareOffline(page: Page, night = false) {
   const control = await setupDownloadedWeek(page);

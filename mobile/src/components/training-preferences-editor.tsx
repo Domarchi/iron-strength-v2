@@ -11,13 +11,18 @@ import {
   toolNumber,
 } from "./training-tool-fields";
 import type { TrainingPreferences } from "../lib/training-preferences";
-export function TrainingPreferencesEditor() {
+export function TrainingPreferencesEditor({ plain = false }: { plain?: boolean }) {
   const p = usePalette(),
     { controller, preferences } = useTrainingPreferences();
   const [editing, setEditing] = useState(false),
     [saved, setSaved] = useState(false);
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
+    <View
+      style={[
+        plain ? { gap: 12 } : s.card,
+        { backgroundColor: plain ? "transparent" : p.card, borderColor: p.border },
+      ]}
+    >
       <Action
         label="Preferencias de entrenamiento"
         quiet

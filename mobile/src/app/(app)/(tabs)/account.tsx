@@ -79,26 +79,35 @@ export default function Account() {
   return (
     <Page>
       <ScreenIntro title="Cuenta" />
-      <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
+      <View style={{ gap: 6 }}>
         <Text style={[s.subheading, { color: p.ink }]}>{person.fullName}</Text>
         <Text style={[s.body, { color: p.muted }]}>{person.email}</Text>
         <Text style={[s.caption, { color: p.blue }]}>
           {person.role === "coach" ? "COACH" : "ALUMNO"}
         </Text>
       </View>
-      <AppearanceSelect />
-      <TrainingPreferencesEditor />
-      <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
       <TrainingCard />
       <CommentDraftCard allowDiscard />
       <LibraryDraftCard />
       <PersonalExerciseDraftCard />
       <CorrectionDraftCard />
       <WorkoutRemovalCard />
-      <Action label="Mis ejercicios" secondary onPress={() => router.navigate("/my-exercises")} />
-      <TrainingDownloadCard />
+      <View style={[s.divider, { borderColor: p.border }]}>
+        <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
+          Preferencias
+        </Text>
+        <AppearanceSelect plain />
+        <TrainingPreferencesEditor plain />
+      </View>
+      <View style={[s.divider, { borderColor: p.border }]}>
+        <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
+          Datos y ayuda
+        </Text>
+        <Action label="Mis ejercicios" quiet onPress={() => router.navigate("/my-exercises")} />
+        <TrainingDownloadCard />
+        <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
+      </View>
       {error ? <Notice message={error} /> : null}
-      {training.error ? <Notice message={training.error} /> : null}
       {person.role === "coach" ? (
         <>
           <Text style={[s.subheading, { color: p.ink }]}>Tu espacio de coach</Text>

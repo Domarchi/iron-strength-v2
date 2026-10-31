@@ -63,6 +63,7 @@ export function Action({
   quiet = false,
   busy = false,
   icon,
+  iconPosition = "start",
 }: {
   label: string;
   accessibilityLabel?: string;
@@ -72,6 +73,7 @@ export function Action({
   quiet?: boolean;
   busy?: boolean;
   icon?: IconName;
+  iconPosition?: "start" | "end";
 }) {
   const p = usePalette();
   return (
@@ -102,7 +104,7 @@ export function Action({
     >
       {busy ? (
         <ActivityIndicator size="small" color={secondary || quiet ? p.blue : "#fff"} />
-      ) : icon ? (
+      ) : icon && iconPosition === "start" ? (
         <Icon name={icon} size={19} color={quiet ? p.blue : secondary ? p.ink : "#fff"} />
       ) : null}
       <Text
@@ -117,6 +119,9 @@ export function Action({
       >
         {label}
       </Text>
+      {!busy && icon && iconPosition === "end" ? (
+        <Icon name={icon} size={19} color={quiet ? p.blue : secondary ? p.ink : "#fff"} />
+      ) : null}
     </Pressable>
   );
 }
@@ -294,19 +299,21 @@ export function IconAction({
   icon,
   onPress,
   disabled = false,
+  busy = false,
 }: {
   label: string;
   icon: IconName;
   onPress: () => void;
   disabled?: boolean;
+  busy?: boolean;
 }) {
   const p = usePalette();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled: disabled || busy, busy }}
+      disabled={disabled || busy}
       onPress={onPress}
       style={({ pressed }) => ({
         width: 48,
@@ -318,7 +325,7 @@ export function IconAction({
         opacity: disabled ? 0.5 : 1,
       })}
     >
-      <Icon name={icon} color={p.ink} size={22} />
+      {busy ? <ActivityIndicator color={p.blue} /> : <Icon name={icon} color={p.ink} size={22} />}
     </Pressable>
   );
 }

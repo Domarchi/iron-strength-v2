@@ -1,7 +1,8 @@
 import { FreeStart } from "./free-start";
 import { TrainingDownloadCard } from "./training-download-card";
 import { router } from "expo-router";
-import { Action, Page, ScreenIntro } from "./ui";
+import { Action, Page } from "./ui";
+import { HomeHeading } from "./home-heading";
 import { useSession } from "../lib/session";
 import { TrainingCard } from "./training-card";
 import { CommentDraftCard } from "./comment-draft-card";
@@ -11,9 +12,9 @@ export function OfflineWeek() {
   if (state.status !== "authenticated") return null;
   return (
     <Page>
-      <ScreenIntro
-        eyebrow="SIN CONEXIÓN"
-        title={`Hola, ${state.session.profile.fullName.trim().split(" ")[0]}`}
+      <HomeHeading
+        fullName={state.session.profile.fullName}
+        onAccount={() => router.navigate("/account")}
       />
       <TrainingCard />
       <CommentDraftCard />
@@ -25,7 +26,7 @@ export function OfflineWeek() {
         secondary
         onPress={() => router.push("/exercises")}
       />
-      <TrainingDownloadCard />
+      <TrainingDownloadCard compact />
       <Action
         label="Explorar rutinas de ejemplo"
         secondary

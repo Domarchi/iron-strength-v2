@@ -8,8 +8,10 @@ import { downloadedAt } from "../lib/offline-week";
 import { Action, Notice, s, usePalette } from "./ui";
 export function TrainingDownloadCard({
   expected,
+  compact = false,
 }: {
   expected?: { programId: string; weekStart: string };
+  compact?: boolean;
 }) {
   const p = usePalette(),
     { state } = useSession(),
@@ -26,22 +28,64 @@ export function TrainingDownloadCard({
     expected &&
     (bundle.week?.program.id !== expected.programId ||
       bundle.week?.weekStart !== expected.weekStart);
+  const summary = download.busy
+    ? "Comprobando la descarga…"
+    : !download.ready
+      ? "Recuperando descarga…"
+      : bundle
+        ? `Disponible sin conexión · ${downloadedAt(bundle.downloadedAt)}`
+        : old
+          ? `Copia anterior · ${downloadedAt(old.downloadedAt)}`
+          : compact
+            ? "Descargar esta semana"
+            : "Descarga tus entrenamientos para usarlos sin Internet.";
+  const actionLabel = bundle ? "Actualizar entrenamientos descargados" : "Descargar entrenamientos";
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.border }]}>
-      <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
-        Sin conexión
-      </Text>
-      <Text style={[s.caption, { color: p.muted }]}>
-        {download.busy
-          ? "Comprobando la descarga…"
-          : !download.ready
-            ? "Recuperando descarga…"
-            : bundle
-              ? `Disponible sin conexión · ${downloadedAt(bundle.downloadedAt)}`
-              : old
-                ? `Copia anterior · ${downloadedAt(old.downloadedAt)}`
-                : "Descarga tus entrenamientos para usarlos sin Internet."}
-      </Text>
+    <View
+      testID="training-download-card"
+      style={[
+        compact ? { gap: 12 } : s.card,
+        { backgroundColor: compact ? "transparent" : p.card, borderColor: p.border },
+      ]}
+    >
+      {compact ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel}
+          accessibilityHint={summary}
+          accessibilityState={{
+            disabled: disabled || offline || download.blocked,
+            busy: download.busy,
+          }}
+          disabled={disabled || offline || download.blocked}
+          onPress={() => {
+            void controller.download();
+          }}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 14,
+            minHeight: 64,
+            paddingVertical: 12,
+            borderRadius: 10,
+            backgroundColor: pressed ? p.raised : "transparent",
+          })}
+        >
+          <Icon name="download" size={22} color={p.muted} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={[s.label, { color: p.ink }]}>Sin conexión</Text>
+            <Text style={[s.caption, { color: p.muted }]}>{summary}</Text>
+          </View>
+          <Icon name="arrow" size={18} color={p.muted} />
+        </Pressable>
+      ) : (
+        <>
+          <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
+            Sin conexión
+          </Text>
+          <Text style={[s.caption, { color: p.muted }]}>{summary}</Text>
+        </>
+      )}
       {mismatch ? (
         <Text style={[s.caption, { color: p.muted }]}>
           La copia tiene otra semana o programa. Actualiza para traer tu planificación vigente.
@@ -51,17 +95,19 @@ export function TrainingDownloadCard({
         <Notice message={previous.error ?? "Hay una copia anterior sin verificar. Se conserva."} />
       ) : null}
       {download.error ? <Notice message={download.error.message} /> : null}
-      <Action
-        label={bundle ? "Actualizar" : "Descargar"}
-        accessibilityLabel={
-          bundle ? "Actualizar entrenamientos descargados" : "Descargar entrenamientos"
-        }
-        secondary
-        disabled={disabled || offline || download.blocked}
-        onPress={() => {
-          void controller.download();
-        }}
-      />
+      {!compact ? (
+        <Action
+          label={bundle ? "Actualizar" : "Descargar"}
+          accessibilityLabel={
+            bundle ? "Actualizar entrenamientos descargados" : "Descargar entrenamientos"
+          }
+          secondary
+          disabled={disabled || offline || download.blocked}
+          onPress={() => {
+            void controller.download();
+          }}
+        />
+      ) : null}
       {download.blocked || (!download.verified && download.ready) ? (
         <Action
           label="Comprobar entrenamientos descargados"

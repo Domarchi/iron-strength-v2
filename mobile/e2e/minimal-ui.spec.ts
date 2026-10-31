@@ -117,7 +117,7 @@ for (const theme of ["light", "dark"] as const) {
       await page.getByTestId("app-page").evaluate((element) => {
         element.scrollTop = 0;
       });
-      await expect(page.getByRole("heading", { name: "Hola, Ana", exact: true })).toBeInViewport();
+      await expect(page.getByRole("heading", { name: "Tu semana", exact: true })).toBeInViewport();
       for (const tab of await page.getByRole("tab").all()) {
         const hit = await tab.boundingBox();
         const label = await tab.getByText(await tab.innerText(), { exact: true }).boundingBox();

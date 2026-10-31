@@ -1,0 +1,24 @@
+{
+  "formatVersion": 1,
+  "task": "T227",
+  "status": "Inicio implementado en cliente Expo; entrega física final pendiente",
+  "platform": "Expo web / WebKit with synthetic API fixtures; not physical iPhone",
+  "capturedAt": "2026-10-31T15:59:03.988903+00:00",
+  "themes": ["dark", "light"],
+  "tests": "118 E2E Chromium/WebKit; t227-home-regression-fourth.log",
+  "nativePhysicalAcceptance": false,
+  "images": [
+    {
+      "file": "t227-home-dark-360.png",
+      "sha256": "d26ffc3ae19fa2fd6da2e1c4e17f5b79e06ac80952ebd6419185e3ffe69f7be3",
+      "width": 360,
+      "height": 844
+    },
+    {
+      "file": "t227-home-light-360.png",
+      "sha256": "778c45880c5cc8f08ea2be37b0f7e3b9e583640d45ce5fa8c3a4b02c1cdae024",
+      "width": 360,
+      "height": 844
+    }
+  ]
+}
