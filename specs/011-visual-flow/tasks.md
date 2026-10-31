@@ -8,5 +8,5 @@
 - [x] T229 · Consulta compacta compartida, ficha durante selección, descanso y detalles directos; creación de cuatro ejercicios en nueve acciones. 142 E2E y 18 de arrastre/teclado, check raíz/móvil y mapas Hermes exactos.
 - [x] T230 · Resultados compactos con opciones agrupadas y conteo real, notas extensas desplegables, historial/progreso coherentes con retorno de filtros/posición. 202 E2E y controles raíz/móvil/Hermes aprobados.
 - [x] T231 · Texto ampliado sin recortes, cabecera/descanso flexibles y controles de foco/scroll/viewport bajo/movimiento reducido. 136 E2E y checks raíz/móvil/Hermes aprobados.
-- [ ] T232 · Composición/legibilidad y biblioteca vinculada implementadas; check1431 y20casos visuales con operaciones ficticias aprobados. Falta benchmark actual y E2E de copia/asignación en base aislada; Docker sin acceso.
-- [ ] T233 · Validación completa, enlace de entrega y revisión en iPhone.
+- [ ] T232 · Composición/legibilidad y biblioteca vinculada en PR19 draft; check1431 y20casos visuales ficticios aprobados. Falta benchmark/E2E de adaptación en base aislada; Docker sin acceso.
+- [ ] T233 · Diseño entregado en Expo Go independiente y Safari anterior conservado; regresión móvil completa566casos verificada. Faltan cierre del coach y revisión física.

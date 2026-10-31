@@ -226,3 +226,39 @@ test("viewport bajo mantiene campo editable y descanso separados", async ({ page
     "1:00",
   );
 });
+
+for (const theme of ["light", "dark"] as const) {
+  test(`navegación adaptable conserva etiquetas y contenido al girar · ${theme}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 844 });
+    await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+    await setupDownloadedWeek(page);
+    async function checkTabs() {
+      await expect(async () => {
+        await expect(
+          page.getByRole("heading", { name: "Tu semana", exact: true }),
+        ).toBeInViewport();
+        for (const tab of await page.getByRole("tab").all()) {
+          const hit = await tab.boundingBox();
+          const label = await tab.locator('[dir="auto"]').boundingBox();
+          expect(hit!.height).toBeGreaterThanOrEqual(48);
+          expect(hit!.height).toBeLessThanOrEqual(130);
+          expect(label!.y).toBeGreaterThanOrEqual(hit!.y);
+          expect(label!.y + label!.height).toBeLessThanOrEqual(hit!.y + hit!.height);
+        }
+      }).toPass({ timeout: 5000 });
+    }
+    for (const width of [360, 768, 900, 360]) {
+      await page.setViewportSize({ width, height: width > 700 ? 430 : 844 });
+      await checkTabs();
+    }
+    await enlargeText(page);
+    for (const width of [768, 900, 360]) {
+      await page.setViewportSize({ width, height: width > 700 ? 430 : 844 });
+      await checkTabs();
+    }
+    await restoreText(page);
+    await checkTabs();
+  });
+}
