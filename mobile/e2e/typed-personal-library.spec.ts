@@ -74,7 +74,7 @@ for (const theme of ["light", "dark"] as const)
     await page.getByRole("button", { name: "Guardar rutina", exact: true }).click();
     await page.getByRole("button", { name: "Ver rutina Tiempo y distancia", exact: true }).click();
     await expect(
-      page.getByText("Superserie · 0 s entre rondas", { exact: true }).filter({ visible: true }),
+      page.getByText("SUPERSERIE · Sin descanso", { exact: true }).filter({ visible: true }),
     ).toBeVisible();
     await expect(
       page

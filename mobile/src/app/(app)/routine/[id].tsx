@@ -1,17 +1,12 @@
+import { RoutineExercisePreview } from "../../../components/routine-exercise-preview";
 import { useTrainingDownload } from "../../../lib/training-download-context";
 import { verifiedDownloadedTraining } from "../../../lib/downloaded-training";
-import { useTrainingPreferences } from "../../../lib/training-preferences-context";
-import { formatTrainingTarget } from "../../../lib/training-labels";
 import { typedPrescriptionFromLegacy } from "../../../lib/typed-training";
-import {
-  assignedCanStart,
-  type AssignedTrainingContext,
-} from "../../../../../src/lib/workout/training-context";
-import type { TrainingPrescription } from "../../../../../src/domain/training-metrics";
+import { assignedCanStart } from "../../../../../src/lib/workout/training-context";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
-import { Action, Brand, Notice, Page, s, usePalette } from "../../../components/ui";
+import { Action, IconAction, Notice, Page, s, usePalette } from "../../../components/ui";
 import { useSession } from "../../../lib/session";
 import { useQuery } from "../../../lib/use-query";
 import { demoRoutine } from "../../../lib/demo";
@@ -19,91 +14,6 @@ import { useTraining } from "../../../lib/training-context";
 import { useWeekDownload } from "../../../lib/week-context";
 import { downloadedRoutine, downloadedCanStart, downloadedAt } from "../../../lib/offline-week";
 import { santiagoDate } from "../../../../../src/domain/dates";
-import type { MobileRoutine } from "../../../lib/client";
-type Exercise = MobileRoutine["exercises"][number] | AssignedTrainingContext["exercises"][number];
-function Targets({ prescribed }: { prescribed: Exercise["prescribed"] }) {
-  const { preferences } = useTrainingPreferences(),
-    p = usePalette();
-  const rx: TrainingPrescription =
-    "recordType" in prescribed ? prescribed : typedPrescriptionFromLegacy(prescribed);
-  return rx.series ? (
-    <View style={{ gap: 5 }}>
-      {rx.series.map((target, index) => (
-        <Text key={index} style={[s.body, { color: p.ink }]}>
-          {index + 1}. {formatTrainingTarget(target, preferences.value) || "Objetivo libre"}
-        </Text>
-      ))}
-    </View>
-  ) : (
-    <Text style={[s.body, { color: p.ink }]}>
-      {rx.sets} × {formatTrainingTarget(rx.target, preferences.value) || "Objetivo libre"}
-    </Text>
-  );
-}
-function ExerciseCard({
-  exercise,
-  index,
-  newGroup,
-}: {
-  exercise: Exercise;
-  index: number;
-  newGroup: boolean;
-}) {
-  const p = usePalette(),
-    [open, setOpen] = useState(false);
-  return (
-    <View
-      style={[
-        s.divider,
-        {
-          borderColor: p.border,
-          ...(exercise.supersetId
-            ? { borderLeftWidth: 2, borderLeftColor: p.blue, paddingLeft: 16 }
-            : {}),
-        },
-      ]}
-    >
-      {newGroup ? (
-        <Text style={[s.caption, { color: p.blue }]}>
-          SUPERSERIE
-          {exercise.supersetRestSeconds != null
-            ? ` · ${exercise.supersetRestSeconds === 0 ? "Sin descanso" : `${exercise.supersetRestSeconds} s al terminar la ronda`}`
-            : ""}
-        </Text>
-      ) : null}
-      <Text style={[s.subheading, { color: p.ink }]}>
-        {index + 1}. {exercise.name}
-      </Text>
-      <Targets prescribed={exercise.prescribed} />
-      {exercise.restSeconds != null && !exercise.supersetId ? (
-        <Text style={[s.caption, { color: p.muted }]}>
-          {exercise.restSeconds === 0 ? "Sin descanso" : `Descanso: ${exercise.restSeconds} s`}
-        </Text>
-      ) : null}
-      {exercise.note ? <Text style={[s.body, { color: p.muted }]}>{exercise.note}</Text> : null}
-      {exercise.alternatives?.length ? (
-        <>
-          <Action
-            label={`${open ? "Ocultar" : "Ver"} alternativas de ${exercise.name}`}
-            secondary
-            onPress={() => setOpen((v) => !v)}
-          />
-          {open
-            ? exercise.alternatives.map((alternative) => (
-                <View
-                  key={alternative.exerciseId}
-                  style={{ padding: 14, gap: 6, borderRadius: 14, backgroundColor: p.tint }}
-                >
-                  <Text style={[s.label, { color: p.ink }]}>{alternative.name}</Text>
-                  <Targets prescribed={alternative.prescribed} />
-                </View>
-              ))
-            : null}
-        </>
-      ) : null}
-    </View>
-  );
-}
 export default function RoutineRoute() {
   const { state } = useSession(),
     { id } = useLocalSearchParams<{ id: string }>();
@@ -209,12 +119,11 @@ function Routine({ id }: { id: string }) {
   const query = useQuery(request),
     view = query.value;
   return (
-    <Page>
-      <View style={s.row}>
-        <Brand />
-        <Action
+    <Page compact>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <IconAction
           label="Volver"
-          secondary
+          icon="chevronLeft"
           onPress={() => {
             if (router.canGoBack()) router.back();
             else router.replace("/");
@@ -245,7 +154,9 @@ function Routine({ id }: { id: string }) {
       {view ? (
         <>
           {demo ? (
-            <Notice message="DEMO · Rutina de ejemplo. Sus resultados quedan solo en este dispositivo y no se envían al coach." />
+            <Text style={[s.caption, { color: p.blue }]}>
+              DEMO · Guardado solo en este dispositivo
+            </Text>
           ) : null}
           {training.active ? (
             <Action
@@ -291,9 +202,25 @@ function Routine({ id }: { id: string }) {
             }}
           />
           {view.exercises.map((exercise, index) => (
-            <ExerciseCard
+            <RoutineExercisePreview
+              name={exercise.name}
+              prescribed={
+                "recordType" in exercise.prescribed
+                  ? exercise.prescribed
+                  : typedPrescriptionFromLegacy(exercise.prescribed)
+              }
+              restSeconds={exercise.restSeconds ?? null}
+              supersetId={exercise.supersetId ?? null}
+              supersetRestSeconds={exercise.supersetRestSeconds ?? null}
+              note={exercise.note ?? null}
+              alternatives={exercise.alternatives?.map((a) => ({
+                ...a,
+                prescribed:
+                  "recordType" in a.prescribed
+                    ? a.prescribed
+                    : typedPrescriptionFromLegacy(a.prescribed),
+              }))}
               key={exercise.sessionExerciseId}
-              exercise={exercise}
               index={index}
               newGroup={
                 !!exercise.supersetId &&

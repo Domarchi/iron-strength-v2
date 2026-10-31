@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 const paths = {
+  info: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM12 11v6M12 7h.01",
   home: "M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z",
   train: "M8 5v14M4 8v8M16 5v14M20 8v8M8 12h8",
   history: "M6 3h12a2 2 0 0 1 2 2v16H4V5a2 2 0 0 1 2-2ZM8 8h8M8 12h8M8 16h5",

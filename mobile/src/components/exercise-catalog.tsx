@@ -1,3 +1,5 @@
+import { WorkoutPanel } from "./workout-panel";
+import { TrainingExerciseHistory } from "./training-exercise-history";
 import type { TypedCatalogEntry } from "../../../src/lib/mobile/typed-exercise-contracts";
 import { RECORD_TYPE_LABELS } from "../lib/training-labels";
 import { isTypedTraining } from "../lib/training";
@@ -7,11 +9,11 @@ import { TrainingChangeReview } from "./training-change-review";
 import { randomUUID } from "expo-crypto";
 import { addTypedPersonalExercise } from "../../../src/domain/typed-personal-routines";
 import { useLibraryDrafts } from "../lib/library-context";
-import { useMemo, useState, useRef } from "react";
-import { router } from "expo-router";
-import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from "react-native";
+import { useCallback, useMemo, useState, useRef } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { ActivityIndicator, FlatList, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Action, Notice, ScreenIntro, s, usePalette } from "./ui";
+import { Action, IconAction, Input, Notice, ScreenIntro, s, usePalette } from "./ui";
 import { ConnectionStatus } from "./connection-status";
 import { CatalogFilter } from "./catalog-filter";
 import { Icon } from "./icon";
@@ -71,6 +73,8 @@ export function ExerciseCatalog({
   const [search, setSearch] = useState(""),
     [muscle, setMuscle] = useState(""),
     [equipment, setEquipment] = useState("");
+  const [inspected, setInspected] = useState<string | null>(null);
+  useFocusEffect(useCallback(() => () => setInspected(null), []));
   const [filter, setFilter] = useState<"muscle" | "equipment" | null>(null);
   const catalog = useMemo(
     () =>
@@ -95,6 +99,7 @@ export function ExerciseCatalog({
         .map((value) => ({ value, label: value === noEquipment ? "Sin equipo indicado" : value })),
     [catalog],
   );
+  const inspectedEntry = catalog.find((e) => e.id === inspected);
   const needle = normalize(search);
   const matches = q.error
     ? []
@@ -222,22 +227,30 @@ export function ExerciseCatalog({
         ListHeaderComponent={
           <View style={{ gap: 16, paddingBottom: 16 }}>
             <ConnectionStatus />
-            <Action
-              label={
-                pickForTraining
-                  ? "Volver al entrenamiento"
-                  : picking
-                    ? "Volver a la rutina"
-                    : "Volver a Entrenar"
-              }
-              quiet
-              onPress={() => (picking ? router.back() : router.navigate("/train"))}
-            />
-            <ScreenIntro
-              title={
-                replacing ? "Reemplazar ejercicio" : picking ? "Agregar ejercicios" : "Biblioteca"
-              }
-            />
+            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+              <IconAction
+                label={
+                  pickForTraining
+                    ? "Volver al entrenamiento"
+                    : picking
+                      ? "Volver a la rutina"
+                      : "Volver a Entrenar"
+                }
+                icon="chevronLeft"
+                onPress={() => (picking ? router.back() : router.navigate("/train"))}
+              />
+              <View style={{ flex: 1 }}>
+                <ScreenIntro
+                  title={
+                    replacing
+                      ? "Reemplazar ejercicio"
+                      : picking
+                        ? "Agregar ejercicios"
+                        : "Biblioteca"
+                  }
+                />
+              </View>
+            </View>
             {!picking ? (
               <Action
                 label="Mis ejercicios"
@@ -259,7 +272,7 @@ export function ExerciseCatalog({
                 }}
               />
             ) : null}
-            <TextInput
+            <Input
               accessibilityLabel="Buscar ejercicios"
               placeholder="Buscar ejercicios"
               placeholderTextColor={p.muted}
@@ -268,7 +281,7 @@ export function ExerciseCatalog({
               autoCorrect={false}
               value={search}
               onChangeText={setSearch}
-              style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.card }]}
+              style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.field }]}
             />
             <View style={{ flexDirection: "row", gap: 8 }}>
               <View style={{ flex: 1 }}>
@@ -364,92 +377,119 @@ export function ExerciseCatalog({
           ) : undefined
         }
         renderItem={({ item }) => (
-          <Pressable
-            accessibilityRole={picking && !replacing ? "checkbox" : "button"}
-            aria-checked={picking && !replacing ? selected.includes(item.id) : undefined}
-            accessibilityState={
-              picking
-                ? {
-                    checked: !replacing ? selected.includes(item.id) : undefined,
-                    selected: replacing ? selected.includes(item.id) : undefined,
-                    disabled: adding || added || (replacing && item.id === replacement?.exerciseId),
-                  }
-                : undefined
-            }
-            disabled={
-              picking && (adding || added || (replacing && item.id === replacement?.exerciseId))
-            }
-            accessibilityLabel={
-              replacing
-                ? `Elegir ${item.name}`
-                : picking
-                  ? `Seleccionar ${item.name}`
-                  : `Ver ejercicio ${item.name}`
-            }
-            onPress={() => {
-              if (!picking) {
-                router.push({
-                  pathname: "/exercises/[id]",
-                  params: { id: item.id, from: "catalog" },
-                });
-                return;
-              }
-              setAddError(null);
-              if (replacing) {
-                setSelected([item.id]);
-                return;
-              }
-              if (!selected.includes(item.id) && selected.length + existingCount >= 15) {
-                setAddError("Máximo 15 ejercicios por rutina.");
-                return;
-              }
-              setSelected((previous) =>
-                previous.includes(item.id)
-                  ? previous.filter((id) => id !== item.id)
-                  : [...previous, item.id],
-              );
-            }}
-            style={({ pressed }) => ({
-              minHeight: 72,
-              paddingVertical: 16,
-              paddingHorizontal: 4,
-              borderTopWidth: 0.5,
-              borderTopColor: p.border,
-              backgroundColor: pressed ? p.raised : "transparent",
+          <View
+            style={{
               flexDirection: "row",
               alignItems: "center",
-              gap: 12,
-            })}
+              borderTopWidth: 0.5,
+              borderTopColor: p.border,
+            }}
           >
-            <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-              <Text style={[s.label, { color: p.ink }]}>{item.name}</Text>
-              <Text style={[s.caption, { color: p.muted }]}>
-                {item.muscleGroup} · {item.equipment ?? "Sin equipo indicado"}
-                {item.recordType !== null ? ` · ${RECORD_TYPE_LABELS[item.recordType]}` : ""}
-              </Text>
-            </View>
-            {picking ? (
-              <View
-                accessible={false}
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 11,
-                  borderWidth: 1.5,
-                  borderColor: selected.includes(item.id) ? p.button : p.control,
-                  backgroundColor: selected.includes(item.id) ? p.button : "transparent",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {selected.includes(item.id) ? <Icon name="check" color="#fff" size={16} /> : null}
+            <Pressable
+              accessibilityRole={picking && !replacing ? "checkbox" : "button"}
+              aria-checked={picking && !replacing ? selected.includes(item.id) : undefined}
+              accessibilityState={
+                picking
+                  ? {
+                      checked: !replacing ? selected.includes(item.id) : undefined,
+                      selected: replacing ? selected.includes(item.id) : undefined,
+                      disabled:
+                        adding || added || (replacing && item.id === replacement?.exerciseId),
+                    }
+                  : undefined
+              }
+              disabled={
+                picking && (adding || added || (replacing && item.id === replacement?.exerciseId))
+              }
+              accessibilityLabel={
+                replacing
+                  ? `Elegir ${item.name}`
+                  : picking
+                    ? `Seleccionar ${item.name}`
+                    : `Ver ejercicio ${item.name}`
+              }
+              onPress={() => {
+                if (!picking) {
+                  router.push({
+                    pathname: "/exercises/[id]",
+                    params: { id: item.id, from: "catalog" },
+                  });
+                  return;
+                }
+                setAddError(null);
+                if (replacing) {
+                  setSelected([item.id]);
+                  return;
+                }
+                if (!selected.includes(item.id) && selected.length + existingCount >= 15) {
+                  setAddError("Máximo 15 ejercicios por rutina.");
+                  return;
+                }
+                setSelected((previous) =>
+                  previous.includes(item.id)
+                    ? previous.filter((id) => id !== item.id)
+                    : [...previous, item.id],
+                );
+              }}
+              style={({ pressed }) => ({
+                minHeight: 72,
+                paddingVertical: 16,
+                paddingHorizontal: 4,
+                flex: 1,
+                minWidth: 0,
+                backgroundColor: pressed ? p.raised : "transparent",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+              })}
+            >
+              <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+                <Text style={[s.label, { color: p.ink }]}>{item.name}</Text>
+                <Text style={[s.caption, { color: p.muted }]}>
+                  {item.muscleGroup} · {item.equipment ?? "Sin equipo indicado"}
+                  {item.recordType !== null && item.recordType !== "weight_reps"
+                    ? ` · ${RECORD_TYPE_LABELS[item.recordType]}`
+                    : ""}
+                </Text>
               </View>
-            ) : (
-              <Icon name="arrow" color={p.muted} size={18} />
-            )}
-          </Pressable>
+              {picking ? (
+                <View
+                  accessible={false}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 11,
+                    borderWidth: 1.5,
+                    borderColor: selected.includes(item.id) ? p.button : p.control,
+                    backgroundColor: selected.includes(item.id) ? p.button : "transparent",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {selected.includes(item.id) ? <Icon name="check" color="#fff" size={16} /> : null}
+                </View>
+              ) : (
+                <Icon name="arrow" color={p.muted} size={18} />
+              )}
+            </Pressable>
+            {picking ? (
+              <IconAction
+                label={`Ver ficha de ${item.name}`}
+                icon="info"
+                onPress={() => setInspected(item.id)}
+              />
+            ) : null}
+          </View>
         )}
       />
+      {inspectedEntry ? (
+        <WorkoutPanel title={inspectedEntry.name} onClose={() => setInspected(null)}>
+          <Text style={[s.caption, { color: p.muted }]}>
+            {inspectedEntry.muscleGroup} · {inspectedEntry.equipment ?? "Sin equipo indicado"}
+          </Text>
+          <TrainingExerciseHistory exerciseId={inspectedEntry.id} />
+        </WorkoutPanel>
+      ) : null}
       {picking ? (
         <View
           style={{

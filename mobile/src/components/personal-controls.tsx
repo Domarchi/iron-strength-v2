@@ -1,6 +1,6 @@
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { Icon } from "./icon";
-import { s, usePalette } from "./ui";
+import { Input, s, usePalette } from "./ui";
 export function SelectionMark({
   label,
   checked,
@@ -100,7 +100,7 @@ export function PersonalField({
   return (
     <View style={{ flex: 1, minWidth: numeric ? 48 : 0, gap: 5 }}>
       {title ? <Text style={[s.caption, { color: p.muted }]}>{title}</Text> : null}
-      <TextInput
+      <Input
         accessibilityLabel={label}
         value={value}
         onChangeText={onChange}
@@ -113,13 +113,13 @@ export function PersonalField({
         placeholderTextColor={p.muted}
         placeholder={numeric ? "—" : undefined}
         style={{
-          minHeight: multiline ? 88 : 44,
+          minHeight: multiline ? 88 : 48,
           minWidth: 0,
           borderRadius: 7,
           borderWidth: 1,
           borderColor: p.control,
           color: p.ink,
-          backgroundColor: p.card,
+          backgroundColor: p.field,
           paddingHorizontal: numeric ? 7 : 12,
           paddingVertical: 10,
           fontSize: 16,

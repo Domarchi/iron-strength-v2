@@ -3,12 +3,22 @@ import { useReducedMotion } from "../../../lib/motion-context";
 import { useRef, useState } from "react";
 import { randomUUID } from "expo-crypto";
 import { router } from "expo-router";
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import type {
   TypedPersonalMutation,
   TypedPersonalRoutine,
 } from "../../../../../src/lib/mobile/typed-personal-contracts";
-import { Action, Loading, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
+import {
+  Action,
+  IconAction,
+  Input,
+  Loading,
+  Notice,
+  Page,
+  ScreenIntro,
+  s,
+  usePalette,
+} from "../../../components/ui";
 import { MoreButton, PersonalField } from "../../../components/personal-controls";
 import { LibraryAttempt } from "../../../components/library-attempt";
 import type { TypedPersonalDraft } from "../../../lib/typed-library-drafts";
@@ -225,9 +235,15 @@ export default function PersonalLibraryScreen() {
   if (!library.ready) return <Loading />;
   return (
     <Page compact>
-      <Action label="Volver a Entrenar" quiet onPress={() => router.navigate("/train")} />
-      <View style={s.row}>
-        <ScreenIntro title="Mis rutinas" />
+      <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+        <IconAction
+          label="Volver a Entrenar"
+          icon="chevronLeft"
+          onPress={() => router.navigate("/train")}
+        />
+        <View style={{ flex: 1 }}>
+          <ScreenIntro title="Mis rutinas" />
+        </View>
         <MoreButton
           label="Opciones de biblioteca"
           disabled={disabled}
@@ -253,7 +269,7 @@ export default function PersonalLibraryScreen() {
         }}
       />
       {newFolder !== null ? (
-        <View style={[s.card, { borderColor: p.border, backgroundColor: p.card }]}>
+        <View style={[s.card, { borderColor: p.border, backgroundColor: p.field }]}>
           <PersonalField
             label="Nombre de la carpeta"
             title="Nueva carpeta"
@@ -273,13 +289,13 @@ export default function PersonalLibraryScreen() {
         </View>
       ) : null}
       {viewRows.length ? (
-        <TextInput
+        <Input
           accessibilityLabel="Buscar mis rutinas"
           placeholder="Buscar rutina"
           placeholderTextColor={p.muted}
           value={search}
           onChangeText={setSearch}
-          style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.card }]}
+          style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.field }]}
         />
       ) : null}
       {!viewRows.length && !q.loading && !q.error ? (
