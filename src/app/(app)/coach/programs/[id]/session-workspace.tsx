@@ -45,6 +45,15 @@ export function SessionWorkspace({
                 aria-controls={`editor-session-${session.id}`}
                 onClick={() => activate(session.id)}
                 onKeyDown={(event) => {
+                  if (
+                    event.defaultPrevented ||
+                    event.nativeEvent.isComposing ||
+                    event.ctrlKey ||
+                    event.metaKey ||
+                    event.altKey ||
+                    event.shiftKey
+                  )
+                    return;
                   let next: number | undefined;
                   if (event.key === "ArrowRight") next = (index + 1) % sessions.length;
                   if (event.key === "ArrowLeft")

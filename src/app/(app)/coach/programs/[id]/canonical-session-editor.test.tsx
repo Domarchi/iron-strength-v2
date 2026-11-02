@@ -457,3 +457,36 @@ it("vincula la biblioteca a la sesión visible y conserva el objetivo al cambiar
   expect(restored.querySelector("aside")!.textContent).toContain("Destino: sesión A");
   expect(mocks.mutate).not.toHaveBeenCalled();
 });
+
+it("Ctrl+Enter durante composición conserva el borrador sin enviarlo", async () => {
+  await mount();
+  await fill("Tiempo (s) de Sostener carga", "45");
+  const field = container.querySelector<HTMLInputElement>(
+    'input[aria-label="Tiempo (s) de Sostener carga"]',
+  )!;
+  field.focus();
+  const composing = new KeyboardEvent("keydown", {
+    key: "Enter",
+    ctrlKey: true,
+    isComposing: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  await act(() => {
+    field.dispatchEvent(composing);
+  });
+  expect(mocks.mutate).not.toHaveBeenCalled();
+  expect(composing.defaultPrevented).toBe(false);
+  expect(field.value).toBe("45");
+  const confirmed = new KeyboardEvent("keydown", {
+    key: "Enter",
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  await act(() => {
+    field.dispatchEvent(confirmed);
+  });
+  expect(mocks.mutate).toHaveBeenCalledTimes(1);
+  expect(confirmed.defaultPrevented).toBe(true);
+});

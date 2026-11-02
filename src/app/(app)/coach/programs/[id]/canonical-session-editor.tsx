@@ -495,6 +495,7 @@ function Editor({ userId, programId, session, exercises, canDuplicateSession = t
             (event.ctrlKey || event.metaKey) &&
             !event.altKey &&
             !event.repeat &&
+            !event.nativeEvent.isComposing &&
             !event.defaultPrevented &&
             !event.currentTarget.closest("[hidden],fieldset[disabled]") &&
             !saveDisabled
