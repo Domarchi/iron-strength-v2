@@ -39,3 +39,7 @@ Completo: referencia visual aprobada implementada, recorridos verificados, versi
 ## Corrección de entrada · 2 de noviembre de 2026
 
 El propietario solicita mejorar la intro y primera impresión con referencias Hevy/TeamBuildr y autoriza ejecutar. T234 se define en [entry.md](entry.md): carga, acceso y composición inicial de Inicio, conservando contratos, rutas y datos. Esa petición autoriza la implementación; no reabre la aprobación T225 ni cierra la revisión física T233. La entrega debe ser independiente de la preview8096/3170 en uso.
+
+## T235 · Arranque de Expo Go por túnel
+
+La captura del2-nov informa Failed to load all assets. La petición de bundle retenida en el inspector del túnel contiene x-forwarded-proto duplicado e idéntico; Metro construye una URL inválida y responde500. Reproducción HTTP: la misma ruta sin esa cabecera devuelve200. Corregir en la configuración propia del servidor Metro, sin editar dependencias, interfaz, autenticación o datos. Normalizar únicamente valores http/https coincidentes; devolver400 ante valores vacíos, desconocidos o contradictorios. Conservar middleware previo, Host, ruta, query y otras cabeceras. La comprobación de entrega debe recorrer manifiestos, bundle y recursos en uso, incluyendo solicitudes con cabecera reenviada, y no limitarse a comprobar un GET habitual. Actualizar solo la preview8097 fallida, conservando nombre/slug/ámbito y recursos de comparación. Otros servidores, túnel API y borradores se preservan. La repetición en el iPhone sigue siendo aceptación física independiente.
