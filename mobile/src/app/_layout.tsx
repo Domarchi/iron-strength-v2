@@ -3,7 +3,8 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider, useSession } from "../lib/session";
-import { Action, Brand, Loading, Notice, Page, usePalette } from "../components/ui";
+import { Action, Notice, usePalette } from "../components/ui";
+import { EntryIdentity, EntryLoading, EntryPage } from "../components/entry-screen";
 import { AppearanceProvider, useAppearance } from "../lib/appearance-context";
 import { AccountRemovalProvider } from "../lib/account-removal-context";
 import { AccountRemovalGate } from "../components/account-removal-gate";
@@ -12,11 +13,17 @@ function Routes() {
   const { client, state } = useSession(),
     p = usePalette(),
     { ready } = useAppearance();
-  if (state.status === "booting" || !ready) return <Loading />;
+  if (state.status === "booting" || !ready)
+    return (
+      <>
+        <StatusBar style={p.dark ? "light" : "dark"} />
+        <EntryLoading />
+      </>
+    );
   if (state.status === "blocked")
     return (
-      <Page>
-        <Brand />
+      <EntryPage>
+        <EntryIdentity />
         <Notice
           message={state.message}
           retry={() => {
@@ -30,7 +37,7 @@ function Routes() {
             void client.logout().catch(() => {});
           }}
         />
-      </Page>
+      </EntryPage>
     );
   return (
     <>

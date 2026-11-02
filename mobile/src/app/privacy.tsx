@@ -91,7 +91,7 @@ export default function Privacy() {
       <Action
         label={state.status === "authenticated" ? "Volver a mi cuenta" : "Volver a iniciar sesión"}
         secondary
-        onPress={() => router.replace(state.status === "authenticated" ? "/account" : "/login")}
+        onPress={() => router.dismissTo(state.status === "authenticated" ? "/account" : "/login")}
       />
     </Page>
   );

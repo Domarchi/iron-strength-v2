@@ -1,0 +1,83 @@
+{
+  "formatVersion": 1,
+  "task": "T234",
+  "capturedAt": "2026-11-02T13:23:18.973122+00:00",
+  "platform": "Expo web/WebKit, synthetic fixtures, not physical iPhone",
+  "beforeSource": "447b53e",
+  "afterSource": "T234 runtime with public source-map proof",
+  "physicalAcceptance": false,
+  "images": [
+    {
+      "file": "entry-dark-before.png",
+      "screen": "entry",
+      "theme": "dark",
+      "stage": "before",
+      "sha256": "0e4740e3ff23981b030730e70b07e2b5af61d0c18d107e3373f5bc340bd0558b",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "entry-dark-after.png",
+      "screen": "entry",
+      "theme": "dark",
+      "stage": "after",
+      "sha256": "0af6d2aacc7cf942b10827d2c7214f18db18fb082bdc480699a0c9975322b632",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "entry-light-before.png",
+      "screen": "entry",
+      "theme": "light",
+      "stage": "before",
+      "sha256": "8955ee2c851e52379f2f29be5175a1a8ba71e3a2ee65b7ca3bd1c0653bfbc04a",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "entry-light-after.png",
+      "screen": "entry",
+      "theme": "light",
+      "stage": "after",
+      "sha256": "b84e59bc2ed3b188b06102d0720089c0e4c3b2407d0d901b36bf13830eeb67ce",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "home-dark-before.png",
+      "screen": "home",
+      "theme": "dark",
+      "stage": "before",
+      "sha256": "e2051789c51a65c4f50e0c8a6c1830d487d34a204f5749f4d49b0f9a5f336f89",
+      "width": 360,
+      "height": 844
+    },
+    {
+      "file": "home-dark-after.png",
+      "screen": "home",
+      "theme": "dark",
+      "stage": "after",
+      "sha256": "43048d141265b5bf632956da94785e0da516623b5c40d62a90970f0d80e97fd5",
+      "width": 360,
+      "height": 844
+    },
+    {
+      "file": "home-light-before.png",
+      "screen": "home",
+      "theme": "light",
+      "stage": "before",
+      "sha256": "316f03de3937c03e1531997041ea40944660b93cabd6c0304766724daf78b655",
+      "width": 360,
+      "height": 844
+    },
+    {
+      "file": "home-light-after.png",
+      "screen": "home",
+      "theme": "light",
+      "stage": "after",
+      "sha256": "66e009022481bf41607252791a142a9b5cd045f0ed678ee9223b8c8cd3b8ddce",
+      "width": 360,
+      "height": 844
+    }
+  ]
+}

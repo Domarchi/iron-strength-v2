@@ -10,3 +10,4 @@
 - [x] T231 · Texto ampliado sin recortes, cabecera/descanso flexibles y controles de foco/scroll/viewport bajo/movimiento reducido. 136 E2E y checks raíz/móvil/Hermes aprobados.
 - [ ] T232 · Presentación y pruebas de componentes preparadas en PR19 draft; benchmark/E2E de adaptación pendientes del motor aislado.
 - [ ] T233 · Diseño entregado en Expo Go independiente y Safari anterior conservado; regresión móvil completa566casos verificada. Faltan cierre del coach y revisión física.
+- [x] T234 · Entrada/carga/acceso e Inicio refinados, regreso de Ayuda/invitación sin perder campos. Check1430/14Python, móvil491 y118casos dirigidos; comparación Safari y Expo Go independiente verificados. Revisión física separada.
