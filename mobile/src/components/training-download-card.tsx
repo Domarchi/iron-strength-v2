@@ -73,7 +73,7 @@ export function TrainingDownloadCard({
         >
           <Icon name="download" size={22} color={p.muted} />
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[s.label, { color: p.ink }]}>Sin conexión</Text>
+            <Text style={[s.label, { color: p.ink }]}>Entrenar sin conexión</Text>
             <Text style={[s.caption, { color: p.muted }]}>{summary}</Text>
           </View>
           <Icon name="arrow" size={18} color={p.muted} />
@@ -81,7 +81,7 @@ export function TrainingDownloadCard({
       ) : (
         <>
           <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
-            Sin conexión
+            Entrenar sin conexión
           </Text>
           <Text style={[s.caption, { color: p.muted }]}>{summary}</Text>
         </>

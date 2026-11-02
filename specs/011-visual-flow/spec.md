@@ -35,3 +35,7 @@ Revisar360/390/420px y escritorio desde1280px, ambos temas, texto ampliado, tecl
 Seguir especificación→pruebas pertinentes→implementación→verificación→commit; npm run check y reglas AGENTS. Mantener evidencia de fallos y alcance de cada pasada. No reconstruir binarios por cambios de documentación; exportaciones y vistas previas verificadas según el cambio, regresión final del circuito. Entregar enlace HTTPS, antes/después y guía breve. Mantener la demo anterior hasta coordinar actualización conservando pendientes.
 
 Completo: referencia visual aprobada implementada, recorridos verificados, versión accesible y revisión del propietario en iPhone registrada. Simulación, prototipo, exportación JS o tienda pendiente no se presentan como aceptación física. Solicitar intervención solo para aprobación visual, decisión de producto nueva, resultado físico o acceso imprescindible.
+
+## Corrección de entrada · 2 de noviembre de 2026
+
+El propietario solicita mejorar la intro y primera impresión con referencias Hevy/TeamBuildr y autoriza ejecutar. T234 se define en [entry.md](entry.md): carga, acceso y composición inicial de Inicio, conservando contratos, rutas y datos. Esa petición autoriza la implementación; no reabre la aprobación T225 ni cierra la revisión física T233. La entrega debe ser independiente de la preview8096/3170 en uso.

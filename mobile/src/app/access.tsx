@@ -225,7 +225,7 @@ function AccessForm({
           label="Volver a iniciar sesión"
           secondary
           disabled={busy}
-          onPress={() => router.replace("/login")}
+          onPress={() => router.dismissTo("/login")}
         />
         <Action
           label="Ingresar otro enlace"

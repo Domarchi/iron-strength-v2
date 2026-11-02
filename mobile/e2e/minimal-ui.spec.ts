@@ -43,12 +43,14 @@ test("volver a Inicio conserva la posición del contenido mientras actualiza la 
 }) => {
   await setupDownloadedWeek(page);
   let calls = 0;
+  let holdRefresh = false;
   let release!: () => void;
   const waiting = new Promise<void>((resolve) => {
     release = resolve;
   });
   await page.route("**/api/mobile/v1/week", async (route) => {
-    if (++calls > 1) await waiting;
+    calls++;
+    if (holdRefresh) await waiting;
     await route.fallback();
   });
   await page.route("**/api/mobile/v1/workouts", (route) =>
@@ -66,9 +68,11 @@ test("volver a Inicio conserva la posición del contenido mientras actualiza la 
   await expect(
     page.getByRole("button", { name: "Actualizar historial", exact: true }),
   ).toBeVisible();
+  const initialCalls = calls;
+  holdRefresh = true;
   await page.getByRole("tab", { name: "Inicio", exact: true }).click();
   try {
-    await expect.poll(() => calls).toBeGreaterThan(1);
+    await expect.poll(() => calls).toBeGreaterThan(initialCalls);
     await expect(action).toBeVisible();
     await expect
       .poll(async () => Math.abs((await action.boundingBox())!.y - before!.y))
