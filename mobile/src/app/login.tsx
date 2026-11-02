@@ -8,9 +8,11 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { Icon } from "../components/icon";
-import { Action, Brand, Notice, Page, s, usePalette } from "../components/ui";
+import { Action, Notice, s, usePalette } from "../components/ui";
+import { EntryIdentity, EntryPage } from "../components/entry-screen";
 import { useSession } from "../lib/session";
 import { useAccountRemoval } from "../lib/account-removal-context";
 export default function Login() {
@@ -18,6 +20,8 @@ export default function Login() {
   const { reason } = useLocalSearchParams<{ reason?: string }>();
   const p = usePalette(),
     { client, state } = useSession();
+  const { height } = useWindowDimensions();
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(null);
   const passwordInput = useRef<ComponentRef<typeof TextInput>>(null);
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
@@ -51,129 +55,176 @@ export default function Login() {
       style={{ flex: 1, backgroundColor: p.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Page>
-        <Brand />
-        {removal.completion ? (
-          <Notice
-            message={
-              removal.completion === "server_deleted"
-                ? "Tu cuenta fue borrada del servidor y completamos la limpieza de este dispositivo."
-                : "Se borraron solo los registros de esta cuenta en este dispositivo. No tenemos confirmación de borrado de tu cuenta remota."
-            }
-          />
-        ) : null}
-        {reason === "registered" || reason === "password" ? (
-          <Text accessibilityRole="alert" style={[s.body, { color: p.success }]}>
-            {reason === "registered"
-              ? "Tu cuenta está lista. Entra con el correo de la invitación y la contraseña que elegiste."
-              : "Contraseña actualizada. Entra con tu contraseña nueva; tus registros locales se conservan."}
-          </Text>
-        ) : null}
-        <Text
-          accessibilityRole="header"
-          style={[s.heading, { color: p.ink, marginTop: compact ? 0 : 12 }]}
-        >
-          Inicia sesión
-        </Text>
-        <View style={{ gap: 20 }}>
-          <View style={{ gap: 7 }}>
-            <Text style={[s.label, { color: p.ink }]}>Correo</Text>
-            <TextInput
-              keyboardAppearance={p.dark ? "dark" : "light"}
-              selectionColor={p.blue}
-              accessibilityLabel="Correo"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              textContentType="username"
-              autoComplete="email"
-              editable={!busy}
-              placeholder="tu@correo.com"
-              placeholderTextColor={p.muted}
-              style={[s.input, { color: p.ink, borderColor: p.control, backgroundColor: p.bg }]}
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => passwordInput.current?.focus()}
-            />
+      <EntryPage compact={compact}>
+        <EntryIdentity />
+        <View style={{ gap: compact || height < 650 ? 20 : 28 }}>
+          <View style={{ gap: 8 }}>
+            <Text
+              accessibilityRole="header"
+              style={[s.heading, { color: p.ink, fontSize: 32, lineHeight: 39 }]}
+            >
+              Inicia sesión
+            </Text>
+            <Text style={[s.body, { color: p.muted }]}>Tu espacio de entrenamiento.</Text>
           </View>
-          <View style={{ gap: 7 }}>
-            <Text style={[s.label, { color: p.ink }]}>Contraseña</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          {removal.completion ? (
+            <Notice
+              message={
+                removal.completion === "server_deleted"
+                  ? "Tu cuenta fue borrada del servidor y completamos la limpieza de este dispositivo."
+                  : "Se borraron solo los registros de esta cuenta en este dispositivo. No tenemos confirmación de borrado de tu cuenta remota."
+              }
+            />
+          ) : null}
+          {reason === "registered" || reason === "password" ? (
+            <Text accessibilityRole="alert" style={[s.body, { color: p.success }]}>
+              {reason === "registered"
+                ? "Tu cuenta está lista. Entra con el correo de la invitación y la contraseña que elegiste."
+                : "Contraseña actualizada. Entra con tu contraseña nueva; tus registros locales se conservan."}
+            </Text>
+          ) : null}
+          <View style={{ gap: 20 }}>
+            <View style={{ gap: 8 }}>
+              <Text style={[s.label, { color: p.muted, fontSize: 14 }]}>Correo</Text>
               <TextInput
                 keyboardAppearance={p.dark ? "dark" : "light"}
                 selectionColor={p.blue}
-                accessibilityLabel="Contraseña"
-                ref={passwordInput}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!visible}
-                textContentType="password"
-                autoComplete="current-password"
+                accessibilityLabel="Correo"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                textContentType="username"
+                autoComplete="email"
                 editable={!busy}
-                onSubmitEditing={() => {
-                  void submit();
-                }}
-                returnKeyType="go"
+                placeholder="tu@correo.com"
+                placeholderTextColor={p.muted}
+                onFocus={() => setFocusedField("email")}
+                onBlur={() => setFocusedField(null)}
                 style={[
                   s.input,
                   {
-                    flex: 1,
-                    minWidth: 0,
+                    minHeight: 56,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
                     color: p.ink,
-                    borderColor: p.control,
-                    backgroundColor: p.bg,
+                    borderColor: focusedField === "email" ? p.blue : p.control,
+                    backgroundColor: p.field,
                   },
                 ]}
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordInput.current?.focus()}
               />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
-                onPress={() => setVisible((v) => !v)}
-                disabled={busy}
+            </View>
+            <View style={{ gap: 8 }}>
+              <Text style={[s.label, { color: p.muted, fontSize: 14 }]}>Contraseña</Text>
+              <View
                 style={{
-                  minWidth: 48,
-                  minHeight: 52,
-                  borderRadius: 12,
+                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: p.raised,
+                  backgroundColor: p.field,
+                  borderColor: focusedField === "password" ? p.blue : p.control,
+                  borderWidth: 1,
+                  borderRadius: 12,
                 }}
               >
-                <Text style={[s.caption, { color: p.ink }]}>{visible ? "Ocultar" : "Ver"}</Text>
-              </Pressable>
+                <TextInput
+                  keyboardAppearance={p.dark ? "dark" : "light"}
+                  selectionColor={p.blue}
+                  accessibilityLabel="Contraseña"
+                  ref={passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!visible}
+                  textContentType="password"
+                  autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!busy}
+                  onSubmitEditing={() => {
+                    void submit();
+                  }}
+                  onFocus={() => setFocusedField("password")}
+                  onBlur={() => setFocusedField(null)}
+                  returnKeyType="go"
+                  style={[
+                    s.input,
+                    {
+                      flex: 1,
+                      minWidth: 0,
+                      minHeight: 56,
+                      borderWidth: 0,
+                      paddingHorizontal: 16,
+                      color: p.ink,
+                      borderColor: p.control,
+                      backgroundColor: "transparent",
+                    },
+                  ]}
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  onPress={() => setVisible((v) => !v)}
+                  disabled={busy}
+                  style={{
+                    minWidth: 48,
+                    minHeight: 56,
+                    borderRadius: 12,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "transparent",
+                  }}
+                >
+                  <Icon name={visible ? "eyeOff" : "eye"} color={p.muted} size={20} />
+                </Pressable>
+              </View>
             </View>
+            {message ? (
+              <Text
+                accessibilityRole="alert"
+                style={[s.body, { color: error ? p.danger : p.muted }]}
+              >
+                {message}
+              </Text>
+            ) : null}
+            <Action
+              label="Entrar"
+              icon="arrow"
+              busy={busy}
+              disabled={!email.trim() || !password}
+              onPress={() => {
+                void submit();
+              }}
+            />
           </View>
-          {message ? (
-            <Text accessibilityRole="alert" style={[s.body, { color: error ? p.danger : p.muted }]}>
-              {message}
+        </View>
+        <View style={{ gap: 10 }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Tengo un enlace de mi coach"
+            onPress={() => router.push("/access")}
+            style={({ pressed }) => ({
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 14,
+              minHeight: 64,
+              paddingVertical: 12,
+              borderTopWidth: 1,
+              borderTopColor: p.border,
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Icon name="link" color={p.muted} size={20} />
+            <Text style={[s.body, { color: p.ink, flex: 1, fontWeight: "500" }]}>
+              Tengo un enlace de mi coach
             </Text>
-          ) : null}
-          <Action
-            label="Entrar"
-            icon="arrow"
-            busy={busy}
-            disabled={!email.trim() || !password}
-            onPress={() => {
-              void submit();
-            }}
-          />
+            <Icon name="arrow" color={p.muted} size={18} />
+          </Pressable>
+          <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
-          <Icon name="train" color={p.muted} size={18} />
-          <Text style={[s.caption, { color: p.muted, flex: 1 }]}>
-            PLANIFICA · ENTRENA · PROGRESA
-          </Text>
-        </View>
-        <Action label="Tengo un enlace de mi coach" quiet onPress={() => router.push("/access")} />
-        <Text style={[s.caption, { color: p.muted, textAlign: "center" }]}>
-          ¿Necesitas acceso? Pide a tu coach un enlace de invitación o recuperación.
-        </Text>
-        <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
-      </Page>
+      </EntryPage>
     </KeyboardAvoidingView>
   );
 }

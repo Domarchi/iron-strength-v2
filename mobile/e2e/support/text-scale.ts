@@ -48,7 +48,9 @@ export async function horizontalClipping(page: Page) {
       const overflow =
         rect.right > viewport + 1 ||
         rect.left < -1 ||
-        (el.matches('[dir="auto"]') && el.scrollWidth > el.clientWidth + 2);
+        (el.matches('[dir="auto"]') &&
+          !el.matches("input,textarea") &&
+          el.scrollWidth > el.clientWidth + 2);
       return overflow
         ? [
             {

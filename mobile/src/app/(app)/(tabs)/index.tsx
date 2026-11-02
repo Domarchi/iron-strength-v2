@@ -60,11 +60,18 @@ function OnlineWeek() {
               borderColor: p.border,
               gap: 12,
               padding: 20,
+              borderWidth: 1,
+              borderRadius: 20,
             },
           ]}
         >
           <View style={s.row}>
-            <Text style={[s.caption, { color: p.muted, fontWeight: "500" }]}>SIGUIENTE SESIÓN</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Icon name="train" color={p.blue} size={18} />
+              <Text style={[s.caption, { color: p.muted, fontWeight: "500" }]}>
+                SIGUIENTE SESIÓN
+              </Text>
+            </View>
             <SessionMark label={next.label} />
           </View>
           <Text accessibilityRole="header" style={[s.heading, { color: p.ink }]}>

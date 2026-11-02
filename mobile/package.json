@@ -41,11 +41,12 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "node ../node_modules/vitest/vitest.mjs run -c vitest.config.ts",
-    "check": "npm run lint && npm run typecheck && npm test",
+    "check": "npm run lint && npm run typecheck && npm test && npm run test:metro",
     "bundle": "expo export --platform android --platform ios",
     "test:ui": "node ../node_modules/@playwright/test/cli.js test -c playwright.config.ts",
     "login": "expo login --browser",
-    "dev-client": "APP_VARIANT=development expo start --dev-client"
+    "dev-client": "APP_VARIANT=development expo start --dev-client",
+    "test:metro": "node --test scripts/metro-forwarded-headers.test.cjs"
   },
   "private": true
 }
