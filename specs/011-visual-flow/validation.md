@@ -193,3 +193,13 @@ Fallo del benchmark: la comparación `snapshot()` antes/después difería en IDs
 Comparación del benchmark (10-nov-2026): mismo test (`adaptación de 72 pesos`, 4 semanas × 3 sesiones × 6 ejercicios) sobre pila limpia (`supabase stop --no-backup` + `start`) para cada versión. 49bf69a: 40 acciones frente a la línea base de 95 (−57,9 %) en Chromium y WebKit. 3cf0d6c: 40 acciones (−57,9 %) en ambos motores. Es decir, la composición de T232 no cambia el número de acciones de la adaptación; no es una mejora medida de ese recorrido. En 49bf69a con el oráculo original, el benchmark también falló en Chromium por la comparación `toEqual` del snapshot (primer intento, sin ordenar), lo que apunta a no determinismo del oráculo y no a una regresión del editor; con el oráculo ordenado pasó en ambos. Los tiempos de personas no se midieron. Un `db reset` con la pila viva dejó la base sin contenedor y auth sin resolverla; se resolvió con parada y arranque limpios solo de la pila propia.
 
 Pendiente: T233 completa. PR19 sigue draft; sin push, integración, publicación ni migraciones remotas.
+
+## T233 · Regresión final local · 10-nov-2026
+
+Pila aislada `iron-strength-t232` (puertos 56320–56329), sin tocar 54321/55321/demo. Parches locales de puertos no forman parte del commit.
+
+- `npm run check` raíz: aprobado (lint, tipos, unitarias, build; 73 recursos offline). Check móvil: aprobado (13 pruebas Metro incluidas).
+- E2E web completa, ambos motores, 40,6 min: 427 aprobadas, 1 omitida (arrastre táctil CDP en WebKit, por diseño), 2 fallidas.
+- Las 2 fallidas (`flujo-principal`, Chromium y WebKit) fueron un defecto del entorno de prueba: sin `NEXT_PUBLIC_SITE_URL` el enlace de invitación era relativo y `new URL()` falló. Con `NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3100` el spec pasa 2/2. No hubo cambio de código; no es una pasada única limpia.
+
+No acredita: teléfono físico, binarios firmados, migraciones remotas (local 56 vs remoto 40), CI (bloqueado por facturación) ni publicación.
