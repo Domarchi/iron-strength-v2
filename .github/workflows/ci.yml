@@ -26,6 +26,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm ci
+        working-directory: mobile
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
@@ -48,6 +50,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm ci
+        working-directory: mobile
       - name: Levantar Supabase local (sin servicios innecesarios)
         run: npx supabase start -x studio,mailpit,imgproxy,edge-runtime,logflare,vector,realtime,postgres-meta,supavisor
       - name: Tests de base de datos (RLS, restricciones, funciones)
@@ -80,6 +84,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm ci
+        working-directory: mobile
       - name: Levantar Supabase local
         run: npx supabase start -x studio,mailpit,imgproxy,edge-runtime,logflare,vector,realtime,postgres-meta,supavisor
       - name: Variables de la pila local
@@ -92,6 +98,7 @@ jobs:
           echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3100" >> "$GITHUB_ENV"
       - name: Instalar Chromium y WebKit
         run: npx playwright install --with-deps chromium webkit
+        timeout-minutes: 15
       - name: Regresión de respuestas perdidas en WebKit
         run: npm run test:e2e -- e2e/sincronizacion-offline.spec.ts e2e/valoracion-recuperacion.spec.ts --project=webkit --grep "termina offline|esfuerzo y nota se recuperan" --repeat-each=3 --retries=0 --max-failures=1
       - name: Pruebas E2E
@@ -129,5 +136,6 @@ jobs:
         working-directory: mobile
       - name: Instalar navegadores para la interfaz de consulta
         run: npx playwright install --with-deps chromium webkit
+        timeout-minutes: 15
       - run: npm run test:ui
         working-directory: mobile
