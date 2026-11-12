@@ -1,6 +1,7 @@
 import { MotionProvider, useReducedMotion } from "../lib/motion-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useForjaFonts } from "../ui/fonts";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider, useSession } from "../lib/session";
@@ -64,6 +65,7 @@ function Routes() {
   );
 }
 export default function RootLayout() {
+  useForjaFonts();
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
