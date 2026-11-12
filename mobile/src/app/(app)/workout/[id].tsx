@@ -206,7 +206,7 @@ export default function Workout() {
             <Action label="Cancelar descarte" quiet onPress={() => setDiscard(false)} />
           </>
         ) : (
-          <Action label="Descartar registro local" quiet onPress={() => setDiscard(true)} />
+          <Action label="Descartar registro local" danger onPress={() => setDiscard(true)} />
         )}
       </Page>
     );
@@ -632,6 +632,7 @@ export default function Workout() {
         ) : (
           <Action
             label="Descartar registro local"
+            danger
             quiet
             disabled={training.busy || training.closing || (pending && syncQueue.transferring)}
             onPress={() => setDiscard(true)}

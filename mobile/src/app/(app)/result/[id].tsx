@@ -211,6 +211,7 @@ export default function Result() {
                   {demo !== "1" ? (
                     <Action
                       label="Eliminar entrenamiento"
+                      danger
                       quiet
                       disabled={q.loading || !!q.error || w.id !== id || removal.busy}
                       onPress={() =>

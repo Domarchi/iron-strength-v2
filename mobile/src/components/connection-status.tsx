@@ -61,9 +61,9 @@ function OfflineConnection() {
           }}
         >
           {busy ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={p.onButton} />
           ) : (
-            <Text style={{ fontSize: 14, lineHeight: 21, fontWeight: "600", color: "#fff" }}>
+            <Text style={{ fontSize: 14, lineHeight: 21, fontWeight: "600", color: p.onButton }}>
               Conectar
             </Text>
           )}

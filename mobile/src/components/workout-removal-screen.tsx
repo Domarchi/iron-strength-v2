@@ -251,6 +251,7 @@ export function WorkoutRemovalScreen({ id }: { id: string }) {
                       ) : null}
                       <Action
                         label="Eliminar para siempre"
+                        danger
                         disabled={
                           disabled ||
                           correctionBlocked ||

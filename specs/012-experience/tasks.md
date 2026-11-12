@@ -17,7 +17,7 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 
 ## Fase B · Núcleo de entrenamiento
 
-- [ ] T240 · Navegación nativa: cabeceras, gesto de retroceso, hojas, transiciones.
+- [x] T240 · Paleta Forja aplicada a toda la app remapeando la paleta existente (claves conservadas; contraste AA verificado), fuentes en el sistema de estilos base, acciones de peligro (`danger`) en las destructivas y enlaces «Volver…» como flecha + texto a la izquierda. Regresión móvil completa: 588 aprobadas, 32 omitidas, 6 fallos corregidos (título del registro en una línea, botones que envuelven al ampliar texto).
 - [ ] T241 · Registro en curso rediseñado.
 - [ ] T242 · Teclado numérico propio y copia rápida.
 - [ ] T243 · Descanso: anillo, háptica, notificación local, pantalla encendida.

@@ -36,7 +36,7 @@ export function WorkoutHeading({
         disabled={backDisabled}
       />
       <View style={{ flex: 1, minWidth: 80, gap: 3 }}>
-        <Text accessibilityRole="header" style={[s.label, { color: p.ink }]}>
+        <Text accessibilityRole="header" numberOfLines={1} style={[s.label, { color: p.ink }]}>
           {title}
         </Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>

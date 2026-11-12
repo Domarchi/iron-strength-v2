@@ -534,9 +534,9 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                 }))
               }
             />
-            <View style={{ flexDirection: "row", gap: 8 }}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {!pending ? (
-                <View style={{ flex: 1 }}>
+                <View style={{ flexGrow: 1 }}>
                   <Action
                     label="Herramientas"
                     accessibilityLabel="Herramientas del ejercicio"
@@ -549,7 +549,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                   />
                 </View>
               ) : null}
-              <View style={{ flex: 1 }}>
+              <View style={{ flexGrow: 1 }}>
                 <Action
                   label="Detalles"
                   accessibilityLabel="Detalles del ejercicio"
@@ -785,6 +785,7 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
         ) : (
           <Action
             label="Descartar registro local"
+            danger
             quiet
             disabled={training.busy || training.closing}
             onPress={() => setDiscard(true)}

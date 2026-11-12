@@ -63,7 +63,7 @@ export function TrainingCalendar({
                 backgroundColor: selected === d.date ? p.button : "transparent",
               }}
             >
-              <Text style={[s.body, s.number, { color: selected === d.date ? "#fff" : p.ink }]}>
+              <Text style={[s.body, s.number, { color: selected === d.date ? p.onButton : p.ink }]}>
                 {Number(d.date.slice(-2))}
               </Text>
             </View>

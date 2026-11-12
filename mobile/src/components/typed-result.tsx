@@ -126,6 +126,7 @@ export function TypedResult({
           />
           <Action
             label="Eliminar entrenamiento"
+            danger
             quiet
             disabled={loading || !!error || removal.busy}
             onPress={() => router.push({ pathname: "/remove-result/[id]", params: { id: w.id } })}

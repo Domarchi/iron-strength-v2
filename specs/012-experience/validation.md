@@ -15,3 +15,11 @@
 - Defectos encontrados y corregidos por las pruebas: chips de 34 px (ahora 44 px de objetivo), interruptor nativo de 40×20 (ahora fila de 56 px con interruptor propio), roles ARIA de radio, interruptor, ajuste y anillo no llegaban a la web con `accessibilityRole`, ActivityIndicator sin nombre.
 - Resultados: 31 pruebas de tokens (contraste de 13 pares en ambos temas); check móvil completo con 57 archivos y 522 pruebas; 12 E2E de la galería (Chromium y WebKit: AA, 360 px, objetivos de 44 px, hoja/diálogo/menú con Escape, segmentado/ajuste/aviso); regresión enfocada de 64 E2E (acceso, cuenta, Inicio, registro, fundamentos y galería) sin fallos; exportación Hermes Android e iOS.
 - Límites: sin probar en teléfono (arrastre de la hoja, háptica, fuentes en nativo); el arrastre para cerrar usa gesture-handler y solo está verificado en web con teclado; la galería está empaquetada en producción pero redirige; las pantallas actuales siguen con la paleta anterior; falta la regresión completa de 566 casos.
+
+## T240 · 12-nov-2026
+
+- La paleta Forja se aplicó cambiando los valores de `palettes` (mobile/src/lib/appearance.ts) y añadiendo `onButton`; las 80 pantallas conservan sus claves. Ajustes por AA en claro: acento #BF3606 y éxito #17692F.
+- `Action` ahora tiene `danger` (borde y texto de peligro) y muestra «Volver…» como flecha + texto a la izquierda; nombres accesibles sin cambio.
+- Hallazgo: el fallo de CI de `consulta.spec.ts:631` no era lentitud sino un oráculo roto por T234 (`app-page` pasó a `entry-page`); corregido con un helper de fondo efectivo.
+- Regresión móvil completa (626 casos, ambos motores): 588 aprobadas, 32 omitidas, 6 fallos: `workout-refresh` (primera serie bajó de 320 px por títulos en tres líneas con Inter) y `fluidity` en WebKit (botón «Herramientas» recortado al 200 %). Corregidos y repetidos: 42 y 40 aprobadas.
+- Límites: sin teléfono; la regresión completa no se repitió entera tras las dos correcciones.

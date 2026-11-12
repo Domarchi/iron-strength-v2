@@ -50,10 +50,10 @@ export const themes: { dark: Theme; light: Theme } = {
     text: "#15130F",
     muted: "#6D675A",
     // El #E8480F de la propuesta no alcanza AA con texto blanco (3,9:1); se usa un naranja más profundo.
-    accent: "#C73A08",
+    accent: "#BF3606",
     accentSoft: "#FFF1EA",
     onAccent: "#FFFFFF",
-    ok: "#1D7A3A",
+    ok: "#17692F",
     okBg: "#E3F2E6",
     rec: "#8A5A00",
     recBg: "#FBEFCF",

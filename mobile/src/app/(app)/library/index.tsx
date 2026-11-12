@@ -439,6 +439,7 @@ export default function PersonalLibraryScreen() {
                     </View>
                     <Action
                       label={routine ? "Eliminar rutina" : "Eliminar carpeta"}
+                      danger
                       quiet
                       disabled={disabled}
                       onPress={() => setConfirm(true)}
