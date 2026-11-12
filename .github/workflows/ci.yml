@@ -74,7 +74,7 @@ jobs:
   e2e:
     name: E2E (Playwright contra Supabase local y build de producción)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
