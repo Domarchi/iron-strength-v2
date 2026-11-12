@@ -2,6 +2,7 @@ import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight } from "../../../src/domain/training-tools";
 import { isTypedTraining } from "../lib/training";
 import { isSuggestedWeight } from "../lib/suggested-value";
+import { QuickAdjust, adjustWeightText } from "./quick-adjust";
 import { useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { Action, Input, s, usePalette } from "./ui";
@@ -44,6 +45,7 @@ export function WorkoutSets({
     training.active?.pause?.pausedAtMs != null ||
     training.active?.draft.status === "pending_save";
   if (!exercise) return null;
+  const activeIndex = exercise.sets.findIndex((x) => !x.done);
   const history =
       state.status === "authenticated" && training.active?.mode === "real"
         ? downloadedHistory(
@@ -258,6 +260,25 @@ export function WorkoutSets({
                 }}
               />
             </View>
+            {si === activeIndex && !blocked && !exercise.isBodyweight ? (
+              <QuickAdjust
+                setNumber={si + 1}
+                step={2.5}
+                unitLabel="kg"
+                disabled={blocked}
+                onAdjust={(delta) =>
+                  controller.edit((draft) =>
+                    updateSetField(
+                      draft,
+                      index,
+                      si,
+                      "weight",
+                      adjustWeightText(set.weight, delta, target?.targetWeightKg ?? null),
+                    ),
+                  )
+                }
+              />
+            ) : null}
             {preferences.value.weightUnit !== "kg" && /^\d+(?:[.,]\d+)?$/.test(set.weight) ? (
               <Text style={[s.caption, { color: p.muted, paddingLeft: 48 }]}>
                 ≈ {formatWeight(Number(set.weight.replace(",", ".")), preferences.value.weightUnit)}

@@ -4,6 +4,7 @@ import { useTrainingDownload } from "../lib/training-download-context";
 import { TrainingExerciseHistory } from "./training-exercise-history";
 import { WorkoutTools } from "./workout-tools";
 import { isSuggestedWeight } from "../lib/suggested-value";
+import { QuickAdjust, adjustWeightText } from "./quick-adjust";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { trainingFields } from "../lib/training-fields";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
@@ -465,6 +466,29 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                       }}
                     />
                   </View>
+                  {si === exercise.sets.findIndex((x) => !x.done) &&
+                  !locked &&
+                  trainingFields(exercise.prescribed.recordType).some(
+                    (f) => f.field === "weight",
+                  ) ? (
+                    <QuickAdjust
+                      setNumber={si + 1}
+                      step={2.5}
+                      unitLabel="kg"
+                      disabled={locked}
+                      onAdjust={(delta) =>
+                        update((draft) =>
+                          editTypedSet(
+                            draft,
+                            index,
+                            si,
+                            "weight",
+                            adjustWeightText(set.weight, delta, target?.targetWeightKg ?? null),
+                          ),
+                        )
+                      }
+                    />
+                  ) : null}
                   {preferences.value.showPrevious && !previousColumn ? previousValue : null}
                   {options === set.id ? (
                     <View style={{ gap: 8, padding: 8 }}>
