@@ -1,3 +1,4 @@
+import { useKeepAwake } from "expo-keep-awake";
 import { WorkoutHeading } from "../../../components/workout-heading";
 import { WorkoutPanel } from "../../../components/workout-panel";
 import { useTrainingDownload } from "../../../lib/training-download-context";
@@ -56,6 +57,8 @@ function useClock() {
   return now;
 }
 export default function Workout() {
+  // La pantalla no se apaga mientras se entrena (se libera al salir del registro).
+  useKeepAwake();
   const { preferences } = useTrainingPreferences();
   const [tools, setTools] = useState(false);
   const p = usePalette(),

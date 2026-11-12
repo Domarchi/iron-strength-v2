@@ -1,7 +1,10 @@
+import { useEffect, useRef } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Action, s, usePalette } from "./ui";
 import { formatClock } from "../../../src/domain/rest-timer";
+import { ProgressRing } from "../ui/display";
+import { tap } from "../lib/haptics";
 
 /** A layout sibling of the scroll view: visible without covering a set or the keyboard. */
 export function RestControls({
@@ -17,6 +20,12 @@ export function RestControls({
 }) {
   const p = usePalette(),
     insets = useSafeAreaInsets();
+  const previous = useRef(seconds);
+  useEffect(() => {
+    // Aviso táctil al terminar el descanso (no al abrir la pantalla con 0).
+    if (previous.current > 0 && seconds === 0) tap("success");
+    previous.current = seconds;
+  }, [seconds]);
   return (
     <View
       style={{
@@ -54,6 +63,12 @@ export function RestControls({
         >
           <Text style={[s.label, { color: p.blue }]}>−15</Text>
         </Pressable>
+        <ProgressRing
+          value={totalSeconds > 0 ? seconds / totalSeconds : 0}
+          size={36}
+          stroke={4}
+          label={`Descanso: quedan ${seconds} segundos de ${totalSeconds}`}
+        />
         <View style={{ flex: 1, minWidth: 110, gap: 0, alignItems: "center" }}>
           <Text style={[s.caption, { color: p.muted, fontSize: 11 }]}>Descanso</Text>
           <Text
