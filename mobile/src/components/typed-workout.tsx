@@ -5,6 +5,7 @@ import { TrainingExerciseHistory } from "./training-exercise-history";
 import { WorkoutTools } from "./workout-tools";
 import { isSuggestedWeight } from "../lib/suggested-value";
 import { QuickAdjust, adjustWeightText } from "./quick-adjust";
+import { EffortChips } from "./effort-chips";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { trainingFields } from "../lib/training-fields";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
@@ -747,10 +748,21 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
               {total - done === 1 ? "pendiente" : "pendientes"}
             </Text>
             <Text style={[s.caption, { color: p.muted }]}>
-              {formatWeight(totals.externalVolumeKg, preferences.value.weightUnit)} de volumen ·{" "}
-              {totals.durationSeconds} s registrados ·{" "}
-              {formatDistance(totals.distanceMeters, preferences.value.distanceUnit)}
+              {[
+                `${formatWeight(totals.externalVolumeKg, preferences.value.weightUnit)} de volumen`,
+                totals.durationSeconds > 0 ? `${totals.durationSeconds} s registrados` : null,
+                totals.distanceMeters > 0
+                  ? formatDistance(totals.distanceMeters, preferences.value.distanceUnit)
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </Text>
+            <EffortChips
+              value={a.review?.effort ?? ""}
+              disabled={training.closing}
+              onChange={(v) => controller.review(v, a.review?.note ?? "")}
+            />
             <Input
               accessibilityLabel="Esfuerzo percibido"
               placeholder="Esfuerzo 1–10 · opcional"

@@ -1,3 +1,4 @@
+import { EffortChips } from "../../../components/effort-chips";
 import { useKeepAwake } from "expo-keep-awake";
 import { WorkoutHeading } from "../../../components/workout-heading";
 import { WorkoutPanel } from "../../../components/workout-panel";
@@ -542,6 +543,11 @@ export default function Workout() {
                   guardarán solo las series completadas.
                 </Text>
                 <Text style={[s.label, { color: p.ink }]}>Esfuerzo de 1 a 10 · opcional</Text>
+                <EffortChips
+                  value={effort}
+                  disabled={training.closing}
+                  onChange={(v) => controller.review(v, note)}
+                />
                 <Input
                   keyboardAppearance={p.dark ? "dark" : "light"}
                   selectionColor={p.blue}
