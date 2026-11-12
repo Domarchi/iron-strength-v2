@@ -1,6 +1,7 @@
 import { MotionProvider, useReducedMotion } from "../lib/motion-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider, useSession } from "../lib/session";
 import { Action, Notice, usePalette } from "../components/ui";
@@ -64,18 +65,20 @@ function Routes() {
 }
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <MotionProvider>
-        <AppearanceProvider>
-          <SessionProvider>
-            <AccountRemovalProvider>
-              <AccountRemovalGate>
-                <Routes />
-              </AccountRemovalGate>
-            </AccountRemovalProvider>
-          </SessionProvider>
-        </AppearanceProvider>
-      </MotionProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <MotionProvider>
+          <AppearanceProvider>
+            <SessionProvider>
+              <AccountRemovalProvider>
+                <AccountRemovalGate>
+                  <Routes />
+                </AccountRemovalGate>
+              </AccountRemovalProvider>
+            </SessionProvider>
+          </AppearanceProvider>
+        </MotionProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
