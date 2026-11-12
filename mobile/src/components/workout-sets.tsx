@@ -1,6 +1,7 @@
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight } from "../../../src/domain/training-tools";
 import { isTypedTraining } from "../lib/training";
+import { isSuggestedWeight } from "../lib/suggested-value";
 import { useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { Action, Input, s, usePalette } from "./ui";
@@ -203,7 +204,9 @@ export function WorkoutSets({
                     paddingVertical: 11,
                     paddingHorizontal: 4,
                     textAlign: "center",
-                    color: p.ink,
+                    color: isSuggestedWeight(set.weight, target?.targetWeightKg, set.done)
+                      ? p.muted
+                      : p.ink,
                     borderColor: p.control,
                     borderWidth: 1,
                     borderBottomWidth: 1,

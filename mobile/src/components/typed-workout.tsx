@@ -3,6 +3,7 @@ import { WorkoutPanel } from "./workout-panel";
 import { useTrainingDownload } from "../lib/training-download-context";
 import { TrainingExerciseHistory } from "./training-exercise-history";
 import { WorkoutTools } from "./workout-tools";
+import { isSuggestedWeight } from "../lib/suggested-value";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { trainingFields } from "../lib/training-fields";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
@@ -409,7 +410,11 @@ export function TypedWorkout({ active: a }: { active: TypedActiveTraining }) {
                             s.input,
                             s.number,
                             {
-                              color: p.ink,
+                              color:
+                                f.field === "weight" &&
+                                isSuggestedWeight(set.weight, target?.targetWeightKg, set.done)
+                                  ? p.muted
+                                  : p.ink,
                               borderColor: set.done ? p.completed : p.control,
                               backgroundColor: set.done ? p.completed : p.field,
                               textAlign: "center",

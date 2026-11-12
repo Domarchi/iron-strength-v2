@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 import { formatClock } from "../../../src/domain/rest-timer";
 import { Action, IconAction, s, usePalette } from "./ui";
+import { ProgressRing } from "../ui/display";
 
 export function WorkoutHeading({
   title,
@@ -47,11 +48,18 @@ export function WorkoutHeading({
             {formatClock(elapsed)}
           </Text>
           {paused ? <Text style={[s.caption, { color: p.blue }]}>En pausa</Text> : null}
+
           <Text style={[s.caption, s.number, { color: p.muted }]}>
             {done}/{total} series
           </Text>
         </View>
       </View>
+      <ProgressRing
+        value={total > 0 ? done / total : 0}
+        size={26}
+        stroke={3}
+        label={`Avance: ${done} de ${total} series`}
+      />
       {pause}
       {onFinish ? (
         <Action

@@ -18,7 +18,7 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 ## Fase B · Núcleo de entrenamiento
 
 - [x] T240 · Paleta Forja aplicada a toda la app remapeando la paleta existente (claves conservadas; contraste AA verificado), fuentes en el sistema de estilos base, acciones de peligro (`danger`) en las destructivas y enlaces «Volver…» como flecha + texto a la izquierda. Regresión móvil completa: 588 aprobadas, 32 omitidas, 6 fallos corregidos (título del registro en una línea, botones que envuelven al ampliar texto).
-- [ ] T241 · Registro en curso rediseñado.
+- [x] T241 · Registro: el peso precargado desde la prescripción se muestra atenuado hasta marcar la serie (`isSuggestedWeight`, con pruebas), anillo de avance en la cabecera, título del registro en una línea y acciones de peligro diferenciadas. Se conserva la estructura y los nombres accesibles. 54 E2E de registro/herramientas/pausa/fluidez aprobadas (ambos motores). Queda para T245/T250 la reorganización de la cabecera con menú «···».
 - [ ] T242 · Teclado numérico propio y copia rápida.
 - [ ] T243 · Descanso: anillo, háptica, notificación local, pantalla encendida.
 - [ ] T244 · Cierre y resultado con récords y comparación.
