@@ -14,6 +14,7 @@ import { useState } from "react";
 import { router } from "expo-router";
 import { Linking, Text, View } from "react-native";
 import { Action, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
+import { AlertsSettings } from "../../../components/alerts-settings";
 import { Avatar } from "../../../ui/display";
 import { NavRow } from "../../../components/nav-row";
 import { AppearanceSelect } from "../../../components/appearance-select";
@@ -102,6 +103,7 @@ export default function Account() {
           Preferencias
         </Text>
         <AppearanceSelect plain />
+        <AlertsSettings />
         <TrainingPreferencesEditor plain />
       </View>
       <View style={[s.divider, { borderColor: p.border }]}>

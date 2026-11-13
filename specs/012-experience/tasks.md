@@ -27,14 +27,14 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 ## Fase C · Biblioteca, historial y progreso
 
 - [ ] T246 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Biblioteca y editor: pendiente ocultar/plegar rutinas de ejemplo (H8, requiere cambiar oráculos) y rediseño de filas.
-- [ ] T247 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Ficha de ejercicio con instrucciones/demostración: pendiente (D4: contenido por definir).
+- [x] T247 · Ficha de ejercicio con «Cómo ejecutarlo»: guía breve y general (`exerciseGuide`, específica para los movimientos principales y por grupo muscular en el resto; 4 pruebas) con aviso de que no reemplaza a tu coach. Contenido propio decidido por el propietario el 13-nov; no incluye demostración en video.
 - [ ] T248 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Historial: pendiente calendario con tipos de sesión y reducir «Nota conservada».
 - [ ] T249 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Progreso: pendiente gráfico interactivo, panel y mapa muscular.
 - [x] T250 · Cuenta con perfil (avatar) y filas de ajustes con flecha (Mis ejercicios, Privacidad y ayuda, Gestionar cuenta, Planificar y Ver alumnos en la web, Ver rutinas de ejemplo). 66 E2E de cuenta/consulta/Inicio/minimal-ui aprobadas.
 
 ## Fase D · Funciones nuevas
 
-- [ ] T251 · Bienvenida y recordatorios.
+- [x] T251 · Avisos opcionales, apagados por defecto, en Cuenta → Avisos (solo app del teléfono): aviso al terminar el descanso con la app en segundo plano y recordatorio diario a la hora elegida (`expo-notifications`, aprobado por el propietario el 13-nov). El permiso se pide solo al activar un aviso; un rechazo no activa nada y muestra cómo corregirlo; formato de preferencias versionado y cerrado (`is:native-alerts:v1`, 4 pruebas). Hermes Android/iOS exporta; 44 E2E web de cuenta/registro aprobadas (los avisos no existen en web). Sin probar en teléfono: programación real, canal de Android y entrega con pantalla apagada requieren dispositivo.
 - [ ] T252 · Notificaciones push de comentarios (D7; migración).
 - [ ] T253 · Medidas, peso y fotos en nativo (D5).
 - [ ] T254 · Parcial: API de solo lectura `GET /api/mobile/v1/achievements` (JWT, RLS, sin parámetros, no-store; contrato cerrado, ruta añadida a la lista exacta del proxy) con racha de semanas, entrenamientos y logros del propio alumno; cliente `achievements()` y tarjetas en Inicio solo cuando hay algo que contar. Pruebas: 2 de API, 1 de rutas, 1 de cliente, 2 E2E. Faltan la lista de logros con avance hacia los siguientes, una prueba de integración contra Supabase local y publicar la API (el remoto aún no la tiene).

@@ -1,6 +1,7 @@
 import { MotionProvider, useReducedMotion } from "../lib/motion-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { AlertsProvider } from "../lib/alerts-context";
 import { useForjaFonts } from "../ui/fonts";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -70,15 +71,17 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <MotionProvider>
-          <AppearanceProvider>
-            <SessionProvider>
-              <AccountRemovalProvider>
-                <AccountRemovalGate>
-                  <Routes />
-                </AccountRemovalGate>
-              </AccountRemovalProvider>
-            </SessionProvider>
-          </AppearanceProvider>
+          <AlertsProvider>
+            <AppearanceProvider>
+              <SessionProvider>
+                <AccountRemovalProvider>
+                  <AccountRemovalGate>
+                    <Routes />
+                  </AccountRemovalGate>
+                </AccountRemovalProvider>
+              </SessionProvider>
+            </AppearanceProvider>
+          </AlertsProvider>
         </MotionProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -5,6 +5,7 @@ import { Action, s, usePalette } from "./ui";
 import { formatClock } from "../../../src/domain/rest-timer";
 import { ProgressRing } from "../ui/display";
 import { tap } from "../lib/haptics";
+import { useRestEndAlert } from "../lib/alerts-context";
 
 /** A layout sibling of the scroll view: visible without covering a set or the keyboard. */
 export function RestControls({
@@ -20,6 +21,7 @@ export function RestControls({
 }) {
   const p = usePalette(),
     insets = useSafeAreaInsets();
+  useRestEndAlert(seconds);
   const previous = useRef(seconds);
   useEffect(() => {
     // Aviso táctil al terminar el descanso (no al abrir la pantalla con 0).
