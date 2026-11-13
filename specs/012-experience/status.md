@@ -36,5 +36,5 @@ Rama `codex/redesign-forja-20261112`. Nada está publicado ni empujado. Una tare
 
 ## Pendiente fuera de esta rama
 
-- **PR19 (editor del coach):** el fallo de WebKit era axe leyendo contraste a mitad de una transición de tema; las 3 pruebas del CI se estabilizaron en el commit cc33e91 (empujado, a la espera de un CI nuevo).
+- **PR19 (editor del coach):** CI verde en el commit b9f2bc2 (los cuatro trabajos): E2E 428 aprobadas con 1 inestable que pasó en el reintento (`mobile-personal-exercises`, WebKit) y Expo 582 aprobadas. La PR sigue en borrador y sin fusionar; su descripción no se actualizó.
 - **Publicación:** 16 migraciones locales pendientes de aplicar en remoto frente a la copia de seguridad; builds de tienda, cuentas Apple/Google, beta y revisión física siguen sin empezar (ver `docs/native-release-plan.md`).
