@@ -71,6 +71,9 @@ import {
   mobileAchievementsSchema,
   mobileCheckinSchema,
   mobileStudentsSchema,
+  mobileMeasurementsSchema,
+  mobileMeasurementResultSchema,
+  type MobileMeasurementInput,
   mobileCheckinAnswersSchema,
   type MobileCheckinAnswers,
   mobileProgressDetailSchema,
@@ -1060,6 +1063,30 @@ export class MobileClient {
   }
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
+  }
+  /** Medidas corporales propias (más recientes primero). */
+  async measurements() {
+    const parsed = mobileMeasurementsSchema.safeParse(await this.read("measurements"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tus medidas no son compatibles. Actualiza la app y reintenta.",
+      );
+    return parsed.data.items;
+  }
+  /** Guarda las medidas de un día; un registro existente exige `replace` tras confirmarlo (409 «exists»). */
+  async saveMeasurement(measurement: MobileMeasurementInput, replace: boolean) {
+    const parsed = mobileMeasurementResultSchema.safeParse(
+      await this.read("measurements", { version: 1, measurement, replace }),
+    );
+    if (!parsed.success)
+      throw new MobileError("version", "No pudimos confirmar tus medidas. Reintenta.");
+    return parsed.data.status;
+  }
+  async deleteMeasurement(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese registro ya no existe.", 404);
+    await this.read("measurements/delete", { version: 1, id });
   }
   /** Alumnos del coach con señales de atención (solo lectura; solo para el rol coach). */
   async students() {

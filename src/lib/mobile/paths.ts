@@ -27,6 +27,8 @@ export function isMobileEndpointPath(path: string): boolean {
       "/api/mobile/v1/achievements",
       "/api/mobile/v1/checkins",
       "/api/mobile/v1/students",
+      "/api/mobile/v1/measurements",
+      "/api/mobile/v1/measurements/delete",
       "/api/mobile/v1/workout-corrections",
       "/api/mobile/v1/workout-removals",
       "/api/mobile/v1/exercises",

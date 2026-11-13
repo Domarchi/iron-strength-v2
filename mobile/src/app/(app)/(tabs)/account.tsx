@@ -110,6 +110,11 @@ export default function Account() {
         <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
           Datos y ayuda
         </Text>
+        <NavRow
+          label="Medidas corporales"
+          hint="Peso y perímetros"
+          onPress={() => router.navigate("/measurements")}
+        />
         <NavRow label="Mis ejercicios" onPress={() => router.navigate("/my-exercises")} />
         <TrainingDownloadCard />
         <NavRow label="Privacidad y ayuda" onPress={() => router.navigate("/privacy")} />

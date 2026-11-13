@@ -16,6 +16,8 @@ it("solo los endpoints móviles exactos llegan a su guarda JWT; las pantallas si
     "/api/mobile/v1/achievements",
     "/api/mobile/v1/checkins",
     "/api/mobile/v1/students",
+    "/api/mobile/v1/measurements",
+    "/api/mobile/v1/measurements/delete",
     "/api/mobile/v1/exercises",
     "/api/mobile/v1/training-catalog",
     "/api/mobile/v1/training-catalog/11111111-1111-4111-8111-111111111111",

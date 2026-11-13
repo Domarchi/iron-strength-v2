@@ -31,6 +31,8 @@ import { createMobileProgressApi } from "./progress-api";
 import { createMobileAchievementsApi } from "./achievements-api";
 import { createMobileCheckinApi } from "./checkin-api";
 import { createMobileStudentsApi } from "./students-api";
+import { createMobileMeasurementsApi } from "./measurements-api";
+import { deleteMeasurement, listMeasurements, saveMeasurement } from "../data/measurements";
 import { listStudentOverviews } from "../data/students";
 import { coachSignals } from "../../domain/coach-signals";
 import { getCheckin, saveCheckin } from "../data/weekly-checkin";
@@ -289,6 +291,25 @@ export function mobileProgressApi() {
           const value = await getExerciseProgressDetail(db, identity.profile.id, exerciseId);
           return value ? { version: 1 as const, today: santiagoDate(new Date()), ...value } : null;
         },
+      };
+    },
+  });
+}
+
+export function mobileMeasurementsApi() {
+  return createMobileMeasurementsApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token),
+        id = identity.profile.id;
+      return {
+        list: async () =>
+          (await listMeasurements(db, id)).map(({ id: rowId, ...m }) => ({ id: rowId, ...m })),
+        save: (measurement, replace) =>
+          saveMeasurement({ db, studentId: id, input: measurement, replace }),
+        // La RLS limita el borrado a registros propios.
+        remove: (rowId) => deleteMeasurement({ db, id: rowId }),
       };
     },
   });

@@ -21,7 +21,7 @@ Rama `codex/redesign-forja-20261112` (PR #23 en borrador, CI verde en e1a4c0b/5c
 | T250 Cuenta                     | Hecha                       | Perfil con avatar y filas de ajustes con flecha (66 E2E de cuenta/consulta/Inicio aprobadas)                                                  |
 | T251 Bienvenida y recordatorios | No iniciada                 | Recordatorios necesitan `expo-notifications` (permiso nuevo → afecta formularios de privacidad de tiendas)                                    |
 | T252 Push de comentarios        | Bloqueada                   | Credenciales Apple/Google, servicio de envío y migración (D7)                                                                                 |
-| T253 Medidas y fotos nativas    | No iniciada                 | Requiere API móvil nueva y almacenamiento privado; hoy solo web                                                                               |
+| T253 Medidas y fotos nativas    | Parcial                     | Medidas corporales completas (API, pantalla, pruebas); fotos solo en web; falta integración y publicar                                        |
 | T254 Logros y racha nativos     | Parcial                     | API de lectura + tarjetas de racha/entrenamientos/logros en Inicio; falta lista de logros con avance, prueba de integración y publicar la API |
 | T255 Progresión y cronómetros   | Parcial                     | Sugerencia de doble progresión en el registro legado (`progressionHint`, con pruebas); faltan el registro tipado y los cronómetros EMOM/AMRAP |
 | T256 Check-in semanal           | Hecha en local              | Migración+RLS+pgTAP, API, tarjeta nativa y vista del coach; falta aplicarla y publicarla en remoto (respaldo y autorización)                  |

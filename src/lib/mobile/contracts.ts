@@ -356,3 +356,43 @@ export const mobileStudentsSchema = z.object({
   ),
 });
 export type MobileStudents = z.infer<typeof mobileStudentsSchema>;
+
+const optionalMeasure = z.number().finite().positive().max(1000).nullable();
+/** Medidas corporales propias (peso y tres perímetros), un registro por fecha. */
+export const mobileMeasurementSchema = z.object({
+  id: z.uuid(),
+  measuredOn: z.iso.date(),
+  weightKg: optionalMeasure,
+  waistCm: optionalMeasure,
+  chestCm: optionalMeasure,
+  armCm: optionalMeasure,
+});
+export const mobileMeasurementsSchema = z.object({
+  version: z.literal(1),
+  items: z.array(mobileMeasurementSchema),
+});
+export type MobileMeasurements = z.infer<typeof mobileMeasurementsSchema>;
+export const mobileMeasurementInputSchema = z
+  .object({
+    version: z.literal(1),
+    measurement: z
+      .object({
+        measuredOn: z.iso.date(),
+        weightKg: optionalMeasure,
+        waistCm: optionalMeasure,
+        chestCm: optionalMeasure,
+        armCm: optionalMeasure,
+      })
+      .strict(),
+    /** Solo se envía tras confirmar el reemplazo de un registro del mismo día. */
+    replace: z.boolean(),
+  })
+  .strict();
+export type MobileMeasurementInput = z.infer<typeof mobileMeasurementInputSchema>["measurement"];
+export const mobileMeasurementResultSchema = z.object({
+  version: z.literal(1),
+  status: z.enum(["created", "replaced"]),
+});
+export const mobileMeasurementDeleteSchema = z
+  .object({ version: z.literal(1), id: z.uuid() })
+  .strict();
