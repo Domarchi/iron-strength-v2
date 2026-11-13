@@ -25,7 +25,7 @@ Rama `codex/redesign-forja-20261112`. Nada está publicado ni empujado. Una tare
 | T254 Logros y racha nativos     | Parcial                     | API de lectura + tarjetas de racha/entrenamientos/logros en Inicio; falta lista de logros con avance, prueba de integración y publicar la API |
 | T255 Progresión y cronómetros   | Parcial                     | Sugerencia de doble progresión en el registro legado (`progressionHint`, con pruebas); faltan el registro tipado y los cronómetros EMOM/AMRAP |
 | T256 Check-in semanal           | Hecha en local              | Migración+RLS+pgTAP, API, tarjeta nativa y vista del coach; falta aplicarla y publicarla en remoto (respaldo y autorización)                  |
-| T257 Coach en el teléfono       | No iniciada                 | API móvil de alumnos para coach + pantallas                                                                                                   |
+| T257 Coach en el teléfono       | Parcial                     | Lista «Mis alumnos» con avisos (solo lectura); faltan ficha y respuestas, integración y publicar la API                                       |
 | T258 Biometría                  | No iniciada                 | Dependencia nueva (`expo-local-authentication`)                                                                                               |
 | T259 Rendimiento                | No iniciada                 | Requiere teléfono real para medir                                                                                                             |
 | T260 Accesibilidad con lectores | Bloqueada                   | VoiceOver/TalkBack en teléfonos reales                                                                                                        |

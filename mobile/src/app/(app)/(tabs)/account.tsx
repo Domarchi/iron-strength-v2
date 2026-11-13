@@ -119,6 +119,11 @@ export default function Account() {
         <>
           <Text style={[s.subheading, { color: p.ink }]}>Tu espacio de coach</Text>
           <NavRow
+            label="Mis alumnos"
+            hint="Quién necesita atención"
+            onPress={() => router.navigate("/students")}
+          />
+          <NavRow
             label="Planificar rutinas en la web"
             onPress={() => {
               void open("/coach/programs");

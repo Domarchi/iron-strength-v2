@@ -70,6 +70,7 @@ import {
   mobileProgressSchema,
   mobileAchievementsSchema,
   mobileCheckinSchema,
+  mobileStudentsSchema,
   mobileCheckinAnswersSchema,
   type MobileCheckinAnswers,
   mobileProgressDetailSchema,
@@ -1059,6 +1060,16 @@ export class MobileClient {
   }
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
+  }
+  /** Alumnos del coach con señales de atención (solo lectura; solo para el rol coach). */
+  async students() {
+    const parsed = mobileStudentsSchema.safeParse(await this.read("students"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La lista de alumnos no es compatible. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
   }
   /** Check-in semanal de la semana vigente (la semana la decide el servidor). */
   async checkin() {

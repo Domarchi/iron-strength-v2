@@ -324,3 +324,35 @@ export const mobileCheckinSchema = z.object({
   answers: mobileCheckinAnswersSchema.nullable(),
 });
 export type MobileCheckin = z.infer<typeof mobileCheckinSchema>;
+
+/** Lista de alumnos del coach con señales de atención (solo lectura; sin enlaces web). */
+export const mobileStudentsSchema = z.object({
+  version: z.literal(1),
+  students: z.array(
+    z.object({
+      id: z.uuid(),
+      fullName: z.string().min(1),
+      lastWorkoutDate: z.iso.date().nullable(),
+      week: z.discriminatedUnion("kind", [
+        z.object({ kind: z.literal("no_program") }),
+        z.object({
+          kind: z.literal("active"),
+          programName: z.string(),
+          planned: z.number().int().nonnegative(),
+          done: z.number().int().nonnegative(),
+          deload: z.boolean(),
+        }),
+        z.object({ kind: z.literal("scheduled") }),
+        z.object({ kind: z.literal("finished") }),
+      ]),
+      signals: z.array(
+        z.object({
+          kind: z.enum(["comments", "no_program", "ending", "inactive"]),
+          label: z.string(),
+          detail: z.string(),
+        }),
+      ),
+    }),
+  ),
+});
+export type MobileStudents = z.infer<typeof mobileStudentsSchema>;

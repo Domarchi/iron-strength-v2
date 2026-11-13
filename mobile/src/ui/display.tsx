@@ -198,7 +198,14 @@ export function ListRow({
       ) : null}
     </View>
   );
-  if (!onPress) return content;
+  if (!onPress)
+    return accessibilityLabel ? (
+      <View accessible accessibilityLabel={accessibilityLabel}>
+        {content}
+      </View>
+    ) : (
+      content
+    );
   return (
     <Pressable
       accessibilityRole="button"

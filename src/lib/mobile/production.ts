@@ -30,6 +30,9 @@ import { readPersonalLibrary, mutatePersonalLibrary } from "../data/personal-lib
 import { createMobileProgressApi } from "./progress-api";
 import { createMobileAchievementsApi } from "./achievements-api";
 import { createMobileCheckinApi } from "./checkin-api";
+import { createMobileStudentsApi } from "./students-api";
+import { listStudentOverviews } from "../data/students";
+import { coachSignals } from "../../domain/coach-signals";
 import { getCheckin, saveCheckin } from "../data/weekly-checkin";
 import { weekStartOf } from "../../domain/dates";
 import { getAchievementsOverview } from "../data/achievements";
@@ -285,6 +288,51 @@ export function mobileProgressApi() {
         detail: async (exerciseId) => {
           const value = await getExerciseProgressDetail(db, identity.profile.id, exerciseId);
           return value ? { version: 1 as const, today: santiagoDate(new Date()), ...value } : null;
+        },
+      };
+    },
+  });
+}
+
+export function mobileStudentsApi() {
+  return createMobileStudentsApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        isCoach: identity.profile.role === "coach",
+        read: async () => {
+          const today = santiagoDate(new Date()),
+            [students, unread] = await Promise.all([
+              listStudentOverviews(db, today),
+              listUnread(db).catch(() => []),
+            ]);
+          return {
+            version: 1 as const,
+            students: students
+              .filter((s) => s.isActive && s.id !== identity.profile.id)
+              .map((s) => ({
+                id: s.id,
+                fullName: s.fullName,
+                lastWorkoutDate: s.lastWorkoutDate,
+                week:
+                  s.week.kind === "active"
+                    ? {
+                        kind: "active" as const,
+                        programName: s.week.programName,
+                        planned: s.week.planned,
+                        done: s.week.done,
+                        deload: s.week.deload,
+                      }
+                    : { kind: s.week.kind },
+                signals: coachSignals(s, today, unread).map(({ kind, label, detail }) => ({
+                  kind,
+                  label,
+                  detail,
+                })),
+              })),
+          };
         },
       };
     },
