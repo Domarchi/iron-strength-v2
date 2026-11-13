@@ -1,7 +1,10 @@
 import { MotionProvider, useReducedMotion } from "../lib/motion-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { startMonitoring } from "../lib/monitoring";
 import { AlertsProvider } from "../lib/alerts-context";
+import { AppLockProvider } from "../lib/app-lock-context";
+import { AppLockGate } from "../components/app-lock-gate";
 import { useForjaFonts } from "../ui/fonts";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -65,6 +68,7 @@ function Routes() {
     </>
   );
 }
+startMonitoring();
 export default function RootLayout() {
   useForjaFonts();
   return (
@@ -72,15 +76,19 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <MotionProvider>
           <AlertsProvider>
-            <AppearanceProvider>
-              <SessionProvider>
-                <AccountRemovalProvider>
-                  <AccountRemovalGate>
-                    <Routes />
-                  </AccountRemovalGate>
-                </AccountRemovalProvider>
-              </SessionProvider>
-            </AppearanceProvider>
+            <AppLockProvider>
+              <AppearanceProvider>
+                <SessionProvider>
+                  <AccountRemovalProvider>
+                    <AccountRemovalGate>
+                      <AppLockGate>
+                        <Routes />
+                      </AppLockGate>
+                    </AccountRemovalGate>
+                  </AccountRemovalProvider>
+                </SessionProvider>
+              </AppearanceProvider>
+            </AppLockProvider>
           </AlertsProvider>
         </MotionProvider>
       </SafeAreaProvider>

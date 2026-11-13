@@ -41,14 +41,14 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 - [ ] T255 · Parcial: sugerencia de doble progresión en el registro legado (`progressionHint`, usa `suggestProgression` del dominio; no aparece con detalle por serie, sin historial ni peso corporal). Faltan el registro tipado y los cronómetros EMOM/AMRAP.
 - [ ] T256 · Check-in semanal alumno → coach (migración, RLS, web del coach).
 - [ ] T257 · Coach en el teléfono: alumnos, ficha, comentarios (D9).
-- [ ] T258 · Desbloqueo biométrico.
+- [x] T258 · Bloqueo opcional con huella, rostro o código del teléfono (`expo-local-authentication`, aprobado el 13-nov): Cuenta → Avisos; se activa tras una verificación, se vuelve a pedir tras 60 s en segundo plano, no bloquea a quien ya no tiene verificación configurada y no actúa en web. Preferencia versionada (`is:native-applock:v1`, 3 pruebas). Hermes exporta y 58 E2E web de cuenta/consulta/acceso aprobadas. La verificación real solo se probó en teoría: requiere teléfono.
 
 ## Fase E · Pulido y calidad
 
 - [ ] T259 · Rendimiento: perfilado, virtualización, arranque, tamaño.
 - [ ] T260 · Accesibilidad con VoiceOver/TalkBack en teléfonos reales.
 - [ ] T261 · Parcial: se reemplazó la jerga de recuperación visible («relectura», «recibo») por «Volver a comprobar…» y «registro de la limpieza» en seis pantallas y sus pruebas (531 unitarias y 62 E2E aprobadas). Falta la revisión del resto de textos de la app.
-- [ ] T262 · Monitoreo de errores y rendimiento (D6).
+- [ ] T262 · Código listo y desactivado: Sentry (`@sentry/react-native`, elegido el 13-nov) arranca solo con `EXPO_PUBLIC_SENTRY_DSN`, fuera de desarrollo y web, con depuración de datos personales (`scrubEvent`, 2 pruebas). Pasos para activarlo y texto de privacidad en `docs/native-monitoring.md`. Falta crear el proyecto y el DSN (tuyo), actualizar la política/formularios de tienda y probar un informe real.
 - [ ] T263 · Web del coach con el sistema v2 (tras cerrar PR19).
 - [ ] T264 · Regresión total, prueba en cuatro teléfonos, builds internos.
 

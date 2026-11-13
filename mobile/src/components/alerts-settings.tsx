@@ -1,5 +1,6 @@
 import { View } from "react-native";
 import { useAlerts } from "../lib/alerts-context";
+import { useAppLock } from "../lib/app-lock-context";
 import { formatTime } from "../lib/alerts-prefs";
 import { Banner } from "../ui/feedback";
 import { Stepper, Toggle } from "../ui/controls";
@@ -7,7 +8,8 @@ import { Txt } from "../ui/text";
 
 /** Ajustes de avisos (descanso y recordatorio). Solo existen en la app del teléfono. */
 export function AlertsSettings() {
-  const a = useAlerts();
+  const a = useAlerts(),
+    lock = useAppLock();
   if (!a.supported || !a.ready) return null;
   const { reminder } = a.prefs;
   return (
@@ -43,6 +45,13 @@ export function AlertsSettings() {
           onChange={(hour) => void a.setReminder({ hour })}
         />
       ) : null}
+      <Toggle
+        label="Pedir huella, rostro o código al abrir"
+        description="Se vuelve a pedir si la app estuvo un minuto o más en segundo plano."
+        value={lock.enabled}
+        onChange={(v) => void lock.setEnabled(v)}
+      />
+      {lock.error ? <Banner tone="danger" message={lock.error} /> : null}
       {a.error ? <Banner tone="danger" message={a.error} /> : null}
     </View>
   );
