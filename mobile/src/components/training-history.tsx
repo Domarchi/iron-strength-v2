@@ -19,6 +19,7 @@ import { ProgressChoice } from "./progress-choice";
 import { TrainingCalendar } from "./training-calendar";
 import { PeriodNavigation } from "./period-navigation";
 import { TrainingActivityRow } from "./training-activity-row";
+import { recordCountsByWorkout } from "../lib/record-counts";
 export function TrainingHistory() {
   const p = usePalette(),
     insets = useSafeAreaInsets(),
@@ -40,6 +41,10 @@ export function TrainingHistory() {
   const filtered = useMemo(
     () => filterTrainingActivity(q.value?.activity ?? [], { query, sourceKind: source }),
     [q.value, query, source],
+  );
+  const recordCounts = useMemo(
+    () => (q.value ? recordCountsByWorkout(q.value) : new Map<string, number>()),
+    [q.value],
   );
   const rows = useMemo(
     () => filterTrainingActivity(filtered, view === "calendar" ? { month, date } : {}),
@@ -185,7 +190,9 @@ export function TrainingHistory() {
         testID="history-list"
         data={rows}
         keyExtractor={(r) => r.id}
-        renderItem={({ item }) => <TrainingActivityRow row={item} />}
+        renderItem={({ item }) => (
+          <TrainingActivityRow row={item} records={recordCounts.get(item.id) ?? 0} />
+        )}
         ListHeaderComponent={header}
         ListFooterComponent={footer ?? undefined}
         ListEmptyComponent={
