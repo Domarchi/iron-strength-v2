@@ -1,7 +1,9 @@
 import { HomeHeading, WeeklyProgress } from "../../../components/home-heading";
 import { OfflineWeek } from "../../../components/offline-week";
 import { TrainingDownloadCard } from "../../../components/training-download-card";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { santiagoDate } from "../../../../../src/domain/dates";
+import { WeekStrip } from "../../../components/week-strip";
 import { router } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import {
@@ -39,6 +41,7 @@ function OnlineWeek() {
   const p = usePalette(),
     { client, state } = useSession(),
     { training } = useTraining();
+  const [today] = useState(() => santiagoDate(new Date()));
   const request = useCallback(() => client.week(), [client]);
   const query = useQuery(request);
   if (state.status !== "authenticated") return null;
@@ -50,6 +53,9 @@ function OnlineWeek() {
     <Page>
       <HomeHeading fullName={person.fullName} onAccount={() => router.navigate("/account")} />
       {active ? <WeeklyProgress week={active} /> : null}
+      {active ? (
+        <WeekStrip weekStart={active.weekStart} today={today} sessions={active.sessions} />
+      ) : null}
       <TrainingCard />
       {active && !training.active && next ? (
         <View

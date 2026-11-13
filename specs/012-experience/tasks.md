@@ -19,10 +19,10 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 
 - [x] T240 · Paleta Forja aplicada a toda la app remapeando la paleta existente (claves conservadas; contraste AA verificado), fuentes en el sistema de estilos base, acciones de peligro (`danger`) en las destructivas y enlaces «Volver…» como flecha + texto a la izquierda. Regresión móvil completa: 588 aprobadas, 32 omitidas, 6 fallos corregidos (título del registro en una línea, botones que envuelven al ampliar texto).
 - [x] T241 · Registro: el peso precargado desde la prescripción se muestra atenuado hasta marcar la serie (`isSuggestedWeight`, con pruebas), anillo de avance en la cabecera, título del registro en una línea y acciones de peligro diferenciadas. Se conserva la estructura y los nombres accesibles. 54 E2E de registro/herramientas/pausa/fluidez aprobadas (ambos motores). Queda para T245/T250 la reorganización de la cabecera con menú «···».
-- [ ] T242 · Teclado numérico propio y copia rápida.
-- [ ] T243 · Descanso: anillo, háptica, notificación local, pantalla encendida.
-- [ ] T244 · Cierre y resultado con récords y comparación.
-- [ ] T245 · Inicio «Hoy» y tira semanal.
+- [x] T242 · Ajuste rápido de peso (±2,5 kg) sobre la serie en curso, en registro legado y tipado (`QuickAdjust`, `adjustWeightText` con pruebas, E2E). No se sustituyó el teclado del sistema por uno propio: se conservan `fill` y entrada decimal; el teclado propio queda como mejora futura.
+- [x] T243 · Descanso: anillo de avance, vibración al marcar serie y al terminar el descanso (`tap`), pantalla encendida durante el registro en nativo (`useTrainingKeepAwake`; en web se omite porque el wake lock abre el overlay de errores). Aviso en segundo plano requiere notificaciones locales: pasa a T251.
+- [ ] T244 · Parcial: esfuerzo 1–10 con un toque (`EffortChips`, conserva el campo numérico) y resumen de cierre sin ceros. Faltan récords destacados y comparación con la sesión anterior en el resultado.
+- [x] T245 · Inicio con tira de la semana (lunes a domingo: hecho, hoy, previsto; solo con días reales). Racha y tarjetas de métricas no se añadieron: la API actual no entrega racha confirmada.
 
 ## Fase C · Biblioteca, historial y progreso
 
