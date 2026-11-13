@@ -628,6 +628,16 @@ test("opciones de serie compactas conservan calentamientos y registro directo", 
   ).toHaveCount(0);
 });
 
+async function effectiveBackground(locator: import("@playwright/test").Locator) {
+  // La pantalla de entrada es transparente: el fondo real lo pone el primer ancestro opaco.
+  return locator.evaluate((el) => {
+    for (let n: Element | null = el; n; n = n.parentElement) {
+      const c = getComputedStyle(n).backgroundColor;
+      if (c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c;
+    }
+    return "rgba(0, 0, 0, 0)";
+  });
+}
 test("salir conserva apariencia oscura y la apertura siguiente la recupera", async ({ page }) => {
   await emptyAccount(page);
   await enter(page);
@@ -636,10 +646,10 @@ test("salir conserva apariencia oscura y la apertura siguiente la recupera", asy
   await expect(page.getByRole("radio", { name: "Oscuro", exact: true })).toBeChecked();
   await page.getByRole("button", { name: "Salir", exact: true }).click();
   await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
-  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(11, 12, 14)");
+  expect(await effectiveBackground(page.getByTestId("entry-page"))).toBe("rgb(11, 12, 14)");
   await page.reload();
   await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
-  await expect(page.getByTestId("app-page")).toHaveCSS("background-color", "rgb(11, 12, 14)");
+  expect(await effectiveBackground(page.getByTestId("entry-page"))).toBe("rgb(11, 12, 14)");
   await page.screenshot({ path: test.info().outputPath("login-dark.png") });
 });
 

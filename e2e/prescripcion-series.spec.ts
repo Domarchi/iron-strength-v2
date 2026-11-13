@@ -133,6 +133,10 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
   ).toBe(0);
   for (const colorScheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme });
+    // Axe no debe leer colores a mitad de una transición entre temas.
+    await page.evaluate(() =>
+      Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))),
+    );
     expect(
       (
         await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()
