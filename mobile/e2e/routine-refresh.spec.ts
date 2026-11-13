@@ -169,8 +169,10 @@ test("navegar a más historial conserva selección y búsqueda al volver al cat�
   await page.getByRole("button", { name: "Ver más historial", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goBack();
+  // Bajo carga completa el catálogo vuelve a montarse tras una compilación diferida de Metro.
   await expect(page.getByRole("textbox", { name: "Buscar ejercicios", exact: true })).toHaveValue(
     exercise.name,
+    { timeout: 20000 },
   );
   await expect(
     page.getByRole("checkbox", { name: `Seleccionar ${exercise.name}`, exact: true }),

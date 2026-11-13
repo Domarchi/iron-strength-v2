@@ -14,6 +14,7 @@ import { useState } from "react";
 import { router } from "expo-router";
 import { Linking, Text, View } from "react-native";
 import { Action, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
+import { NavRow } from "../../../components/nav-row";
 import { AppearanceSelect } from "../../../components/appearance-select";
 import { useSession } from "../../../lib/session";
 import { useTraining } from "../../../lib/training-context";
@@ -103,9 +104,9 @@ export default function Account() {
         <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
           Datos y ayuda
         </Text>
-        <Action label="Mis ejercicios" quiet onPress={() => router.navigate("/my-exercises")} />
+        <NavRow label="Mis ejercicios" onPress={() => router.navigate("/my-exercises")} />
         <TrainingDownloadCard />
-        <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
+        <NavRow label="Privacidad y ayuda" onPress={() => router.navigate("/privacy")} />
       </View>
       {error ? <Notice message={error} /> : null}
       {person.role === "coach" ? (
