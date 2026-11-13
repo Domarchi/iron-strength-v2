@@ -21,7 +21,7 @@ export function AccountRemovalProvider({ children }: PropsWithChildren) {
         const session = client.getSnapshot();
         if (session.status === "booting" || session.status === "blocked")
           throw Error(
-            "Primero comprueba la sesión o confirma la salida de este dispositivo. Conservamos el recibo de limpieza.",
+            "Primero comprueba la sesión o confirma la salida de este dispositivo. Conservamos el registro de la limpieza.",
           );
         if (session.status === "authenticated" && session.session.profile.id === userId)
           await client.logout();

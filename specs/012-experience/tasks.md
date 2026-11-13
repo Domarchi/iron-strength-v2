@@ -47,7 +47,7 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 
 - [ ] T259 · Rendimiento: perfilado, virtualización, arranque, tamaño.
 - [ ] T260 · Accesibilidad con VoiceOver/TalkBack en teléfonos reales.
-- [ ] T261 · Revisión completa de textos (es-CL, tuteo, sin jerga).
+- [ ] T261 · Parcial: se reemplazó la jerga de recuperación visible («relectura», «recibo») por «Volver a comprobar…» y «registro de la limpieza» en seis pantallas y sus pruebas (531 unitarias y 62 E2E aprobadas). Falta la revisión del resto de textos de la app.
 - [ ] T262 · Monitoreo de errores y rendimiento (D6).
 - [ ] T263 · Web del coach con el sistema v2 (tras cerrar PR19).
 - [ ] T264 · Regresión total, prueba en cuatro teléfonos, builds internos.

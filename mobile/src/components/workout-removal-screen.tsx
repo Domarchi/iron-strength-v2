@@ -51,7 +51,7 @@ export function WorkoutRemovalScreen({ id }: { id: string }) {
     <>
       <Notice message="Se reemplazará el intento en memoria por el guardado en este dispositivo. Se perderán los cambios que no se pudieron guardar." />
       <Action
-        label="Confirmar relectura de eliminación"
+        label="Volver a comprobar la eliminación"
         disabled={disabled}
         onPress={() => {
           void run(async () => {

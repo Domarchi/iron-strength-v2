@@ -29,7 +29,7 @@ Rama `codex/redesign-forja-20261112`. Nada está publicado ni empujado. Una tare
 | T258 Biometría                  | No iniciada                 | Dependencia nueva (`expo-local-authentication`)                                                                                               |
 | T259 Rendimiento                | No iniciada                 | Requiere teléfono real para medir                                                                                                             |
 | T260 Accesibilidad con lectores | Bloqueada                   | VoiceOver/TalkBack en teléfonos reales                                                                                                        |
-| T261 Textos                     | No iniciada                 | Revisión pantalla a pantalla                                                                                                                  |
+| T261 Textos                     | Parcial                     | Jerga de recuperación («relectura», «recibo») reemplazada en seis pantallas; falta el resto                                                   |
 | T262 Monitoreo                  | Bloqueada                   | D6: elegir servicio y declarar en privacidad                                                                                                  |
 | T263 Web del coach con Forja    | No iniciada                 | PR19 aún en borrador y con CI en rojo                                                                                                         |
 | T264 Regresión y 4 teléfonos    | Bloqueada                   | Teléfonos reales                                                                                                                              |

@@ -46,7 +46,7 @@ function RemovalRecovery() {
       ) : null}
       {removal.blocked ? (
         <Action
-          label="Reintentar lectura del recibo"
+          label="Reintentar comprobación de la limpieza"
           busy={removal.busy}
           onPress={() => {
             void controller.restore();
