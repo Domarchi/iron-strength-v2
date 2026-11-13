@@ -8,7 +8,7 @@
 - [x] T229 · Consulta compacta compartida, ficha durante selección, descanso y detalles directos; creación de cuatro ejercicios en nueve acciones. 142 E2E y 18 de arrastre/teclado, check raíz/móvil y mapas Hermes exactos.
 - [x] T230 · Resultados compactos con opciones agrupadas y conteo real, notas extensas desplegables, historial/progreso coherentes con retorno de filtros/posición. 202 E2E y controles raíz/móvil/Hermes aprobados.
 - [x] T231 · Texto ampliado sin recortes, cabecera/descanso flexibles y controles de foco/scroll/viewport bajo/movimiento reducido. 136 E2E y checks raíz/móvil/Hermes aprobados.
-- [ ] T232 · Presentación y pruebas de componentes preparadas en PR19 draft; benchmark/E2E de adaptación pendientes del motor aislado.
+- [x] T232 · Composición/legibilidad, biblioteca vinculada y teclado en PR19 draft. Check1443 y30casos de interfaz aprobados; E2E reales del coach y adaptación en base aislada propia (Docker ya accesible) aprobados el 10-nov-2026. Benchmark comparado con 49bf69a: 40 acciones en ambos (sin cambio); ver validation.md.
 - [ ] T233 · Diseño entregado en Expo Go independiente y Safari anterior conservado; regresión móvil completa566casos verificada. Faltan cierre del coach y revisión física.
 - [x] T234 · Entrada/carga/acceso e Inicio refinados, regreso de Ayuda/invitación sin perder campos. Check1430/14Python, móvil491 y118casos dirigidos; comparación Safari y Expo Go independiente verificados. Revisión física separada.
 - [x] T235 · Normalización de protocolo reenviado en Metro;13pruebas nuevas, checks raíz/móvil y100descargas de recursos con/sin cabecera verificadas. Enlace y ámbito conservados; repetición física pendiente.

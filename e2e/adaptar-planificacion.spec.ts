@@ -89,7 +89,22 @@ async function snapshot(id = programId) {
     .eq("id", id)
     .single();
   expect(error).toBeNull();
-  return data!;
+  // PostgREST no ordena los arreglos anidados: se fijan por semana y posición para que dos
+  // lecturas del mismo programa sean comparables sin ocultar ningún dato.
+  const byPosition = <T extends { position: number }>(rows: T[]): T[] =>
+    [...rows].sort((a, b) => a.position - b.position);
+  return {
+    ...data!,
+    program_sessions: [...data!.program_sessions]
+      .sort((a, b) => a.week_number - b.week_number || a.position - b.position)
+      .map((s) => ({
+        ...s,
+        session_exercises: byPosition(s.session_exercises).map((e) => ({
+          ...e,
+          session_exercise_alternatives: byPosition(e.session_exercise_alternatives),
+        })),
+      })),
+  };
 }
 async function open(page: Page) {
   await page.setViewportSize({ width: 1440, height: 1000 });

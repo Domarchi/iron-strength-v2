@@ -1,0 +1,464 @@
+{
+  "formatVersion": 1,
+  "task": "T232",
+  "status": "Presentación verificada con operaciones ficticias; benchmark real de adaptación/asignación pendiente de acceso a motor aislado",
+  "capturedAt": "2026-10-31T18:12:30.061599+00:00",
+  "platform": "React components / compiled CSS / WebKit, synthetic four-week fixture; no SQL or full-page authentication",
+  "nativePhysicalAcceptance": false,
+  "fullAdaptationAcceptance": false,
+  "baseCommit": "5110cd21357c4998251cc9eb35d184a466df2cd0",
+  "runtimeSources": {
+    "src/app/(app)/coach/programs/[id]/canonical-editor-tools.tsx": "2f615c96bfddff2b03e7762cc8486e94809ef25fc645328c9bb46ab3b24808d4",
+    "src/app/(app)/coach/programs/[id]/canonical-session-editor.tsx": "f718569d0f59d9ed2d08a2e293567cf1f18be1447f170a81a83688a99056b2b0",
+    "src/app/(app)/coach/programs/[id]/session-workspace.tsx": "be70b216e81caf7f72018ef885fcf2e9839b3520eb1fec259dcd96a0755ccba0",
+    "src/app/globals.css": "0442185b2efb1383912c60200301a3e8327e5606539acdc5736cb9ae5254c2fa",
+    "src/components/coach/typed-prescription-editor.tsx": "71446e7b0f093fa0ef742361857a74fe770d123123ecc6a0bec3ac5fdfab3e98"
+  },
+  "compiledCssSha256": "e69ffb831c8fbc612cfcf990b15c43e8aacfd1c2fe1649e28b8abc1642bfce17",
+  "tests": "20 private harness UI cases Chromium/WebKit, 47.7 seconds; 30 component tests; root check 1431/14 Python/build",
+  "before": [
+    {
+      "theme": "light",
+      "width": 360,
+      "errors": [],
+      "documentWidth": 360,
+      "viewport": 360,
+      "rows": 6,
+      "firstRowHeight": 555,
+      "fieldLabelPx": 12,
+      "namePx": 14,
+      "fields": [
+        {
+          "name": "Descanso de Sentadilla",
+          "width": 173,
+          "height": 44
+        },
+        {
+          "name": "Prescripción de Sentadilla",
+          "width": 252,
+          "height": 44
+        },
+        {
+          "name": "Series de Sentadilla",
+          "width": 122,
+          "height": 44
+        },
+        {
+          "name": "Reps mín. de Sentadilla",
+          "width": 122,
+          "height": 44
+        },
+        {
+          "name": "Reps máx. de Sentadilla",
+          "width": 122,
+          "height": 44
+        },
+        {
+          "name": "Peso (kg) de Sentadilla",
+          "width": 122,
+          "height": 44
+        },
+        {
+          "name": "Nota de Sentadilla",
+          "width": 252,
+          "height": 44
+        }
+      ],
+      "library": "Biblioteca de ejerciciosAgregar ejercicios"
+    },
+    {
+      "theme": "light",
+      "width": 1280,
+      "errors": [],
+      "documentWidth": 1280,
+      "viewport": 1280,
+      "rows": 6,
+      "firstRowHeight": 271.46875,
+      "fieldLabelPx": 10.4,
+      "namePx": 12.8,
+      "fields": [
+        {
+          "name": "Descanso de Sentadilla",
+          "width": 143,
+          "height": 44
+        },
+        {
+          "name": "Prescripción de Sentadilla",
+          "width": 432,
+          "height": 44
+        },
+        {
+          "name": "Series de Sentadilla",
+          "width": 102,
+          "height": 44
+        },
+        {
+          "name": "Reps mín. de Sentadilla",
+          "width": 102,
+          "height": 44
+        },
+        {
+          "name": "Reps máx. de Sentadilla",
+          "width": 102,
+          "height": 44
+        },
+        {
+          "name": "Peso (kg) de Sentadilla",
+          "width": 102,
+          "height": 44
+        },
+        {
+          "name": "Nota de Sentadilla",
+          "width": 432,
+          "height": 44
+        }
+      ],
+      "library": "Biblioteca de ejerciciosAgregar ejerciciosElige ejercicios3 series. Ajusta los objetivos después de agregar.Todos los músculosPiernasTren superiorSentadillaPiernas · BarraPress de bancaTren superior · BarraRemo con barraPiernas · BarraPeso muertoTren superior · BarraPress de hombrosPiernas · BarraCurl con mancuernasTren superior · BarraPrensaPiernas · BarraAgregar seleccionados (0)"
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "errors": [],
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "rows": 6,
+      "firstRowHeight": 271.46875,
+      "fieldLabelPx": 10.4,
+      "namePx": 12.8,
+      "fields": [
+        {
+          "name": "Descanso de Sentadilla",
+          "width": 143,
+          "height": 44
+        },
+        {
+          "name": "Prescripción de Sentadilla",
+          "width": 492,
+          "height": 44
+        },
+        {
+          "name": "Series de Sentadilla",
+          "width": 117,
+          "height": 44
+        },
+        {
+          "name": "Reps mín. de Sentadilla",
+          "width": 117,
+          "height": 44
+        },
+        {
+          "name": "Reps máx. de Sentadilla",
+          "width": 117,
+          "height": 44
+        },
+        {
+          "name": "Peso (kg) de Sentadilla",
+          "width": 117,
+          "height": 44
+        },
+        {
+          "name": "Nota de Sentadilla",
+          "width": 492,
+          "height": 44
+        }
+      ],
+      "library": "Biblioteca de ejerciciosAgregar ejerciciosElige ejercicios3 series. Ajusta los objetivos después de agregar.Todos los músculosPiernasTren superiorSentadillaPiernas · BarraPress de bancaTren superior · BarraRemo con barraPiernas · BarraPeso muertoTren superior · BarraPress de hombrosPiernas · BarraCurl con mancuernasTren superior · BarraPrensaPiernas · BarraAgregar seleccionados (0)"
+    },
+    {
+      "theme": "dark",
+      "width": 360,
+      "errors": [],
+      "documentWidth": 360,
+      "viewport": 360,
+      "rows": 6,
+      "firstRowHeight": 555,
+      "fieldLabelPx": 12,
+      "namePx": 14,
+      "fields": [
+        {
+          "name": "Descanso de Sentadilla",
+          "width": 173,
+          "height": 44
+        },
+        {
+          "name": "Prescripción de Sentadilla",
+          "width": 252,
+          "height": 44
+        },
+        {
+          "name": "Series de Sentadilla",
+          "width": 122,
+          "height": 44
+        },
+        {
+          "name": "Reps mín. de Sentadilla",
+          "width": 122,
+          "height": 44
+        },
+        {
+          "name": "Reps máx. de Sentadilla",
+          "width": 122,
+          "height": 44
+        },
+        {
+          "name": "Peso (kg) de Sentadilla",
+          "width": 122,
+          "height": 44
+        },
+        {
+          "name": "Nota de Sentadilla",
+          "width": 252,
+          "height": 44
+        }
+      ],
+      "library": "Biblioteca de ejerciciosAgregar ejercicios"
+    },
+    {
+      "theme": "dark",
+      "width": 1280,
+      "errors": [],
+      "documentWidth": 1280,
+      "viewport": 1280,
+      "rows": 6,
+      "firstRowHeight": 271.46875,
+      "fieldLabelPx": 10.4,
+      "namePx": 12.8,
+      "fields": [
+        {
+          "name": "Descanso de Sentadilla",
+          "width": 143,
+          "height": 44
+        },
+        {
+          "name": "Prescripción de Sentadilla",
+          "width": 432,
+          "height": 44
+        },
+        {
+          "name": "Series de Sentadilla",
+          "width": 102,
+          "height": 44
+        },
+        {
+          "name": "Reps mín. de Sentadilla",
+          "width": 102,
+          "height": 44
+        },
+        {
+          "name": "Reps máx. de Sentadilla",
+          "width": 102,
+          "height": 44
+        },
+        {
+          "name": "Peso (kg) de Sentadilla",
+          "width": 102,
+          "height": 44
+        },
+        {
+          "name": "Nota de Sentadilla",
+          "width": 432,
+          "height": 44
+        }
+      ],
+      "library": "Biblioteca de ejerciciosAgregar ejerciciosElige ejercicios3 series. Ajusta los objetivos después de agregar.Todos los músculosPiernasTren superiorSentadillaPiernas · BarraPress de bancaTren superior · BarraRemo con barraPiernas · BarraPeso muertoTren superior · BarraPress de hombrosPiernas · BarraCurl con mancuernasTren superior · BarraPrensaPiernas · BarraAgregar seleccionados (0)"
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "errors": [],
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "rows": 6,
+      "firstRowHeight": 271.46875,
+      "fieldLabelPx": 10.4,
+      "namePx": 12.8,
+      "fields": [
+        {
+          "name": "Descanso de Sentadilla",
+          "width": 143,
+          "height": 44
+        },
+        {
+          "name": "Prescripción de Sentadilla",
+          "width": 492,
+          "height": 44
+        },
+        {
+          "name": "Series de Sentadilla",
+          "width": 117,
+          "height": 44
+        },
+        {
+          "name": "Reps mín. de Sentadilla",
+          "width": 117,
+          "height": 44
+        },
+        {
+          "name": "Reps máx. de Sentadilla",
+          "width": 117,
+          "height": 44
+        },
+        {
+          "name": "Peso (kg) de Sentadilla",
+          "width": 117,
+          "height": 44
+        },
+        {
+          "name": "Nota de Sentadilla",
+          "width": 492,
+          "height": 44
+        }
+      ],
+      "library": "Biblioteca de ejerciciosAgregar ejerciciosElige ejercicios3 series. Ajusta los objetivos después de agregar.Todos los músculosPiernasTren superiorSentadillaPiernas · BarraPress de bancaTren superior · BarraRemo con barraPiernas · BarraPeso muertoTren superior · BarraPress de hombrosPiernas · BarraCurl con mancuernasTren superior · BarraPrensaPiernas · BarraAgregar seleccionados (0)"
+    }
+  ],
+  "after": [
+    {
+      "theme": "light",
+      "width": 360,
+      "documentWidth": 360,
+      "rowHeight": 565.984375,
+      "labelPx": 13,
+      "namePx": 16
+    },
+    {
+      "theme": "light",
+      "width": 1280,
+      "documentWidth": 1280,
+      "rowHeight": 255.328125,
+      "labelPx": 13,
+      "namePx": 16
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "documentWidth": 1440,
+      "rowHeight": 255.328125,
+      "labelPx": 13,
+      "namePx": 16
+    },
+    {
+      "theme": "dark",
+      "width": 360,
+      "documentWidth": 360,
+      "rowHeight": 565.984375,
+      "labelPx": 13,
+      "namePx": 16
+    },
+    {
+      "theme": "dark",
+      "width": 1280,
+      "documentWidth": 1280,
+      "rowHeight": 255.328125,
+      "labelPx": 13,
+      "namePx": 16
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "documentWidth": 1440,
+      "rowHeight": 255.328125,
+      "labelPx": 13,
+      "namePx": 16
+    }
+  ],
+  "images": [
+    {
+      "file": "t232-before-light-360.png",
+      "phase": "before",
+      "theme": "light",
+      "width": 360,
+      "height": 1000,
+      "sha256": "1f91caace4643899bb7d3165cd96a6b3f679c53a1284621051590fd794314155"
+    },
+    {
+      "file": "t232-after-light-360.png",
+      "phase": "after",
+      "theme": "light",
+      "width": 360,
+      "height": 1000,
+      "sha256": "4a9236d5cec706c6a5ac1774d7872613624815968b83a88ae3030559969964eb"
+    },
+    {
+      "file": "t232-before-light-1280.png",
+      "phase": "before",
+      "theme": "light",
+      "width": 1280,
+      "height": 1000,
+      "sha256": "8935887913a4c08ae46bc02a7d3388b2a570b7ba5697daa8bb2572e9b0c9bc2c"
+    },
+    {
+      "file": "t232-after-light-1280.png",
+      "phase": "after",
+      "theme": "light",
+      "width": 1280,
+      "height": 1000,
+      "sha256": "9b11589b425abf5544c5633136a1a8419dd16a8acf60777d61c9c868a34f3c51"
+    },
+    {
+      "file": "t232-before-light-1440.png",
+      "phase": "before",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "sha256": "a65cb4997fcae6956b155ac88426b54459f0b3bfb095269f7f0d6edea58c3c7c"
+    },
+    {
+      "file": "t232-after-light-1440.png",
+      "phase": "after",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "sha256": "038915efb7416a07c4605bbe592f4883ef8be6476c7d1b31c62a5d8d1a2584db"
+    },
+    {
+      "file": "t232-before-dark-360.png",
+      "phase": "before",
+      "theme": "dark",
+      "width": 360,
+      "height": 1000,
+      "sha256": "12b9cc686b334350e7a20e5444cb8d285f30c68b0e963a4e18ae6587330d8fab"
+    },
+    {
+      "file": "t232-after-dark-360.png",
+      "phase": "after",
+      "theme": "dark",
+      "width": 360,
+      "height": 1000,
+      "sha256": "563076d677b12378b10ec0f0f6ecb9493bda281245fd14f9bfc5e21d37796f4b"
+    },
+    {
+      "file": "t232-before-dark-1280.png",
+      "phase": "before",
+      "theme": "dark",
+      "width": 1280,
+      "height": 1000,
+      "sha256": "6ff86a78a795c4990b820444eb1c960d37e9c519c60c8cf29fd9fce4507b905a"
+    },
+    {
+      "file": "t232-after-dark-1280.png",
+      "phase": "after",
+      "theme": "dark",
+      "width": 1280,
+      "height": 1000,
+      "sha256": "9efd1d47d2554ee509421aa84479b713b8482b450a364b55d99a4616f152bc79"
+    },
+    {
+      "file": "t232-before-dark-1440.png",
+      "phase": "before",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "sha256": "67f61834927917eb1771d50b77e6d4accb4ae872ca8e0bce0b91c56dfe929173"
+    },
+    {
+      "file": "t232-after-dark-1440.png",
+      "phase": "after",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "sha256": "3ec9d029599498dc645f7d893e2a9206d107b032b2d86c0fc9dc72b64edb459d"
+    }
+  ],
+  "limits": "No action reduction or real copy/assignment claimed. 200% browser root font and axe do not replace physical phone review."
+}

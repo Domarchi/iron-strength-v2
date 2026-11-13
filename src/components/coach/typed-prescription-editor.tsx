@@ -95,15 +95,18 @@ export function TypedPrescriptionEditor({
   }
   function uniformControls(input: Uniform, change: (next: Uniform) => void, suffix: string) {
     return (
-      <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="prescription-uniform-grid grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
         {countControl(input, change, suffix)}
         {targetControls(input.target, (target) => change({ ...input, target }), suffix)}
       </div>
     );
   }
   return (
-    <div className="prescription-controls min-w-0 space-y-3">
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+    <div
+      className="prescription-controls min-w-0 space-y-3"
+      data-compact={value.mode === "uniform" && !showModeError && !activeReview}
+    >
+      <label className="prescription-mode flex flex-col gap-1 text-xs text-muted-foreground">
         Objetivos de las series
         <NativeSelect
           aria-label={`Prescripción de ${name}`}
