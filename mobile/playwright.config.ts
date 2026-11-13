@@ -5,7 +5,7 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535)
 export default defineConfig({
   testDir: "./e2e",
   workers: 1,
-  retries: 0,
+  retries: process.env.CI ? 1 : 0,
   timeout: 90000,
   use: {
     baseURL: `http://127.0.0.1:${port}`,

@@ -466,7 +466,9 @@ export function ExerciseCatalog({
                     justifyContent: "center",
                   }}
                 >
-                  {selected.includes(item.id) ? <Icon name="check" color="#fff" size={16} /> : null}
+                  {selected.includes(item.id) ? (
+                    <Icon name="check" color={p.onButton} size={16} />
+                  ) : null}
                 </View>
               ) : (
                 <Icon name="arrow" color={p.muted} size={18} />
@@ -507,7 +509,9 @@ export function ExerciseCatalog({
                 ? "Reintentar guardado local"
                 : replacing
                   ? "Reemplazar ejercicio"
-                  : `Agregar ${selected.length} ${selected.length === 1 ? "ejercicio" : "ejercicios"}`
+                  : selected.length === 0
+                    ? "Selecciona ejercicios"
+                    : `Agregar ${selected.length} ${selected.length === 1 ? "ejercicio" : "ejercicios"}`
             }
             busy={adding}
             disabled={

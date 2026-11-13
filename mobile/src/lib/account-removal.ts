@@ -71,7 +71,7 @@ export class AccountRemovalController {
         ready: true,
         blocked: true,
         error:
-          "No pudimos leer el recibo de eliminación. Se conserva; reintenta o usa una versión compatible.",
+          "No pudimos leer el registro de la limpieza de eliminación. Se conserva; reintenta o usa una versión compatible.",
       });
     }
   }

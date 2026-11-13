@@ -33,7 +33,7 @@ export function CatalogFilter({
             backgroundColor: value === option.value ? p.button : pressed ? p.card : p.raised,
           })}
         >
-          <Text style={[s.caption, { color: value === option.value ? "#fff" : p.ink }]}>
+          <Text style={[s.caption, { color: value === option.value ? p.onButton : p.ink }]}>
             {option.label}
           </Text>
         </Pressable>

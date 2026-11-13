@@ -134,6 +134,7 @@ function QueuedEntry({ id }: { id: string }) {
         ) : (
           <Action
             label="Descartar registro local"
+            danger
             quiet
             disabled={syncing || transferring || queue.busy}
             onPress={() => setConfirm(true)}

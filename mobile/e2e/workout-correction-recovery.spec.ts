@@ -48,7 +48,9 @@ test("relectura fallida conserva la propuesta y permite confirmar otra relectura
   await page.evaluate((k) => localStorage.setItem(k, '{"version":99}'), key);
   await page.getByLabel("Peso en kg de serie 1", { exact: true }).fill("65");
   await page.getByRole("button", { name: "Releer corrección local", exact: true }).click();
-  await page.getByRole("button", { name: "Confirmar relectura local", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Volver a comprobar en este dispositivo", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Releer corrección local", exact: true }),
   ).toBeVisible();
@@ -58,7 +60,9 @@ test("relectura fallida conserva la propuesta y permite confirmar otra relectura
   expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBe('{"version":99}');
   await page.evaluate(({ key, saved }) => localStorage.setItem(key, saved), { key, saved });
   await page.getByRole("button", { name: "Releer corrección local", exact: true }).click();
-  await page.getByRole("button", { name: "Confirmar relectura local", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Volver a comprobar en este dispositivo", exact: true })
+    .click();
   await expect(page.getByLabel("Peso en kg de serie 1", { exact: true })).toHaveValue("64");
   expect(c.calls).toEqual([]);
 });

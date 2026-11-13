@@ -619,6 +619,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"weekly_checkins": {
+                  Row: {
+                    "created_at": string,"energy": number,"id": string,"motivation": number,"note": string | null,"sleep": number,"soreness": number,"student_id": string,"updated_at": string,"week_start": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"energy": number,"id"?: string,"motivation": number,"note"?: string | null,"sleep": number,"soreness": number,"student_id": string,"updated_at"?: string,"week_start": string
+                  }
+                  Update: {
+                    "created_at"?: string,"energy"?: number,"id"?: string,"motivation"?: number,"note"?: string | null,"sleep"?: number,"soreness"?: number,"student_id"?: string,"updated_at"?: string,"week_start"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "weekly_checkins_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"workout_correction_receipts": {
                   Row: {
                     "created_at": string,"owner_id": string,"payload_hash": string,"request_id": string,"revision": number,"workout_id": string

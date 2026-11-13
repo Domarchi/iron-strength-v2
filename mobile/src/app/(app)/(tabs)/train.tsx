@@ -1,5 +1,6 @@
 import { TrainingDownloadCard } from "../../../components/training-download-card";
 import { FreeStart } from "../../../components/free-start";
+import { NavRow } from "../../../components/nav-row";
 import { Icon } from "../../../components/icon";
 import { useSession } from "../../../lib/session";
 import { DownloadedSessions } from "../../../components/downloaded-sessions";
@@ -50,6 +51,11 @@ export default function Train() {
           onPress={() => router.navigate("/")}
         />
       </View>
+      <NavRow
+        label="Cronómetro EMOM / AMRAP"
+        hint="Intervalos para tus circuitos"
+        onPress={() => router.navigate("/interval-timer")}
+      />
       <View style={{ gap: 6 }}>
         <Text style={[s.subheading, { color: p.ink }]}>Rutinas de ejemplo</Text>
         <Text style={[s.caption, { color: p.muted }]}>Demos locales · no se envían al coach</Text>

@@ -28,6 +28,17 @@ import { savePersonalWorkout } from "../data/save-personal-workout";
 import { createMobilePersonalApi } from "./personal-api";
 import { readPersonalLibrary, mutatePersonalLibrary } from "../data/personal-library";
 import { createMobileProgressApi } from "./progress-api";
+import { createMobileAchievementsApi } from "./achievements-api";
+import { createMobileCheckinApi } from "./checkin-api";
+import { createMobileStudentsApi } from "./students-api";
+import { createMobileMeasurementsApi } from "./measurements-api";
+import { deleteMeasurement, listMeasurements, saveMeasurement } from "../data/measurements";
+import { listStudentOverviews } from "../data/students";
+import { coachSignals } from "../../domain/coach-signals";
+import { getCheckin, saveCheckin } from "../data/weekly-checkin";
+import { weekStartOf } from "../../domain/dates";
+import { getAchievementsOverview } from "../data/achievements";
+import { getStreakSummary } from "../data/streak";
 import { createMobileExerciseApi } from "./exercise-api";
 import { listMobileExercises } from "../data/exercises";
 import { listExerciseHistory } from "../data/exercise-history";
@@ -279,6 +290,116 @@ export function mobileProgressApi() {
         detail: async (exerciseId) => {
           const value = await getExerciseProgressDetail(db, identity.profile.id, exerciseId);
           return value ? { version: 1 as const, today: santiagoDate(new Date()), ...value } : null;
+        },
+      };
+    },
+  });
+}
+
+export function mobileMeasurementsApi() {
+  return createMobileMeasurementsApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token),
+        id = identity.profile.id;
+      return {
+        list: async () =>
+          (await listMeasurements(db, id)).map(({ id: rowId, ...m }) => ({ id: rowId, ...m })),
+        save: (measurement, replace) =>
+          saveMeasurement({ db, studentId: id, input: measurement, replace }),
+        // La RLS limita el borrado a registros propios.
+        remove: (rowId) => deleteMeasurement({ db, id: rowId }),
+      };
+    },
+  });
+}
+
+export function mobileStudentsApi() {
+  return createMobileStudentsApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        isCoach: identity.profile.role === "coach",
+        read: async () => {
+          const today = santiagoDate(new Date()),
+            [students, unread] = await Promise.all([
+              listStudentOverviews(db, today),
+              listUnread(db).catch(() => []),
+            ]);
+          return {
+            version: 1 as const,
+            students: students
+              .filter((s) => s.isActive && s.id !== identity.profile.id)
+              .map((s) => ({
+                id: s.id,
+                fullName: s.fullName,
+                lastWorkoutDate: s.lastWorkoutDate,
+                week:
+                  s.week.kind === "active"
+                    ? {
+                        kind: "active" as const,
+                        programName: s.week.programName,
+                        planned: s.week.planned,
+                        done: s.week.done,
+                        deload: s.week.deload,
+                      }
+                    : { kind: s.week.kind },
+                signals: coachSignals(s, today, unread).map(({ kind, label, detail }) => ({
+                  kind,
+                  label,
+                  detail,
+                })),
+              })),
+          };
+        },
+      };
+    },
+  });
+}
+
+export function mobileCheckinApi() {
+  return createMobileCheckinApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity || identity.profile.role !== "student") return null;
+      const db = client(token),
+        id = identity.profile.id;
+      const read = async () => {
+        const weekStart = weekStartOf(new Date());
+        return { version: 1 as const, weekStart, answers: await getCheckin(db, id, weekStart) };
+      };
+      return {
+        read,
+        save: async (answers) => {
+          const weekStart = weekStartOf(new Date());
+          await saveCheckin(db, id, weekStart, answers);
+          return read();
+        },
+      };
+    },
+  });
+}
+
+export function mobileAchievementsApi() {
+  return createMobileAchievementsApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token),
+        id = identity.profile.id;
+      return {
+        read: async () => {
+          const streak = await getStreakSummary(db, id, santiagoDate(new Date())),
+            overview = await getAchievementsOverview(db, id, streak.longest);
+          return {
+            version: 1 as const,
+            streak: { current: streak.current, longest: streak.longest },
+            workoutCount: overview.stats.workoutCount,
+            earned: overview.earned,
+          };
         },
       };
     },

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlatList, Text, View } from "react-native";
-import Svg, { Line, Polyline, Circle } from "react-native-svg";
+import Svg, { Line, Polyline, Circle, Text as SvgText } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   compareTrainingProgress,
@@ -208,8 +208,34 @@ export function TrainingProgressDetail() {
                   fill="none"
                 />
                 {coords.map((c, i) => (
-                  <Circle key={i} cx={c.x} cy={c.y} r={3.5} fill={p.blue} />
+                  <Circle
+                    key={i}
+                    cx={c.x}
+                    cy={c.y}
+                    r={i === coords.length - 1 ? 5.5 : 3.5}
+                    fill={p.blue}
+                  />
                 ))}
+                {points.length > 1 ? (
+                  <>
+                    <SvgText x={12} y={12} fontSize={11} fill={p.muted}>
+                      {format(Math.max(...points.map((v) => v.value)))}
+                    </SvgText>
+                    <SvgText x={12} y={166} fontSize={11} fill={p.muted}>
+                      {format(Math.min(...points.map((v) => v.value)))}
+                    </SvgText>
+                  </>
+                ) : null}
+                <SvgText
+                  x={Math.min(coords[coords.length - 1].x, 288)}
+                  y={Math.max(coords[coords.length - 1].y - 10, 24)}
+                  fontSize={12}
+                  fontWeight="bold"
+                  textAnchor="end"
+                  fill={p.ink}
+                >
+                  {format(points[points.length - 1].value)}
+                </SvgText>
               </Svg>
             </View>
           ) : (

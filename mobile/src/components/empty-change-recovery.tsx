@@ -20,7 +20,7 @@ export function EmptyChangeRecovery({
         <>
           <Notice message="Se reemplazará la propuesta en memoria por la guardada en este dispositivo. Se perderán los cambios que no se pudieron guardar." />
           <Action
-            label={`Confirmar relectura de ${kind}`}
+            label={`Volver a comprobar ${kind}`}
             disabled={disabled}
             onPress={() => {
               setError(null);

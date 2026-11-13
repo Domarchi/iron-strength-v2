@@ -187,7 +187,9 @@ export function PersonalExerciseForm({
                   justifyContent: "center",
                 }}
               >
-                {draft.values.isBodyweight ? <Icon name="check" color="#fff" size={14} /> : null}
+                {draft.values.isBodyweight ? (
+                  <Icon name="check" color={p.onButton} size={14} />
+                ) : null}
               </View>
               <Text style={[s.body, { color: p.ink, flexShrink: 1 }]}>Usa peso corporal</Text>
             </Pressable>

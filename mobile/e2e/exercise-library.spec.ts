@@ -218,6 +218,9 @@ test("ficha sin historial no inventa progreso y filtros sin coincidencias", asyn
   await expect(
     page.getByText("Aún no has registrado este ejercicio.", { exact: true }),
   ).toBeVisible();
+  // La guía general no depende del historial y avisa que no reemplaza al coach.
+  await expect(page.getByRole("heading", { name: "Cómo ejecutarlo" })).toBeVisible();
+  await expect(page.getByText(/Guía general\. Sigue las indicaciones de tu coach/)).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Ver progreso de este ejercicio", exact: true }),
   ).toHaveCount(0);

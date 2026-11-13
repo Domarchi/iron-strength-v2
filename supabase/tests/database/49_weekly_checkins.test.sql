@@ -1,0 +1,33 @@
+-- T256 · Check-in semanal: RLS de alumno/coach, rangos y semana en lunes.
+begin;
+select no_plan();
+select has_table('public','weekly_checkins','tabla existe');
+select ok((select relrowsecurity from pg_class where oid='public.weekly_checkins'::regclass),'RLS activa');
+select tests.setup_basic();
+select tests.authenticate_as(tests.student_a_id());
+insert into public.weekly_checkins(student_id,week_start,sleep,energy,soreness,motivation,note)
+  values (tests.student_a_id(),'2026-11-09',4,3,2,5,'Buena semana');
+select is((select count(*)::int from public.weekly_checkins),1,'el alumno ve el suyo');
+select throws_ok(format($q$insert into public.weekly_checkins(student_id,week_start,sleep,energy,soreness,motivation) values (%L,'2026-11-09',3,3,3,3)$q$,tests.student_a_id()),'23505',null,'uno por semana');
+select throws_ok(format($q$insert into public.weekly_checkins(student_id,week_start,sleep,energy,soreness,motivation) values (%L,'2026-11-10',3,3,3,3)$q$,tests.student_a_id()),'23514',null,'la semana empieza en lunes');
+select throws_ok(format($q$insert into public.weekly_checkins(student_id,week_start,sleep,energy,soreness,motivation) values (%L,'2026-11-16',6,3,3,3)$q$,tests.student_a_id()),'23514',null,'valores de 1 a 5');
+select throws_ok(format($q$insert into public.weekly_checkins(student_id,week_start,sleep,energy,soreness,motivation,note) values (%L,'2026-11-16',3,3,3,3,%L)$q$,tests.student_a_id(),repeat('x',301)),'23514',null,'nota de hasta 300');
+select throws_ok(format($q$insert into public.weekly_checkins(student_id,week_start,sleep,energy,soreness,motivation) values (%L,'2026-11-16',3,3,3,3)$q$,tests.student_b_id()),'42501',null,'no crea para otro alumno');
+update public.weekly_checkins set energy=5, note='Corregido' where week_start='2026-11-09';
+select is((select energy::int from public.weekly_checkins where week_start='2026-11-09'),5,'corrige el suyo');
+select throws_ok($q$update public.weekly_checkins set week_start='2026-11-16' where week_start='2026-11-09'$q$,'23514',null,'no mueve la semana');
+select throws_ok($q$delete from public.weekly_checkins$q$,'42501',null,'sin borrado directo');
+select tests.authenticate_as(tests.student_b_id());
+select is((select count(*)::int from public.weekly_checkins),0,'otro alumno no lo ve');
+update public.weekly_checkins set energy=1;
+select tests.authenticate_as(tests.student_a_id());
+select is((select energy::int from public.weekly_checkins where week_start='2026-11-09'),5,'otro alumno no lo modifica');
+select tests.authenticate_as(tests.coach_id());
+select is((select count(*)::int from public.weekly_checkins),1,'el coach del alumno lo lee');
+update public.weekly_checkins set energy=1;
+select tests.authenticate_as(tests.student_a_id());
+select is((select energy::int from public.weekly_checkins where week_start='2026-11-09'),5,'el coach no lo modifica');
+select tests.authenticate_as(null);
+select is((select count(*)::int from public.weekly_checkins),0,'anónimo no lee');
+select * from finish();
+rollback;

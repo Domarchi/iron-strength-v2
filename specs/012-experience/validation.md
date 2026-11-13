@@ -1,0 +1,34 @@
+# Validación · Spec 012
+
+## T238 · 12-nov-2026
+
+- Rama `codex/redesign-forja-20261112` desde d487362. El `node_modules` heredado estaba desfasado (react-native 0.88.0 frente a 0.88.1 del lock); se reinstaló con `npm ci` y quedó solo el desfase de safe-area-context y screens, corregido junto con las nuevas.
+- `npx expo install` añadió: react-native-reanimated 4.7.1, react-native-worklets 0.13.0, react-native-gesture-handler ~3.3.0, expo-haptics ~58.0.8, expo-keep-awake ~58.0.4, @gorhom/bottom-sheet ^5.2.14, @shopify/flash-list 2.3.2, @expo-google-fonts/barlow-condensed ^0.4.1 e inter ^0.4.2; react-native-safe-area-context ~5.11.1 y react-native-screens ~4.30.1. Sin babel.config: babel-preset-expo carga el plugin de worklets.
+- Único cambio de código: `GestureHandlerRootView` en `mobile/src/app/_layout.tsx`.
+- Resultados: `npm run check` móvil con 56 archivos y 491 pruebas aprobadas; `expo export` Android e iOS (Hermes, 6,4 MB cada uno) con un archivo temporal que importaba los ocho módulos nuevos (retirado después); 60 E2E aprobadas en Chromium y WebKit (visual-foundations, workout-refresh, home-refresh, fluidity).
+- Límites: no se ejecutó en teléfono; no se probó si Expo Go SDK 58 trae todos los módulos nativos (si no, se necesita build de desarrollo); no se corrió la regresión E2E completa de 566 casos; las fuentes aún no se cargan (T239); sin commit.
+
+## T239 · 12-nov-2026
+
+- Código: `mobile/src/ui/` (tokens, theme, fonts, text, actions, display, controls, feedback, overlay, appbar, index), galería `mobile/src/app/design.tsx` (redirige a `/` fuera de desarrollo) y `useForjaFonts()` en el layout raíz. El tema sigue la preferencia vigente (Claro/Oscuro/Sistema) mediante `usePalette`.
+- Corrección al diseño aprobado: en claro el acento #E8480F da 3,9:1 con texto blanco; se usa #C73A08 (5,2:1) y un fondo suave `accentSoft` (#FFF1EA) para etiquetas, que la galería detectó con 4,2:1 antes de ajustarse.
+- Defectos encontrados y corregidos por las pruebas: chips de 34 px (ahora 44 px de objetivo), interruptor nativo de 40×20 (ahora fila de 56 px con interruptor propio), roles ARIA de radio, interruptor, ajuste y anillo no llegaban a la web con `accessibilityRole`, ActivityIndicator sin nombre.
+- Resultados: 31 pruebas de tokens (contraste de 13 pares en ambos temas); check móvil completo con 57 archivos y 522 pruebas; 12 E2E de la galería (Chromium y WebKit: AA, 360 px, objetivos de 44 px, hoja/diálogo/menú con Escape, segmentado/ajuste/aviso); regresión enfocada de 64 E2E (acceso, cuenta, Inicio, registro, fundamentos y galería) sin fallos; exportación Hermes Android e iOS.
+- Límites: sin probar en teléfono (arrastre de la hoja, háptica, fuentes en nativo); el arrastre para cerrar usa gesture-handler y solo está verificado en web con teclado; la galería está empaquetada en producción pero redirige; las pantallas actuales siguen con la paleta anterior; falta la regresión completa de 566 casos.
+
+## T240 · 12-nov-2026
+
+- La paleta Forja se aplicó cambiando los valores de `palettes` (mobile/src/lib/appearance.ts) y añadiendo `onButton`; las 80 pantallas conservan sus claves. Ajustes por AA en claro: acento #BF3606 y éxito #17692F.
+- `Action` ahora tiene `danger` (borde y texto de peligro) y muestra «Volver…» como flecha + texto a la izquierda; nombres accesibles sin cambio.
+- Hallazgo: el fallo de CI de `consulta.spec.ts:631` no era lentitud sino un oráculo roto por T234 (`app-page` pasó a `entry-page`); corregido con un helper de fondo efectivo.
+- Regresión móvil completa (626 casos, ambos motores): 588 aprobadas, 32 omitidas, 6 fallos: `workout-refresh` (primera serie bajó de 320 px por títulos en tres líneas con Inter) y `fluidity` en WebKit (botón «Herramientas» recortado al 200 %). Corregidos y repetidos: 42 y 40 aprobadas.
+- Límites: sin teléfono; la regresión completa no se repitió entera tras las dos correcciones.
+
+## T241–T250 · 13-nov-2026
+
+- Regresión móvil completa tras T249 (634 casos, Chromium y WebKit, un worker, sin reintentos): 601 aprobadas, 32 omitidas, 1 fallo (`routine-refresh:119` en Chromium). El caso pasa solo, tres veces, tanto con estos cambios como en un commit anterior: es una espera de 5 s demasiado corta cuando Metro compila de forma diferida bajo carga. Se subió esa espera a 20 s; Cuenta y las pruebas relacionadas se repitieron después (112 aprobadas). No es una pasada limpia única.
+- Check móvil: 60 archivos, 528 pruebas, lint y tipos sin avisos.
+- Hallazgo: `expo-keep-awake` en web rechaza la promesa («wake lock … has not activated yet») y el overlay de errores de desarrollo bloquea los clics; se usa solo en nativo con captura de errores (`useTrainingKeepAwake`).
+- Hallazgo: una lista con `role=list` sin `listitem` rompe axe (`aria-required-children`); la tira de la semana usa `role=group`.
+- PR19 (rama del editor del coach): se empujó cc33e91 con tres estabilizaciones de E2E (consulta, routine-refresh y espera de transiciones antes de axe en prescripción por serie). El fallo del CI era un axe de contraste sobre la barra inferior leído a mitad de una transición de tema. Sin verificar en CI al escribir esto.
+- Límites: sin teléfono; sin regresión completa posterior a la fila de ajustes de Cuenta.

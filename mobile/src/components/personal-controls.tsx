@@ -41,7 +41,7 @@ export function SelectionMark({
           justifyContent: "center",
         }}
       >
-        {checked ? <Icon name="check" color="#fff" size={16} /> : null}
+        {checked ? <Icon name="check" color={p.onButton} size={16} /> : null}
       </View>
     </Pressable>
   );

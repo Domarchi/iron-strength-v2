@@ -77,7 +77,7 @@ describe("apariencia del dispositivo", () => {
           expect(contrast(fg, bg), `${fg} / ${bg}`).toBeGreaterThanOrEqual(4.5);
       for (const bg of [p.bg, p.card, p.raised, p.tint, p.field, p.completed])
         expect(contrast(p.control, bg)).toBeGreaterThanOrEqual(3);
-      expect(contrast("#ffffff", p.button)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(p.onButton, p.button)).toBeGreaterThanOrEqual(4.5);
       expect(contrast(p.dark ? p.bg : "#ffffff", p.completedMark)).toBeGreaterThanOrEqual(3);
     },
   );

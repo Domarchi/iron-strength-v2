@@ -1,3 +1,4 @@
+import { plural } from "../lib/plural";
 import { useMemo, useState } from "react";
 import { Text, View, Pressable } from "react-native";
 import type { MobileTrainingProgress } from "../../../src/lib/mobile/training-progress-contracts";
@@ -152,7 +153,7 @@ export function TrainingSummary({
                     {label}
                   </Text>
                   <Text style={[s.caption, s.number, { color: p.muted }]}>
-                    {m.workingSets} series
+                    {plural(m.workingSets, "serie", "series")}
                   </Text>
                 </View>
                 <View

@@ -147,6 +147,7 @@ export function DeleteAccount() {
           />
           <Action
             label="Borrar mi cuenta para siempre"
+            danger
             disabled={
               !isDeleteConfirmation(confirmation) ||
               !training.ready ||

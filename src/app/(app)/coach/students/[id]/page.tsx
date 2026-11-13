@@ -23,6 +23,7 @@ import { formatDuration, formatKg } from "@/domain/format";
 import { programState } from "@/domain/program-weeks";
 import { getAchievementsOverview } from "@/lib/data/achievements";
 import { listUnread } from "@/lib/data/unread";
+import { latestCheckin } from "@/lib/data/weekly-checkin";
 import { listAssignedPrograms } from "@/lib/data/programs";
 import { getVisibleTrainingProgress } from "@/lib/data/training-review";
 import { TrainingExerciseList } from "@/components/progress/typed-exercise-list";
@@ -68,24 +69,26 @@ export default async function StudentDetailPage({
     .maybeSingle();
   if (!student) notFound();
 
-  const [constancyResult, workouts, reviewResult, programs, unreadRows] = await Promise.all([
-    getStreakSummary(db, id, today)
-      .then(async (streak) => ({
-        streak,
-        achievements: await getAchievementsOverview(db, id, streak.longest),
-      }))
-      .then(
+  const [constancyResult, workouts, reviewResult, programs, unreadRows, checkin] =
+    await Promise.all([
+      getStreakSummary(db, id, today)
+        .then(async (streak) => ({
+          streak,
+          achievements: await getAchievementsOverview(db, id, streak.longest),
+        }))
+        .then(
+          (value) => ({ ok: true as const, value }),
+          (error: unknown) => ({ ok: false as const, error }),
+        ),
+      listWorkouts(db, id, { limit: 10 }),
+      getVisibleTrainingProgress(db, id).then(
         (value) => ({ ok: true as const, value }),
         (error: unknown) => ({ ok: false as const, error }),
       ),
-    listWorkouts(db, id, { limit: 10 }),
-    getVisibleTrainingProgress(db, id).then(
-      (value) => ({ ok: true as const, value }),
-      (error: unknown) => ({ ok: false as const, error }),
-    ),
-    listAssignedPrograms(db, id),
-    listUnread(db).catch(() => null),
-  ]);
+      listAssignedPrograms(db, id),
+      listUnread(db).catch(() => null),
+      latestCheckin(db, id).catch(() => undefined),
+    ]);
 
   const pendingComments =
     unreadRows
@@ -276,6 +279,39 @@ export default async function StudentDetailPage({
           retryHref={studentHref(id, navigation)}
         />
       )}
+
+      {checkin !== undefined ? (
+        <Card aria-labelledby="checkin-heading">
+          <CardHeader>
+            <CardTitle id="checkin-heading">Último check-in semanal</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 text-sm">
+            {checkin ? (
+              <>
+                <p className="text-muted-foreground">Semana del {fmt(checkin.week_start)}</p>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
+                  {(
+                    [
+                      ["Sueño", checkin.sleep],
+                      ["Energía", checkin.energy],
+                      ["Dolor muscular", checkin.soreness],
+                      ["Motivación", checkin.motivation],
+                    ] as const
+                  ).map(([label, value]) => (
+                    <div key={label}>
+                      <dt className="text-muted-foreground">{label}</dt>
+                      <dd className="font-medium">{value} de 5</dd>
+                    </div>
+                  ))}
+                </dl>
+                {checkin.note ? <p className="whitespace-pre-wrap">{checkin.note}</p> : null}
+              </>
+            ) : (
+              <p className="text-muted-foreground">Aún no ha enviado su check-in semanal.</p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div>
         <Button variant="outline" render={<a href={`/export/history?alumno=${id}`} download />}>

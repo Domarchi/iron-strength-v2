@@ -1,6 +1,7 @@
 import { Pressable, View } from "react-native";
 import { Icon } from "./icon";
 import { usePalette } from "./ui";
+import { tap } from "../lib/haptics";
 
 /** Compact visible mark; the full surrounding square remains a touch target. */
 export function SetCheck({
@@ -22,7 +23,10 @@ export function SetCheck({
       accessibilityState={{ checked, disabled }}
       aria-checked={checked}
       disabled={disabled}
-      onPress={onPress}
+      onPress={() => {
+        if (!checked) tap("light");
+        onPress();
+      }}
       style={({ pressed }) => ({
         width: 48,
         minHeight: 48,

@@ -178,6 +178,7 @@ function OnlineWorkoutComments({ workoutId }: { workoutId: string }) {
             ) : (
               <Action
                 label="Borrar mi comentario"
+                danger
                 quiet
                 disabled={busy}
                 onPress={() => setDeleting(c.id)}

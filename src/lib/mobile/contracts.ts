@@ -279,3 +279,120 @@ export const mobileProgressDetailSchema = z.object({
   ),
 });
 export type MobileProgressDetail = z.infer<typeof mobileProgressDetailSchema>;
+
+export const MOBILE_ACHIEVEMENT_KINDS = [
+  "first_workout",
+  "first_record",
+  "workouts_10",
+  "streak_4",
+  "workouts_25",
+  "workouts_50",
+] as const;
+/** Racha de semanas cumplidas y logros obtenidos del propio alumno (solo lectura). */
+export const mobileAchievementsSchema = z.object({
+  version: z.literal(1),
+  streak: z.object({
+    current: z.number().int().nonnegative(),
+    longest: z.number().int().nonnegative(),
+  }),
+  workoutCount: z.number().int().nonnegative(),
+  earned: z.array(
+    z.object({ kind: z.enum(MOBILE_ACHIEVEMENT_KINDS), earnedAt: z.string().min(1) }),
+  ),
+});
+export type MobileAchievements = z.infer<typeof mobileAchievementsSchema>;
+
+const rating = z.number().int().min(1).max(5);
+/** Respuestas del check-in semanal (1 a 5) y nota opcional de hasta 300 caracteres. */
+export const mobileCheckinAnswersSchema = z
+  .object({
+    sleep: rating,
+    energy: rating,
+    soreness: rating,
+    motivation: rating,
+    note: z.string().max(300).nullable(),
+  })
+  .strict();
+export type MobileCheckinAnswers = z.infer<typeof mobileCheckinAnswersSchema>;
+export const mobileCheckinInputSchema = z
+  .object({ version: z.literal(1), answers: mobileCheckinAnswersSchema })
+  .strict();
+/** Check-in de la semana vigente (la semana la decide el servidor); `answers` es null si aún no hay. */
+export const mobileCheckinSchema = z.object({
+  version: z.literal(1),
+  weekStart: z.iso.date(),
+  answers: mobileCheckinAnswersSchema.nullable(),
+});
+export type MobileCheckin = z.infer<typeof mobileCheckinSchema>;
+
+/** Lista de alumnos del coach con señales de atención (solo lectura; sin enlaces web). */
+export const mobileStudentsSchema = z.object({
+  version: z.literal(1),
+  students: z.array(
+    z.object({
+      id: z.uuid(),
+      fullName: z.string().min(1),
+      lastWorkoutDate: z.iso.date().nullable(),
+      week: z.discriminatedUnion("kind", [
+        z.object({ kind: z.literal("no_program") }),
+        z.object({
+          kind: z.literal("active"),
+          programName: z.string(),
+          planned: z.number().int().nonnegative(),
+          done: z.number().int().nonnegative(),
+          deload: z.boolean(),
+        }),
+        z.object({ kind: z.literal("scheduled") }),
+        z.object({ kind: z.literal("finished") }),
+      ]),
+      signals: z.array(
+        z.object({
+          kind: z.enum(["comments", "no_program", "ending", "inactive"]),
+          label: z.string(),
+          detail: z.string(),
+        }),
+      ),
+    }),
+  ),
+});
+export type MobileStudents = z.infer<typeof mobileStudentsSchema>;
+
+const optionalMeasure = z.number().finite().positive().max(1000).nullable();
+/** Medidas corporales propias (peso y tres perímetros), un registro por fecha. */
+export const mobileMeasurementSchema = z.object({
+  id: z.uuid(),
+  measuredOn: z.iso.date(),
+  weightKg: optionalMeasure,
+  waistCm: optionalMeasure,
+  chestCm: optionalMeasure,
+  armCm: optionalMeasure,
+});
+export const mobileMeasurementsSchema = z.object({
+  version: z.literal(1),
+  items: z.array(mobileMeasurementSchema),
+});
+export type MobileMeasurements = z.infer<typeof mobileMeasurementsSchema>;
+export const mobileMeasurementInputSchema = z
+  .object({
+    version: z.literal(1),
+    measurement: z
+      .object({
+        measuredOn: z.iso.date(),
+        weightKg: optionalMeasure,
+        waistCm: optionalMeasure,
+        chestCm: optionalMeasure,
+        armCm: optionalMeasure,
+      })
+      .strict(),
+    /** Solo se envía tras confirmar el reemplazo de un registro del mismo día. */
+    replace: z.boolean(),
+  })
+  .strict();
+export type MobileMeasurementInput = z.infer<typeof mobileMeasurementInputSchema>["measurement"];
+export const mobileMeasurementResultSchema = z.object({
+  version: z.literal(1),
+  status: z.enum(["created", "replaced"]),
+});
+export const mobileMeasurementDeleteSchema = z
+  .object({ version: z.literal(1), id: z.uuid() })
+  .strict();

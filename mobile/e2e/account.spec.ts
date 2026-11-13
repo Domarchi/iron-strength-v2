@@ -273,8 +273,10 @@ test("coach conserva gestión y no ofrece borrar; formato desconocido de recibo 
   ).toBeVisible();
   await page.evaluate((key) => localStorage.setItem(key, '{"version":99}'), receiptKey);
   await page.reload();
-  await expect(page.getByText(/No pudimos leer el recibo/)).toBeVisible();
-  await page.getByRole("button", { name: "Reintentar lectura del recibo", exact: true }).click();
+  await expect(page.getByText(/No pudimos leer el registro de la limpieza/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Reintentar comprobación de la limpieza", exact: true })
+    .click();
   expect(await page.evaluate((key) => localStorage.getItem(key), receiptKey)).toBe(
     '{"version":99}',
   );

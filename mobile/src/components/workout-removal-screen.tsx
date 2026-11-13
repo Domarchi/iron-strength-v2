@@ -1,3 +1,4 @@
+import { plural } from "../lib/plural";
 import { useCallback, useState } from "react";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
@@ -50,7 +51,7 @@ export function WorkoutRemovalScreen({ id }: { id: string }) {
     <>
       <Notice message="Se reemplazará el intento en memoria por el guardado en este dispositivo. Se perderán los cambios que no se pudieron guardar." />
       <Action
-        label="Confirmar relectura de eliminación"
+        label="Volver a comprobar la eliminación"
         disabled={disabled}
         onPress={() => {
           void run(async () => {
@@ -83,7 +84,8 @@ export function WorkoutRemovalScreen({ id }: { id: string }) {
         </Text>
         <Text style={[s.body, { color: p.muted }]}>{day(w.performedOn)}</Text>
         <Text style={[s.body, { color: p.ink }]}>
-          {w.setCount} series · {w.commentCount} comentarios
+          {plural(w.setCount, "serie", "series")} ·{" "}
+          {plural(w.commentCount, "comentario", "comentarios")}
         </Text>
       </View>
     );
@@ -251,6 +253,7 @@ export function WorkoutRemovalScreen({ id }: { id: string }) {
                       ) : null}
                       <Action
                         label="Eliminar para siempre"
+                        danger
                         disabled={
                           disabled ||
                           correctionBlocked ||
