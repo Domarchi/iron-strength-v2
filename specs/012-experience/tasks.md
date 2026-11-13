@@ -49,7 +49,7 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 - [ ] T260 · Accesibilidad con VoiceOver/TalkBack en teléfonos reales.
 - [ ] T261 · Parcial: se reemplazó la jerga de recuperación visible («relectura», «recibo») por «Volver a comprobar…» y «registro de la limpieza» en seis pantallas y sus pruebas (531 unitarias y 62 E2E aprobadas). Falta la revisión del resto de textos de la app.
 - [ ] T262 · Código listo y desactivado: Sentry (`@sentry/react-native`, elegido el 13-nov) arranca solo con `EXPO_PUBLIC_SENTRY_DSN`, fuera de desarrollo y web, con depuración de datos personales (`scrubEvent`, 2 pruebas). Pasos para activarlo y texto de privacidad en `docs/native-monitoring.md`. Falta crear el proyecto y el DSN (tuyo), actualizar la política/formularios de tienda y probar un informe real.
-- [ ] T263 · Paleta Forja aplicada a la web (variables de `globals.css`, color del navegador y manifiesto; la superficie de registro «Azul atleta» del alumno web no cambia). Check raíz: 184 archivos y 1449 pruebas, lint y build; oráculos de color de tres E2E actualizados. Pendiente: resultado del CI de la PR #23 (E2E web con axe) y revisión visual del editor del coach.
+- [x] T263 · Paleta Forja aplicada a la web (variables de `globals.css`, color del navegador y manifiesto; la superficie de registro «Azul atleta» del alumno web conserva su azul propio). CI de la PR #23 verde en los cuatro trabajos (E2E web con axe: 427 aprobadas y 2 inestables que pasaron en el reintento; Expo 618). Revisión visual del editor del coach pendiente del propietario.
 - [ ] T264 · Regresión total, prueba en cuatro teléfonos, builds internos.
 
 ## Reglas heredadas

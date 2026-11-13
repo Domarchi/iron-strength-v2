@@ -1,6 +1,6 @@
 # Spec 012 · Estado real del plan (12-nov-2026)
 
-Rama `codex/redesign-forja-20261112`. Nada está publicado ni empujado. Una tarea figura como hecha solo si tiene código, pruebas y commit; «parcial» dice qué falta; «bloqueada» dice qué se necesita de fuera.
+Rama `codex/redesign-forja-20261112` (PR #23 en borrador, CI verde en e1a4c0b/5c918a0). Nada está publicado en producción. Una tarea figura como hecha solo si tiene código, pruebas y commit; «parcial» dice qué falta; «bloqueada» dice qué se necesita de fuera.
 
 | Tarea                           | Estado                      | Notas                                                                                                                                         |
 | ------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -31,7 +31,7 @@ Rama `codex/redesign-forja-20261112`. Nada está publicado ni empujado. Una tare
 | T260 Accesibilidad con lectores | Bloqueada                   | VoiceOver/TalkBack en teléfonos reales                                                                                                        |
 | T261 Textos                     | Parcial                     | Jerga de recuperación («relectura», «recibo») reemplazada en seis pantallas; falta el resto                                                   |
 | T262 Monitoreo                  | Bloqueada                   | D6: elegir servicio y declarar en privacidad                                                                                                  |
-| T263 Web del coach con Forja    | Parcial                     | Paleta aplicada a la web; falta el resultado del CI (E2E con axe) y revisión visual                                                           |
+| T263 Web del coach con Forja    | Hecha                       | Paleta en la web; CI de la PR #23 verde; falta tu revisión visual                                                                             |
 | T264 Regresión y 4 teléfonos    | Bloqueada                   | Teléfonos reales                                                                                                                              |
 
 ## Pendiente fuera de esta rama
