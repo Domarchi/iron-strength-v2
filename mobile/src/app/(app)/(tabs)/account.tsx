@@ -111,6 +111,11 @@ export default function Account() {
           Datos y ayuda
         </Text>
         <NavRow
+          label="Logros"
+          hint="Tus hitos y lo que falta"
+          onPress={() => router.navigate("/achievements")}
+        />
+        <NavRow
           label="Medidas corporales"
           hint="Peso y perímetros"
           onPress={() => router.navigate("/measurements")}
