@@ -2,6 +2,7 @@ import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight } from "../../../src/domain/training-tools";
 import { isTypedTraining } from "../lib/training";
 import { isSuggestedWeight } from "../lib/suggested-value";
+import { progressionHint } from "../lib/progression-hint";
 import { QuickAdjust, adjustWeightText } from "./quick-adjust";
 import { useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
@@ -56,6 +57,14 @@ export function WorkoutSets({
         : null,
     last = history?.items[0] ?? null,
     previousColumn = preferences.value.showPrevious && width >= 360 && fontScale <= 1.15;
+  const hint =
+    last && preferences.value.showPrevious
+      ? progressionHint(last, exercise.prescribed, {
+          incrementKg: 2.5,
+          isBodyweight: exercise.isBodyweight,
+          weightUnit: preferences.value.weightUnit,
+        })
+      : null;
   async function complete(setId: string, si: number) {
     setError(null);
     try {
@@ -84,6 +93,11 @@ export function WorkoutSets({
       {last && preferences.value.showPrevious ? (
         <Text style={[s.caption, { color: p.muted, marginBottom: 0 }]}>
           Anterior · {last.date.split("-").reverse().slice(0, 2).join("/")} · copia descargada
+        </Text>
+      ) : null}
+      {hint ? (
+        <Text accessibilityLabel="Sugerencia de progresión" style={[s.caption, { color: p.ink }]}>
+          {hint}
         </Text>
       ) : null}
       <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>

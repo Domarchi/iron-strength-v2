@@ -30,7 +30,7 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 - [ ] T247 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Ficha de ejercicio con instrucciones/demostración: pendiente (D4: contenido por definir).
 - [ ] T248 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Historial: pendiente calendario con tipos de sesión y reducir «Nota conservada».
 - [ ] T249 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Progreso: pendiente gráfico interactivo, panel y mapa muscular.
-- [ ] T250 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Cuenta: pendiente agrupar como ajustes nativos con tarjeta de perfil.
+- [x] T250 · Cuenta con perfil (avatar) y filas de ajustes con flecha (Mis ejercicios, Privacidad y ayuda, Gestionar cuenta, Planificar y Ver alumnos en la web, Ver rutinas de ejemplo). 66 E2E de cuenta/consulta/Inicio/minimal-ui aprobadas.
 
 ## Fase D · Funciones nuevas
 
@@ -38,7 +38,7 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 - [ ] T252 · Notificaciones push de comentarios (D7; migración).
 - [ ] T253 · Medidas, peso y fotos en nativo (D5).
 - [ ] T254 · Logros y racha en nativo.
-- [ ] T255 · Sugerencia de progresión y cronómetros EMOM/AMRAP.
+- [ ] T255 · Parcial: sugerencia de doble progresión en el registro legado (`progressionHint`, usa `suggestProgression` del dominio; no aparece con detalle por serie, sin historial ni peso corporal). Faltan el registro tipado y los cronómetros EMOM/AMRAP.
 - [ ] T256 · Check-in semanal alumno → coach (migración, RLS, web del coach).
 - [ ] T257 · Coach en el teléfono: alumnos, ficha, comentarios (D9).
 - [ ] T258 · Desbloqueo biométrico.
