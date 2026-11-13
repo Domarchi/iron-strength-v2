@@ -346,6 +346,8 @@ function subscribe(changed: () => void) {
 }
 export function CanonicalExercisePicker({
   sessionId,
+  sessionLabel,
+  sessionTitle,
   catalog,
   selection,
   count,
@@ -355,6 +357,8 @@ export function CanonicalExercisePicker({
   onAdd,
 }: {
   sessionId: string;
+  sessionLabel: string;
+  sessionTitle?: string | null;
   catalog: CoachCatalogExercise[];
   selection: string[];
   count: number;
@@ -373,7 +377,11 @@ export function CanonicalExercisePicker({
     groups = [...new Set(catalog.map((exercise) => exercise.muscleGroup))].sort();
   return (
     <aside aria-label="Biblioteca de ejercicios" className="coach-library border-t p-4">
-      <h3 className="mb-2 text-sm font-bold">Biblioteca de ejercicios</h3>
+      <h3 className="text-sm font-semibold">Biblioteca de ejercicios</h3>
+      <p className="mb-3 mt-1 text-sm text-muted-foreground">
+        Destino: sesión {sessionLabel}
+        {sessionTitle ? ` · ${sessionTitle}` : ""}
+      </p>
       <Button
         type="button"
         variant="outline"

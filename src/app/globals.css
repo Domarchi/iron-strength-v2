@@ -896,3 +896,69 @@
     grid-row: 4;
   }
 }
+
+/* T232: identity, editable targets and secondary detail share a readable workspace. */
+.coach-session-canonical .coach-exercise-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 1rem 0;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.coach-session-canonical .coach-exercise-row[data-changed="true"] {
+  border-color: var(--primary);
+  background: color-mix(in oklch, var(--primary) 5%, transparent);
+}
+.coach-session-canonical .coach-row-identity {
+  display: flex;
+  flex-basis: 100%;
+}
+.coach-session-canonical .coach-row-identity h4 {
+  font-size: 1rem;
+}
+.coach-session-canonical .coach-row-identity > div:first-child p {
+  display: block;
+}
+.coach-session-canonical .coach-prescription {
+  flex-basis: 100%;
+  margin-top: 0;
+  container-type: inline-size;
+}
+.coach-session-canonical .coach-prescription label {
+  font-size: 0.8125rem;
+}
+.coach-session-canonical .coach-prescription input {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+}
+.coach-session-canonical .coach-row-selection {
+  flex-basis: 100%;
+  margin-top: 0;
+  gap: 0.75rem;
+}
+.coach-session-canonical .coach-row-note,
+.coach-session-canonical .coach-exercise-row > details:not(.coach-row-note) {
+  flex: 1 1 14rem;
+  min-width: 0;
+  margin-top: 0;
+}
+.coach-session-canonical .coach-exercise-row > [role="alert"] {
+  flex-basis: 100%;
+}
+@container (min-width: 34rem) {
+  .coach-prescription .prescription-controls[data-compact="true"] {
+    display: grid;
+    grid-template-columns: minmax(9rem, 1fr) minmax(0, 3fr);
+    align-items: end;
+    gap: 0.75rem;
+  }
+  .coach-prescription .prescription-controls[data-compact="true"] > * {
+    margin-block: 0;
+  }
+  .coach-prescription .prescription-controls[data-compact="true"] .prescription-uniform-grid {
+    grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
+  }
+}

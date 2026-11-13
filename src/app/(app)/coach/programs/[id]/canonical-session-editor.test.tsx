@@ -415,3 +415,78 @@ it("muestra ejercicios e indicaciones actuales al revisar un agregado con revisi
     "Recorrer distancia",
   );
 });
+
+it("vincula la biblioteca a la sesión visible y conserva el objetivo al cambiar de sesión", async () => {
+  const second = { ...source, id: crypto.randomUUID(), label: "B", title: "Piernas" };
+  await act(() =>
+    root.render(
+      <WeekWorkspace
+        weeks={[{ number: 1, editable: true, sessions: 2, exercises: 4 }]}
+        initialWeek={1}
+      >
+        {[
+          <SessionWorkspace key="sessions" sessions={[source, second]}>
+            {[source, second].map((session) => (
+              <CanonicalSessionEditor
+                key={session.id}
+                userId={scope.userId}
+                programId={scope.programId}
+                session={session}
+                exercises={catalog}
+              />
+            ))}
+          </SessionWorkspace>,
+        ]}
+      </WeekWorkspace>,
+    ),
+  );
+  await fill("Tiempo (s) de Sostener carga", "45");
+  await click("Sesión B · Piernas");
+  const activePanel = container.querySelector<HTMLElement>("[data-session-panel]:not([hidden])")!;
+  expect(activePanel.querySelector("aside")!.textContent).toContain("Destino: sesión B");
+  await act(() =>
+    container
+      .querySelector<HTMLButtonElement>(`button[aria-controls="editor-session-${source.id}"]`)!
+      .click(),
+  );
+  const restored = container.querySelector<HTMLElement>("[data-session-panel]:not([hidden])")!;
+  expect(
+    restored.querySelector<HTMLInputElement>('input[aria-label="Tiempo (s) de Sostener carga"]')!
+      .value,
+  ).toBe("45");
+  expect(restored.querySelector("aside")!.textContent).toContain("Destino: sesión A");
+  expect(mocks.mutate).not.toHaveBeenCalled();
+});
+
+it("Ctrl+Enter durante composición conserva el borrador sin enviarlo", async () => {
+  await mount();
+  await fill("Tiempo (s) de Sostener carga", "45");
+  const field = container.querySelector<HTMLInputElement>(
+    'input[aria-label="Tiempo (s) de Sostener carga"]',
+  )!;
+  field.focus();
+  const composing = new KeyboardEvent("keydown", {
+    key: "Enter",
+    ctrlKey: true,
+    isComposing: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  await act(() => {
+    field.dispatchEvent(composing);
+  });
+  expect(mocks.mutate).not.toHaveBeenCalled();
+  expect(composing.defaultPrevented).toBe(false);
+  expect(field.value).toBe("45");
+  const confirmed = new KeyboardEvent("keydown", {
+    key: "Enter",
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  await act(() => {
+    field.dispatchEvent(confirmed);
+  });
+  expect(mocks.mutate).toHaveBeenCalledTimes(1);
+  expect(confirmed.defaultPrevented).toBe(true);
+});

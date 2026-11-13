@@ -165,7 +165,7 @@ function Workspace({
           aria-label="Semanas del programa"
           className="coach-week-ribbon grid grid-cols-2 gap-2 sm:grid-cols-4"
         >
-          {weeks.map((week) => (
+          {weeks.map((week, index) => (
             <Button
               key={week.number}
               variant={active === week.number ? "default" : "outline"}
@@ -173,6 +173,28 @@ function Workspace({
               aria-pressed={active === week.number}
               aria-controls={`editor-week-${week.number}`}
               onClick={() => changeView({ ...current.current, week: week.number })}
+              onKeyDown={(event) => {
+                if (
+                  event.defaultPrevented ||
+                  event.nativeEvent.isComposing ||
+                  event.ctrlKey ||
+                  event.metaKey ||
+                  event.altKey ||
+                  event.shiftKey
+                )
+                  return;
+                let next: number | undefined;
+                if (event.key === "ArrowRight") next = (index + 1) % weeks.length;
+                if (event.key === "ArrowLeft") next = (index + weeks.length - 1) % weeks.length;
+                if (event.key === "Home") next = 0;
+                if (event.key === "End") next = weeks.length - 1;
+                if (next === undefined) return;
+                event.preventDefault();
+                changeView({ ...current.current, week: weeks[next].number });
+                event.currentTarget.parentElement
+                  ?.querySelectorAll<HTMLButtonElement>("button")
+                  [next]?.focus();
+              }}
             >
               {!week.editable ? <Lock className="size-4 shrink-0" aria-hidden /> : null}
               <span className="min-w-0">

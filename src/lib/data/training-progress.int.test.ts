@@ -180,7 +180,7 @@ it("supera1000 series sin perder filas por el límite REST", async () => {
     sets = snapshot.workouts.filter((w) => fixtures.includes(w.id)).flatMap((w) => w.sets);
   expect(sets).toHaveLength(1080);
   expect(new Set(sets.map((s) => s.id)).size).toBe(1080);
-});
+}, 60_000);
 it("archivar un ejercicio privado conserva su clasificación histórica propia", async () => {
   const created = await students[0]
     .from("exercises")

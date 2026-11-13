@@ -282,7 +282,8 @@ function Editor({ userId, programId, session, exercises, canDuplicateSession = t
       <div
         key={row.id}
         data-detailed={goals.mode === "series"}
-        className={`coach-exercise-row min-w-0 rounded-md border p-3 ${edit ? "border-primary/40 bg-primary/5" : "bg-background"}`}
+        data-changed={!!edit}
+        className="coach-exercise-row min-w-0 border-b py-4"
       >
         <div className="coach-row-identity flex flex-wrap items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -356,6 +357,15 @@ function Editor({ userId, programId, session, exercises, canDuplicateSession = t
             </Button>
           </div>
         </div>
+        <fieldset disabled={rowDisabled} className="coach-prescription mt-3 min-w-0">
+          <TypedPrescriptionEditor
+            name={row.name}
+            value={goals}
+            invalid={!!state.errors[row.id]}
+            errorId={`error-${row.id}`}
+            onChange={(input) => editRow(row, { targets: { kind: "replace", input } })}
+          />
+        </fieldset>
         <div className="coach-row-selection mt-2 flex flex-wrap items-center gap-2">
           <label className="flex min-h-11 items-center gap-2 text-xs">
             <input
@@ -391,15 +401,6 @@ function Editor({ userId, programId, session, exercises, canDuplicateSession = t
             />
           )}
         </div>
-        <fieldset disabled={rowDisabled} className="coach-prescription mt-3 min-w-0">
-          <TypedPrescriptionEditor
-            name={row.name}
-            value={goals}
-            invalid={!!state.errors[row.id]}
-            errorId={`error-${row.id}`}
-            onChange={(input) => editRow(row, { targets: { kind: "replace", input } })}
-          />
-        </fieldset>
         <details className="coach-row-note mt-2" open={edit?.note !== undefined ? true : undefined}>
           <summary className="min-h-11 cursor-pointer py-3 text-xs text-muted-foreground">
             Nota del ejercicio{(edit?.note ?? row.note) ? "" : " (opcional)"}
@@ -487,13 +488,14 @@ function Editor({ userId, programId, session, exercises, canDuplicateSession = t
     >
       <Card
         id={`session-${source.id}`}
-        className="coach-session"
+        className="coach-session coach-session-canonical"
         onKeyDown={(event) => {
           if (
             event.key === "Enter" &&
             (event.ctrlKey || event.metaKey) &&
             !event.altKey &&
             !event.repeat &&
+            !event.nativeEvent.isComposing &&
             !event.defaultPrevented &&
             !event.currentTarget.closest("[hidden],fieldset[disabled]") &&
             !saveDisabled
@@ -869,6 +871,8 @@ function Editor({ userId, programId, session, exercises, canDuplicateSession = t
           ) : null}
         </CardContent>
         <CanonicalExercisePicker
+          sessionLabel={source.label}
+          sessionTitle={source.title}
           key={`${source.id}:${source.exercises.length}`}
           sessionId={source.id}
           catalog={exercises}
