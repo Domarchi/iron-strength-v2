@@ -29,6 +29,9 @@ import { createMobilePersonalApi } from "./personal-api";
 import { readPersonalLibrary, mutatePersonalLibrary } from "../data/personal-library";
 import { createMobileProgressApi } from "./progress-api";
 import { createMobileAchievementsApi } from "./achievements-api";
+import { createMobileCheckinApi } from "./checkin-api";
+import { getCheckin, saveCheckin } from "../data/weekly-checkin";
+import { weekStartOf } from "../../domain/dates";
 import { getAchievementsOverview } from "../data/achievements";
 import { getStreakSummary } from "../data/streak";
 import { createMobileExerciseApi } from "./exercise-api";
@@ -282,6 +285,29 @@ export function mobileProgressApi() {
         detail: async (exerciseId) => {
           const value = await getExerciseProgressDetail(db, identity.profile.id, exerciseId);
           return value ? { version: 1 as const, today: santiagoDate(new Date()), ...value } : null;
+        },
+      };
+    },
+  });
+}
+
+export function mobileCheckinApi() {
+  return createMobileCheckinApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity || identity.profile.role !== "student") return null;
+      const db = client(token),
+        id = identity.profile.id;
+      const read = async () => {
+        const weekStart = weekStartOf(new Date());
+        return { version: 1 as const, weekStart, answers: await getCheckin(db, id, weekStart) };
+      };
+      return {
+        read,
+        save: async (answers) => {
+          const weekStart = weekStartOf(new Date());
+          await saveCheckin(db, id, weekStart, answers);
+          return read();
         },
       };
     },

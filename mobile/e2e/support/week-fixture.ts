@@ -106,7 +106,14 @@ export async function setupDownloadedWeek(page: Page, timestamp = "2026-10-24T12
         [...control.saved.values()].map(result),
         santiagoDate(new Date()),
       );
-    else if (path.endsWith("/achievements"))
+    else if (path.endsWith("/checkins")) {
+      // Sin check-in disponible: la tarjeta no aparece en las pruebas que no la ejercitan.
+      await route.fulfill({
+        status: 503,
+        json: { version: 1, error: { code: "unavailable", message: "Sin check-in de prueba." } },
+      });
+      return;
+    } else if (path.endsWith("/achievements"))
       json = { version: 1, streak: { current: 0, longest: 0 }, workoutCount: 0, earned: [] };
     else if (path.endsWith("comments/unread")) json = { version: 1, items: [] };
     else if (path.endsWith("/comments") && req.method() === "GET")

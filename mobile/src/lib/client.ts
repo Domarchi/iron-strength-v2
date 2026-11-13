@@ -69,6 +69,9 @@ import {
   mobileWorkoutSchema,
   mobileProgressSchema,
   mobileAchievementsSchema,
+  mobileCheckinSchema,
+  mobileCheckinAnswersSchema,
+  type MobileCheckinAnswers,
   mobileProgressDetailSchema,
   mobileSaveSchema,
   mobileInvitationSchema,
@@ -1056,6 +1059,28 @@ export class MobileClient {
   }
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
+  }
+  /** Check-in semanal de la semana vigente (la semana la decide el servidor). */
+  async checkin() {
+    const parsed = mobileCheckinSchema.safeParse(await this.read("checkins"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tu check-in no es compatible. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
+  }
+  /** Crea o corrige el check-in de la semana; repetir el envío no duplica. */
+  async saveCheckin(answers: MobileCheckinAnswers) {
+    const input = mobileCheckinAnswersSchema.safeParse(answers);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa las respuestas del check-in.", 400);
+    const parsed = mobileCheckinSchema.safeParse(
+      await this.read("checkins", { version: 1, answers: input.data }),
+    );
+    if (!parsed.success || parsed.data.answers === null)
+      throw new MobileError("version", "No pudimos confirmar tu check-in. Reintenta.");
+    return parsed.data;
   }
   /** Racha de semanas cumplidas y logros del propio alumno (solo lectura). */
   async achievements() {

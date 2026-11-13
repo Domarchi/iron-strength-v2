@@ -301,3 +301,26 @@ export const mobileAchievementsSchema = z.object({
   ),
 });
 export type MobileAchievements = z.infer<typeof mobileAchievementsSchema>;
+
+const rating = z.number().int().min(1).max(5);
+/** Respuestas del check-in semanal (1 a 5) y nota opcional de hasta 300 caracteres. */
+export const mobileCheckinAnswersSchema = z
+  .object({
+    sleep: rating,
+    energy: rating,
+    soreness: rating,
+    motivation: rating,
+    note: z.string().max(300).nullable(),
+  })
+  .strict();
+export type MobileCheckinAnswers = z.infer<typeof mobileCheckinAnswersSchema>;
+export const mobileCheckinInputSchema = z
+  .object({ version: z.literal(1), answers: mobileCheckinAnswersSchema })
+  .strict();
+/** Check-in de la semana vigente (la semana la decide el servidor); `answers` es null si aún no hay. */
+export const mobileCheckinSchema = z.object({
+  version: z.literal(1),
+  weekStart: z.iso.date(),
+  answers: mobileCheckinAnswersSchema.nullable(),
+});
+export type MobileCheckin = z.infer<typeof mobileCheckinSchema>;
