@@ -1,6 +1,6 @@
 # T237 · Dos direcciones de marca — elegida A · Forja (12-nov-2026)
 
-Referencia estática en `docs/design-refresh/brand/` (index.html, brand.css, brand.js; fuentes locales; capturas en `captures/`, script `capture.cjs`, servidor estático en el puerto 8110). Datos ficticios, sin red ni almacenamiento (CSP cerrada). **No es la app**: no acredita fluidez ni funciona como pantalla nativa.
+Referencia estática en `docs/design-refresh/brand/` (index.html, brand.css, brand.js; fuentes locales; capturas en `captures/`, script `capture.mjs`, servidor estático en el puerto 8110). Datos ficticios, sin red ni almacenamiento (CSP cerrada). **No es la app**: no acredita fluidez ni funciona como pantalla nativa.
 
 Cuatro pantallas por propuesta (Hoy, Registro, Resultado, Progreso) en oscuro y claro, más una hoja de componentes con los cuatro roles de acción (primario, secundario, terciario, peligro). Atiende hallazgos de T236: H1 (descartar fuera de la vista), H2 (sugerido ≠ digitado), H3 (cabecera más corta), H6 (esfuerzo como selector), H7 (sin tarjeta de descarga repetida en Hoy), M11 (gráfico con ejes, valores y marca del punto) y el patrón de acciones sin forma.
 

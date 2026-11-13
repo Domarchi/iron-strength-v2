@@ -21,7 +21,7 @@ describe("manifiesto de la app instalable (RF-45)", () => {
   });
 
   it("los colores coinciden con la nueva superficie neutra de la app", () => {
-    expect(m.background_color).toBe("#111214");
-    expect(m.theme_color).toBe("#111214");
+    expect(m.background_color).toBe("#0c0c0b");
+    expect(m.theme_color).toBe("#0c0c0b");
   });
 });

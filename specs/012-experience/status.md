@@ -31,7 +31,7 @@ Rama `codex/redesign-forja-20261112`. Nada está publicado ni empujado. Una tare
 | T260 Accesibilidad con lectores | Bloqueada                   | VoiceOver/TalkBack en teléfonos reales                                                                                                        |
 | T261 Textos                     | Parcial                     | Jerga de recuperación («relectura», «recibo») reemplazada en seis pantallas; falta el resto                                                   |
 | T262 Monitoreo                  | Bloqueada                   | D6: elegir servicio y declarar en privacidad                                                                                                  |
-| T263 Web del coach con Forja    | No iniciada                 | PR19 aún en borrador y con CI en rojo                                                                                                         |
+| T263 Web del coach con Forja    | Parcial                     | Paleta aplicada a la web; falta el resultado del CI (E2E con axe) y revisión visual                                                           |
 | T264 Regresión y 4 teléfonos    | Bloqueada                   | Teléfonos reales                                                                                                                              |
 
 ## Pendiente fuera de esta rama

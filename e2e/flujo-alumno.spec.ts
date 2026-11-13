@@ -94,7 +94,7 @@ test("el índice cambia y recupera el ejercicio sin alterar las series", async (
     "0",
   );
   const activeButton = index.getByRole("button", { name: "Ir a Sentadilla", exact: true });
-  await expect(activeButton).toHaveCSS("background-color", "rgb(129, 188, 255)");
+  await expect(activeButton).toHaveCSS("background-color", "rgb(255, 90, 31)");
   const audit = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();

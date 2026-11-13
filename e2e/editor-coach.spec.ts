@@ -79,11 +79,11 @@ test("copiar y reordenar una semana conserva prescripciones, es accesible y cabe
     const activeWeek = page.getByRole("button", { name: /Semana 2/ });
     await expect(activeWeek).toHaveCSS(
       "color",
-      scheme === "dark" ? "rgb(7, 26, 48)" : "rgb(255, 255, 255)",
+      scheme === "dark" ? "rgb(18, 10, 5)" : "rgb(255, 255, 255)",
     );
     await expect(activeWeek).toHaveCSS(
       "background-color",
-      scheme === "dark" ? "rgb(129, 188, 255)" : "rgb(0, 95, 217)",
+      scheme === "dark" ? "rgb(255, 90, 31)" : "rgb(191, 54, 6)",
     );
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

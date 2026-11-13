@@ -1,6 +1,8 @@
-// Captura las filas de cada propuesta. Uso: node docs/design-refresh/brand/capture.cjs (servidor estático en 8110).
-const { chromium } = require("@playwright/test");
-const path = require("node:path");
+// Captura las filas de cada propuesta. Uso: node docs/design-refresh/brand/capture.mjs (servidor estático en 8110).
+import { chromium } from "@playwright/test";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+const here = path.dirname(fileURLToPath(import.meta.url));
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({
@@ -13,7 +15,7 @@ const path = require("node:path");
   await page.goto("http://127.0.0.1:8110/index.html");
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(500);
-  const out = path.join(__dirname, "captures");
+  const out = path.join(here, "captures");
   for (const p of ["a", "b"]) {
     const rows = page.locator(`#${p} .row`);
     const n = await rows.count();
