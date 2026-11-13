@@ -23,3 +23,12 @@
 - Hallazgo: el fallo de CI de `consulta.spec.ts:631` no era lentitud sino un oráculo roto por T234 (`app-page` pasó a `entry-page`); corregido con un helper de fondo efectivo.
 - Regresión móvil completa (626 casos, ambos motores): 588 aprobadas, 32 omitidas, 6 fallos: `workout-refresh` (primera serie bajó de 320 px por títulos en tres líneas con Inter) y `fluidity` en WebKit (botón «Herramientas» recortado al 200 %). Corregidos y repetidos: 42 y 40 aprobadas.
 - Límites: sin teléfono; la regresión completa no se repitió entera tras las dos correcciones.
+
+## T241–T250 · 13-nov-2026
+
+- Regresión móvil completa tras T249 (634 casos, Chromium y WebKit, un worker, sin reintentos): 601 aprobadas, 32 omitidas, 1 fallo (`routine-refresh:119` en Chromium). El caso pasa solo, tres veces, tanto con estos cambios como en un commit anterior: es una espera de 5 s demasiado corta cuando Metro compila de forma diferida bajo carga. Se subió esa espera a 20 s; Cuenta y las pruebas relacionadas se repitieron después (112 aprobadas). No es una pasada limpia única.
+- Check móvil: 60 archivos, 528 pruebas, lint y tipos sin avisos.
+- Hallazgo: `expo-keep-awake` en web rechaza la promesa («wake lock … has not activated yet») y el overlay de errores de desarrollo bloquea los clics; se usa solo en nativo con captura de errores (`useTrainingKeepAwake`).
+- Hallazgo: una lista con `role=list` sin `listitem` rompe axe (`aria-required-children`); la tira de la semana usa `role=group`.
+- PR19 (rama del editor del coach): se empujó cc33e91 con tres estabilizaciones de E2E (consulta, routine-refresh y espera de transiciones antes de axe en prescripción por serie). El fallo del CI era un axe de contraste sobre la barra inferior leído a mitad de una transición de tema. Sin verificar en CI al escribir esto.
+- Límites: sin teléfono; sin regresión completa posterior a la fila de ajustes de Cuenta.
