@@ -37,7 +37,7 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 - [ ] T251 · Bienvenida y recordatorios.
 - [ ] T252 · Notificaciones push de comentarios (D7; migración).
 - [ ] T253 · Medidas, peso y fotos en nativo (D5).
-- [ ] T254 · Logros y racha en nativo.
+- [ ] T254 · Parcial: API de solo lectura `GET /api/mobile/v1/achievements` (JWT, RLS, sin parámetros, no-store; contrato cerrado, ruta añadida a la lista exacta del proxy) con racha de semanas, entrenamientos y logros del propio alumno; cliente `achievements()` y tarjetas en Inicio solo cuando hay algo que contar. Pruebas: 2 de API, 1 de rutas, 1 de cliente, 2 E2E. Faltan la lista de logros con avance hacia los siguientes, una prueba de integración contra Supabase local y publicar la API (el remoto aún no la tiene).
 - [ ] T255 · Parcial: sugerencia de doble progresión en el registro legado (`progressionHint`, usa `suggestProgression` del dominio; no aparece con detalle por serie, sin historial ni peso corporal). Faltan el registro tipado y los cronómetros EMOM/AMRAP.
 - [ ] T256 · Check-in semanal alumno → coach (migración, RLS, web del coach).
 - [ ] T257 · Coach en el teléfono: alumnos, ficha, comentarios (D9).

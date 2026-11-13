@@ -68,6 +68,7 @@ import {
   mobileHistorySchema,
   mobileWorkoutSchema,
   mobileProgressSchema,
+  mobileAchievementsSchema,
   mobileProgressDetailSchema,
   mobileSaveSchema,
   mobileInvitationSchema,
@@ -1055,6 +1056,16 @@ export class MobileClient {
   }
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
+  }
+  /** Racha de semanas cumplidas y logros del propio alumno (solo lectura). */
+  async achievements() {
+    const parsed = mobileAchievementsSchema.safeParse(await this.read("achievements"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tus logros no son compatibles. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
   }
   async savePersonalWorkout(payload: PersonalWorkoutPayload, expectedUserId: string) {
     if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)

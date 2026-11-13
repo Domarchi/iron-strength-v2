@@ -28,6 +28,9 @@ import { savePersonalWorkout } from "../data/save-personal-workout";
 import { createMobilePersonalApi } from "./personal-api";
 import { readPersonalLibrary, mutatePersonalLibrary } from "../data/personal-library";
 import { createMobileProgressApi } from "./progress-api";
+import { createMobileAchievementsApi } from "./achievements-api";
+import { getAchievementsOverview } from "../data/achievements";
+import { getStreakSummary } from "../data/streak";
 import { createMobileExerciseApi } from "./exercise-api";
 import { listMobileExercises } from "../data/exercises";
 import { listExerciseHistory } from "../data/exercise-history";
@@ -279,6 +282,29 @@ export function mobileProgressApi() {
         detail: async (exerciseId) => {
           const value = await getExerciseProgressDetail(db, identity.profile.id, exerciseId);
           return value ? { version: 1 as const, today: santiagoDate(new Date()), ...value } : null;
+        },
+      };
+    },
+  });
+}
+
+export function mobileAchievementsApi() {
+  return createMobileAchievementsApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token),
+        id = identity.profile.id;
+      return {
+        read: async () => {
+          const streak = await getStreakSummary(db, id, santiagoDate(new Date())),
+            overview = await getAchievementsOverview(db, id, streak.longest);
+          return {
+            version: 1 as const,
+            streak: { current: streak.current, longest: streak.longest },
+            workoutCount: overview.stats.workoutCount,
+            earned: overview.earned,
+          };
         },
       };
     },

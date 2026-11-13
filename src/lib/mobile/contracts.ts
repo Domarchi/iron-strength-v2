@@ -279,3 +279,25 @@ export const mobileProgressDetailSchema = z.object({
   ),
 });
 export type MobileProgressDetail = z.infer<typeof mobileProgressDetailSchema>;
+
+export const MOBILE_ACHIEVEMENT_KINDS = [
+  "first_workout",
+  "first_record",
+  "workouts_10",
+  "streak_4",
+  "workouts_25",
+  "workouts_50",
+] as const;
+/** Racha de semanas cumplidas y logros obtenidos del propio alumno (solo lectura). */
+export const mobileAchievementsSchema = z.object({
+  version: z.literal(1),
+  streak: z.object({
+    current: z.number().int().nonnegative(),
+    longest: z.number().int().nonnegative(),
+  }),
+  workoutCount: z.number().int().nonnegative(),
+  earned: z.array(
+    z.object({ kind: z.enum(MOBILE_ACHIEVEMENT_KINDS), earnedAt: z.string().min(1) }),
+  ),
+});
+export type MobileAchievements = z.infer<typeof mobileAchievementsSchema>;

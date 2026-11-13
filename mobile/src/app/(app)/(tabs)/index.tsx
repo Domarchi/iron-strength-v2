@@ -4,6 +4,7 @@ import { TrainingDownloadCard } from "../../../components/training-download-card
 import { useCallback, useState } from "react";
 import { santiagoDate } from "../../../../../src/domain/dates";
 import { WeekStrip } from "../../../components/week-strip";
+import { HomeStats } from "../../../components/home-stats";
 import { router } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import {
@@ -44,6 +45,7 @@ function OnlineWeek() {
   const [today] = useState(() => santiagoDate(new Date()));
   const request = useCallback(() => client.week(), [client]);
   const query = useQuery(request);
+  const achievements = useQuery(useCallback(() => client.achievements(), [client]));
   if (state.status !== "authenticated") return null;
   const person = state.session.profile,
     view = query.value;
@@ -56,6 +58,7 @@ function OnlineWeek() {
       {active ? (
         <WeekStrip weekStart={active.weekStart} today={today} sessions={active.sessions} />
       ) : null}
+      {achievements.value ? <HomeStats data={achievements.value} /> : null}
       <TrainingCard />
       {active && !training.active && next ? (
         <View
