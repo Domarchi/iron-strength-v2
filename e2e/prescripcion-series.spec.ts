@@ -135,7 +135,12 @@ test("edita y recupera detalle, exige revisar conversión uniforme y guarda alte
     await page.emulateMedia({ colorScheme });
     // Axe no debe leer colores a mitad de una transición entre temas.
     await page.evaluate(() =>
-      Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))),
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a instanceof CSSTransition)
+          .map((a) => a.finished.catch(() => undefined)),
+      ),
     );
     expect(
       (

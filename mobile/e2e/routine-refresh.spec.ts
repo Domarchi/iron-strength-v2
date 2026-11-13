@@ -166,7 +166,10 @@ test("navegar a más historial conserva selección y búsqueda al volver al cat�
   await page.getByRole("textbox", { name: "Buscar ejercicios", exact: true }).fill(exercise.name);
   await page.getByRole("checkbox", { name: `Seleccionar ${exercise.name}`, exact: true }).check();
   await page.getByRole("button", { name: `Ver ficha de ${exercise.name}`, exact: true }).click();
+  const before = page.url();
   await page.getByRole("button", { name: "Ver más historial", exact: true }).click();
+  // Esperar la navegación real: volver antes de que ocurra retrocede una pantalla de más.
+  await expect.poll(() => page.url()).not.toBe(before);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goBack();
   // Bajo carga completa el catálogo vuelve a montarse tras una compilación diferida de Metro.
