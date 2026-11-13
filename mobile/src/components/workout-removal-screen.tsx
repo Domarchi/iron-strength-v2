@@ -1,3 +1,4 @@
+import { plural } from "../lib/plural";
 import { useCallback, useState } from "react";
 import { router } from "expo-router";
 import { Text, View } from "react-native";
@@ -83,7 +84,8 @@ export function WorkoutRemovalScreen({ id }: { id: string }) {
         </Text>
         <Text style={[s.body, { color: p.muted }]}>{day(w.performedOn)}</Text>
         <Text style={[s.body, { color: p.ink }]}>
-          {w.setCount} series · {w.commentCount} comentarios
+          {plural(w.setCount, "serie", "series")} ·{" "}
+          {plural(w.commentCount, "comentario", "comentarios")}
         </Text>
       </View>
     );

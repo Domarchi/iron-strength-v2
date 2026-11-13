@@ -509,7 +509,9 @@ export function ExerciseCatalog({
                 ? "Reintentar guardado local"
                 : replacing
                   ? "Reemplazar ejercicio"
-                  : `Agregar ${selected.length} ${selected.length === 1 ? "ejercicio" : "ejercicios"}`
+                  : selected.length === 0
+                    ? "Selecciona ejercicios"
+                    : `Agregar ${selected.length} ${selected.length === 1 ? "ejercicio" : "ejercicios"}`
             }
             busy={adding}
             disabled={

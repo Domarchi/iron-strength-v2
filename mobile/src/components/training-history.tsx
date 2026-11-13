@@ -190,11 +190,20 @@ export function TrainingHistory() {
         ListFooterComponent={footer ?? undefined}
         ListEmptyComponent={
           q.value ? (
-            <Text style={[s.body, { color: p.muted, paddingVertical: 24 }]}>
-              {q.value.activity.length
-                ? "No hay entrenamientos para estos filtros."
-                : "Aún no tienes entrenamientos guardados en tu cuenta. Puedes probar una demo desde Entrenar."}
-            </Text>
+            <View style={{ gap: 12, paddingVertical: 24 }}>
+              <Text style={[s.body, { color: p.muted }]}>
+                {q.value.activity.length
+                  ? "No hay entrenamientos para estos filtros."
+                  : "Aún no tienes entrenamientos guardados en tu cuenta. Puedes probar una demo desde Entrenar."}
+              </Text>
+              {q.value.activity.length ? null : (
+                <Action
+                  label="Ir a Entrenar"
+                  icon="train"
+                  onPress={() => router.navigate("/train")}
+                />
+              )}
+            </View>
           ) : undefined
         }
         contentContainerStyle={{

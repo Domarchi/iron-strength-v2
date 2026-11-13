@@ -26,11 +26,11 @@ Alcance aprobado por el propietario el 12-nov-2026: plan completo (fases A–E).
 
 ## Fase C · Biblioteca, historial y progreso
 
-- [ ] T246 · Biblioteca y editor de rutinas.
-- [ ] T247 · Ficha de ejercicio con instrucciones y demostración (D4).
-- [ ] T248 · Historial con calendario y lista virtualizada.
-- [ ] T249 · Progreso: gráficos interactivos, panel y mapa muscular.
-- [ ] T250 · Cuenta y ajustes.
+- [ ] T246 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Biblioteca y editor: pendiente ocultar/plegar rutinas de ejemplo (H8, requiere cambiar oráculos) y rediseño de filas.
+- [ ] T247 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Ficha de ejercicio con instrucciones/demostración: pendiente (D4: contenido por definir).
+- [ ] T248 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Historial: pendiente calendario con tipos de sesión y reducir «Nota conservada».
+- [ ] T249 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Progreso: pendiente gráfico interactivo, panel y mapa muscular.
+- [ ] T250 · Parcial: plurales correctos (`plural`, con prueba), botón del selector sin «Agregar 0 ejercicios» y estados vacíos de Historial/Progreso con acción «Ir a Entrenar» (110 E2E aprobadas en ambos motores). Cuenta: pendiente agrupar como ajustes nativos con tarjeta de perfil.
 
 ## Fase D · Funciones nuevas
 
