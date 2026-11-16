@@ -63,6 +63,10 @@ for (const theme of ["dark", "light"] as const)
     await expect(page.getByLabel(/Bruno Prueba\. Sin avisos/)).toBeVisible();
     await expect(page.getByText("Fuerza · 1 de 3 sesiones · último 10/11")).toBeVisible();
     await expect(page.getByText("Sin programa vigente")).toBeVisible();
+    // Tocar a un alumno con avisos muestra el detalle de cada uno.
+    await expect(page.getByText("Revisa.")).toHaveCount(0);
+    await page.getByLabel(/Ana Prueba\. 1 comentario pendiente/).click();
+    await expect(page.getByText("Revisa.")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       360,
     );
