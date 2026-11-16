@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordLabel, recordsOfWorkout } from "./workout-records";
+import { recordLabel, recordsOfWorkout, volumeComparisons } from "./workout-records";
 
 const ex = (name: string, points: unknown[]) => ({ exerciseId: name, name, points }) as never;
 describe("recordsOfWorkout", () => {
@@ -32,5 +32,29 @@ describe("recordsOfWorkout", () => {
     expect(recordsOfWorkout({ exercises: [] }, "w1")).toEqual([]);
     expect(recordLabel("otra")).toBe("Nueva marca");
     expect(recordLabel("weightKg")).toBe("Más peso");
+  });
+});
+
+describe("volumeComparisons", () => {
+  const pt = (workoutId: string, startedAt: string, kg: number) => ({
+    workoutId,
+    startedAt,
+    totals: { externalVolumeKg: kg },
+  });
+  it("compara con la sesión anterior del mismo ejercicio", () => {
+    const r = volumeComparisons(
+      {
+        exercises: [
+          ex("Sentadilla", [
+            pt("b", "2026-11-10T10:00Z", 2600.4),
+            pt("a", "2026-11-03T10:00Z", 2400),
+          ]),
+          ex("Banca", [pt("b", "2026-11-10T10:00Z", 900)]),
+          ex("Plancha", [pt("b", "2026-11-10T10:00Z", 0), pt("a", "2026-11-03T10:00Z", 0)]),
+        ] as never,
+      },
+      "b",
+    );
+    expect(r).toEqual([{ name: "Sentadilla", volumeKg: 2600, previousKg: 2400 }]);
   });
 });

@@ -40,3 +40,27 @@ const LABEL: Record<string, string> = {
   distanceMeters: "Más distancia",
 };
 export const recordLabel = (metric: string) => LABEL[metric] ?? "Nueva marca";
+
+export type VolumeComparison = { name: string; volumeKg: number; previousKg: number };
+
+/** Volumen por ejercicio frente a la sesión anterior que lo incluyó; solo con carga en ambas. */
+export function volumeComparisons(
+  progress: Pick<TrainingProgress, "exercises">,
+  workoutId: string,
+): VolumeComparison[] {
+  const out: VolumeComparison[] = [];
+  for (const exercise of progress.exercises) {
+    const points = [...exercise.points].sort((a, b) => a.startedAt.localeCompare(b.startedAt)),
+      at = points.findIndex((p) => p.workoutId === workoutId);
+    if (at < 1) continue;
+    const now = points[at].totals.externalVolumeKg,
+      before = points[at - 1].totals.externalVolumeKg;
+    if (now > 0 && before > 0)
+      out.push({
+        name: exercise.name,
+        volumeKg: Math.round(now),
+        previousKg: Math.round(before),
+      });
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
