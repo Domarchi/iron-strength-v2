@@ -7,6 +7,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 import { Action, Notice, Page, s, usePalette } from "./ui";
 import { WorkoutComments } from "./workout-comments";
+import { WorkoutRecordsCard } from "./workout-records-card";
 import type { TypedWorkout as Result } from "../../../src/lib/mobile/typed-recording-contracts";
 import { formatPresentedTrainingMetrics as formatTrainingMetrics } from "../../../src/domain/training-metrics";
 const kind = {
@@ -157,6 +158,7 @@ export function TypedResult({
           ) : null}
         </ResultOptions>
       </View>
+      <WorkoutRecordsCard workoutId={w.id} />
       <ResultNote note={w.note} />
       {w.exercises.map((e) => (
         <View key={e.id} style={[s.divider, { borderColor: p.border, gap: 8 }]}>
