@@ -1,19 +1,18 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { router } from "expo-router";
 import { View } from "react-native";
-import { Action, Notice, Page, ScreenIntro } from "../../components/ui";
-import { Badge, EmptyState, ListRow, Skeleton } from "../../ui/display";
-import { Avatar } from "../../ui/display";
-import { Divider } from "../../ui/display";
-import { plural } from "../../lib/plural";
-import { useQuery } from "../../lib/use-query";
-import { useSession } from "../../lib/session";
+import { Action, Notice, Page, ScreenIntro } from "../../../components/ui";
+import { Badge, EmptyState, ListRow, Skeleton } from "../../../ui/display";
+import { Avatar } from "../../../ui/display";
+import { Divider } from "../../../ui/display";
+import { plural } from "../../../lib/plural";
+import { useQuery } from "../../../lib/use-query";
+import { useSession } from "../../../lib/session";
 
 /** Alumnos del coach: quién necesita atención. Solo lectura; planificar y comentar sigue en la web. */
 export default function Students() {
   const { client, state } = useSession();
-  const query = useQuery(useCallback(() => client.students(), [client])),
-    [open, setOpen] = useState<string | null>(null);
+  const query = useQuery(useCallback(() => client.students(), [client]));
   if (state.status !== "authenticated") return null;
   if (state.session.profile.role !== "coach")
     return (
@@ -66,21 +65,12 @@ export default function Students() {
                   <Badge label={plural(st.signals.length, "aviso", "avisos")} tone="accent" />
                 ) : null
               }
-              onPress={st.signals.length ? () => setOpen(open === st.id ? null : st.id) : undefined}
+              chevron
+              onPress={() => router.push({ pathname: "/students/[id]", params: { id: st.id } })}
               accessibilityLabel={`${st.fullName}. ${
                 st.signals.length ? st.signals.map((x) => x.label).join(". ") : "Sin avisos"
               }`}
             />
-            {open === st.id
-              ? st.signals.map((x) => (
-                  <ListRow
-                    key={x.kind}
-                    title={x.label}
-                    subtitle={x.detail}
-                    accessibilityLabel={`${x.label}. ${x.detail}`}
-                  />
-                ))
-              : null}
           </View>
         ))}
       </View>
