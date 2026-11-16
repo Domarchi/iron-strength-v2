@@ -29,7 +29,7 @@ async function call(user: User, body?: unknown, query = "") {
 }
 
 describe("APIs nativas nuevas con Auth/RLS reales", () => {
-  let coach: User, ana: User, bea: User, inactive: User;
+  let coach: User, ana: User, bea: User;
   beforeAll(async () => {
     await resetUsers(admin);
     coach = await createProfileUser(admin, {
@@ -49,7 +49,7 @@ describe("APIs nativas nuevas con Auth/RLS reales", () => {
       email: "new-bea@test.local",
       coachId: coach.id,
     });
-    inactive = await createProfileUser(admin, {
+    await createProfileUser(admin, {
       role: "student",
       name: "Inactiva",
       email: "new-off@test.local",
