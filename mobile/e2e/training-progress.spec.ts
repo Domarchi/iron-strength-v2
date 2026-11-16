@@ -50,6 +50,11 @@ for (const theme of ["light", "dark"] as const) {
       .getByRole("button", { name: "Ver progreso de Plancha · Tiempo", exact: true })
       .click();
     await expect(page.getByLabel("Valor del periodo")).toHaveText("75 s");
+    // Tocar un punto del gráfico muestra su fecha y valor.
+    const pick = page.getByRole("button", { name: /^Ver valor del / }).first();
+    await pick.click();
+    await expect(pick).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByText(/^\d+\/\d+: \d+ s$/).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "1RM estimado", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "4 semanas", exact: true }).click();
     await page.getByRole("button", { name: "Tiempo total", exact: true }).click();
