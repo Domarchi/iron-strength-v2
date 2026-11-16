@@ -1,6 +1,11 @@
 import { Text, View, Pressable } from "react-native";
 import { trainingCalendar, type TrainingActivity } from "../../../src/domain/training-progress";
 import { s, usePalette } from "./ui";
+const kindLabel = {
+  assigned: "de tu programa",
+  personal: "de tus rutinas",
+  free: "libre",
+} as const;
 const weekdays = ["L", "M", "M", "J", "V", "S", "D"];
 const readable = (date: string) =>
   new Intl.DateTimeFormat("es-CL", {
@@ -21,7 +26,10 @@ export function TrainingCalendar({
   onSelect: (date: string | null) => void;
 }) {
   const p = usePalette(),
-    calendar = trainingCalendar(month, activity);
+    calendar = trainingCalendar(month, activity),
+    kindsByDay = new Map<string, Set<TrainingActivity["sourceKind"]>>();
+  for (const a of activity)
+    kindsByDay.set(a.date, (kindsByDay.get(a.date) ?? new Set()).add(a.sourceKind));
   return (
     <View style={{ gap: 4 }}>
       <View style={{ flexDirection: "row" }}>
@@ -34,50 +42,64 @@ export function TrainingCalendar({
         ))}
       </View>
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-        {calendar.days.map((d) => (
-          <Pressable
-            key={d.date}
-            disabled={!d.inMonth}
-            accessibilityRole="button"
-            accessibilityLabel={`${readable(d.date)} · ${d.workoutIds.length} ${d.workoutIds.length === 1 ? "entrenamiento" : "entrenamientos"}`}
-            accessibilityState={{ selected: selected === d.date, disabled: !d.inMonth }}
-            aria-pressed={selected === d.date}
-            onPress={() => onSelect(selected === d.date ? null : d.date)}
-            style={{
-              width: "14.285714%",
-              minWidth: 44,
-              minHeight: 52,
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 3,
-              opacity: d.inMonth ? 1 : 0.35,
-            }}
-          >
-            <View
+        {calendar.days.map((d) => {
+          const kinds = [...(kindsByDay.get(d.date) ?? [])],
+            kindText = kinds.length ? ` (${kinds.map((k) => kindLabel[k]).join(", ")})` : "";
+          return (
+            <Pressable
+              key={d.date}
+              disabled={!d.inMonth}
+              accessibilityRole="button"
+              accessibilityLabel={`${readable(d.date)} · ${d.workoutIds.length} ${d.workoutIds.length === 1 ? "entrenamiento" : "entrenamientos"}${kindText}`}
+              accessibilityState={{ selected: selected === d.date, disabled: !d.inMonth }}
+              aria-pressed={selected === d.date}
+              onPress={() => onSelect(selected === d.date ? null : d.date)}
               style={{
-                width: 36,
-                minHeight: 36,
-                borderRadius: 18,
+                width: "14.285714%",
+                minWidth: 44,
+                minHeight: 52,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: selected === d.date ? p.button : "transparent",
+                gap: 3,
+                opacity: d.inMonth ? 1 : 0.35,
               }}
             >
-              <Text style={[s.body, s.number, { color: selected === d.date ? p.onButton : p.ink }]}>
-                {Number(d.date.slice(-2))}
-              </Text>
-            </View>
-            <View
-              style={{
-                height: 5,
-                width: d.workoutIds.length > 1 ? 10 : 5,
-                borderRadius: 3,
-                backgroundColor: d.workoutIds.length ? p.blue : "transparent",
-              }}
-            />
-          </Pressable>
-        ))}
+              <View
+                style={{
+                  width: 36,
+                  minHeight: 36,
+                  borderRadius: 18,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: selected === d.date ? p.button : "transparent",
+                }}
+              >
+                <Text
+                  style={[s.body, s.number, { color: selected === d.date ? p.onButton : p.ink }]}
+                >
+                  {Number(d.date.slice(-2))}
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", gap: 2, height: 5 }}>
+                {kinds.map((k) => (
+                  <View
+                    key={k}
+                    style={{
+                      height: 5,
+                      width: 5,
+                      borderRadius: 3,
+                      backgroundColor: k === "assigned" ? p.blue : p.muted,
+                    }}
+                  />
+                ))}
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
+      <Text style={[s.caption, { color: p.muted, paddingTop: 6 }]}>
+        Punto de color: programa · punto gris: rutina propia o libre
+      </Text>
     </View>
   );
 }
