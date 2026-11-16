@@ -77,7 +77,7 @@ export class AccountRemovalController {
   }
   private ensure() {
     if (!this.state.ready || this.state.blocked || this.state.busy)
-      throw Error("Espera o recupera el recibo antes de continuar.");
+      throw Error("Espera o recupera la eliminación pendiente antes de continuar.");
   }
   private async write(record: Record) {
     const encoded = JSON.stringify(record);
@@ -85,12 +85,12 @@ export class AccountRemovalController {
     this.publish({ record });
     await this.storage.set(REMOVAL_KEY, encoded);
     if ((await this.storage.get(REMOVAL_KEY)) !== encoded)
-      throw Error("No pudimos confirmar el recibo en este dispositivo.");
+      throw Error("No pudimos guardar la eliminación pendiente en este dispositivo.");
   }
   private async removeReceipt() {
     await this.storage.remove(REMOVAL_KEY);
     if ((await this.storage.get(REMOVAL_KEY)) !== null)
-      throw Error("No pudimos retirar el recibo local. Reintenta.");
+      throw Error("No pudimos terminar la limpieza local. Reintenta.");
   }
   private async clean(record: Record, uncertain: boolean) {
     if (record.phase !== "confirmed" && !uncertain)
@@ -119,7 +119,7 @@ export class AccountRemovalController {
         error:
           e instanceof Error
             ? e.message
-            : "No pudimos completar la eliminación. Conservamos el recibo.",
+            : "No pudimos completar la eliminación. Conservamos la eliminación pendiente.",
       });
       throw e;
     } finally {
@@ -151,7 +151,7 @@ export class AccountRemovalController {
       await this.removeReceipt();
       this.publish({ record: null, error: null });
     } catch (e) {
-      this.publish({ error: "No pudimos retirar el recibo. Tus registros se conservan." });
+      this.publish({ error: "No pudimos terminar la limpieza. Tus registros se conservan." });
       throw e;
     } finally {
       this.publish({ busy: false });
