@@ -32,3 +32,8 @@
 - Hallazgo: una lista con `role=list` sin `listitem` rompe axe (`aria-required-children`); la tira de la semana usa `role=group`.
 - PR19 (rama del editor del coach): se empujó cc33e91 con tres estabilizaciones de E2E (consulta, routine-refresh y espera de transiciones antes de axe en prescripción por serie). El fallo del CI era un axe de contraste sobre la barra inferior leído a mitad de una transición de tema. Sin verificar en CI al escribir esto.
 - Límites: sin teléfono; sin regresión completa posterior a la fila de ajustes de Cuenta.
+
+## Integración de las API nuevas · 16-nov-2026
+
+- `src/lib/mobile/new-apis-production.int.test.ts`: 4 pruebas con Auth/RLS reales (coach, dos alumnos y uno inactivo) sobre una pila aislada propia en el puerto 56321 (worktree privado con la guarda local ajustada, nunca 54321/55321 del propietario): check-in (crea, corrige sin duplicar, aísla alumnos, el coach lo lee solo por RLS), medidas (guarda, 409 al repetir el día, reemplazo confirmado, futuro rechazado, otro alumno no ve ni borra), logros (solo los propios) y alumnos del coach (solo coach, sin inactivos, 403 a alumnos). 4/4 aprobadas en 6,4 s.
+- Estas pruebas también correrán en el CI de la PR #23 contra la pila efímera de GitHub. Siguen sin publicarse las rutas ni la migración en remoto.
