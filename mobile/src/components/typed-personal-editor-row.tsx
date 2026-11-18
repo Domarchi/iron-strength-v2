@@ -150,28 +150,48 @@ export function PersonalEditorRow({
       ) : null}
       {error ? <Notice message={error} /> : null}
       {!item.series ? (
-        <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
-          <PersonalField
-            title="Series"
-            label={`Series de ${item.name}`}
-            value={item.sets}
-            onChange={(sets) => change({ sets })}
-            numeric
-            maxLength={20}
-            disabled={disabled}
-          />
-          {personalTargetFields(item.recordType).map((field) => (
-            <PersonalField
-              key={field}
-              title={targetInfo[field].title}
-              label={`${targetInfo[field].label} de ${item.name}`}
-              value={item[field]}
-              onChange={(value) => change({ [field]: value })}
-              numeric
-              maxLength={20}
-              disabled={disabled}
-            />
-          ))}
+        <View style={{ gap: 10 }}>
+          {(() => {
+            const fields = personalTargetFields(item.recordType),
+              reps = fields.filter((f) => f === "repsMin" || f === "repsMax"),
+              load = fields.filter((f) => f !== "repsMin" && f !== "repsMax"),
+              split = reps.length > 0 && load.length > 0,
+              first = split ? reps : fields,
+              field = (key: (typeof fields)[number]) => (
+                <PersonalField
+                  key={key}
+                  title={targetInfo[key].title}
+                  label={`${targetInfo[key].label} de ${item.name}`}
+                  value={item[key]}
+                  onChange={(value) => change({ [key]: value })}
+                  numeric
+                  maxLength={20}
+                  disabled={disabled}
+                />
+              );
+            return (
+              <>
+                <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
+                  <PersonalField
+                    title="Series"
+                    label={`Series de ${item.name}`}
+                    value={item.sets}
+                    onChange={(sets) => change({ sets })}
+                    numeric
+                    maxLength={20}
+                    disabled={disabled}
+                  />
+                  {first.map(field)}
+                </View>
+                {split ? (
+                  <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
+                    {load.map(field)}
+                    <View style={{ flex: Math.max(0, 3 - load.length) }} />
+                  </View>
+                ) : null}
+              </>
+            );
+          })()}
         </View>
       ) : (
         <>
