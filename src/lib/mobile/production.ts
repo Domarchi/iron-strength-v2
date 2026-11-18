@@ -31,6 +31,8 @@ import { createMobileProgressApi } from "./progress-api";
 import { createMobileAchievementsApi } from "./achievements-api";
 import { createMobileCheckinApi } from "./checkin-api";
 import { createMobileStudentsApi } from "./students-api";
+import { createMobileStudentDetailApi } from "./student-detail-api";
+import { getStudentActivity } from "../data/student-activity";
 import { createMobileMeasurementsApi } from "./measurements-api";
 import { deleteMeasurement, listMeasurements, saveMeasurement } from "../data/measurements";
 import { listStudentOverviews } from "../data/students";
@@ -355,6 +357,20 @@ export function mobileStudentsApi() {
               })),
           };
         },
+      };
+    },
+  });
+}
+
+export function mobileStudentDetailApi() {
+  return createMobileStudentDetailApi({
+    authorize: async (token) => {
+      const identity = await mobileProductionDependencies().authorize(token);
+      if (!identity) return null;
+      const db = client(token);
+      return {
+        isCoach: identity.profile.role === "coach",
+        read: (studentId) => getStudentActivity(db, studentId),
       };
     },
   });

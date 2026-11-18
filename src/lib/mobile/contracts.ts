@@ -357,6 +357,24 @@ export const mobileStudentsSchema = z.object({
 });
 export type MobileStudents = z.infer<typeof mobileStudentsSchema>;
 
+/** Ficha de un alumno para su coach: últimos entrenamientos y comentarios (solo lectura). */
+export const mobileStudentDetailSchema = z.object({
+  version: z.literal(1),
+  workouts: z.array(
+    z.object({ id: z.uuid(), date: z.iso.date(), sets: z.number().int().nonnegative() }),
+  ),
+  comments: z.array(
+    z.object({
+      id: z.uuid(),
+      workoutId: z.uuid(),
+      body: z.string().min(1).max(500),
+      createdAt: z.iso.datetime(),
+      authorKind: z.enum(["student", "coach"]),
+    }),
+  ),
+});
+export type MobileStudentDetail = z.infer<typeof mobileStudentDetailSchema>;
+
 const optionalMeasure = z.number().finite().positive().max(1000).nullable();
 /** Medidas corporales propias (peso y tres perímetros), un registro por fecha. */
 export const mobileMeasurementSchema = z.object({

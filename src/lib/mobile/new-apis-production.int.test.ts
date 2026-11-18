@@ -6,6 +6,7 @@ import {
   mobileAchievementsApi,
   mobileCheckinApi,
   mobileMeasurementsApi,
+  mobileStudentDetailApi,
   mobileStudentsApi,
 } from "./production";
 import { weekStartOf } from "../../domain/dates";
@@ -168,5 +169,38 @@ describe("APIs nativas nuevas con Auth/RLS reales", () => {
     expect(names).not.toContain("Inactiva");
     expect((await api.read(await call(ana))).status).toBe(403);
     expect((await api.read(await call(coach, undefined, "?studentId=" + ana.id))).status).toBe(400);
+  });
+
+  it("ficha del alumno: coach ve actividad y comentarios de los suyos; alumnos y ajenos, no", async () => {
+    const workoutId = crypto.randomUUID();
+    await admin.from("workouts").insert({
+      id: workoutId,
+      student_id: ana.id,
+      started_at: "2026-11-10T15:00:00Z",
+      finished_at: "2026-11-10T16:00:00Z",
+      duration_seconds: 3600,
+    });
+    await admin.from("comments").insert([
+      { workout_id: workoutId, author_id: ana.id, body: "¿Subo el peso?" },
+      { workout_id: workoutId, author_id: coach.id, body: "Sí, 2,5 kg." },
+    ]);
+    const api = mobileStudentDetailApi();
+    const ok = await api.read(await call(coach), ana.id);
+    expect(ok.status).toBe(200);
+    const body = await ok.json();
+    expect(body.workouts).toEqual([{ id: workoutId, date: "2026-11-10", sets: 0 }]);
+    expect(body.comments.map((c: { authorKind: string }) => c.authorKind).sort()).toEqual([
+      "coach",
+      "student",
+    ]);
+    expect((await api.read(await call(ana), ana.id)).status).toBe(403);
+    expect((await api.read(await call(bea), ana.id)).status).toBe(403);
+    expect((await api.read(await call(coach), crypto.randomUUID())).status).toBe(404);
+    const other = await createProfileUser(admin, {
+      role: "coach",
+      name: "Otro",
+      email: "new-other@test.local",
+    });
+    expect((await api.read(await call(other), ana.id)).status).toBe(404);
   });
 });
