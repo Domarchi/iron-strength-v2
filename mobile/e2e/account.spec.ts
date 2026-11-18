@@ -1,3 +1,4 @@
+import { openDemo } from "./support/demo";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { fulfillEmptyCommentReads } from "./support/comment-fixture";
@@ -194,7 +195,7 @@ test("respuesta incierta conserva el registro y recibo tras recarga; volver no a
 }) => {
   const calls = await enter(page, "student", 503);
   await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
-  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await openDemo(page, "A");
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByLabel("Peso serie 1", { exact: true }).fill("17");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
