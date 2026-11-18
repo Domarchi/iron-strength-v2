@@ -24,6 +24,20 @@ const students = {
   ],
 };
 
+const detail = {
+  version: 1,
+  workouts: [{ id: "44444444-4444-4444-8444-444444444444", date: "2026-11-10", sets: 12 }],
+  comments: [
+    {
+      id: "55555555-5555-4555-8555-555555555555",
+      workoutId: "44444444-4444-4444-8444-444444444444",
+      body: "¿Puedo subir el peso?",
+      createdAt: "2026-11-10T15:00:00.000Z",
+      authorKind: "student",
+    },
+  ],
+};
+
 async function asCoach(page: import("@playwright/test").Page) {
   await page.route(origin + "/api/mobile/v1/auth/**", (route) =>
     route.fulfill({
@@ -55,6 +69,9 @@ for (const theme of ["dark", "light"] as const)
     await page.route(origin + "/api/mobile/v1/students", (route) =>
       route.fulfill({ json: students }),
     );
+    await page.route(origin + "/api/mobile/v1/students/*", (route) =>
+      route.fulfill({ json: detail }),
+    );
     await asCoach(page);
     await page.getByRole("tab", { name: "Cuenta", exact: true }).click();
     await page.getByRole("button", { name: "Mis alumnos", exact: true }).click();
@@ -68,7 +85,9 @@ for (const theme of ["dark", "light"] as const)
     await expect(page.getByRole("heading", { name: "Ana Prueba" })).toBeVisible();
     await expect(page.getByText("Revisa.")).toBeVisible();
     await expect(page.getByText("Fuerza · 1 de 3 sesiones", { exact: true })).toBeVisible();
-    await expect(page.getByText("10/11/2026")).toBeVisible();
+    await expect(page.getByText("10/11/2026").first()).toBeVisible();
+    await expect(page.getByText("12 series")).toBeVisible();
+    await expect(page.getByText("¿Puedo subir el peso?")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       360,
     );

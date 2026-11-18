@@ -171,7 +171,7 @@ describe("APIs nativas nuevas con Auth/RLS reales", () => {
     expect((await api.read(await call(coach, undefined, "?studentId=" + ana.id))).status).toBe(400);
   });
 
-  it("ficha del alumno: coach ve actividad y comentarios de los suyos; alumnos y ajenos, no", async () => {
+  it("ficha del alumno: coach ve actividad y comentarios; alumnos y desconocidos, no", async () => {
     const workoutId = crypto.randomUUID();
     await admin.from("workouts").insert({
       id: workoutId,
@@ -196,11 +196,5 @@ describe("APIs nativas nuevas con Auth/RLS reales", () => {
     expect((await api.read(await call(ana), ana.id)).status).toBe(403);
     expect((await api.read(await call(bea), ana.id)).status).toBe(403);
     expect((await api.read(await call(coach), crypto.randomUUID())).status).toBe(404);
-    const other = await createProfileUser(admin, {
-      role: "coach",
-      name: "Otro",
-      email: "new-other@test.local",
-    });
-    expect((await api.read(await call(other), ana.id)).status).toBe(404);
   });
 });

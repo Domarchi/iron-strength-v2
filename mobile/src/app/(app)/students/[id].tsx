@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 import { Action, Notice, Page, ScreenIntro } from "../../../components/ui";
-import { Avatar, EmptyState, ListRow, Skeleton } from "../../../ui/display";
+import { Avatar, EmptyState, ListRow, SectionHeader, Skeleton } from "../../../ui/display";
 import { plural } from "../../../lib/plural";
 import { useQuery } from "../../../lib/use-query";
 import { useSession } from "../../../lib/session";
@@ -11,7 +11,10 @@ import { useSession } from "../../../lib/session";
 export default function StudentDetail() {
   const { id } = useLocalSearchParams<{ id: string }>(),
     { client, state } = useSession(),
-    query = useQuery(useCallback(() => client.students(), [client]));
+    query = useQuery(useCallback(() => client.students(), [client])),
+    activity = useQuery(
+      useCallback(() => (id ? client.studentDetail(id) : Promise.resolve(null)), [client, id]),
+    );
   if (state.status !== "authenticated") return null;
   const back = (
     <Action label="Volver a mis alumnos" quiet onPress={() => router.navigate("/students")} />
@@ -62,6 +65,35 @@ export default function StudentDetail() {
           ) : (
             <ListRow title="Sin avisos" subtitle="Nada que atender por ahora." />
           )}
+          {activity.error ? <Notice message={activity.error} retry={activity.retry} /> : null}
+          {activity.value ? (
+            <>
+              <SectionHeader title="Últimos entrenamientos" />
+              {activity.value.workouts.length ? (
+                activity.value.workouts.map((w) => (
+                  <ListRow
+                    key={w.id}
+                    title={w.date.split("-").reverse().join("/")}
+                    subtitle={plural(w.sets, "serie", "series")}
+                  />
+                ))
+              ) : (
+                <ListRow title="Aún no entrena" subtitle="Cuando registre uno, aparecerá aquí." />
+              )}
+              <SectionHeader title="Conversación reciente" />
+              {activity.value.comments.length ? (
+                activity.value.comments.map((c) => (
+                  <ListRow
+                    key={c.id}
+                    title={c.authorKind === "student" ? st.fullName : "Tú"}
+                    subtitle={c.body}
+                  />
+                ))
+              ) : (
+                <ListRow title="Sin comentarios" subtitle="Responder sigue en la web." />
+              )}
+            </>
+          ) : null}
         </>
       ) : null}
     </Page>

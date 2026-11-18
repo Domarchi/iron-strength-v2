@@ -70,6 +70,7 @@ import {
   mobileProgressSchema,
   mobileAchievementsSchema,
   mobileCheckinSchema,
+  mobileStudentDetailSchema,
   mobileStudentsSchema,
   mobileMeasurementsSchema,
   mobileMeasurementResultSchema,
@@ -1095,6 +1096,18 @@ export class MobileClient {
       throw new MobileError(
         "version",
         "La lista de alumnos no es compatible. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
+  }
+  /** Últimos entrenamientos y comentarios de un alumno (solo para el rol coach). */
+  async studentDetail(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese alumno no está disponible.", 404);
+    const parsed = mobileStudentDetailSchema.safeParse(await this.read(`students/${id}`));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La ficha del alumno no es compatible. Actualiza la app y reintenta.",
       );
     return parsed.data;
   }
