@@ -53,9 +53,7 @@ for (const family of ["correction", "removal"] as const) {
     ).toBeVisible();
     await page.getByRole("button", { name: `Releer ${label} local`, exact: true }).click();
     await expect(page.getByText(/Se reemplazará/)).toBeVisible();
-    await page
-      .getByRole("button", { name: `Confirmar relectura de ${label}`, exact: true })
-      .click();
+    await page.getByRole("button", { name: `Volver a comprobar ${label}`, exact: true }).click();
     expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBe('{"version":99}');
     await expect(page.getByRole("button", { name: "Salir", exact: true })).toBeDisabled();
     await page.evaluate(
@@ -72,9 +70,7 @@ for (const family of ["correction", "removal"] as const) {
       { key, user: downloadId(1), family },
     );
     await page.getByRole("button", { name: `Releer ${label} local`, exact: true }).click();
-    await page
-      .getByRole("button", { name: `Confirmar relectura de ${label}`, exact: true })
-      .click();
+    await page.getByRole("button", { name: `Volver a comprobar ${label}`, exact: true }).click();
     await expect(page.getByRole("button", { name: "Salir", exact: true })).toBeEnabled();
     expect(c.calls).toEqual([]);
     expect(c.correction.calls).toEqual([]);

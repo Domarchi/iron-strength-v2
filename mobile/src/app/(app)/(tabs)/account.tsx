@@ -14,6 +14,9 @@ import { useState } from "react";
 import { router } from "expo-router";
 import { Linking, Text, View } from "react-native";
 import { Action, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
+import { AlertsSettings } from "../../../components/alerts-settings";
+import { Avatar } from "../../../ui/display";
+import { NavRow } from "../../../components/nav-row";
 import { AppearanceSelect } from "../../../components/appearance-select";
 import { useSession } from "../../../lib/session";
 import { useTraining } from "../../../lib/training-context";
@@ -79,12 +82,15 @@ export default function Account() {
   return (
     <Page>
       <ScreenIntro title="Cuenta" />
-      <View style={{ gap: 6 }}>
-        <Text style={[s.subheading, { color: p.ink }]}>{person.fullName}</Text>
-        <Text style={[s.body, { color: p.muted }]}>{person.email}</Text>
-        <Text style={[s.caption, { color: p.blue }]}>
-          {person.role === "coach" ? "COACH" : "ALUMNO"}
-        </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+        <Avatar name={person.fullName} size={56} tone="accent" />
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={[s.subheading, { color: p.ink }]}>{person.fullName}</Text>
+          <Text style={[s.body, { color: p.muted }]}>{person.email}</Text>
+          <Text style={[s.caption, { color: p.blue }]}>
+            {person.role === "coach" ? "COACH" : "ALUMNO"}
+          </Text>
+        </View>
       </View>
       <TrainingCard />
       <CommentDraftCard allowDiscard />
@@ -97,29 +103,44 @@ export default function Account() {
           Preferencias
         </Text>
         <AppearanceSelect plain />
+        <AlertsSettings />
         <TrainingPreferencesEditor plain />
       </View>
       <View style={[s.divider, { borderColor: p.border }]}>
         <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
           Datos y ayuda
         </Text>
-        <Action label="Mis ejercicios" quiet onPress={() => router.navigate("/my-exercises")} />
+        <NavRow
+          label="Logros"
+          hint="Tus hitos y lo que falta"
+          onPress={() => router.navigate("/achievements")}
+        />
+        <NavRow
+          label="Medidas corporales"
+          hint="Peso y perímetros"
+          onPress={() => router.navigate("/measurements")}
+        />
+        <NavRow label="Mis ejercicios" onPress={() => router.navigate("/my-exercises")} />
         <TrainingDownloadCard />
-        <Action label="Privacidad y ayuda" quiet onPress={() => router.navigate("/privacy")} />
+        <NavRow label="Privacidad y ayuda" onPress={() => router.navigate("/privacy")} />
       </View>
       {error ? <Notice message={error} /> : null}
       {person.role === "coach" ? (
         <>
           <Text style={[s.subheading, { color: p.ink }]}>Tu espacio de coach</Text>
-          <Action
+          <NavRow
+            label="Mis alumnos"
+            hint="Quién necesita atención"
+            onPress={() => router.navigate("/students")}
+          />
+          <NavRow
             label="Planificar rutinas en la web"
             onPress={() => {
               void open("/coach/programs");
             }}
           />
-          <Action
+          <NavRow
             label="Ver mis alumnos en la web"
-            secondary
             onPress={() => {
               void open("/coach/students");
             }}
@@ -127,9 +148,8 @@ export default function Account() {
           <Text style={[s.caption, { color: p.muted }]}>Se abre en tu navegador.</Text>
         </>
       ) : null}
-      <Action
+      <NavRow
         label="Gestionar cuenta en la web"
-        secondary
         onPress={() => {
           void open("/account");
         }}
@@ -235,7 +255,11 @@ export default function Account() {
           void logout();
         }}
       />
-      <Action label="Ver rutinas de ejemplo" secondary onPress={() => router.navigate("/train")} />
+      <NavRow
+        label="Ver rutinas de ejemplo"
+        hint="Demos locales, no se envían al coach"
+        onPress={() => router.navigate("/train")}
+      />
       <DeleteAccount />
     </Page>
   );

@@ -24,6 +24,11 @@ export function isMobileEndpointPath(path: string): boolean {
       "/api/mobile/v1/typed-recordings",
       "/api/mobile/v1/progress",
       "/api/mobile/v1/training-progress",
+      "/api/mobile/v1/achievements",
+      "/api/mobile/v1/checkins",
+      "/api/mobile/v1/students",
+      "/api/mobile/v1/measurements",
+      "/api/mobile/v1/measurements/delete",
       "/api/mobile/v1/workout-corrections",
       "/api/mobile/v1/workout-removals",
       "/api/mobile/v1/exercises",
@@ -47,6 +52,9 @@ export function isMobileEndpointPath(path: string): boolean {
       path,
     ) ||
     /^\/api\/mobile\/v1\/workout-removals\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+      path,
+    ) ||
+    /^\/api\/mobile\/v1\/students\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(?:\/comments)?$/i.test(
       path,
     ) ||
     COMMENTS.test(path) ||

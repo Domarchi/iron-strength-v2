@@ -6,13 +6,18 @@ import { workoutTitle } from "../../../src/domain/workout-title";
 import { formatWeight, formatDistance } from "../../../src/domain/training-tools";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { Icon } from "./icon";
+import { Badge } from "../ui/display";
+import { plural } from "../lib/plural";
 import { day, s, usePalette } from "./ui";
 export const TrainingActivityRow = memo(function TrainingActivityRow({
   row,
   from = "history",
+  records = 0,
 }: {
   row: TrainingActivity;
   from?: "history" | "summary";
+  /** Marcas personales mejoradas en este entrenamiento. */
+  records?: number;
 }) {
   const p = usePalette(),
     { preferences } = useTrainingPreferences(),
@@ -59,6 +64,12 @@ export const TrainingActivityRow = memo(function TrainingActivityRow({
       </Text>
       {values.length ? (
         <Text style={[s.caption, { color: p.muted }]}>{values.join(" · ")}</Text>
+      ) : null}
+      {records > 0 ? (
+        <Badge
+          label={`Récord · ${plural(records, "marca mejorada", "marcas mejoradas")}`}
+          tone="rec"
+        />
       ) : null}
       {row.note ? (
         <Text numberOfLines={2} style={[s.caption, { color: p.muted }]}>

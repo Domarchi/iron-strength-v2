@@ -1,3 +1,4 @@
+import { openDemo } from "./support/demo";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { fulfillEmptyCommentReads } from "./support/comment-fixture";
@@ -194,7 +195,7 @@ test("respuesta incierta conserva el registro y recibo tras recarga; volver no a
 }) => {
   const calls = await enter(page, "student", 503);
   await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
-  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await openDemo(page, "A");
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByLabel("Peso serie 1", { exact: true }).fill("17");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
@@ -273,8 +274,10 @@ test("coach conserva gestión y no ofrece borrar; formato desconocido de recibo 
   ).toBeVisible();
   await page.evaluate((key) => localStorage.setItem(key, '{"version":99}'), receiptKey);
   await page.reload();
-  await expect(page.getByText(/No pudimos leer el recibo/)).toBeVisible();
-  await page.getByRole("button", { name: "Reintentar lectura del recibo", exact: true }).click();
+  await expect(page.getByText(/No pudimos leer el registro de la limpieza/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Reintentar comprobación de la limpieza", exact: true })
+    .click();
   expect(await page.evaluate((key) => localStorage.getItem(key), receiptKey)).toBe(
     '{"version":99}',
   );

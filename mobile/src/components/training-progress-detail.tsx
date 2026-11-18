@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
-import { FlatList, Text, View } from "react-native";
-import Svg, { Line, Polyline, Circle } from "react-native-svg";
+import { FlatList, Pressable, Text, View } from "react-native";
+import Svg, { Line, Polyline, Circle, Text as SvgText } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   compareTrainingProgress,
@@ -39,7 +39,8 @@ export function TrainingProgressDetail() {
     request = useCallback(() => client.trainingProgress(), [client]),
     q = useQuery(request),
     [showMarks, setShowMarks] = useState(false),
-    [showInfo, setShowInfo] = useState(false);
+    [showInfo, setShowInfo] = useState(false),
+    [picked, setPicked] = useState<number | null>(null);
   const e = q.value?.exercises.find(
       (e) => e.exerciseId === params.id && (e.recordType ?? "legacy") === params.recordType,
     ),
@@ -192,25 +193,90 @@ export function TrainingProgressDetail() {
             ) : null}
           </View>
           {coords.length ? (
-            <View
-              accessible
-              accessibilityRole="image"
-              accessibilityLabel={`Evolución de ${e.name}: ${coords.length} entrenamientos. Valores y enlaces debajo.`}
-            >
-              <Svg width="100%" height={170} viewBox="0 0 300 170" aria-hidden>
-                {[20, 85, 150].map((y) => (
-                  <Line key={y} x1={12} x2={288} y1={y} y2={y} stroke={p.border} strokeWidth={1} />
-                ))}
-                <Polyline
-                  points={coords.map((c) => `${c.x},${c.y}`).join(" ")}
-                  stroke={p.blue}
-                  strokeWidth={2}
-                  fill="none"
-                />
-                {coords.map((c, i) => (
-                  <Circle key={i} cx={c.x} cy={c.y} r={3.5} fill={p.blue} />
-                ))}
-              </Svg>
+            <View>
+              <View>
+                <View
+                  accessible
+                  accessibilityRole="image"
+                  accessibilityLabel={`Evolución de ${e.name}: ${coords.length} entrenamientos. Valores y enlaces debajo.`}
+                >
+                  <Svg width="100%" height={170} viewBox="0 0 300 170" aria-hidden>
+                    {[20, 85, 150].map((y) => (
+                      <Line
+                        key={y}
+                        x1={12}
+                        x2={288}
+                        y1={y}
+                        y2={y}
+                        stroke={p.border}
+                        strokeWidth={1}
+                      />
+                    ))}
+                    <Polyline
+                      points={coords.map((c) => `${c.x},${c.y}`).join(" ")}
+                      stroke={p.blue}
+                      strokeWidth={2}
+                      fill="none"
+                    />
+                    {coords.map((c, i) => (
+                      <Circle
+                        key={i}
+                        cx={c.x}
+                        cy={c.y}
+                        r={i === picked ? 7 : i === coords.length - 1 ? 5.5 : 3.5}
+                        fill={p.blue}
+                      />
+                    ))}
+                    {points.length > 1 ? (
+                      <>
+                        <SvgText x={12} y={12} fontSize={11} fill={p.muted}>
+                          {format(Math.max(...points.map((v) => v.value)))}
+                        </SvgText>
+                        <SvgText x={12} y={166} fontSize={11} fill={p.muted}>
+                          {format(Math.min(...points.map((v) => v.value)))}
+                        </SvgText>
+                      </>
+                    ) : null}
+                    <SvgText
+                      x={Math.min(coords[coords.length - 1].x, 288)}
+                      y={Math.max(coords[coords.length - 1].y - 10, 24)}
+                      fontSize={12}
+                      fontWeight="bold"
+                      textAnchor="end"
+                      fill={p.ink}
+                    >
+                      {format(points[points.length - 1].value)}
+                    </SvgText>
+                  </Svg>
+                </View>
+                <View
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    flexDirection: "row",
+                  }}
+                >
+                  {points.map((pt, i) => (
+                    <Pressable
+                      key={pt.point.workoutId}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Ver valor del ${day(pt.point.date)}`}
+                      accessibilityState={{ selected: picked === i }}
+                      aria-pressed={picked === i}
+                      onPress={() => setPicked(picked === i ? null : i)}
+                      style={{ flex: 1, minWidth: 44 }}
+                    />
+                  ))}
+                </View>
+              </View>
+              {picked !== null && points[picked] ? (
+                <Text style={[s.body, s.number, { color: p.ink, paddingTop: 6 }]}>
+                  {day(points[picked].point.date)}: {format(points[picked].value)}
+                </Text>
+              ) : null}
             </View>
           ) : (
             <Text style={[s.body, { color: p.muted }]}>No hay registros en este periodo.</Text>

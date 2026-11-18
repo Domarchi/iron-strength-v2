@@ -1,6 +1,9 @@
 import { useTrainingPreferences } from "../lib/training-preferences-context";
 import { formatWeight } from "../../../src/domain/training-tools";
 import { isTypedTraining } from "../lib/training";
+import { isSuggestedWeight } from "../lib/suggested-value";
+import { progressionHint } from "../lib/progression-hint";
+import { QuickAdjust, adjustWeightText } from "./quick-adjust";
 import { useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { Action, Input, s, usePalette } from "./ui";
@@ -43,6 +46,7 @@ export function WorkoutSets({
     training.active?.pause?.pausedAtMs != null ||
     training.active?.draft.status === "pending_save";
   if (!exercise) return null;
+  const activeIndex = exercise.sets.findIndex((x) => !x.done);
   const history =
       state.status === "authenticated" && training.active?.mode === "real"
         ? downloadedHistory(
@@ -53,6 +57,14 @@ export function WorkoutSets({
         : null,
     last = history?.items[0] ?? null,
     previousColumn = preferences.value.showPrevious && width >= 360 && fontScale <= 1.15;
+  const hint =
+    last && preferences.value.showPrevious
+      ? progressionHint(last, exercise.prescribed, {
+          incrementKg: 2.5,
+          isBodyweight: exercise.isBodyweight,
+          weightUnit: preferences.value.weightUnit,
+        })
+      : null;
   async function complete(setId: string, si: number) {
     setError(null);
     try {
@@ -81,6 +93,11 @@ export function WorkoutSets({
       {last && preferences.value.showPrevious ? (
         <Text style={[s.caption, { color: p.muted, marginBottom: 0 }]}>
           Anterior · {last.date.split("-").reverse().slice(0, 2).join("/")} · copia descargada
+        </Text>
+      ) : null}
+      {hint ? (
+        <Text accessibilityLabel="Sugerencia de progresión" style={[s.caption, { color: p.ink }]}>
+          {hint}
         </Text>
       ) : null}
       <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
@@ -203,7 +220,9 @@ export function WorkoutSets({
                     paddingVertical: 11,
                     paddingHorizontal: 4,
                     textAlign: "center",
-                    color: p.ink,
+                    color: isSuggestedWeight(set.weight, target?.targetWeightKg, set.done)
+                      ? p.muted
+                      : p.ink,
                     borderColor: p.control,
                     borderWidth: 1,
                     borderBottomWidth: 1,
@@ -255,6 +274,25 @@ export function WorkoutSets({
                 }}
               />
             </View>
+            {si === activeIndex && !blocked && !exercise.isBodyweight ? (
+              <QuickAdjust
+                setNumber={si + 1}
+                step={2.5}
+                unitLabel="kg"
+                disabled={blocked}
+                onAdjust={(delta) =>
+                  controller.edit((draft) =>
+                    updateSetField(
+                      draft,
+                      index,
+                      si,
+                      "weight",
+                      adjustWeightText(set.weight, delta, target?.targetWeightKg ?? null),
+                    ),
+                  )
+                }
+              />
+            ) : null}
             {preferences.value.weightUnit !== "kg" && /^\d+(?:[.,]\d+)?$/.test(set.weight) ? (
               <Text style={[s.caption, { color: p.muted, paddingLeft: 48 }]}>
                 ≈ {formatWeight(Number(set.weight.replace(",", ".")), preferences.value.weightUnit)}

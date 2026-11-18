@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
 import { Action, Notice, Page, ScreenIntro, day, s, usePalette } from "../../../components/ui";
+import { ExerciseGuideCard } from "../../../components/exercise-guide-card";
 import { useSession } from "../../../lib/session";
 import { useTrainingExerciseQuery } from "../../../lib/training-download-query";
 import { downloadedAt } from "../../../lib/offline-week";
@@ -119,6 +120,14 @@ function ExerciseDetail({ id, fromCatalog }: { id: string; fromCatalog: boolean 
               <Text style={[s.caption, { color: p.muted }]}>Peso corporal</Text>
             ) : null}
           </View>
+          <ExerciseGuideCard
+            exercise={{
+              name: detail.exercise.name,
+              muscleGroup: detail.exercise.muscleGroup,
+              equipment: detail.exercise.equipment,
+              isBodyweight: detail.exercise.isBodyweight,
+            }}
+          />
           <Text accessibilityRole="header" style={[s.subheading, { color: p.ink }]}>
             Tu historial
           </Text>

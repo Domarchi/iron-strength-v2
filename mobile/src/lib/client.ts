@@ -68,6 +68,15 @@ import {
   mobileHistorySchema,
   mobileWorkoutSchema,
   mobileProgressSchema,
+  mobileAchievementsSchema,
+  mobileCheckinSchema,
+  mobileStudentDetailSchema,
+  mobileStudentsSchema,
+  mobileMeasurementsSchema,
+  mobileMeasurementResultSchema,
+  type MobileMeasurementInput,
+  mobileCheckinAnswersSchema,
+  type MobileCheckinAnswers,
   mobileProgressDetailSchema,
   mobileSaveSchema,
   mobileInvitationSchema,
@@ -1055,6 +1064,98 @@ export class MobileClient {
   }
   async progress() {
     return mobileProgressSchema.parse(await this.read("progress"));
+  }
+  /** Medidas corporales propias (más recientes primero). */
+  async measurements() {
+    const parsed = mobileMeasurementsSchema.safeParse(await this.read("measurements"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tus medidas no son compatibles. Actualiza la app y reintenta.",
+      );
+    return parsed.data.items;
+  }
+  /** Guarda las medidas de un día; un registro existente exige `replace` tras confirmarlo (409 «exists»). */
+  async saveMeasurement(measurement: MobileMeasurementInput, replace: boolean) {
+    const parsed = mobileMeasurementResultSchema.safeParse(
+      await this.read("measurements", { version: 1, measurement, replace }),
+    );
+    if (!parsed.success)
+      throw new MobileError("version", "No pudimos confirmar tus medidas. Reintenta.");
+    return parsed.data.status;
+  }
+  async deleteMeasurement(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese registro ya no existe.", 404);
+    await this.read("measurements/delete", { version: 1, id });
+  }
+  /** Alumnos del coach con señales de atención (solo lectura; solo para el rol coach). */
+  async students() {
+    const parsed = mobileStudentsSchema.safeParse(await this.read("students"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La lista de alumnos no es compatible. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
+  }
+  /** Últimos entrenamientos y comentarios de un alumno (solo para el rol coach). */
+  async studentDetail(id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new MobileError("not_found", "Ese alumno no está disponible.", 404);
+    const parsed = mobileStudentDetailSchema.safeParse(await this.read(`students/${id}`));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "La ficha del alumno no es compatible. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
+  }
+  /** Responde como coach a un entrenamiento de un alumno; repetir el mismo `id` no duplica. */
+  async replyToStudent(studentId: string, input: { id: string; workoutId: string; body: string }) {
+    if (!z.uuid().safeParse(studentId).success)
+      throw new MobileError("not_found", "Ese alumno no está disponible.", 404);
+    const parsed = z
+      .object({ version: z.literal(1), status: z.enum(["created", "duplicate"]), id: z.uuid() })
+      .safeParse(await this.read(`students/${studentId}/comments`, input));
+    if (!parsed.success || parsed.data.id !== input.id)
+      throw new MobileError(
+        "version",
+        "No pudimos confirmar tu respuesta. Conservamos tu mensaje para reintentar.",
+      );
+    return parsed.data;
+  }
+  /** Check-in semanal de la semana vigente (la semana la decide el servidor). */
+  async checkin() {
+    const parsed = mobileCheckinSchema.safeParse(await this.read("checkins"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tu check-in no es compatible. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
+  }
+  /** Crea o corrige el check-in de la semana; repetir el envío no duplica. */
+  async saveCheckin(answers: MobileCheckinAnswers) {
+    const input = mobileCheckinAnswersSchema.safeParse(answers);
+    if (!input.success)
+      throw new MobileError("invalid_input", "Revisa las respuestas del check-in.", 400);
+    const parsed = mobileCheckinSchema.safeParse(
+      await this.read("checkins", { version: 1, answers: input.data }),
+    );
+    if (!parsed.success || parsed.data.answers === null)
+      throw new MobileError("version", "No pudimos confirmar tu check-in. Reintenta.");
+    return parsed.data;
+  }
+  /** Racha de semanas cumplidas y logros del propio alumno (solo lectura). */
+  async achievements() {
+    const parsed = mobileAchievementsSchema.safeParse(await this.read("achievements"));
+    if (!parsed.success)
+      throw new MobileError(
+        "version",
+        "Tus logros no son compatibles. Actualiza la app y reintenta.",
+      );
+    return parsed.data;
   }
   async savePersonalWorkout(payload: PersonalWorkoutPayload, expectedUserId: string) {
     if (this.state.status !== "authenticated" || this.state.session.profile.id !== expectedUserId)

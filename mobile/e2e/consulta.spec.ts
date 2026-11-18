@@ -1,3 +1,4 @@
+import { openDemo } from "./support/demo";
 import { assignedFromLegacy, assignedFixtureResult } from "./support/assigned-context";
 import {
   typedRecordingRequestSchema,
@@ -265,7 +266,7 @@ test("sin programa: demo interactiva, recuperación, cierre y resultados separad
   await emptyAccount(page, writes);
   await enter(page);
   await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
-  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await openDemo(page, "A");
   await expect(
     page.getByText("DEMO · Guardado solo en este dispositivo", { exact: true }),
   ).toBeVisible();
@@ -316,7 +317,7 @@ test("superserie demo avanza por ronda y bloquea sustitución después de comple
   await emptyAccount(page);
   await enter(page);
   await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
-  await page.getByRole("button", { name: "Ver demo B", exact: true }).click();
+  await openDemo(page, "B");
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByRole("button", { name: "Indicaciones y alternativas", exact: true }).click();
   await page.getByRole("button", { name: "Cambiar a Remo en polea", exact: true }).click();
@@ -478,7 +479,7 @@ test("fallo de almacenamiento bloquea inicio silencioso y permite recuperar el g
   await emptyAccount(page);
   await enter(page);
   await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
-  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await openDemo(page, "A");
   await page.evaluate(() => {
     const original = Storage.prototype.setItem;
     Storage.prototype.setItem = function (key, value) {
@@ -527,7 +528,7 @@ test("apariencia clara y negra persiste sin tocar el entrenamiento; sistema resp
   await page.screenshot({ path: test.info().outputPath("account-dark.png") });
   await page.getByRole("button", { name: "Ver rutinas de ejemplo", exact: true }).click();
   await page.screenshot({ path: test.info().outputPath("train-dark.png") });
-  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await openDemo(page, "A");
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByLabel("Peso serie 1", { exact: true }).fill("25");
   expect(
@@ -577,7 +578,7 @@ test("apariencia clara y negra persiste sin tocar el entrenamiento; sistema resp
     page
       .getByTestId("app-page")
       .filter({ has: page.getByRole("radiogroup", { name: "Tema de la app" }) }),
-  ).toHaveCSS("background-color", "rgb(11, 12, 14)");
+  ).toHaveCSS("background-color", "rgb(12, 12, 11)");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 });
 
@@ -608,7 +609,7 @@ test("opciones de serie compactas conservan calentamientos y registro directo", 
   await emptyAccount(page);
   await enter(page);
   await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
-  await page.getByRole("button", { name: "Ver demo B", exact: true }).click();
+  await openDemo(page, "B");
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByRole("button", { name: "Ir a Curl de bíceps", exact: true }).click();
   await expect(
@@ -646,10 +647,10 @@ test("salir conserva apariencia oscura y la apertura siguiente la recupera", asy
   await expect(page.getByRole("radio", { name: "Oscuro", exact: true })).toBeChecked();
   await page.getByRole("button", { name: "Salir", exact: true }).click();
   await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
-  expect(await effectiveBackground(page.getByTestId("entry-page"))).toBe("rgb(11, 12, 14)");
+  expect(await effectiveBackground(page.getByTestId("entry-page"))).toBe("rgb(12, 12, 11)");
   await page.reload();
   await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible();
-  expect(await effectiveBackground(page.getByTestId("entry-page"))).toBe("rgb(11, 12, 14)");
+  expect(await effectiveBackground(page.getByTestId("entry-page"))).toBe("rgb(12, 12, 11)");
   await page.screenshot({ path: test.info().outputPath("login-dark.png") });
 });
 
@@ -659,7 +660,7 @@ test("recuperar acceso de la misma cuenta conserva el entrenamiento pendiente", 
   await emptyAccount(page);
   await enter(page);
   await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
-  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await openDemo(page, "A");
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByRole("textbox", { name: "Peso serie 1", exact: true }).fill("31");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();
@@ -720,7 +721,7 @@ for (const theme of ["light", "dark"] as const) {
     await emptyAccount(page);
     await enter(page);
     await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
-    await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+    await openDemo(page, "A");
     await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
     const weight = page.getByRole("textbox", { name: "Peso serie 3", exact: true });
     const check = page.getByRole("checkbox", { name: "Completar serie 3", exact: true });
@@ -913,7 +914,7 @@ for (const theme of ["light", "dark"] as const) {
     await emptyAccount(page);
     await enter(page);
     await page.getByRole("button", { name: "Explorar rutinas y entrenar", exact: true }).click();
-    await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+    await openDemo(page, "A");
     await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
     const check = page.getByRole("checkbox", { name: "Completar serie 1", exact: true });
     const mark = page.getByTestId("set-check-mark-1");

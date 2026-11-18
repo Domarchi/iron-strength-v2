@@ -179,7 +179,9 @@ test("otra ventana no se sobrescribe y releer exige confirmar la pérdida de mem
   ).toBeVisible();
   await page.getByRole("button", { name: "Releer corrección local", exact: true }).click();
   await expect(page.getByLabel("Peso en kg de serie 1", { exact: true })).toHaveValue("65");
-  await page.getByRole("button", { name: "Confirmar relectura local", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Volver a comprobar en este dispositivo", exact: true })
+    .click();
   await expect(page.getByLabel("Peso en kg de serie 1", { exact: true })).toHaveValue("63");
   expect(c.calls).toEqual([]);
   await second.close();

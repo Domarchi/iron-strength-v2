@@ -13,15 +13,28 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePalette } from "../lib/appearance-context";
 import { Icon, type IconName } from "./icon";
+import { fonts } from "../ui/tokens";
 export { usePalette } from "../lib/appearance-context";
 export type { Palette } from "../lib/appearance";
 export const s = StyleSheet.create({
-  body: { fontSize: 15, lineHeight: 22 },
-  caption: { fontSize: 13, lineHeight: 18, fontWeight: "400" },
-  heading: { fontSize: 30, lineHeight: 34, fontWeight: "700", letterSpacing: -0.8 },
-  subheading: { fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.4 },
-  card: { borderRadius: 16, padding: 16, borderWidth: 0, gap: 12 },
-  number: { fontVariant: ["tabular-nums"], fontWeight: "600" },
+  body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22 },
+  caption: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
+  heading: {
+    fontFamily: fonts.display,
+    fontSize: 34,
+    lineHeight: 36,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  subheading: {
+    fontFamily: fonts.displayMedium,
+    fontSize: 22,
+    lineHeight: 24,
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+  },
+  card: { borderRadius: 12, padding: 16, borderWidth: 0, gap: 12 },
+  number: { fontVariant: ["tabular-nums"], fontFamily: fonts.bodySemi },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 18, gap: 12 },
   row: {
     flexWrap: "wrap",
@@ -33,24 +46,25 @@ export const s = StyleSheet.create({
   button: {
     maxWidth: "100%",
     minHeight: 48,
-    borderRadius: 10,
+    borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
   },
-  buttonText: { fontSize: 15, lineHeight: 22, fontWeight: "600" },
+  buttonText: { fontFamily: fonts.bodyBold, fontSize: 15, lineHeight: 22 },
   input: {
     minHeight: 48,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    fontFamily: fonts.body,
     fontSize: 16,
     lineHeight: 22,
   },
-  label: { fontSize: 15, lineHeight: 21, fontWeight: "500" },
+  label: { fontFamily: fonts.bodyMedium, fontSize: 15, lineHeight: 21 },
   screen: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 18 },
 });
@@ -61,6 +75,7 @@ export function Action({
   disabled = false,
   secondary = false,
   quiet = false,
+  danger = false,
   busy = false,
   icon,
   iconPosition = "start",
@@ -71,11 +86,23 @@ export function Action({
   disabled?: boolean;
   secondary?: boolean;
   quiet?: boolean;
+  danger?: boolean;
   busy?: boolean;
   icon?: IconName;
   iconPosition?: "start" | "end";
 }) {
   const p = usePalette();
+  // Un enlace «Volver…» se muestra como flecha + texto a la izquierda, como una cabecera nativa.
+  const back = quiet && !danger && (accessibilityLabel ?? label).startsWith("Volver");
+  const fg = danger ? p.danger : back ? p.ink : quiet ? p.blue : secondary ? p.ink : p.onButton;
+  const bg = (pressed: boolean) =>
+    danger || back || quiet
+      ? pressed
+        ? p.raised
+        : "transparent"
+      : secondary
+        ? p.raised
+        : p.button;
   return (
     <Pressable
       accessibilityRole="button"
@@ -86,41 +113,33 @@ export function Action({
       style={({ pressed }) => [
         s.button,
         {
-          backgroundColor: quiet
-            ? pressed
-              ? p.raised
-              : "transparent"
-            : secondary
-              ? pressed
-                ? p.raised
-                : p.raised
-              : p.button,
-          borderColor: quiet || secondary ? "transparent" : p.button,
+          backgroundColor: bg(pressed),
+          borderColor: danger ? p.danger : quiet || secondary || back ? "transparent" : p.button,
           opacity: disabled ? 0.5 : pressed ? 0.86 : 1,
           flexDirection: "row",
-          gap: 9,
+          gap: back ? 4 : 9,
         },
+        back ? { alignSelf: "flex-start", paddingHorizontal: 4, minHeight: 44 } : null,
+        quiet && !back ? { paddingHorizontal: 6 } : null,
       ]}
     >
       {busy ? (
-        <ActivityIndicator size="small" color={secondary || quiet ? p.blue : "#fff"} />
+        <ActivityIndicator
+          size="small"
+          color={secondary || quiet || danger ? p.blue : p.onButton}
+        />
+      ) : back ? (
+        <Icon name="chevronLeft" size={20} color={fg} />
       ) : icon && iconPosition === "start" ? (
-        <Icon name={icon} size={19} color={quiet ? p.blue : secondary ? p.ink : "#fff"} />
+        <Icon name={icon} size={19} color={fg} />
       ) : null}
       <Text
-        style={[
-          s.buttonText,
-          {
-            color: quiet ? p.blue : secondary ? p.ink : "#fff",
-            textAlign: "center",
-            flexShrink: 1,
-          },
-        ]}
+        style={[s.buttonText, { color: fg, textAlign: back ? "left" : "center", flexShrink: 1 }]}
       >
         {label}
       </Text>
-      {!busy && icon && iconPosition === "end" ? (
-        <Icon name={icon} size={19} color={quiet ? p.blue : secondary ? p.ink : "#fff"} />
+      {!busy && !back && icon && iconPosition === "end" ? (
+        <Icon name={icon} size={19} color={fg} />
       ) : null}
     </Pressable>
   );

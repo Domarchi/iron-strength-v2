@@ -9,7 +9,7 @@ for (const theme of ["dark", "light"] as const) {
     await setupDownloadedWeek(page);
     await expect(page.getByTestId("app-page").filter({ visible: true })).toHaveCSS(
       "background-color",
-      theme === "dark" ? "rgb(11, 12, 14)" : "rgb(250, 250, 250)",
+      theme === "dark" ? "rgb(12, 12, 11)" : "rgb(246, 243, 236)",
     );
     await page.getByRole("tab", { name: "Cuenta", exact: true }).click();
     await page.getByRole("button", { name: "Preferencias de entrenamiento", exact: true }).click();
@@ -17,12 +17,12 @@ for (const theme of ["dark", "light"] as const) {
     await rest.fill("120");
     await expect(rest).toHaveCSS(
       "background-color",
-      theme === "dark" ? "rgb(24, 27, 32)" : "rgb(244, 245, 247)",
+      theme === "dark" ? "rgb(34, 34, 32)" : "rgb(238, 234, 224)",
     );
     await expect(rest).toBeFocused();
     await expect(rest).toHaveCSS(
       "border-top-color",
-      theme === "dark" ? "rgb(152, 190, 255)" : "rgb(32, 88, 189)",
+      theme === "dark" ? "rgb(255, 90, 31)" : "rgb(191, 54, 6)",
     );
     expect((await rest.boundingBox())!.height).toBeGreaterThanOrEqual(48);
     await page
@@ -31,7 +31,7 @@ for (const theme of ["dark", "light"] as const) {
     await expect(rest).toHaveValue("120");
     await expect(rest).toHaveCSS(
       "background-color",
-      theme === "dark" ? "rgb(244, 245, 247)" : "rgb(24, 27, 32)",
+      theme === "dark" ? "rgb(238, 234, 224)" : "rgb(34, 34, 32)",
     );
     await page.getByRole("button", { name: "Guardar preferencias", exact: true }).click();
     await expect(

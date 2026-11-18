@@ -162,6 +162,7 @@ export function TrainingDownloadCard({
                       </Text>
                       <Action
                         label="Confirmar eliminación"
+                        danger
                         accessibilityLabel="Confirmar eliminación de entrenamientos descargados"
                         secondary
                         disabled={disabled}
@@ -185,6 +186,7 @@ export function TrainingDownloadCard({
                   ) : (
                     <Action
                       label="Eliminar descarga"
+                      danger
                       accessibilityLabel="Eliminar entrenamientos descargados"
                       quiet
                       disabled={disabled}
@@ -209,6 +211,7 @@ export function TrainingDownloadCard({
                       </Text>
                       <Action
                         label="Confirmar eliminación de copia anterior"
+                        danger
                         quiet
                         disabled={disabled}
                         onPress={() => {
@@ -228,6 +231,7 @@ export function TrainingDownloadCard({
                   ) : (
                     <Action
                       label="Eliminar copia anterior"
+                      danger
                       quiet
                       disabled={disabled}
                       onPress={() => setRemovePrevious(true)}

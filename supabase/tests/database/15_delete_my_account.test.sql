@@ -1,6 +1,6 @@
 -- T126 · Borrar la propia cuenta (RF-48; DC-4, DC-32).
 begin;
-select plan(34);
+select plan(35);
 
 select tests.setup_basic();
 
@@ -47,6 +47,7 @@ insert into public.comment_reads (user_id, workout_id) values
 insert into public.program_copy_receipts(id,coach_id,payload) values('90000000-0000-0000-0000-0000000000a1',tests.coach_id(),'{}');
 
 insert into public.session_day_overrides values('91000000-0000-0000-0000-0000000000a1',tests.student_a_id(),2);
+insert into public.weekly_checkins(student_id,week_start,sleep,energy,soreness,motivation) values (tests.student_a_id(),'2026-09-07',3,3,3,3);
 
 insert into public.planning_mutations(id,program_id,coach_id,student_id,payload,result) values(gen_random_uuid(),'90000000-0000-0000-0000-0000000000a1',tests.coach_id(),tests.student_a_id(),'{}','{}');
 select tests.authenticate_as(tests.student_a_id());
@@ -100,6 +101,7 @@ select is((select count(*)::int from public.session_exercise_alternatives),0,'su
 select is((select count(*)::int from public.program_copy_receipts),0,'los recibos caen al borrar el programa');
 
 select is((select count(*)::int from public.session_day_overrides),0,'sus días elegidos desaparecen');
+select is((select count(*)::int from public.weekly_checkins where student_id=tests.student_a_id()),0,'sus check-ins desaparecen');
 
 select is((select count(*)::int from public.planning_mutations),0,'los recibos que mencionan al alumno desaparecen');
 select is((select count(*)::int from public.mobile_comment_receipts where author_id=tests.student_a_id()),0,'sus referencias de envío desaparecen');

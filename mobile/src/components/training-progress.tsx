@@ -1,3 +1,4 @@
+import { plural } from "../lib/plural";
 import { ProgressRefresh } from "./progress-refresh";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { router } from "expo-router";
@@ -17,7 +18,7 @@ import { RECORD_TYPE_LABELS } from "../lib/training-labels";
 import { useSession } from "../lib/session";
 import { useQuery } from "../lib/use-query";
 import { useTrainingPreferences } from "../lib/training-preferences-context";
-import { Input, Notice, ScreenIntro, s, day, usePalette } from "./ui";
+import { Action, Input, Notice, ScreenIntro, s, day, usePalette } from "./ui";
 import { ConnectionStatus } from "./connection-status";
 import { ProgressChoice } from "./progress-choice";
 import { TrainingSummary } from "./training-summary";
@@ -60,7 +61,7 @@ function ExerciseRow({ exercise: e }: { exercise: TrainingExerciseProgress }) {
         </Text>
       ) : null}
       <Text style={[s.caption, { color: p.muted }]}>
-        {e.workoutCount} entrenamientos · {day(e.lastDate)}
+        {plural(e.workoutCount, "entrenamiento", "entrenamientos")} · {day(e.lastDate)}
       </Text>
     </Pressable>
   );
@@ -190,13 +191,22 @@ export function TrainingProgress() {
         ListHeaderComponent={header}
         ListEmptyComponent={
           q.value ? (
-            <Text style={[s.body, { color: p.muted, paddingVertical: 24 }]}>
-              {view === "summary"
-                ? "No hay entrenamientos con trabajo para este periodo o filtro."
-                : q.value.exercises.length
-                  ? "No encontramos ejercicios con ese nombre."
-                  : "Tus marcas aparecerán después de guardar tu primer entrenamiento real. Mientras tanto, puedes recorrer las rutinas demo."}
-            </Text>
+            <View style={{ gap: 12, paddingVertical: 24 }}>
+              <Text style={[s.body, { color: p.muted }]}>
+                {view === "summary"
+                  ? "No hay entrenamientos con trabajo para este periodo o filtro."
+                  : q.value.exercises.length
+                    ? "No encontramos ejercicios con ese nombre."
+                    : "Tus marcas aparecerán después de guardar tu primer entrenamiento real. Mientras tanto, puedes recorrer las rutinas demo."}
+              </Text>
+              {view !== "summary" && !q.value.exercises.length ? (
+                <Action
+                  label="Ir a Entrenar"
+                  icon="train"
+                  onPress={() => router.navigate("/train")}
+                />
+              ) : null}
+            </View>
           ) : undefined
         }
         contentContainerStyle={{

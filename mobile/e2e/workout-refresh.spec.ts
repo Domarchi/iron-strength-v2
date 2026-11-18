@@ -1,3 +1,4 @@
+import { openDemo } from "./support/demo";
 import { completeWeekFixture } from "./support/complete-week-fixture";
 import { expect, test } from "@playwright/test";
 import { setupDownloadedWeek, enterWeekUser } from "./support/week-fixture";
@@ -77,7 +78,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
     await setupDownloadedWeek(page);
     await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
-    await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+    await openDemo(page, "A");
     await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
     await page.getByRole("textbox", { name: "Peso serie 1", exact: true }).fill("20");
     await page.getByRole("textbox", { name: "Repeticiones serie 1", exact: true }).fill("8");

@@ -11,6 +11,7 @@ import { useCallback } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { Text, View, KeyboardAvoidingView, Platform } from "react-native";
 import { WorkoutComments } from "../../../components/workout-comments";
+import { WorkoutRecordsCard } from "../../../components/workout-records-card";
 import { Action, Notice, Page, s, usePalette } from "../../../components/ui";
 import { useTraining } from "../../../lib/training-context";
 import { useSession } from "../../../lib/session";
@@ -211,6 +212,7 @@ export default function Result() {
                   {demo !== "1" ? (
                     <Action
                       label="Eliminar entrenamiento"
+                      danger
                       quiet
                       disabled={q.loading || !!q.error || w.id !== id || removal.busy}
                       onPress={() =>
@@ -254,6 +256,7 @@ export default function Result() {
                 </ResultOptions>
               ) : null}
             </View>
+            {demo !== "1" ? <WorkoutRecordsCard workoutId={w.id} /> : null}
             <ResultNote note={w.note ?? null} />
             {w.exercises.map((e) => (
               <View key={e.position} style={[s.divider, { borderColor: p.border, gap: 8 }]}>

@@ -19,6 +19,7 @@ import { ProgressChoice } from "./progress-choice";
 import { TrainingCalendar } from "./training-calendar";
 import { PeriodNavigation } from "./period-navigation";
 import { TrainingActivityRow } from "./training-activity-row";
+import { recordCountsByWorkout } from "../lib/record-counts";
 export function TrainingHistory() {
   const p = usePalette(),
     insets = useSafeAreaInsets(),
@@ -40,6 +41,10 @@ export function TrainingHistory() {
   const filtered = useMemo(
     () => filterTrainingActivity(q.value?.activity ?? [], { query, sourceKind: source }),
     [q.value, query, source],
+  );
+  const recordCounts = useMemo(
+    () => (q.value ? recordCountsByWorkout(q.value) : new Map<string, number>()),
+    [q.value],
   );
   const rows = useMemo(
     () => filterTrainingActivity(filtered, view === "calendar" ? { month, date } : {}),
@@ -185,16 +190,27 @@ export function TrainingHistory() {
         testID="history-list"
         data={rows}
         keyExtractor={(r) => r.id}
-        renderItem={({ item }) => <TrainingActivityRow row={item} />}
+        renderItem={({ item }) => (
+          <TrainingActivityRow row={item} records={recordCounts.get(item.id) ?? 0} />
+        )}
         ListHeaderComponent={header}
         ListFooterComponent={footer ?? undefined}
         ListEmptyComponent={
           q.value ? (
-            <Text style={[s.body, { color: p.muted, paddingVertical: 24 }]}>
-              {q.value.activity.length
-                ? "No hay entrenamientos para estos filtros."
-                : "Aún no tienes entrenamientos guardados en tu cuenta. Puedes probar una demo desde Entrenar."}
-            </Text>
+            <View style={{ gap: 12, paddingVertical: 24 }}>
+              <Text style={[s.body, { color: p.muted }]}>
+                {q.value.activity.length
+                  ? "No hay entrenamientos para estos filtros."
+                  : "Aún no tienes entrenamientos guardados en tu cuenta. Puedes probar una demo desde Entrenar."}
+              </Text>
+              {q.value.activity.length ? null : (
+                <Action
+                  label="Ir a Entrenar"
+                  icon="train"
+                  onPress={() => router.navigate("/train")}
+                />
+              )}
+            </View>
           ) : undefined
         }
         contentContainerStyle={{

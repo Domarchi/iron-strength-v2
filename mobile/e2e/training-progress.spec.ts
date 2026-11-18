@@ -1,3 +1,4 @@
+import { openDemo } from "./support/demo";
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { setupTrainingProgress } from "./support/training-progress-fixture";
@@ -50,6 +51,11 @@ for (const theme of ["light", "dark"] as const) {
       .getByRole("button", { name: "Ver progreso de Plancha · Tiempo", exact: true })
       .click();
     await expect(page.getByLabel("Valor del periodo")).toHaveText("75 s");
+    // Tocar un punto del gráfico muestra su fecha y valor.
+    const pick = page.getByRole("button", { name: /^Ver valor del / }).first();
+    await pick.click();
+    await expect(pick).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByText(/^\d+\/\d+: \d+ s$/).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "1RM estimado", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "4 semanas", exact: true }).click();
     await page.getByRole("button", { name: "Tiempo total", exact: true }).click();
@@ -107,7 +113,7 @@ test("asistencia conserva repeticiones y datos antiguos separados", async ({ pag
 
 test("consultar historial durante un registro conserva series y descanso", async ({ page }) => {
   const { control } = await setupTrainingProgress(page);
-  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await openDemo(page, "A");
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByRole("textbox", { name: "Peso serie 1", exact: true }).fill("27,5");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();

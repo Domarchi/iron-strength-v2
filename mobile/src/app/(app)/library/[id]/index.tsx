@@ -444,6 +444,17 @@ export default function PersonalRoutineEditor() {
             ) : null}
           </View>
         ) : null}
+        {!selectedIds.length && blocks.length >= 2 ? (
+          <Text style={[s.caption, { color: p.muted }]}>
+            Marca varios ejercicios con el círculo para agruparlos en una superserie o editarlos
+            juntos.
+          </Text>
+        ) : null}
+        {library.dirty && blocks.length >= 2 ? (
+          <Text style={[s.caption, { color: p.muted }]}>
+            Guarda los cambios para poder reordenar los ejercicios.
+          </Text>
+        ) : null}
         <Action
           label="Reordenar ejercicios"
           quiet

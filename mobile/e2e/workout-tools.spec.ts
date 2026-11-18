@@ -1,3 +1,4 @@
+import { openDemo } from "./support/demo";
 import { downloadCard } from "./support/download-cache";
 import { defaultTrainingPreferences } from "../src/lib/training-preferences";
 import { trainingMetricCases } from "../../src/test/fixtures/training-metrics";
@@ -15,7 +16,7 @@ async function start(page: Page, legacy = false, metric?: (typeof trainingMetric
   const f = await setupDownloadedWeek(page);
   if (legacy) {
     await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
-    await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+    await openDemo(page, "A");
     await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
     await expect
       .poll(() =>

@@ -161,7 +161,7 @@ test("otra ventana conserva sus bytes y la relectura exige confirmar la intenci�
   await page.getByRole("button", { name: "Releer eliminación local", exact: true }).click();
   await expect(page.getByText(/Se reemplazará el intento en memoria/)).toBeVisible();
   await page
-    .getByRole("button", { name: "Confirmar relectura de eliminación", exact: true })
+    .getByRole("button", { name: "Volver a comprobar la eliminación", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: "Releer eliminación local", exact: true }),
@@ -173,7 +173,7 @@ test("otra ventana conserva sus bytes y la relectura exige confirmar la intenci�
   });
   await page.getByRole("button", { name: "Releer eliminación local", exact: true }).click();
   await page
-    .getByRole("button", { name: "Confirmar relectura de eliminación", exact: true })
+    .getByRole("button", { name: "Volver a comprobar la eliminación", exact: true })
     .click();
   await page.getByRole("button", { name: "Reintentar la misma eliminación", exact: true }).click();
   await expect(page.getByText("Entrenamiento eliminado", { exact: true })).toBeVisible();

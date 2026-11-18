@@ -1,3 +1,4 @@
+import { openDemo } from "./support/demo";
 import { downloadCard } from "./support/download-cache";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
@@ -9,7 +10,7 @@ test("cambiar tema y movimiento entre pestañas conserva series y descanso", asy
   await page.goto("/");
   await enterWeekUser(page);
   await page.getByRole("tab", { name: "Entrenar", exact: true }).click();
-  await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+  await openDemo(page, "A");
   await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
   await page.getByRole("textbox", { name: "Peso serie 1", exact: true }).fill("27,5");
   await page.getByRole("checkbox", { name: "Completar serie 1", exact: true }).click();

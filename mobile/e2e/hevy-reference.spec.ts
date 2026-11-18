@@ -1,3 +1,4 @@
+import { openDemo, showDemos } from "./support/demo";
 import { downloadCard } from "./support/download-cache";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
@@ -127,11 +128,12 @@ for (const theme of ["light", "dark"] as const) {
         /system-ui/,
       );
     }
+    await showDemos(page);
     await expect(page.getByRole("button", { name: "Ver demo A", exact: true })).toContainText(
       "Sentadilla goblet",
     );
     await page.screenshot({ path: test.info().outputPath(`routines-${theme}.png`) });
-    await page.getByRole("button", { name: "Ver demo A", exact: true }).click();
+    await openDemo(page, "A");
     await page.getByRole("button", { name: "Probar entrenamiento demo", exact: true }).click();
     await expect(page.getByText("ANTERIOR", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: /^Copiar anterior/ })).toHaveCount(0);

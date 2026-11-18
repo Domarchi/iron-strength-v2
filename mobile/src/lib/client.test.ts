@@ -41,6 +41,26 @@ function setup(fetcher: Transport) {
     },
   };
 }
+describe("logros y racha", () => {
+  it("lee el contrato cerrado con la sesión vigente y rechaza formatos desconocidos", async () => {
+    const good = {
+      version: 1,
+      streak: { current: 2, longest: 4 },
+      workoutCount: 7,
+      earned: [{ kind: "first_workout", earnedAt: "2026-10-01T12:00:00.000Z" }],
+    };
+    const fetcher = vi
+      .fn<Transport>()
+      .mockResolvedValueOnce(Response.json(session))
+      .mockResolvedValueOnce(Response.json(good))
+      .mockResolvedValueOnce(Response.json({ ...good, version: 2 }));
+    const s = setup(fetcher);
+    await s.client.login(profile.email, "clave");
+    expect(await s.client.achievements()).toEqual(good);
+    expect(fetcher.mock.calls[1][0]).toContain("/api/mobile/v1/achievements");
+    await expect(s.client.achievements()).rejects.toMatchObject({ code: "version" });
+  });
+});
 describe("sesión móvil segura", () => {
   it("cierre con estructura envía el documento completo y exige confirmación versión2 de esa cuenta e ID", async () => {
     const input = recordingPayloadSchema.parse(recordingFixture()),

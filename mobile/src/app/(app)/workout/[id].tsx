@@ -1,3 +1,5 @@
+import { EffortChips } from "../../../components/effort-chips";
+import { useTrainingKeepAwake } from "../../../lib/keep-awake";
 import { WorkoutHeading } from "../../../components/workout-heading";
 import { WorkoutPanel } from "../../../components/workout-panel";
 import { useTrainingDownload } from "../../../lib/training-download-context";
@@ -56,6 +58,8 @@ function useClock() {
   return now;
 }
 export default function Workout() {
+  // La pantalla no se apaga mientras se entrena (se libera al salir del registro).
+  useTrainingKeepAwake();
   const { preferences } = useTrainingPreferences();
   const [tools, setTools] = useState(false);
   const p = usePalette(),
@@ -206,7 +210,7 @@ export default function Workout() {
             <Action label="Cancelar descarte" quiet onPress={() => setDiscard(false)} />
           </>
         ) : (
-          <Action label="Descartar registro local" quiet onPress={() => setDiscard(true)} />
+          <Action label="Descartar registro local" danger onPress={() => setDiscard(true)} />
         )}
       </Page>
     );
@@ -539,6 +543,11 @@ export default function Workout() {
                   guardarán solo las series completadas.
                 </Text>
                 <Text style={[s.label, { color: p.ink }]}>Esfuerzo de 1 a 10 · opcional</Text>
+                <EffortChips
+                  value={effort}
+                  disabled={training.closing}
+                  onChange={(v) => controller.review(v, note)}
+                />
                 <Input
                   keyboardAppearance={p.dark ? "dark" : "light"}
                   selectionColor={p.blue}
@@ -632,6 +641,7 @@ export default function Workout() {
         ) : (
           <Action
             label="Descartar registro local"
+            danger
             quiet
             disabled={training.busy || training.closing || (pending && syncQueue.transferring)}
             onPress={() => setDiscard(true)}

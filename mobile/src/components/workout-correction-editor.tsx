@@ -154,7 +154,7 @@ export function WorkoutCorrectionEditor({ id }: { id: string }) {
     <>
       <Notice message="Se reemplazará la propuesta en memoria por la corrección guardada en este dispositivo. Los cambios que no se pudieron guardar se perderán." />
       <Action
-        label="Confirmar relectura local"
+        label="Volver a comprobar en este dispositivo"
         disabled={c.busy || c.paused || fetching}
         onPress={() => {
           void run(async () => {

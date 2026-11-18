@@ -1,9 +1,11 @@
 import { TrainingDownloadCard } from "../../../components/training-download-card";
 import { FreeStart } from "../../../components/free-start";
+import { NavRow } from "../../../components/nav-row";
 import { Icon } from "../../../components/icon";
 import { useSession } from "../../../lib/session";
 import { DownloadedSessions } from "../../../components/downloaded-sessions";
 import { router } from "expo-router";
+import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Action, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
 import { DEMO_ROUTINES, demoSlug } from "../../../lib/demo";
@@ -11,7 +13,8 @@ import { TrainingCard } from "../../../components/training-card";
 export default function Train() {
   const p = usePalette(),
     { state } = useSession(),
-    offline = state.status === "authenticated" && state.mode === "offline";
+    offline = state.status === "authenticated" && state.mode === "offline",
+    [showDemos, setShowDemos] = useState(false);
   return (
     <Page>
       <ScreenIntro title="Entrenar" />
@@ -50,12 +53,26 @@ export default function Train() {
           onPress={() => router.navigate("/")}
         />
       </View>
-      <View style={{ gap: 6 }}>
-        <Text style={[s.subheading, { color: p.ink }]}>Rutinas de ejemplo</Text>
+      <NavRow
+        label="Cronómetro EMOM / AMRAP"
+        hint="Intervalos para tus circuitos"
+        onPress={() => router.navigate("/interval-timer")}
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Rutinas de ejemplo"
+        accessibilityHint="Demos locales, no se envían al coach"
+        accessibilityState={{ expanded: showDemos }}
+        onPress={() => setShowDemos((v) => !v)}
+        style={{ minHeight: 44, gap: 4, justifyContent: "center" }}
+      >
+        <Text style={[s.subheading, { color: p.ink }]}>
+          Rutinas de ejemplo {showDemos ? "▴" : "▾"}
+        </Text>
         <Text style={[s.caption, { color: p.muted }]}>Demos locales · no se envían al coach</Text>
-      </View>
+      </Pressable>
       <View style={{ gap: 12 }}>
-        {DEMO_ROUTINES.map((r) => (
+        {(showDemos ? DEMO_ROUTINES : []).map((r) => (
           <Pressable
             key={r.session.id}
             accessibilityRole="button"
