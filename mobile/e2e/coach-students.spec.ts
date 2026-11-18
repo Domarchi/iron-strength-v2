@@ -26,6 +26,10 @@ const students = {
 
 const detail = {
   version: 1,
+  checkin: {
+    weekStart: "2026-11-09",
+    answers: { sleep: 4, energy: 3, soreness: 2, motivation: 5, note: "Dormí poco" },
+  },
   workouts: [{ id: "44444444-4444-4444-8444-444444444444", date: "2026-11-10", sets: 12 }],
   comments: [
     {
@@ -86,6 +90,8 @@ for (const theme of ["dark", "light"] as const)
     await expect(page.getByText("Revisa.")).toBeVisible();
     await expect(page.getByText("Fuerza · 1 de 3 sesiones", { exact: true })).toBeVisible();
     await expect(page.getByText("10/11/2026").first()).toBeVisible();
+    await expect(page.getByText("Sueño 4/5 · Energía 3/5")).toBeVisible();
+    await expect(page.getByText(/Motivación 5\/5 · Dormí poco/)).toBeVisible();
     await expect(page.getByText("12 series")).toBeVisible();
     await expect(page.getByText("¿Puedo subir el peso?")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(

@@ -68,6 +68,15 @@ export default function StudentDetail() {
           {activity.error ? <Notice message={activity.error} retry={activity.retry} /> : null}
           {activity.value ? (
             <>
+              <SectionHeader title="Check-in de la semana" />
+              {activity.value.checkin ? (
+                <ListRow
+                  title={`Sueño ${activity.value.checkin.answers.sleep}/5 · Energía ${activity.value.checkin.answers.energy}/5`}
+                  subtitle={`Dolor muscular ${activity.value.checkin.answers.soreness}/5 · Motivación ${activity.value.checkin.answers.motivation}/5${activity.value.checkin.answers.note ? ` · ${activity.value.checkin.answers.note}` : ""}`}
+                />
+              ) : (
+                <ListRow title="Sin check-in" subtitle="Aún no lo completa esta semana." />
+              )}
               <SectionHeader title="Últimos entrenamientos" />
               {activity.value.workouts.length ? (
                 activity.value.workouts.map((w) => (

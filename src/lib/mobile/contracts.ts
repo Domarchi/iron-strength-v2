@@ -360,6 +360,7 @@ export type MobileStudents = z.infer<typeof mobileStudentsSchema>;
 /** Ficha de un alumno para su coach: últimos entrenamientos y comentarios (solo lectura). */
 export const mobileStudentDetailSchema = z.object({
   version: z.literal(1),
+  checkin: z.object({ weekStart: z.iso.date(), answers: mobileCheckinAnswersSchema }).nullable(),
   workouts: z.array(
     z.object({ id: z.uuid(), date: z.iso.date(), sets: z.number().int().nonnegative() }),
   ),

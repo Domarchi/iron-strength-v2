@@ -1,7 +1,8 @@
 // Actividad reciente de un alumno para su coach: últimos entrenamientos con series y comentarios.
 // La RLS limita todo a los alumnos de este coach; si no se ve al alumno, devuelve null.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { santiagoDate } from "../../domain/dates.ts";
+import { santiagoDate, weekStartOf } from "../../domain/dates.ts";
+import { getCheckin } from "./weekly-checkin";
 import type { Database } from "../../types/database.ts";
 
 type Client = SupabaseClient<Database>;
@@ -31,8 +32,11 @@ export async function getStudentActivity(db: Client, studentId: string) {
   ]);
   if (workouts.error) throw new Error("No se pudo leer la actividad.");
   if (comments.error) throw new Error("No se pudieron leer los comentarios.");
+  const weekStart = weekStartOf(new Date()),
+    answers = await getCheckin(db, studentId, weekStart);
   return {
     version: 1 as const,
+    checkin: answers ? { weekStart, answers } : null,
     workouts: workouts.data.map((w) => ({
       id: w.id,
       date: santiagoDate(new Date(w.started_at)),

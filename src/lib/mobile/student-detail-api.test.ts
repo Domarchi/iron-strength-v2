@@ -4,6 +4,10 @@ import { createMobileStudentDetailApi } from "./student-detail-api";
 const id = "11111111-1111-4111-8111-111111111111";
 const value = {
   version: 1 as const,
+  checkin: {
+    weekStart: "2026-11-09",
+    answers: { sleep: 4, energy: 3, soreness: 2, motivation: 5, note: "Dormí poco" },
+  },
   workouts: [{ id: "22222222-2222-4222-8222-222222222222", date: "2026-11-10", sets: 12 }],
   comments: [
     {

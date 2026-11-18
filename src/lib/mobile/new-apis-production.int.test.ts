@@ -185,9 +185,16 @@ describe("APIs nativas nuevas con Auth/RLS reales", () => {
       { workout_id: workoutId, author_id: coach.id, body: "Sí, 2,5 kg." },
     ]);
     const api = mobileStudentDetailApi();
+    const stored = await admin
+      .from("weekly_checkins")
+      .select("sleep,energy,soreness,motivation,note")
+      .eq("student_id", ana.id)
+      .eq("week_start", weekStartOf(new Date()))
+      .single();
     const ok = await api.read(await call(coach), ana.id);
     expect(ok.status).toBe(200);
     const body = await ok.json();
+    expect(body.checkin.answers).toEqual(stored.data);
     expect(body.workouts).toEqual([{ id: workoutId, date: "2026-11-10", sets: 0 }]);
     expect(body.comments.map((c: { authorKind: string }) => c.authorKind).sort()).toEqual([
       "coach",
