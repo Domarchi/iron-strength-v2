@@ -23,6 +23,7 @@ import { MoreButton, PersonalField } from "../../../components/personal-controls
 import { LibraryAttempt } from "../../../components/library-attempt";
 import type { TypedPersonalDraft } from "../../../lib/typed-library-drafts";
 import { useLibraryDrafts } from "../../../lib/library-context";
+import { plural } from "../../../lib/plural";
 import { useSession } from "../../../lib/session";
 import { useTrainingLibraryQuery } from "../../../lib/training-download-query";
 type LibraryRow = {
@@ -30,7 +31,7 @@ type LibraryRow = {
   name: string;
   folderId: string | null;
   position: number;
-  items: { sets: string | number }[];
+  items: { sets: string | number; name?: string }[];
   draft: TypedPersonalDraft | undefined;
   source: TypedPersonalRoutine | undefined;
 };
@@ -154,7 +155,7 @@ export default function PersonalLibraryScreen() {
         name: draft?.name || row.name,
         folderId: row.folderId,
         position: row.position,
-        items: draft?.items ?? row.items.map((i) => ({ sets: i.prescribed.sets })),
+        items: draft?.items ?? row.items.map((i) => ({ sets: i.prescribed.sets, name: i.name })),
         draft,
         source: row,
       };
@@ -210,14 +211,26 @@ export default function PersonalLibraryScreen() {
             </Text>
             <Text style={[s.caption, { color: row.draft ? p.blue : p.muted }]}>
               {row.draft ? "Borrador · " : ""}
-              {row.items.length} ejercicios ·{" "}
-              {row.items.reduce(
-                (n, item) =>
-                  n + (typeof item.sets === "number" ? item.sets : Number(item.sets) || 0),
-                0,
-              )}{" "}
-              series
+              {plural(row.items.length, "ejercicio", "ejercicios")} ·{" "}
+              {plural(
+                row.items.reduce(
+                  (n, item) =>
+                    n + (typeof item.sets === "number" ? item.sets : Number(item.sets) || 0),
+                  0,
+                ),
+                "serie",
+                "series",
+              )}
             </Text>
+            {row.items.length ? (
+              <Text numberOfLines={1} style={[s.caption, { color: p.muted }]}>
+                {row.items
+                  .slice(0, 3)
+                  .map((item) => ("name" in item && item.name ? item.name : null))
+                  .filter(Boolean)
+                  .join(" · ")}
+              </Text>
+            ) : null}
           </Pressable>
           {row.source ? (
             <MoreButton
