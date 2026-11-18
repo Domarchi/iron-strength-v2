@@ -60,6 +60,7 @@ for (const theme of ["light", "dark"] as const)
     await expect(page.getByLabel("Tiempo de Movimiento 7", { exact: true })).toHaveValue("300");
     expect(state.calls).toHaveLength(0);
     expect(JSON.parse(raw!).version).toBe(2);
+    await expect(page.getByText(/Marca varios ejercicios con el círculo/)).toBeVisible();
     for (const i of [5, 7])
       await page
         .getByRole("checkbox", { name: `Seleccionar Movimiento ${i}`, exact: true })
