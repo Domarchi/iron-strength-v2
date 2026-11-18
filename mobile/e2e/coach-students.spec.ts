@@ -73,9 +73,22 @@ for (const theme of ["dark", "light"] as const)
     await page.route(origin + "/api/mobile/v1/students", (route) =>
       route.fulfill({ json: students }),
     );
+    const posts: { id: string; workoutId: string; body: string }[] = [];
     await page.route(origin + "/api/mobile/v1/students/*", (route) =>
       route.fulfill({ json: detail }),
     );
+    await page.route(origin + "/api/mobile/v1/students/*/comments", async (route) => {
+      posts.push(route.request().postDataJSON());
+      if (posts.length === 1)
+        return route.fulfill({
+          status: 503,
+          json: { error: { code: "unavailable", message: "No pudimos confirmar tu respuesta." } },
+        });
+      return route.fulfill({
+        status: 201,
+        json: { version: 1, status: "created", id: posts[posts.length - 1].id },
+      });
+    });
     await asCoach(page);
     await page.getByRole("tab", { name: "Cuenta", exact: true }).click();
     await page.getByRole("button", { name: "Mis alumnos", exact: true }).click();
@@ -93,6 +106,19 @@ for (const theme of ["dark", "light"] as const)
     await expect(page.getByText("Sueño 4/5 · Energía 3/5")).toBeVisible();
     await expect(page.getByText(/Motivación 5\/5 · Dormí poco/)).toBeVisible();
     await expect(page.getByText("12 series")).toBeVisible();
+    const box = page.getByLabel("Responder a Ana Prueba", { exact: true });
+    await box.fill("Sí, sube 2,5 kg.");
+    await page.getByRole("button", { name: "Enviar respuesta", exact: true }).click();
+    await expect(page.getByText("No pudimos completar la solicitud.")).toBeVisible();
+    await expect(box).toHaveValue("Sí, sube 2,5 kg.");
+    await page.getByRole("button", { name: "Enviar respuesta", exact: true }).click();
+    await expect(box).toHaveValue("");
+    expect(posts).toHaveLength(2);
+    expect(posts[1]).toEqual(posts[0]);
+    expect(posts[0]).toMatchObject({
+      workoutId: "44444444-4444-4444-8444-444444444444",
+      body: "Sí, sube 2,5 kg.",
+    });
     await expect(page.getByText("¿Puedo subir el peso?")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       360,

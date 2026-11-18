@@ -1,7 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
+import { randomUUID } from "expo-crypto";
 import { router, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
-import { Action, Notice, Page, ScreenIntro } from "../../../components/ui";
+import { Action, Input, Notice, Page, ScreenIntro, s, usePalette } from "../../../components/ui";
 import { Avatar, EmptyState, ListRow, SectionHeader, Skeleton } from "../../../ui/display";
 import { plural } from "../../../lib/plural";
 import { useQuery } from "../../../lib/use-query";
@@ -10,6 +11,11 @@ import { useSession } from "../../../lib/session";
 /** Ficha de un alumno del coach, de solo lectura, con los datos que ya entrega la lista. */
 export default function StudentDetail() {
   const { id } = useLocalSearchParams<{ id: string }>(),
+    p = usePalette(),
+    [reply, setReply] = useState(""),
+    [sending, setSending] = useState(false),
+    [replyError, setReplyError] = useState<string | null>(null),
+    attempt = useRef<{ id: string; body: string } | null>(null),
     { client, state } = useSession(),
     query = useQuery(useCallback(() => client.students(), [client])),
     activity = useQuery(
@@ -99,8 +105,63 @@ export default function StudentDetail() {
                   />
                 ))
               ) : (
-                <ListRow title="Sin comentarios" subtitle="Responder sigue en la web." />
+                <ListRow title="Sin comentarios" subtitle="Aún no hay mensajes." />
               )}
+              {activity.value.comments.some((c) => c.authorKind === "student") ? (
+                <View style={{ gap: 10 }}>
+                  <Input
+                    accessibilityLabel={`Responder a ${st.fullName}`}
+                    placeholder="Escribe tu respuesta"
+                    placeholderTextColor={p.muted}
+                    value={reply}
+                    onChangeText={setReply}
+                    maxLength={500}
+                    multiline
+                    editable={!sending}
+                    style={[
+                      s.input,
+                      { color: p.ink, borderColor: p.control, backgroundColor: p.field },
+                    ]}
+                  />
+                  {replyError ? <Notice message={replyError} /> : null}
+                  <Action
+                    label={sending ? "Enviando…" : "Enviar respuesta"}
+                    disabled={sending || !reply.trim()}
+                    onPress={() => {
+                      const target = activity.value?.comments.find(
+                        (c) => c.authorKind === "student",
+                      );
+                      const body = reply.trim();
+                      if (!target || !body || sending) return;
+                      // Un reintento exacto conserva el ID; si cambia el texto, es otro mensaje.
+                      if (!attempt.current || attempt.current.body !== body)
+                        attempt.current = { id: randomUUID(), body };
+                      const current = attempt.current;
+                      setSending(true);
+                      setReplyError(null);
+                      client
+                        .replyToStudent(st.id, {
+                          id: current.id,
+                          workoutId: target.workoutId,
+                          body,
+                        })
+                        .then(() => {
+                          attempt.current = null;
+                          setReply("");
+                          activity.retry();
+                        })
+                        .catch((e: unknown) =>
+                          setReplyError(
+                            e instanceof Error
+                              ? e.message
+                              : "No pudimos enviar tu respuesta. Reintenta.",
+                          ),
+                        )
+                        .finally(() => setSending(false));
+                    }}
+                  />
+                </View>
+              ) : null}
             </>
           ) : null}
         </>

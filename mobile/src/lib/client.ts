@@ -1111,6 +1111,20 @@ export class MobileClient {
       );
     return parsed.data;
   }
+  /** Responde como coach a un entrenamiento de un alumno; repetir el mismo `id` no duplica. */
+  async replyToStudent(studentId: string, input: { id: string; workoutId: string; body: string }) {
+    if (!z.uuid().safeParse(studentId).success)
+      throw new MobileError("not_found", "Ese alumno no está disponible.", 404);
+    const parsed = z
+      .object({ version: z.literal(1), status: z.enum(["created", "duplicate"]), id: z.uuid() })
+      .safeParse(await this.read(`students/${studentId}/comments`, input));
+    if (!parsed.success || parsed.data.id !== input.id)
+      throw new MobileError(
+        "version",
+        "No pudimos confirmar tu respuesta. Conservamos tu mensaje para reintentar.",
+      );
+    return parsed.data;
+  }
   /** Check-in semanal de la semana vigente (la semana la decide el servidor). */
   async checkin() {
     const parsed = mobileCheckinSchema.safeParse(await this.read("checkins"));

@@ -7,6 +7,7 @@ import {
   mobileCheckinApi,
   mobileMeasurementsApi,
   mobileStudentDetailApi,
+  mobileStudentReplyApi,
   mobileStudentsApi,
 } from "./production";
 import { weekStartOf } from "../../domain/dates";
@@ -203,5 +204,47 @@ describe("APIs nativas nuevas con Auth/RLS reales", () => {
     expect((await api.read(await call(ana), ana.id)).status).toBe(403);
     expect((await api.read(await call(bea), ana.id)).status).toBe(403);
     expect((await api.read(await call(coach), crypto.randomUUID())).status).toBe(404);
+  });
+
+  it("respuesta del coach: crea una vez, reintenta sin duplicar y no escribe donde no debe", async () => {
+    const workoutId = crypto.randomUUID(),
+      id = crypto.randomUUID();
+    await admin.from("workouts").insert({
+      id: workoutId,
+      student_id: bea.id,
+      started_at: "2026-11-11T15:00:00Z",
+      finished_at: "2026-11-11T16:00:00Z",
+      duration_seconds: 3600,
+    });
+    const api = mobileStudentReplyApi();
+    const post = async (user: User, studentId: string, body: unknown) =>
+      new Request("https://example.test/", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + (await token(user)),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+    const input = { workoutId, id, body: "Buen trabajo, sigue así." };
+    const first = await api.post(await post(coach, bea.id, input), bea.id);
+    expect(first.status).toBe(201);
+    const again = await api.post(await post(coach, bea.id, input), bea.id);
+    expect(again.status).toBe(200);
+    expect((await again.json()).status).toBe("duplicate");
+    const rows = await admin.from("comments").select("author_id,body").eq("workout_id", workoutId);
+    expect(rows.data).toEqual([{ author_id: coach.id, body: input.body }]);
+    const changed = await api.post(
+      await post(coach, bea.id, { ...input, body: "Otro texto" }),
+      bea.id,
+    );
+    expect(changed.status).toBe(409);
+    // Un alumno no responde por esta vía; el entrenamiento debe ser del alumno indicado.
+    expect((await api.post(await post(bea, bea.id, input), bea.id)).status).toBe(403);
+    const wrong = { ...input, id: crypto.randomUUID() };
+    expect((await api.post(await post(coach, ana.id, wrong), ana.id)).status).toBe(404);
+    expect(
+      (await admin.from("comments").select("id").eq("workout_id", workoutId)).data,
+    ).toHaveLength(1);
   });
 });
